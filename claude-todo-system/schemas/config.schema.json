@@ -1,0 +1,209 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "claude-todo-config-schema-v2.1",
+  "title": "CLAUDE-TODO Configuration Schema",
+  "description": "Configuration for archive policies, validation rules, logging, and session behavior.",
+  "type": "object",
+  "required": ["version"],
+  "additionalProperties": false,
+
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Config schema version."
+    },
+
+    "archive": {
+      "type": "object",
+      "description": "Archive automation settings.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable automatic archiving of completed tasks."
+        },
+        "daysUntilArchive": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 365,
+          "default": 7,
+          "description": "Days after completion before task is eligible for archive."
+        },
+        "maxCompletedTasks": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 15,
+          "description": "Max completed tasks in todo.json before triggering archive."
+        },
+        "preserveRecentCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20,
+          "default": 3,
+          "description": "Always keep this many recent completed tasks (for context)."
+        },
+        "archiveOnSessionEnd": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run archive check at session end."
+        }
+      }
+    },
+
+    "logging": {
+      "type": "object",
+      "description": "Change history logging settings.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable logging to todo-log.json."
+        },
+        "retentionDays": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 365,
+          "default": 30,
+          "description": "Days to retain log entries."
+        },
+        "level": {
+          "type": "string",
+          "enum": ["minimal", "standard", "verbose"],
+          "default": "standard",
+          "description": "minimal=status changes, standard=+notes, verbose=+all fields."
+        },
+        "logSessionEvents": {
+          "type": "boolean",
+          "default": true,
+          "description": "Log session start/end events."
+        }
+      }
+    },
+
+    "validation": {
+      "type": "object",
+      "description": "Validation and integrity settings.",
+      "additionalProperties": false,
+      "properties": {
+        "strictMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Treat warnings as errors."
+        },
+        "checksumEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable checksum verification. CRITICAL for anti-hallucination."
+        },
+        "enforceAcceptance": {
+          "type": "boolean",
+          "default": true,
+          "description": "Require acceptance criteria for high/critical tasks."
+        },
+        "requireDescription": {
+          "type": "boolean",
+          "default": false,
+          "description": "Require description field for all tasks."
+        },
+        "maxActiveTasks": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1,
+          "default": 1,
+          "description": "Maximum active tasks. Default 1. DO NOT CHANGE without good reason."
+        },
+        "validateDependencies": {
+          "type": "boolean",
+          "default": true,
+          "description": "Check all depends[] references exist and are valid."
+        },
+        "detectCircularDeps": {
+          "type": "boolean",
+          "default": true,
+          "description": "Detect and block circular dependencies."
+        }
+      }
+    },
+
+    "defaults": {
+      "type": "object",
+      "description": "Default values for new tasks.",
+      "additionalProperties": false,
+      "properties": {
+        "priority": {
+          "type": "string",
+          "enum": ["critical", "high", "medium", "low"],
+          "default": "medium"
+        },
+        "phase": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$",
+          "default": "core"
+        },
+        "labels": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        }
+      }
+    },
+
+    "session": {
+      "type": "object",
+      "description": "Session behavior settings.",
+      "additionalProperties": false,
+      "properties": {
+        "requireSessionNote": {
+          "type": "boolean",
+          "default": true,
+          "description": "Warn if session ends without updating sessionNote."
+        },
+        "warnOnNoFocus": {
+          "type": "boolean",
+          "default": true,
+          "description": "Warn if no task is active at session start."
+        },
+        "autoStartSession": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically log session_start on first read."
+        },
+        "sessionTimeoutHours": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 72,
+          "default": 24,
+          "description": "Hours before orphaned session warning."
+        }
+      }
+    },
+
+    "display": {
+      "type": "object",
+      "description": "Display and notification settings.",
+      "additionalProperties": false,
+      "properties": {
+        "showArchiveCount": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show archived task count in status output."
+        },
+        "showLogSummary": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show recent log summary."
+        },
+        "warnStaleDays": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 30,
+          "description": "Warn about tasks pending longer than this."
+        }
+      }
+    }
+  }
+}

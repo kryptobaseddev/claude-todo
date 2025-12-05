@@ -1,0 +1,12 @@
+{
+  "$schema": "../schemas/log.schema.json",
+  "version": "2.1.0",
+  "project": "{{PROJECT_NAME}}",
+  "_meta": {
+    "totalEntries": 0,
+    "firstEntry": null,
+    "lastEntry": null,
+    "entriesPruned": 0
+  },
+  "entries": []
+}
