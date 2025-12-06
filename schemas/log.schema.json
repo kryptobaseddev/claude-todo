@@ -22,6 +22,12 @@
       "required": ["totalEntries", "firstEntry", "lastEntry"],
       "additionalProperties": false,
       "properties": {
+        "formatVersion": {
+          "type": "string",
+          "pattern": "^\\d+$",
+          "default": "1",
+          "description": "Log entry format version for future compatibility. Increment when entry structure changes."
+        },
         "totalEntries": {
           "type": "integer",
           "minimum": 0

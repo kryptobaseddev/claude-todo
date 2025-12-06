@@ -18,6 +18,7 @@
 | **[ARCHITECTURE.md](../ARCHITECTURE.md)** | Complete system architecture | Understanding system design |
 | **[DATA-FLOW-DIAGRAMS.md](DATA-FLOW-DIAGRAMS.md)** | Visual workflows and data flows | Understanding operations |
 | **[SYSTEM-DESIGN-SUMMARY.md](../SYSTEM-DESIGN-SUMMARY.md)** | Executive overview | High-level understanding |
+| **[design-principles.md](design-principles.md)** | Core design principles and patterns | Understanding design decisions |
 
 ### 📖 User Guides
 

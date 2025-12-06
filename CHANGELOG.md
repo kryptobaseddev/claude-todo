@@ -5,6 +5,27 @@ All notable changes to the claude-todo system will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2025-12-06
+
+### Added
+- **Checksum verification diagram**: Visual workflow in DATA-FLOW-DIAGRAMS.md
+- **Log format versioning**: `formatVersion` field in log schema for future compatibility
+- **Template documentation**: README.md documenting placeholder contract ({{PROJECT_NAME}}, {{TIMESTAMP}}, {{CHECKSUM}})
+- **activeForm documentation**: Explained auto-derived field in design-principles.md
+
+### Changed
+- **archive.sh help**: Comprehensive explanation of --force vs --all behavior with examples
+- **stats.sh help**: Added JSON output structure documentation
+- **Performance targets**: Clarified as design goals, not verified benchmarks
+- **Error messages**: Updated troubleshooting.md to match actual [ERROR] format
+- **Archive metadata**: Fixed schema-reference.md (sessionId/cycleTimeDays are optional)
+- **INDEX.md**: Added design-principles.md to Architecture section
+
+### Verified
+- Session protocol in WORKFLOW.md is fully implemented (session, focus, log commands)
+- All 7 test suites passing
+- CI/CD pipeline functional
+
 ## [0.2.6] - 2025-12-06
 
 ### Added

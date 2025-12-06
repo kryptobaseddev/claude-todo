@@ -40,15 +40,33 @@ Archive completed tasks from todo.json to todo-archive.json.
 
 Options:
   --dry-run       Preview without making changes
-  --force         Archive all completed (except preserved count)
-  --all           Archive ALL completed tasks (bypasses retention AND preserve)
+  --force         Bypass age-based retention (archive immediately)
+                  Still respects preserveRecentCount setting
+  --all           Archive ALL completed tasks immediately
+                  Bypasses BOTH age retention AND preserveRecentCount
   --count N       Override maxCompletedTasks setting
   -h, --help      Show this help
 
-Reads config from todo-config.json for:
-  - daysUntilArchive: Days after completion before archiving
-  - maxCompletedTasks: Threshold for completed tasks
-  - preserveRecentCount: Number of recent completions to keep
+Archive Behavior:
+  Default:  Only archive tasks older than daysUntilArchive (default 7 days)
+            Keeps preserveRecentCount most recent completed tasks (default 3)
+
+  --force:  Ignores daysUntilArchive - archives regardless of age
+            Still keeps preserveRecentCount tasks (safe for recent work)
+
+  --all:    Archives everything marked 'done' without exceptions
+            Use with caution - removes ALL completed tasks
+
+Config (from todo-config.json):
+  - daysUntilArchive: Days after completion before archiving (default: 7)
+  - maxCompletedTasks: Threshold triggering archive prompt (default: 15)
+  - preserveRecentCount: Recent completions to keep (default: 3)
+
+Examples:
+  $(basename "$0")               # Archive based on config rules
+  $(basename "$0") --dry-run     # Preview what would be archived
+  $(basename "$0") --force       # Archive all, keep 3 most recent
+  $(basename "$0") --all         # Archive everything (nuclear option)
 EOF
   exit 0
 }

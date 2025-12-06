@@ -2,19 +2,19 @@
   "$schema": "./schemas/todo.schema.json",
   "version": "2.1.0",
   "project": "claude-todo",
-  "lastUpdated": "2025-12-06T08:14:04Z",
+  "lastUpdated": "2025-12-06T16:49:19Z",
   "_meta": {
-    "checksum": "c05fb5559c0f55b8",
+    "checksum": "d4405e5d10c7b0a9",
     "configVersion": "2.1.0",
     "lastSessionId": null,
     "activeSession": null,
-    "lastModified": "2025-12-06T06:52:51Z"
+    "lastModified": "2025-12-06T16:49:49Z"
   },
   "focus": {
     "currentTask": null,
     "blockedUntil": null,
-    "sessionNote": "Research complete. Consensus: Option B (auto-derive) + Option C (export command). No schema changes. Ready for implementation decision.",
-    "nextAction": null
+    "sessionNote": "Completed all documentation tasks. 31/32 tasks done. T012 (CLI wrapper refactoring) deferred.",
+    "nextAction": "Complete T028 documentation review"
   },
   "tasks": [
     {
@@ -72,7 +72,7 @@
     {
       "id": "T012",
       "title": "Decouple CLI wrapper from hardcoded script mappings",
-      "status": "pending",
+      "status": "active",
       "priority": "medium",
       "createdAt": "2025-12-06T04:51:17Z",
       "description": "MEDIUM RISK: The claude-todo wrapper has hardcoded case statement mapping commands to scripts. If scripts are renamed (like we almost did with -todo suffix), wrapper breaks silently. FIX: Generate wrapper from script directory listing, use config file for mappings, or convention-based routing (command name = script name).",
@@ -84,26 +84,28 @@
     {
       "id": "T013",
       "title": "Add log format versioning for future compatibility",
-      "status": "pending",
+      "status": "done",
       "priority": "low",
       "createdAt": "2025-12-06T04:51:24Z",
       "description": "LOW RISK: Log entries are append-only with specific JSON format. If format changes in future versions, old logs become unparseable. MITIGATION: Log format rarely needs to change. FIX: Add formatVersion field to log file header, document log format stability guarantees.",
       "labels": [
         "fragile-coupling",
         "low"
-      ]
+      ],
+      "completedAt": "2025-12-06T16:49:18Z"
     },
     {
       "id": "T014",
       "title": "Document template placeholder contract",
-      "status": "pending",
+      "status": "done",
       "priority": "low",
       "createdAt": "2025-12-06T04:51:31Z",
       "description": "LOW RISK: init.sh expects specific placeholders in templates like {{PROJECT_NAME}}. If templates change placeholder format, init breaks. MITIGATION: Templates are versioned with installation. FIX: Document placeholder contract in templates, add placeholder validation in init.sh, consider using envsubst.",
       "labels": [
         "fragile-coupling",
         "low"
-      ]
+      ],
+      "completedAt": "2025-12-06T16:49:18Z"
     },
     {
       "id": "T016",
@@ -225,50 +227,54 @@
     {
       "id": "T025",
       "title": "Add checksum verification diagram to DATA-FLOW-DIAGRAMS.md",
-      "status": "pending",
+      "status": "done",
       "priority": "high",
       "createdAt": "2025-12-06T05:19:20Z",
       "description": "Checksum verification is core anti-hallucination mechanism but not diagrammed. Add workflow showing checksum read->verify->validate before write operations",
       "labels": [
         "documentation",
         "important"
-      ]
+      ],
+      "completedAt": "2025-12-06T16:44:10Z"
     },
     {
       "id": "T026",
       "title": "Add design-principles.md to INDEX.md",
-      "status": "pending",
+      "status": "done",
       "priority": "high",
       "createdAt": "2025-12-06T05:19:21Z",
       "description": "design-principles.md exists in docs/ but not listed in INDEX.md. Add to Architecture section with proper description and cross-references",
       "labels": [
         "documentation",
         "important"
-      ]
+      ],
+      "completedAt": "2025-12-06T16:44:11Z"
     },
     {
       "id": "T027",
       "title": "Improve archive.sh help text",
-      "status": "pending",
+      "status": "done",
       "priority": "high",
       "createdAt": "2025-12-06T05:19:23Z",
       "description": "Help text doesnt explain --force vs --all behavior. --force: ignores age, respects preserve count. --all: ignores BOTH age AND preserve. Add clear explanation",
       "labels": [
         "documentation",
         "important"
-      ]
+      ],
+      "completedAt": "2025-12-06T16:44:11Z"
     },
     {
       "id": "T028",
       "title": "Remove/fix session protocol in WORKFLOW.md",
-      "status": "pending",
+      "status": "done",
       "priority": "high",
       "createdAt": "2025-12-06T05:19:24Z",
       "description": "WORKFLOW.md describes session management protocol that isnt implemented in scripts. Either implement session scripts or mark as planned future feature",
       "labels": [
         "documentation",
         "important"
-      ]
+      ],
+      "completedAt": "2025-12-06T16:42:05Z"
     },
     {
       "id": "T029",
@@ -286,38 +292,41 @@
     {
       "id": "T030",
       "title": "Expand stats.sh help text",
-      "status": "pending",
+      "status": "done",
       "priority": "medium",
       "createdAt": "2025-12-06T05:19:49Z",
       "description": "stats.sh help is minimal. Only shows 3 options. Document all available output metrics and JSON output structure",
       "labels": [
         "documentation",
         "minor"
-      ]
+      ],
+      "completedAt": "2025-12-06T16:46:45Z"
     },
     {
       "id": "T031",
       "title": "Document activeForm field in design-principles.md",
-      "status": "pending",
+      "status": "done",
       "priority": "medium",
       "createdAt": "2025-12-06T05:19:50Z",
       "description": "activeForm is required field per validation but not explained in design-principles.md. Document its purpose: present continuous form of task description",
       "labels": [
         "documentation",
         "minor"
-      ]
+      ],
+      "completedAt": "2025-12-06T16:46:45Z"
     },
     {
       "id": "T032",
       "title": "Fix archive metadata requirements in schema-reference.md",
-      "status": "pending",
+      "status": "done",
       "priority": "medium",
       "createdAt": "2025-12-06T05:19:51Z",
       "description": "Docs say sessionId and cycleTimeDays are required in _archive but only archivedAt and reason are required. Fix schema-reference.md lines 187-196",
       "labels": [
         "documentation",
         "minor"
-      ]
+      ],
+      "completedAt": "2025-12-06T16:46:45Z"
     },
     {
       "id": "T033",
@@ -348,26 +357,28 @@
     {
       "id": "T035",
       "title": "Verify or remove performance targets",
-      "status": "pending",
+      "status": "done",
       "priority": "low",
       "createdAt": "2025-12-06T05:19:55Z",
       "description": "README claims performance targets (task creation <100ms, etc) but no benchmarks exist. Either add benchmark tests or document as design goals not verified",
       "labels": [
         "documentation",
         "minor"
-      ]
+      ],
+      "completedAt": "2025-12-06T16:49:18Z"
     },
     {
       "id": "T036",
       "title": "Fix error message format in troubleshooting.md",
-      "status": "pending",
+      "status": "done",
       "priority": "low",
       "createdAt": "2025-12-06T05:19:58Z",
       "description": "Docs show multi-line error format but scripts use [ERROR] prefix format. Update troubleshooting.md to show actual error output format",
       "labels": [
         "documentation",
         "minor"
-      ]
+      ],
+      "completedAt": "2025-12-06T16:49:19Z"
     },
     {
       "id": "T037",

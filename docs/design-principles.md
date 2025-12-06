@@ -238,6 +238,37 @@ These properties must ALWAYS be true:
 - Cross-file queries more complex
 - Requires careful handling during archival to prevent data loss
 
+### Why Auto-Derived activeForm?
+
+**Decision**: Generate `activeForm` from task `title` during TodoWrite export rather than storing it
+
+**Context**: Claude Code's TodoWrite tool uses two fields:
+- `content`: The imperative task description ("Fix authentication bug")
+- `activeForm`: Present continuous form shown during execution ("Fixing authentication bug")
+
+**Rationale**:
+- **Single source of truth**: Users write `title` once; `activeForm` derived on export
+- **Grammar transformation**: Automatic verb conjugation (Fix→Fixing, Add→Adding, Implement→Implementing)
+- **No schema changes**: No modification to existing data structures
+- **Bidirectional mapping**: Clean export to TodoWrite format, clean import potential
+
+**Implementation** (`lib/grammar.sh`):
+```bash
+# "Fix authentication bug" → "Fixing authentication bug"
+# "Add new feature" → "Adding new feature"
+# "Implement search" → "Implementing search"
+derive_active_form "$title"
+```
+
+**Export Integration**:
+```bash
+claude-todo export --format todowrite  # Generates TodoWrite-compatible JSON
+```
+
+**Trade-offs**:
+- Grammar rules may not cover all edge cases (handled by fallback: "Working on X")
+- Derived value computed at export time (not stored)
+
 ---
 
 ## Performance Design
@@ -250,7 +281,10 @@ These properties must ALWAYS be true:
 4. **Batch Operations**: Archive multiple tasks in single operation
 5. **Cache Invalidation**: In-memory cache cleared on write
 
-### Performance Targets
+### Performance Targets (Design Goals)
+
+> **Note**: These are design goals for user experience. No formal benchmarks exist.
+> Actual performance varies by system. Targets assume SSD storage and modern hardware.
 
 | Operation | Target | Rationale |
 |-----------|--------|-----------|

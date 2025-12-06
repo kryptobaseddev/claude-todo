@@ -71,6 +71,17 @@ Statistics Categories:
     📈 Completion Metrics: Rate, average time, period analysis
     📅 Activity Metrics: Tasks created/completed per period
     📦 Archive Statistics: Total archived, growth rate
+    🏆 All-Time Statistics: Total created, completed, success rate
+
+JSON Output Structure (--format json):
+    {
+      "period_days": 30,
+      "current": { "pending": N, "active": N, "done": N, "total": N },
+      "completion": { "completed": N, "created": N, "rate_pct": N, "avg_hours": N },
+      "activity": { "tasks_created": N, "tasks_completed": N, "busiest_day": "..." },
+      "archive": { "total": N, "archived_period": N },
+      "all_time": { "total_created": N, "total_completed": N }
+    }
 
 EOF
 }

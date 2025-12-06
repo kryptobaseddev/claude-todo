@@ -186,14 +186,14 @@ All original task fields PLUS:
 
 #### Archive Metadata (_archive)
 
-Required fields added during archival:
+Fields added during archival:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `archivedAt` | string | When task was archived (ISO 8601) |
-| `reason` | string | Enum: auto, manual, stale |
-| `sessionId` | string | Session that performed archival |
-| `cycleTimeDays` | number | Days from creation to completion |
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `archivedAt` | string | **Yes** | When task was archived (ISO 8601) |
+| `reason` | string | **Yes** | Enum: auto, manual, stale |
+| `sessionId` | string | No | Session that performed archival |
+| `cycleTimeDays` | number | No | Days from creation to completion |
 
 **Archive Reason Values**:
 - `auto` - Triggered by config rules (daysUntilArchive)

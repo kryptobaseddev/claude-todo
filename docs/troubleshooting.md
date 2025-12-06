@@ -26,6 +26,11 @@ claude-todo list
 
 **Symptom:**
 ```
+[ERROR] Cannot write to .claude/todo.json: Permission denied
+```
+
+Or in earlier versions:
+```
 Error: Cannot write to file
 File: .claude/todo.json
 Reason: Permission denied
@@ -72,10 +77,14 @@ sudo chown $USER:$USER .claude/todo*.json
 
 **Symptom:**
 ```
+[ERROR] Invalid JSON in .claude/todo.json: Unexpected token ',' at line 23
+```
+
+Or:
+```
 Error: Invalid JSON format
 File: .claude/todo.json
 Line: 23
-Issue: Unexpected token ','
 ```
 
 **Causes:**
@@ -140,6 +149,11 @@ claude-todo validate
 ### 3. Schema Validation Failures
 
 **Symptom:**
+```
+[ERROR] Validation failed: Missing required field "title" in task T001
+```
+
+Or:
 ```
 Error: Invalid JSON Schema
 File: .claude/todo.json

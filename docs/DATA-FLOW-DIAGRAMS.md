@@ -468,6 +468,95 @@ Key Properties:
 
 ---
 
+## Checksum Verification Flow (Anti-Hallucination)
+
+```
+                    ANY WRITE OPERATION
+                           │
+                           ▼
+                ┌────────────────────┐
+                │  Read todo.json    │
+                │  Extract _meta     │
+                │  checksum          │
+                └──────────┬─────────┘
+                           │
+                           ▼
+                ┌────────────────────┐
+                │  Compute Current   │
+                │  Checksum          │
+                │                    │
+                │  jq -c '.tasks' |  │
+                │  sha256sum |       │
+                │  cut -c1-16        │
+                └──────────┬─────────┘
+                           │
+                           ▼
+                ┌────────────────────┐
+                │  Compare Stored    │
+                │     vs             │
+                │  Computed          │
+                └──────────┬─────────┘
+                           │
+              ┌────────────┴────────────┐
+              │                         │
+         MISMATCH                    MATCH
+              │                         │
+              ▼                         ▼
+       ┌─────────────┐         ┌─────────────────┐
+       │  ABORT      │         │  PROCEED with   │
+       │  Operation  │         │  Write          │
+       │             │         └────────┬────────┘
+       │  Log Error: │                  │
+       │  "Checksum  │                  ▼
+       │  mismatch!  │         ┌─────────────────┐
+       │  File may   │         │  Perform Data   │
+       │  be corrupt │         │  Modification   │
+       │  or modified│         └────────┬────────┘
+       │  externally"│                  │
+       └─────────────┘                  ▼
+                               ┌─────────────────┐
+                               │  Recalculate    │
+                               │  New Checksum   │
+                               │  After Changes  │
+                               └────────┬────────┘
+                                        │
+                                        ▼
+                               ┌─────────────────┐
+                               │  Update _meta   │
+                               │  checksum       │
+                               │  lastModified   │
+                               └────────┬────────┘
+                                        │
+                                        ▼
+                               ┌─────────────────┐
+                               │  Atomic Write   │
+                               │  (see above)    │
+                               └────────┬────────┘
+                                        │
+                                        ▼
+                               ┌─────────────────┐
+                               │    SUCCESS      │
+                               └─────────────────┘
+
+Checksum Calculation:
+  Input:  .tasks array (JSON, compact)
+  Hash:   SHA-256
+  Output: First 16 characters of hex digest
+
+Purpose (Anti-Hallucination):
+  1. Detects external file modifications
+  2. Prevents Claude from writing stale data
+  3. Ensures read-modify-write cycle integrity
+  4. Catches file corruption early
+
+Commands:
+  Compute:  jq -c '.tasks' todo.json | sha256sum | cut -c1-16
+  Verify:   jq -r '._meta.checksum' todo.json
+  Fix:      claude-todo validate --fix
+```
+
+---
+
 ## Backup Rotation Strategy
 
 ```
