@@ -1,0 +1,651 @@
+# Configuration Reference
+
+CLAUDE-TODO uses a hierarchical configuration system allowing customization at multiple levels while maintaining sensible defaults.
+
+## Configuration Files
+
+### Default Configuration Template
+Location: `~/.claude-todo/templates/config.template.json`
+
+This file contains the default configuration that serves as the starting point for all projects.
+
+### Global Configuration (Optional)
+Location: `~/.claude-todo/config.json`
+
+Create this file to override defaults across all projects. Useful for personal preferences like logging levels or display settings.
+
+### Project Configuration
+Location: `.claude/todo-config.json`
+
+Project-specific configuration. Created automatically during initialization from the default template.
+
+## Configuration Override Hierarchy
+
+Configuration values are resolved in this order (later overrides earlier):
+
+1. **Defaults** - Built-in defaults from schema
+2. **Global** - `~/.claude-todo/config.json` (if exists)
+3. **Project** - `.claude/todo-config.json`
+4. **Environment** - `CLAUDE_TODO_*` environment variables
+5. **CLI Flags** - Command-line arguments (highest priority)
+
+## Configuration Schema
+
+### Complete Configuration Structure
+
+```json
+{
+  "version": "2.1.0",
+  "archive": {
+    "enabled": true,
+    "daysUntilArchive": 7,
+    "maxCompletedTasks": 15,
+    "preserveRecentCount": 3,
+    "archiveOnSessionEnd": true
+  },
+  "logging": {
+    "enabled": true,
+    "retentionDays": 30,
+    "level": "standard",
+    "logSessionEvents": true
+  },
+  "validation": {
+    "strictMode": false,
+    "checksumEnabled": true,
+    "enforceAcceptance": true,
+    "requireDescription": false,
+    "maxActiveTasks": 1,
+    "validateDependencies": true,
+    "detectCircularDeps": true
+  },
+  "defaults": {
+    "priority": "medium",
+    "phase": "core",
+    "labels": []
+  },
+  "session": {
+    "requireSessionNote": true,
+    "warnOnNoFocus": true,
+    "autoStartSession": true,
+    "sessionTimeoutHours": 24
+  },
+  "display": {
+    "showArchiveCount": true,
+    "showLogSummary": true,
+    "warnStaleDays": 30
+  }
+}
+```
+
+## Configuration Sections
+
+### Archive Settings
+
+Controls automatic archiving behavior for completed tasks.
+
+| Field | Type | Default | Range | Description |
+|-------|------|---------|-------|-------------|
+| `enabled` | boolean | `true` | - | Enable automatic archiving |
+| `daysUntilArchive` | integer | `7` | 1-365 | Days after completion before eligible for archive |
+| `maxCompletedTasks` | integer | `15` | 1-100 | Maximum completed tasks before triggering archive |
+| `preserveRecentCount` | integer | `3` | 0-20 | Number of recent completed tasks to always keep |
+| `archiveOnSessionEnd` | boolean | `true` | - | Check archive eligibility when session ends |
+
+**Archive Trigger Logic:**
+- Tasks become eligible for archive after `daysUntilArchive` days
+- Archive runs when completed tasks exceed `maxCompletedTasks`
+- Most recent `preserveRecentCount` completed tasks are always preserved
+- Can be triggered manually or automatically at session end
+
+**Examples:**
+```json
+// Conservative: Keep tasks longer, preserve more context
+{
+  "archive": {
+    "enabled": true,
+    "daysUntilArchive": 14,
+    "maxCompletedTasks": 30,
+    "preserveRecentCount": 5,
+    "archiveOnSessionEnd": false
+  }
+}
+
+// Aggressive: Archive quickly, minimal history
+{
+  "archive": {
+    "enabled": true,
+    "daysUntilArchive": 1,
+    "maxCompletedTasks": 5,
+    "preserveRecentCount": 0,
+    "archiveOnSessionEnd": true
+  }
+}
+
+// Manual-only: Disable automatic archiving
+{
+  "archive": {
+    "enabled": false
+  }
+}
+```
+
+### Logging Settings
+
+Controls change history logging to `todo-log.json`.
+
+| Field | Type | Default | Options | Description |
+|-------|------|---------|---------|-------------|
+| `enabled` | boolean | `true` | - | Enable change logging |
+| `retentionDays` | integer | `30` | 1-365 | Days to retain log entries |
+| `level` | string | `"standard"` | `minimal`, `standard`, `verbose` | Detail level of logging |
+| `logSessionEvents` | boolean | `true` | - | Log session start/end events |
+
+**Logging Levels:**
+- **minimal**: Only status changes (pending → in_progress → completed)
+- **standard**: Status changes plus notes and priority changes
+- **verbose**: All field changes including labels, dependencies, estimates
+
+**Examples:**
+```json
+// Detailed audit trail
+{
+  "logging": {
+    "enabled": true,
+    "retentionDays": 90,
+    "level": "verbose",
+    "logSessionEvents": true
+  }
+}
+
+// Minimal logging for performance
+{
+  "logging": {
+    "enabled": true,
+    "retentionDays": 7,
+    "level": "minimal",
+    "logSessionEvents": false
+  }
+}
+
+// Disable logging (not recommended)
+{
+  "logging": {
+    "enabled": false
+  }
+}
+```
+
+### Validation Settings
+
+Controls data integrity checks and anti-hallucination mechanisms.
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `strictMode` | boolean | `false` | Treat warnings as errors, block operations on any issue |
+| `checksumEnabled` | boolean | `true` | **CRITICAL** - Enable checksum verification for anti-hallucination |
+| `enforceAcceptance` | boolean | `true` | Require acceptance criteria for high/critical priority tasks |
+| `requireDescription` | boolean | `false` | Require description field for all tasks |
+| `maxActiveTasks` | integer | `1` | Maximum number of in_progress tasks (1-1) |
+| `validateDependencies` | boolean | `true` | Verify all dependency references exist |
+| `detectCircularDeps` | boolean | `true` | Detect and block circular dependency chains |
+
+**Important Notes:**
+- `checksumEnabled` should **always** be `true` - disabling removes critical anti-hallucination protection
+- `maxActiveTasks` is intentionally limited to 1 to enforce focus (see ARCHITECTURE.md)
+- `strictMode` is useful during initial setup or troubleshooting, but may be too restrictive for normal use
+
+**Examples:**
+```json
+// Strict validation (recommended for teams)
+{
+  "validation": {
+    "strictMode": true,
+    "checksumEnabled": true,
+    "enforceAcceptance": true,
+    "requireDescription": true,
+    "maxActiveTasks": 1,
+    "validateDependencies": true,
+    "detectCircularDeps": true
+  }
+}
+
+// Relaxed validation (personal use)
+{
+  "validation": {
+    "strictMode": false,
+    "checksumEnabled": true,
+    "enforceAcceptance": false,
+    "requireDescription": false,
+    "maxActiveTasks": 1,
+    "validateDependencies": true,
+    "detectCircularDeps": true
+  }
+}
+
+// DANGER: Minimal validation (not recommended)
+{
+  "validation": {
+    "strictMode": false,
+    "checksumEnabled": true,  // Never disable this!
+    "enforceAcceptance": false,
+    "requireDescription": false,
+    "maxActiveTasks": 1,
+    "validateDependencies": false,
+    "detectCircularDeps": false
+  }
+}
+```
+
+### Defaults Settings
+
+Default values applied to new tasks.
+
+| Field | Type | Default | Options | Description |
+|-------|------|---------|---------|-------------|
+| `priority` | string | `"medium"` | `critical`, `high`, `medium`, `low` | Default task priority |
+| `phase` | string | `"core"` | Pattern: `^[a-z][a-z0-9-]*$` | Default project phase |
+| `labels` | array | `[]` | Array of strings | Default labels for new tasks |
+
+**Examples:**
+```json
+// Backend project defaults
+{
+  "defaults": {
+    "priority": "high",
+    "phase": "backend",
+    "labels": ["api", "backend"]
+  }
+}
+
+// Frontend project defaults
+{
+  "defaults": {
+    "priority": "medium",
+    "phase": "frontend",
+    "labels": ["ui", "react"]
+  }
+}
+
+// Research project defaults
+{
+  "defaults": {
+    "priority": "low",
+    "phase": "research",
+    "labels": ["exploration", "documentation"]
+  }
+}
+```
+
+### Session Settings
+
+Controls session behavior and warnings.
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `requireSessionNote` | boolean | `true` | Warn if session ends without updating sessionNote |
+| `warnOnNoFocus` | boolean | `true` | Warn if no task is active at session start |
+| `autoStartSession` | boolean | `true` | Automatically log session_start on first read |
+| `sessionTimeoutHours` | integer | `24` | Hours before orphaned session warning (1-72) |
+
+**Examples:**
+```json
+// Strict session management (recommended)
+{
+  "session": {
+    "requireSessionNote": true,
+    "warnOnNoFocus": true,
+    "autoStartSession": true,
+    "sessionTimeoutHours": 12
+  }
+}
+
+// Relaxed session management
+{
+  "session": {
+    "requireSessionNote": false,
+    "warnOnNoFocus": false,
+    "autoStartSession": true,
+    "sessionTimeoutHours": 48
+  }
+}
+
+// Manual session management
+{
+  "session": {
+    "requireSessionNote": false,
+    "warnOnNoFocus": false,
+    "autoStartSession": false,
+    "sessionTimeoutHours": 24
+  }
+}
+```
+
+### Display Settings
+
+Controls output formatting and notifications.
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `showArchiveCount` | boolean | `true` | Display archived task count in status output |
+| `showLogSummary` | boolean | `true` | Display recent log activity summary |
+| `warnStaleDays` | integer | `30` | Warn about pending tasks older than this (days) |
+
+**Examples:**
+```json
+// Detailed display (recommended)
+{
+  "display": {
+    "showArchiveCount": true,
+    "showLogSummary": true,
+    "warnStaleDays": 14
+  }
+}
+
+// Minimal display
+{
+  "display": {
+    "showArchiveCount": false,
+    "showLogSummary": false,
+    "warnStaleDays": 60
+  }
+}
+
+// Alert on stale tasks quickly
+{
+  "display": {
+    "showArchiveCount": true,
+    "showLogSummary": true,
+    "warnStaleDays": 7
+  }
+}
+```
+
+## Environment Variables
+
+Override configuration using environment variables with `CLAUDE_TODO_` prefix:
+
+```bash
+# Archive settings
+export CLAUDE_TODO_ARCHIVE_ENABLED=true
+export CLAUDE_TODO_ARCHIVE_DAYS_UNTIL_ARCHIVE=14
+export CLAUDE_TODO_ARCHIVE_MAX_COMPLETED_TASKS=20
+export CLAUDE_TODO_ARCHIVE_PRESERVE_RECENT_COUNT=5
+
+# Logging settings
+export CLAUDE_TODO_LOGGING_ENABLED=true
+export CLAUDE_TODO_LOGGING_LEVEL=verbose
+export CLAUDE_TODO_LOGGING_RETENTION_DAYS=60
+
+# Validation settings
+export CLAUDE_TODO_VALIDATION_STRICT_MODE=true
+export CLAUDE_TODO_VALIDATION_CHECKSUM_ENABLED=true
+export CLAUDE_TODO_VALIDATION_MAX_ACTIVE_TASKS=1
+
+# Session settings
+export CLAUDE_TODO_SESSION_REQUIRE_SESSION_NOTE=true
+export CLAUDE_TODO_SESSION_AUTO_START_SESSION=true
+
+# Display settings
+export CLAUDE_TODO_DISPLAY_WARN_STALE_DAYS=7
+```
+
+**Environment Variable Naming Convention:**
+- Prefix: `CLAUDE_TODO_`
+- Section: Uppercase section name (e.g., `ARCHIVE`, `LOGGING`)
+- Field: Uppercase field name with underscores (e.g., `DAYS_UNTIL_ARCHIVE`)
+- Values: `true`/`false` for booleans, numbers for integers, strings for text
+
+## CLI Flag Overrides
+
+Most configuration values can be overridden via command-line flags:
+
+```bash
+# Override archive settings
+todo-add.sh --no-archive-on-complete "Task description"
+
+# Override validation settings
+todo-add.sh --no-strict "Task description"
+todo-complete.sh --allow-multiple-active task-123
+
+# Override logging settings
+todo-add.sh --log-level=verbose "Task description"
+
+# Override display settings
+todo-list.sh --no-show-archive-count
+```
+
+See individual script documentation for available flags.
+
+## Common Configuration Scenarios
+
+### Solo Developer - Focused Work
+
+```json
+{
+  "version": "2.1.0",
+  "archive": {
+    "enabled": true,
+    "daysUntilArchive": 7,
+    "maxCompletedTasks": 10,
+    "preserveRecentCount": 3,
+    "archiveOnSessionEnd": true
+  },
+  "validation": {
+    "strictMode": false,
+    "checksumEnabled": true,
+    "maxActiveTasks": 1,
+    "enforceAcceptance": false
+  },
+  "session": {
+    "requireSessionNote": true,
+    "warnOnNoFocus": true,
+    "autoStartSession": true
+  }
+}
+```
+
+### Team Project - Strict Standards
+
+```json
+{
+  "version": "2.1.0",
+  "archive": {
+    "enabled": true,
+    "daysUntilArchive": 14,
+    "maxCompletedTasks": 30,
+    "preserveRecentCount": 5
+  },
+  "logging": {
+    "enabled": true,
+    "retentionDays": 90,
+    "level": "verbose",
+    "logSessionEvents": true
+  },
+  "validation": {
+    "strictMode": true,
+    "checksumEnabled": true,
+    "enforceAcceptance": true,
+    "requireDescription": true,
+    "maxActiveTasks": 1,
+    "validateDependencies": true,
+    "detectCircularDeps": true
+  },
+  "display": {
+    "warnStaleDays": 7
+  }
+}
+```
+
+### Research/Exploration - Minimal Constraints
+
+```json
+{
+  "version": "2.1.0",
+  "archive": {
+    "enabled": false
+  },
+  "logging": {
+    "level": "minimal"
+  },
+  "validation": {
+    "strictMode": false,
+    "checksumEnabled": true,
+    "enforceAcceptance": false,
+    "requireDescription": false,
+    "maxActiveTasks": 1
+  },
+  "session": {
+    "requireSessionNote": false,
+    "warnOnNoFocus": false
+  },
+  "display": {
+    "warnStaleDays": 60
+  }
+}
+```
+
+### Long-Running Project - Comprehensive Tracking
+
+```json
+{
+  "version": "2.1.0",
+  "archive": {
+    "enabled": true,
+    "daysUntilArchive": 30,
+    "maxCompletedTasks": 50,
+    "preserveRecentCount": 10,
+    "archiveOnSessionEnd": false
+  },
+  "logging": {
+    "enabled": true,
+    "retentionDays": 180,
+    "level": "verbose",
+    "logSessionEvents": true
+  },
+  "validation": {
+    "strictMode": false,
+    "checksumEnabled": true,
+    "enforceAcceptance": true,
+    "validateDependencies": true,
+    "detectCircularDeps": true,
+    "maxActiveTasks": 1
+  },
+  "display": {
+    "showArchiveCount": true,
+    "showLogSummary": true,
+    "warnStaleDays": 14
+  }
+}
+```
+
+## Configuration Validation
+
+Configuration files are validated against `config.schema.json` during:
+- Project initialization (`init.sh`)
+- Manual validation (`validate.sh`)
+- Script execution (if validation enabled)
+
+### Valid Value Ranges
+
+| Field | Valid Range | Notes |
+|-------|-------------|-------|
+| `version` | Semantic version (e.g., `2.1.0`) | Must match pattern `^\d+\.\d+\.\d+$` |
+| `daysUntilArchive` | 1-365 | Realistic timeframes for archiving |
+| `maxCompletedTasks` | 1-100 | Prevents excessive todo.json size |
+| `preserveRecentCount` | 0-20 | Balance between context and clutter |
+| `retentionDays` | 1-365 | Log retention period |
+| `level` | `minimal`, `standard`, `verbose` | Logging detail level |
+| `maxActiveTasks` | 1-1 | Enforces single-task focus (by design) |
+| `priority` | `critical`, `high`, `medium`, `low` | Task priority levels |
+| `phase` | Pattern: `^[a-z][a-z0-9-]*$` | Lowercase with hyphens |
+| `sessionTimeoutHours` | 1-72 | Reasonable session duration |
+| `warnStaleDays` | 1-999 | Task staleness threshold |
+
+### Schema Reference
+
+For complete schema definition including all constraints and validation rules:
+```bash
+cat ~/.claude-todo/schemas/config.schema.json
+```
+
+See also: [schema-reference.md](./schema-reference.md)
+
+## Troubleshooting Configuration
+
+### Configuration Not Taking Effect
+
+**Check override hierarchy:**
+```bash
+# Verify project config exists
+cat .claude/todo-config.json
+
+# Check environment variables
+env | grep CLAUDE_TODO
+
+# Test with explicit CLI flags
+todo-list.sh --help
+```
+
+**Validate configuration:**
+```bash
+~/.claude-todo/scripts/validate.sh .claude/todo-config.json
+```
+
+### Invalid Configuration Values
+
+**Error: "Invalid configuration value"**
+- Check value ranges in schema
+- Ensure correct data types (boolean vs string)
+- Verify enum values match exactly (case-sensitive)
+
+**Error: "Missing required field: version"**
+- Add version field: `"version": "2.1.0"`
+
+**Error: "Unknown field"**
+- Check for typos in field names
+- Verify field exists in schema (additionalProperties: false)
+
+### Performance Issues
+
+If operations are slow:
+- Reduce `logging.level` to `minimal`
+- Increase `archive.maxCompletedTasks` threshold
+- Disable `logSessionEvents` if not needed
+- Consider shorter `retentionDays` for logs
+
+### Configuration Migration
+
+When upgrading between versions:
+```bash
+# Backup current config
+cp .claude/todo-config.json .claude/todo-config.backup.json
+
+# Re-initialize to get new defaults (preserves existing data)
+~/.claude-todo/scripts/init.sh --force
+
+# Validate migrated config
+~/.claude-todo/scripts/validate.sh .claude/todo-config.json
+```
+
+> **Note**: Automated migration scripts are not yet implemented. Manual backup and re-initialization is recommended.
+
+## Best Practices
+
+1. **Start with defaults** - Only customize what you need
+2. **Use project config** - Keep global config minimal for personal preferences
+3. **Enable checksums** - Never disable `checksumEnabled` (anti-hallucination protection)
+4. **Enforce focus** - Keep `maxActiveTasks: 1` unless you have compelling reason
+5. **Regular archiving** - Set reasonable `daysUntilArchive` (7-14 days typical)
+6. **Log appropriately** - Use `standard` logging unless you need `verbose` for auditing
+7. **Version control** - Commit `.claude/todo-config.json` to share team standards
+8. **Test changes** - Validate configuration after editing
+9. **Document overrides** - Comment why you changed defaults (JSON doesn't support comments, use separate docs)
+10. **Review periodically** - Adjust settings as project needs evolve
+
+## See Also
+
+- [Installation Guide](./installation.md) - Setting up CLAUDE-TODO
+- [Usage Guide](./usage.md) - Working with tasks
+- [Schema Reference](./schema-reference.md) - Complete schema documentation
+- [Troubleshooting](./troubleshooting.md) - Common issues and solutions
+- [ARCHITECTURE.md](../ARCHITECTURE.md) - System design and rationale

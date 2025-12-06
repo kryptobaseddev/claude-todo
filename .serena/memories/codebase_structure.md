@@ -16,14 +16,14 @@ claude-todo/
 │
 ├── schemas/                      # JSON Schema Definitions
 │   ├── todo.schema.json         # Main task list schema
-│   ├── todo-archive.schema.json # Archive schema
-│   ├── todo-config.schema.json  # Configuration schema
-│   └── todo-log.schema.json     # Change log schema
+│   ├── archive.schema.json # Archive schema
+│   ├── config.schema.json  # Configuration schema
+│   └── log.schema.json     # Change log schema
 │
 ├── templates/                    # Starter Templates
 │   ├── todo.template.json       # Empty task list with examples
-│   ├── todo-config.template.json # Default configuration
-│   └── todo-archive.template.json # Empty archive
+│   ├── config.template.json # Default configuration
+│   └── archive.template.json # Empty archive
 │
 ├── scripts/                      # User-Facing Scripts
 │   ├── init.sh                  # Initialize project
@@ -40,8 +40,7 @@ claude-todo/
 ├── lib/                          # Shared Library Functions
 │   ├── validation.sh            # Schema validation functions
 │   ├── logging.sh               # Change log functions
-│   ├── file-ops.sh              # Atomic file operations
-│   └── config.sh                # Configuration management
+│   └── file-ops.sh              # Atomic file operations
 │
 ├── docs/                         # Detailed Documentation
 │   ├── installation.md          # Installation guide
@@ -103,16 +102,16 @@ After running `install.sh`, this structure exists:
   - Enforces status enum
   - Requires content/activeForm pairing
   
-- **todo-archive.schema.json**: 
+- **archive.schema.json**: 
   - Same as todo.schema.json but for archived tasks
   - Additional archive-specific metadata
   
-- **todo-config.schema.json**: 
+- **config.schema.json**: 
   - Configuration options validation
   - Default value definitions
   - Type constraints
   
-- **todo-log.schema.json**: 
+- **log.schema.json**: 
   - Log entry structure
   - Operation type validation
   - Timestamp requirements
@@ -121,8 +120,8 @@ After running `install.sh`, this structure exists:
 **Purpose**: Provide starter files for new projects
 
 - **todo.template.json**: Empty todos array with example tasks (commented out)
-- **todo-config.template.json**: All configuration options with sensible defaults
-- **todo-archive.template.json**: Empty archive with structure
+- **config.template.json**: All configuration options with sensible defaults
+- **archive.template.json**: Empty archive with structure
 
 ### Script Files (scripts/)
 **Purpose**: User-facing operations
@@ -162,11 +161,8 @@ After running `install.sh`, this structure exists:
   - `backup_file()`: Create versioned backup
   - `rotate_backups()`: Manage backup retention
   - `restore_backup()`: Restore from backup file
-  
-- **config.sh**:
-  - `load_config()`: Merge config hierarchy
-  - `get_config_value()`: Retrieve specific config option
-  - `validate_config()`: Check config against schema
+
+**Note**: Configuration management (lib/config.sh) is NOT YET IMPLEMENTED. Scripts currently use hardcoded defaults and direct JSON parsing.
 
 ### Documentation Files (docs/)
 **Purpose**: Comprehensive user and developer documentation
@@ -210,7 +206,6 @@ User → scripts/validate.sh
 ### Archive Flow
 ```
 User OR Auto-trigger → scripts/archive.sh
-                     → lib/config.sh (load policy)
                      → lib/validation.sh (validate tasks)
                      → lib/file-ops.sh (atomic multi-file update)
                      → lib/logging.sh (log archive operation)
@@ -219,6 +214,8 @@ User OR Auto-trigger → scripts/archive.sh
                      → .claude/.backups/ (both files backed up)
 ```
 
+**Note**: Config loading currently done directly in scripts, not via lib/config.sh (not implemented).
+
 ## Import/Dependency Graph
 
 ### scripts/ dependencies
@@ -226,8 +223,7 @@ User OR Auto-trigger → scripts/archive.sh
 All scripts:
 ├── lib/validation.sh (validation functions)
 ├── lib/logging.sh (logging functions)
-├── lib/file-ops.sh (file operations)
-└── lib/config.sh (configuration management)
+└── lib/file-ops.sh (file operations)
 
 add-task.sh:
 ├── lib/validation.sh (validate new task)
@@ -235,11 +231,12 @@ add-task.sh:
 └── lib/logging.sh (log creation)
 
 archive.sh:
-├── lib/config.sh (archive policy)
 ├── lib/validation.sh (validate tasks)
 ├── lib/file-ops.sh (multi-file atomic update)
 └── lib/logging.sh (log archive)
 ```
+
+**Note**: lib/config.sh is referenced in architecture docs but NOT YET IMPLEMENTED. Configuration currently handled in scripts directly.
 
 ### lib/ dependencies
 ```
@@ -253,12 +250,10 @@ file-ops.sh:
 
 logging.sh:
 ├── lib/file-ops.sh (atomic log append)
-└── schemas/todo-log.schema.json (log validation)
-
-config.sh:
-├── lib/validation.sh (config validation)
-└── schemas/todo-config.schema.json (config schema)
+└── schemas/log.schema.json (log validation)
 ```
+
+**Note**: lib/config.sh dependencies listed in architecture docs but file NOT YET IMPLEMENTED.
 
 ## Key Architecture Files
 

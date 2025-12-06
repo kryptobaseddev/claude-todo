@@ -1,0 +1,152 @@
+# CLAUDE-TODO System .gitignore
+# This file is for the claude-todo system repository itself.
+# It excludes per-project data files and development artifacts.
+
+# ============================================================
+# Per-Project Task Data (NEVER commit these)
+# ============================================================
+# These files are created by init.sh in each project's .claude/ directory.
+# They contain project-specific task data and should never be tracked in the
+# claude-todo system repository.
+
+.claude/todo.json
+.claude/todo-archive.json
+.claude/todo-config.json
+.claude/todo-log.json
+.claude/.backups/
+.claude/*.tmp
+
+# Any test project directories created during development
+test-project/
+example-project/
+
+# ============================================================
+# Development and Testing Artifacts
+# ============================================================
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Log files
+*.log
+logs/
+
+# Test output and fixtures
+test-output/
+test-results/
+coverage/
+
+# Backup files created during testing
+*.backup
+*.bak
+
+# ============================================================
+# Operating System Files
+# ============================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Linux
+.Trash-*
+.directory
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ============================================================
+# Editor and IDE Files
+# ============================================================
+
+# VSCode
+.vscode/settings.json
+.vscode/launch.json
+.vscode/*.code-workspace
+
+# IntelliJ IDEA / WebStorm
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/usage.statistics.xml
+.idea/dictionaries/
+.idea/shelf/
+
+# Vim
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+
+# Emacs
+\#*\#
+.\#*
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# ============================================================
+# Build and Distribution
+# ============================================================
+
+# Build artifacts (if any future compilation is added)
+dist/
+build/
+*.o
+*.so
+*.dylib
+
+# Package files
+*.tar.gz
+*.zip
+*.tgz
+
+# ============================================================
+# Environment and Configuration
+# ============================================================
+
+# Local environment files (for testing)
+.env
+.env.local
+.env.*.local
+
+# User-specific configuration overrides
+config.local.json
+
+# ============================================================
+# Documentation Build Artifacts
+# ============================================================
+archive/
+# Generated documentation (if using doc generators)
+docs/_build/
+docs/.doctrees/
+
+# ============================================================
+# KEEP THESE TRACKED
+# ============================================================
+# The following should be committed to the repository:
+# - schemas/ - JSON Schema definitions
+# - templates/ - Starter templates
+# - scripts/ - Operational scripts
+# - lib/ - Shared library functions
+# - docs/ - Documentation
+# - tests/ - Test suite
+# - README.md, LICENSE, install.sh, etc.
+
+# Do NOT ignore:
+# !schemas/
+# !templates/
+# !scripts/
+# !lib/
+# !docs/
+# !tests/

@@ -69,6 +69,15 @@ alias ct-archive='~/.claude-todo/scripts/archive.sh'
 ### System Structure
 
 ```
+Repository Structure
+├── schemas/           JSON Schema validation definitions
+├── scripts/           User-facing operational scripts
+├── lib/               Shared library functions
+├── templates/         Starter templates
+├── docs/              Documentation (see docs/INDEX.md)
+├── tests/             Test suite and fixtures
+└── archive/           Development artifacts and history
+
 Global Installation (~/.claude-todo/)
 ├── schemas/           JSON Schema validation definitions
 ├── scripts/           User-facing operational scripts
@@ -97,13 +106,13 @@ CLAUDE-TODO implements multiple layers of protection against AI-generated errors
 
 ### Layer 1: JSON Schema Enforcement
 - Structure validation (required fields, types)
-- Enum constraints (status must be: pending, in_progress, completed)
+- Enum constraints (status must be: pending, active, blocked, done)
 - Format validation (ISO 8601 timestamps, proper IDs)
 
 ### Layer 2: Semantic Validation
 - **ID Uniqueness**: No duplicate IDs within or across files
 - **Timestamp Sanity**: created_at not in future, completed_at after created_at
-- **Content Pairing**: Every task must have both `content` AND `activeForm`
+- **Field Requirements**: Every task must have both `title` AND `description`
 - **Duplicate Detection**: Warning on identical task descriptions
 - **Status Transitions**: Only valid state transitions allowed
 
@@ -173,7 +182,7 @@ Defaults → Global → Project → Environment → CLI Flags
   "validation": {
     "strict_mode": true,
     "allow_duplicates": false,
-    "require_active_form": true
+    "require_description": true
   },
   "backups": {
     "enabled": true,
@@ -199,7 +208,6 @@ Defaults → Global → Project → Environment → CLI Flags
 - `validate.sh` - Validate all JSON files
 - `backup.sh` - Create manual backup
 - `restore.sh` - Restore from backup
-- `health-check.sh` - System health verification
 
 ## Extension Points
 
@@ -231,7 +239,7 @@ Add output formatters in `~/.claude-todo/formatters/`:
 # ~/.claude-todo/formatters/csv-export.sh
 format_csv() {
     local todo_file="$1"
-    jq -r '.todos[] | [.id, .status, .content] | @csv' "$todo_file"
+    jq -r '.todos[] | [.id, .status, .title] | @csv' "$todo_file"
 }
 ```
 
@@ -245,18 +253,28 @@ Create integration scripts in `~/.claude-todo/integrations/`:
 
 ## Documentation
 
+Complete documentation is available in the `docs/` directory. See **docs/INDEX.md** for the full documentation map.
+
+### Core Documents
+
 | Document | Purpose |
 |----------|---------|
 | **README.md** | This file - Quick start and overview |
-| **ARCHITECTURE.md** | Complete system architecture and design |
-| **DATA-FLOW-DIAGRAMS.md** | Visual workflows and data relationships |
-| **SYSTEM-DESIGN-SUMMARY.md** | Executive overview of the system |
-| **QUICK-REFERENCE.md** | Quick reference card for developers |
+| **CLAUDE.md** | Task management protocol for Claude Code |
+| **docs/design-principles.md** | Design philosophy and architectural decisions |
+
+### Documentation Guide
+
+| Document | Purpose |
+|----------|---------|
+| **docs/INDEX.md** | Documentation navigation and index |
 | **docs/installation.md** | Detailed installation guide |
 | **docs/usage.md** | Comprehensive usage examples |
 | **docs/configuration.md** | Configuration reference |
 | **docs/schema-reference.md** | Schema documentation |
 | **docs/troubleshooting.md** | Common issues and solutions |
+| **docs/QUICK-REFERENCE.md** | Quick reference card for developers |
+| **docs/DATA-FLOW-DIAGRAMS.md** | Visual workflows and data relationships |
 
 ## Testing
 
@@ -329,7 +347,7 @@ chmod 755 ~/.claude-todo/scripts/*.sh
 ### Health Check
 
 ```bash
-~/.claude-todo/scripts/health-check.sh
+~/.claude-todo/scripts/validate.sh
 ```
 
 Checks:
@@ -358,7 +376,20 @@ Contributions welcome! Please:
 3. Update documentation
 4. Run validation before submitting
 
-## Design Principles
+## Design Philosophy
+
+CLAUDE-TODO is built on three core pillars:
+
+### 1. Anti-Hallucination First
+Multi-layer validation prevents AI-generated errors from corrupting task data. Schema enforcement, semantic validation, and cross-file integrity checks ensure data remains accurate and consistent across all operations.
+
+### 2. Atomic Operations
+Every file modification uses atomic write patterns: write to temp file, validate, backup original, atomic rename. If any step fails, the system rolls back automatically. No partial writes, no data corruption.
+
+### 3. Session Continuity
+Complete audit trails, immutable change logs, and automatic backups enable seamless work across sessions. Pick up exactly where you left off, with full context and history preserved.
+
+### Design Principles
 
 1. **Single Source of Truth**: todo.json is authoritative
 2. **Immutable History**: Append-only change log
@@ -387,8 +418,9 @@ MIT License - See LICENSE file for details
 ## Support
 
 For detailed information, see:
-- **ARCHITECTURE.md** - Complete system design
-- **QUICK-REFERENCE.md** - Quick reference card
+- **docs/design-principles.md** - Design philosophy and architectural decisions
+- **docs/INDEX.md** - Documentation navigation
+- **docs/QUICK-REFERENCE.md** - Quick reference card
 - **docs/** directory - Comprehensive guides
 
 ---

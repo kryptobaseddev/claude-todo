@@ -92,11 +92,12 @@ fi
 ```json
 {
   "id": "unique-identifier",
-  "status": "pending|in_progress|completed",
-  "content": "Task description (imperative form)",
-  "activeForm": "Task description (continuous form)",
-  "created_at": "ISO 8601 timestamp",
-  "completed_at": "ISO 8601 timestamp or null"
+  "title": "Task description (imperative form)",
+  "description": "Task description (continuous form)",
+  "status": "pending|active|blocked|done",
+  "priority": "low|medium|high|critical",
+  "createdAt": "ISO 8601 timestamp",
+  "completedAt": "ISO 8601 timestamp or null"
 }
 ```
 
@@ -116,25 +117,29 @@ generate_task_id() {
 ## Schema Design Conventions
 
 ### Required vs Optional
-- **Always Required**: id, status, content, activeForm, created_at
-- **Conditionally Required**: completed_at (required when status=completed)
-- **Optional**: tags, priority, dependencies
+- **Always Required**: id, title, status, priority, createdAt
+- **Conditionally Required**: completedAt (required when status=done)
+- **Optional**: description, files, acceptance, depends, blockedBy, notes, labels
 
 ### Enum Constraints
 ```json
 {
   "status": {
     "type": "string",
-    "enum": ["pending", "in_progress", "completed"]
+    "enum": ["pending", "active", "blocked", "done"]
+  },
+  "priority": {
+    "type": "string",
+    "enum": ["low", "medium", "high", "critical"]
   }
 }
 ```
 
 ### Anti-Hallucination Constraints
-- Enforce content ≠ activeForm (different strings)
+- Enforce title ≠ description (different strings when description provided)
 - Validate timestamp sanity (not in future)
 - Ensure ID uniqueness across files
-- Prevent duplicate task content
+- Prevent duplicate task titles
 
 ## Configuration Conventions
 

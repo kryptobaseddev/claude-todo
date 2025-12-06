@@ -425,11 +425,6 @@ The `stats.sh` script analyzes all data sources to provide:
 - `rotate_backups()` - Manage retention
 - `restore_backup()` - Restore from backup
 
-### config.sh
-- `load_config()` - Merge config hierarchy
-- `get_config_value()` - Retrieve config option
-- `validate_config()` - Config validation
-
 ## Testing Strategy
 
 ### Test Categories

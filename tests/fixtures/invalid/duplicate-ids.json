@@ -1,0 +1,34 @@
+{
+  "$schema": "../../schemas/todo.schema.json",
+  "version": "0.1.0",
+  "project": "test-project",
+  "lastUpdated": "2025-12-05T12:00:00Z",
+  "_meta": {
+    "checksum": "abc123def4567890",
+    "configVersion": "0.1.0",
+    "lastSessionId": null,
+    "activeSession": null
+  },
+  "focus": {
+    "currentTask": null,
+    "blockedUntil": null,
+    "sessionNote": null,
+    "nextAction": null
+  },
+  "tasks": [
+    {
+      "id": "T001",
+      "title": "First task",
+      "status": "pending",
+      "priority": "medium",
+      "createdAt": "2025-12-05T10:00:00Z"
+    },
+    {
+      "id": "T001",
+      "title": "Duplicate ID task",
+      "status": "pending",
+      "priority": "low",
+      "createdAt": "2025-12-05T11:00:00Z"
+    }
+  ]
+}
