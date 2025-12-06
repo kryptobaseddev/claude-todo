@@ -1,0 +1,139 @@
+{
+  "$schema": "./schemas/archive.schema.json",
+  "version": "2.1.0",
+  "project": "claude-todo",
+  "_meta": {
+    "totalArchived": 8,
+    "lastArchived": "2025-12-06T05:53:10Z",
+    "oldestTask": "2025-12-06T04:16:39Z",
+    "newestTask": "2025-12-06T05:39:45Z"
+  },
+  "archivedTasks": [
+    {
+      "id": "T001",
+      "title": "Test task after fix",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-06T04:16:39Z",
+      "completedAt": "2025-12-06T04:17:07Z",
+      "description": "Test task",
+      "_archive": {
+        "archivedAt": "2025-12-06T04:17:37Z",
+        "reason": "auto",
+        "sessionId": "system"
+      }
+    },
+    {
+      "id": "T004",
+      "title": "Archive test 1",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-06T04:17:37Z",
+      "completedAt": "2025-12-06T04:17:37Z",
+      "description": "Archive test task",
+      "_archive": {
+        "archivedAt": "2025-12-06T04:17:37Z",
+        "reason": "auto",
+        "sessionId": "system"
+      }
+    },
+    {
+      "id": "T005",
+      "title": "Archive test 2",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-06T04:17:37Z",
+      "completedAt": "2025-12-06T05:08:21Z",
+      "description": "Archive test task",
+      "_archive": {
+        "archivedAt": "2025-12-06T05:08:21Z",
+        "reason": "auto",
+        "sessionId": "system"
+      }
+    },
+    {
+      "id": "T006",
+      "title": "Archive test 3",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-06T04:17:37Z",
+      "completedAt": "2025-12-06T05:08:21Z",
+      "description": "Archive test task",
+      "_archive": {
+        "archivedAt": "2025-12-06T05:08:21Z",
+        "reason": "auto",
+        "sessionId": "system"
+      }
+    },
+    {
+      "id": "T007",
+      "title": "Archive test 4",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-06T04:17:37Z",
+      "completedAt": "2025-12-06T05:08:21Z",
+      "description": "Archive test task",
+      "_archive": {
+        "archivedAt": "2025-12-06T05:08:21Z",
+        "reason": "auto",
+        "sessionId": "system"
+      }
+    },
+    {
+      "id": "T003",
+      "title": "Third test task",
+      "status": "done",
+      "priority": "low",
+      "createdAt": "2025-12-06T04:16:55Z",
+      "description": "Test task from previous session",
+      "completedAt": "2025-12-06T05:38:03Z",
+      "_archive": {
+        "archivedAt": "2025-12-06T05:38:14Z",
+        "reason": "auto",
+        "sessionId": "system",
+        "cycleTimeDays": 0
+      }
+    },
+    {
+      "id": "T002",
+      "title": "Second test task",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-06T04:16:55Z",
+      "description": "Test task from previous session",
+      "completedAt": "2025-12-06T05:38:02Z",
+      "_archive": {
+        "archivedAt": "2025-12-06T05:38:14Z",
+        "reason": "auto",
+        "sessionId": "system",
+        "cycleTimeDays": 0
+      }
+    },
+    {
+      "id": "T015",
+      "title": "Fix stats.sh schema mismatch bugs",
+      "status": "done",
+      "priority": "critical",
+      "createdAt": "2025-12-06T04:55:40Z",
+      "description": "Fix schema mismatch bugs in stats.sh",
+      "completedAt": "2025-12-06T05:39:45Z",
+      "_archive": {
+        "archivedAt": "2025-12-06T05:53:10Z",
+        "reason": "auto",
+        "sessionId": "system",
+        "cycleTimeDays": 0
+      }
+    }
+  ],
+  "statistics": {
+    "byPhase": {},
+    "byPriority": {
+      "critical": 0,
+      "high": 0,
+      "medium": 5,
+      "low": 0
+    },
+    "byLabel": {},
+    "averageCycleTime": null
+  }
+}

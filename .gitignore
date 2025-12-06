@@ -1,20 +1,18 @@
 # CLAUDE-TODO System .gitignore
 # This file is for the claude-todo system repository itself.
-# It excludes per-project data files and development artifacts.
 
 # ============================================================
-# Per-Project Task Data (NEVER commit these)
+# Per-Project Task Data
 # ============================================================
-# These files are created by init.sh in each project's .claude/ directory.
-# They contain project-specific task data and should never be tracked in the
-# claude-todo system repository.
-
-.claude/todo.json
-.claude/todo-archive.json
-.claude/todo-config.json
-.claude/todo-log.json
+# Task files (.claude/todo*.json) ARE tracked for version control benefits:
+# - Task history preserved in git
+# - Team visibility into work
+# - Backup via version control
+#
+# Only exclude backups and temp files (noise):
 .claude/.backups/
 .claude/*.tmp
+.claude/todo-log-old.json
 
 # Any test project directories created during development
 test-project/

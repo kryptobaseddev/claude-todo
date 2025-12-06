@@ -1,0 +1,371 @@
+{
+  "$schema": "./schemas/todo.schema.json",
+  "version": "2.1.0",
+  "project": "claude-todo",
+  "lastUpdated": "2025-12-06T05:53:10Z",
+  "_meta": {
+    "checksum": "5a9b238a8c729903",
+    "configVersion": "2.1.0",
+    "lastSessionId": null,
+    "activeSession": null
+  },
+  "focus": {
+    "currentTask": null,
+    "blockedUntil": null,
+    "sessionNote": null,
+    "nextAction": null
+  },
+  "tasks": [
+    {
+      "id": "T008",
+      "title": "Fix runtime library dependency coupling",
+      "status": "pending",
+      "priority": "critical",
+      "createdAt": "2025-12-06T04:50:47Z",
+      "description": "HIGH RISK: Scripts in ~/.claude-todo/scripts/ source libraries at runtime (source $CLAUDE_TODO_HOME/lib/logging.sh). Fragility: partial install, mismatched versions, wrong CLAUDE_TODO_HOME causes cryptic failures. FIX OPTIONS: Bundle lib functions into scripts, add version checking between scripts and libs, or copy libs to project level like schemas.",
+      "labels": [
+        "fragile-coupling",
+        "critical"
+      ]
+    },
+    {
+      "id": "T009",
+      "title": "Add platform compatibility layer for external tools",
+      "status": "pending",
+      "priority": "critical",
+      "createdAt": "2025-12-06T04:50:54Z",
+      "description": "HIGH RISK: Hard dependencies on jq, sha256sum, date, bash 4.0+ with no version checking. macOS uses shasum -a 256 instead of sha256sum. GNU vs BSD date have different flags. FIX: Add check_dependencies() function that detects platform and uses appropriate tool variants (sha256sum vs shasum -a 256).",
+      "labels": [
+        "fragile-coupling",
+        "critical"
+      ]
+    },
+    {
+      "id": "T010",
+      "title": "Implement schema version migration system",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-06T04:51:03Z",
+      "description": "MEDIUM RISK: No migration path when schemas evolve. If v2.2.0 adds required fields, old v2.1.0 files fail validation with no upgrade path. FIX: Add schemaVersion field to data files, create migration scripts (migrate-2.1-to-2.2.sh), make new fields optional with defaults.",
+      "labels": [
+        "fragile-coupling",
+        "high"
+      ]
+    },
+    {
+      "id": "T011",
+      "title": "Add config schema backward compatibility",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-06T04:51:10Z",
+      "description": "MEDIUM RISK: Scripts assume specific config structure with hardcoded jq paths like .archive.daysUntilArchive. If config schema changes field names or nesting, scripts break. FIX: Use config version field, add fallback defaults for missing fields, create config accessor functions in lib/.",
+      "labels": [
+        "fragile-coupling",
+        "high"
+      ]
+    },
+    {
+      "id": "T012",
+      "title": "Decouple CLI wrapper from hardcoded script mappings",
+      "status": "pending",
+      "priority": "medium",
+      "createdAt": "2025-12-06T04:51:17Z",
+      "description": "MEDIUM RISK: The claude-todo wrapper has hardcoded case statement mapping commands to scripts. If scripts are renamed (like we almost did with -todo suffix), wrapper breaks silently. FIX: Generate wrapper from script directory listing, use config file for mappings, or convention-based routing (command name = script name).",
+      "labels": [
+        "fragile-coupling",
+        "medium"
+      ]
+    },
+    {
+      "id": "T013",
+      "title": "Add log format versioning for future compatibility",
+      "status": "pending",
+      "priority": "low",
+      "createdAt": "2025-12-06T04:51:24Z",
+      "description": "LOW RISK: Log entries are append-only with specific JSON format. If format changes in future versions, old logs become unparseable. MITIGATION: Log format rarely needs to change. FIX: Add formatVersion field to log file header, document log format stability guarantees.",
+      "labels": [
+        "fragile-coupling",
+        "low"
+      ]
+    },
+    {
+      "id": "T014",
+      "title": "Document template placeholder contract",
+      "status": "pending",
+      "priority": "low",
+      "createdAt": "2025-12-06T04:51:31Z",
+      "description": "LOW RISK: init.sh expects specific placeholders in templates like {{PROJECT_NAME}}. If templates change placeholder format, init breaks. MITIGATION: Templates are versioned with installation. FIX: Document placeholder contract in templates, add placeholder validation in init.sh, consider using envsubst.",
+      "labels": [
+        "fragile-coupling",
+        "low"
+      ]
+    },
+    {
+      "id": "T016",
+      "title": "Fix task field names: title/description to content/activeForm",
+      "status": "pending",
+      "priority": "critical",
+      "createdAt": "2025-12-06T05:18:30Z",
+      "description": "CRITICAL: Docs use wrong field names. Schema uses content/activeForm, docs say title/description. Files: README.md, CLAUDE.md, usage.md, design-principles.md, QUICK-REFERENCE.md, troubleshooting.md",
+      "labels": [
+        "documentation",
+        "critical"
+      ]
+    },
+    {
+      "id": "T017",
+      "title": "Fix task ID format in all doc examples",
+      "status": "pending",
+      "priority": "critical",
+      "createdAt": "2025-12-06T05:18:45Z",
+      "description": "CRITICAL: Docs show task-1733395200-xyz789 but actual format is T001, T002. Pattern: ^T\\d{3,}$. Fix ~15 examples in usage.md, troubleshooting.md, QUICK-REFERENCE.md",
+      "labels": [
+        "documentation",
+        "critical"
+      ]
+    },
+    {
+      "id": "T018",
+      "title": "Fix archive.sh options in usage.md",
+      "status": "pending",
+      "priority": "critical",
+      "createdAt": "2025-12-06T05:18:46Z",
+      "description": "CRITICAL: Docs show --days N, --verbose (dont exist). Missing: --all, --count N. Actual options: --dry-run, --force, --all, --count N. Update usage.md lines 505-562",
+      "labels": [
+        "documentation",
+        "critical"
+      ]
+    },
+    {
+      "id": "T019",
+      "title": "Fix complete-task.sh options in usage.md",
+      "status": "pending",
+      "priority": "critical",
+      "createdAt": "2025-12-06T05:18:47Z",
+      "description": "CRITICAL: Docs show --archive, --no-log, --notes (dont exist). Actual has --skip-archive only. Fix usage.md lines 462-502",
+      "labels": [
+        "documentation",
+        "critical"
+      ]
+    },
+    {
+      "id": "T020",
+      "title": "Clarify description field is optional",
+      "status": "pending",
+      "priority": "critical",
+      "createdAt": "2025-12-06T05:18:48Z",
+      "description": "CRITICAL: README.md and CLAUDE.md claim description is required, but schema shows only id, title, status, priority, createdAt are required. Update docs to clarify description is optional but recommended",
+      "labels": [
+        "documentation",
+        "critical"
+      ]
+    },
+    {
+      "id": "T021",
+      "title": "Update installation.md for automatic PATH config",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-06T05:19:13Z",
+      "description": "install.sh now auto-configures PATH but docs still show manual setup. Update installation.md to document automatic detection of bash/zsh/fish and PATH configuration",
+      "labels": [
+        "documentation",
+        "important"
+      ]
+    },
+    {
+      "id": "T022",
+      "title": "Document claude-todo CLI wrapper in README/usage",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-06T05:19:15Z",
+      "description": "Install creates claude-todo wrapper but docs only show full paths like ~/.claude-todo/scripts/add-task.sh. Document both methods and the command mapping (add->add-task.sh, etc)",
+      "labels": [
+        "documentation",
+        "important"
+      ]
+    },
+    {
+      "id": "T023",
+      "title": "Fix config field names in docs",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-06T05:19:16Z",
+      "description": "Docs use archive_after_days but code uses daysUntilArchive. Same for max_archive_size->maxCompletedTasks. Fix configuration.md and usage.md to match actual script usage",
+      "labels": [
+        "documentation",
+        "important"
+      ]
+    },
+    {
+      "id": "T024",
+      "title": "Fix log entry structure in QUICK-REFERENCE.md",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-06T05:19:19Z",
+      "description": "Docs show operation/task_id but actual is action/taskId/sessionId/actor. Update log entry structure documentation to match log.schema.json",
+      "labels": [
+        "documentation",
+        "important"
+      ]
+    },
+    {
+      "id": "T025",
+      "title": "Add checksum verification diagram to DATA-FLOW-DIAGRAMS.md",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-06T05:19:20Z",
+      "description": "Checksum verification is core anti-hallucination mechanism but not diagrammed. Add workflow showing checksum read->verify->validate before write operations",
+      "labels": [
+        "documentation",
+        "important"
+      ]
+    },
+    {
+      "id": "T026",
+      "title": "Add design-principles.md to INDEX.md",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-06T05:19:21Z",
+      "description": "design-principles.md exists in docs/ but not listed in INDEX.md. Add to Architecture section with proper description and cross-references",
+      "labels": [
+        "documentation",
+        "important"
+      ]
+    },
+    {
+      "id": "T027",
+      "title": "Improve archive.sh help text",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-06T05:19:23Z",
+      "description": "Help text doesnt explain --force vs --all behavior. --force: ignores age, respects preserve count. --all: ignores BOTH age AND preserve. Add clear explanation",
+      "labels": [
+        "documentation",
+        "important"
+      ]
+    },
+    {
+      "id": "T028",
+      "title": "Remove/fix session protocol in WORKFLOW.md",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-06T05:19:24Z",
+      "description": "WORKFLOW.md describes session management protocol that isnt implemented in scripts. Either implement session scripts or mark as planned future feature",
+      "labels": [
+        "documentation",
+        "important"
+      ]
+    },
+    {
+      "id": "T029",
+      "title": "Remove non-existent list-tasks.sh options from docs",
+      "status": "pending",
+      "priority": "medium",
+      "createdAt": "2025-12-06T05:19:48Z",
+      "description": "Docs show --since, --sort, --reverse, --until options that dont exist in list-tasks.sh. Remove from usage.md",
+      "labels": [
+        "documentation",
+        "minor"
+      ]
+    },
+    {
+      "id": "T030",
+      "title": "Expand stats.sh help text",
+      "status": "pending",
+      "priority": "medium",
+      "createdAt": "2025-12-06T05:19:49Z",
+      "description": "stats.sh help is minimal. Only shows 3 options. Document all available output metrics and JSON output structure",
+      "labels": [
+        "documentation",
+        "minor"
+      ]
+    },
+    {
+      "id": "T031",
+      "title": "Document activeForm field in design-principles.md",
+      "status": "pending",
+      "priority": "medium",
+      "createdAt": "2025-12-06T05:19:50Z",
+      "description": "activeForm is required field per validation but not explained in design-principles.md. Document its purpose: present continuous form of task description",
+      "labels": [
+        "documentation",
+        "minor"
+      ]
+    },
+    {
+      "id": "T032",
+      "title": "Fix archive metadata requirements in schema-reference.md",
+      "status": "pending",
+      "priority": "medium",
+      "createdAt": "2025-12-06T05:19:51Z",
+      "description": "Docs say sessionId and cycleTimeDays are required in _archive but only archivedAt and reason are required. Fix schema-reference.md lines 187-196",
+      "labels": [
+        "documentation",
+        "minor"
+      ]
+    },
+    {
+      "id": "T033",
+      "title": "Add CONTRIBUTING.md for open source",
+      "status": "pending",
+      "priority": "low",
+      "createdAt": "2025-12-06T05:19:52Z",
+      "description": "Project needs CONTRIBUTING.md with guidelines for contributors, code style, PR process, etc for open source release",
+      "labels": [
+        "documentation",
+        "opensource"
+      ]
+    },
+    {
+      "id": "T034",
+      "title": "Add CHANGELOG.md for version tracking",
+      "status": "pending",
+      "priority": "low",
+      "createdAt": "2025-12-06T05:19:54Z",
+      "description": "Project needs CHANGELOG.md to track version history for open source release",
+      "labels": [
+        "documentation",
+        "opensource"
+      ]
+    },
+    {
+      "id": "T035",
+      "title": "Verify or remove performance targets",
+      "status": "pending",
+      "priority": "low",
+      "createdAt": "2025-12-06T05:19:55Z",
+      "description": "README claims performance targets (task creation <100ms, etc) but no benchmarks exist. Either add benchmark tests or document as design goals not verified",
+      "labels": [
+        "documentation",
+        "minor"
+      ]
+    },
+    {
+      "id": "T036",
+      "title": "Fix error message format in troubleshooting.md",
+      "status": "pending",
+      "priority": "low",
+      "createdAt": "2025-12-06T05:19:58Z",
+      "description": "Docs show multi-line error format but scripts use [ERROR] prefix format. Update troubleshooting.md to show actual error output format",
+      "labels": [
+        "documentation",
+        "minor"
+      ]
+    }
+  ],
+  "phases": {
+    "setup": {
+      "order": 1,
+      "name": "Setup & Foundation"
+    },
+    "core": {
+      "order": 2,
+      "name": "Core Development"
+    },
+    "polish": {
+      "order": 3,
+      "name": "Polish & Launch"
+    }
+  },
+  "labels": {}
+}

@@ -1,0 +1,820 @@
+{
+  "$schema": "./schemas/log.schema.json",
+  "version": "2.1.0",
+  "project": "claude-todo",
+  "_meta": {
+    "totalEntries": 9,
+    "firstEntry": "2025-12-06T04:16:33Z",
+    "lastEntry": "2025-12-06T05:53:10Z",
+    "entriesPruned": 0
+  },
+  "entries": [
+    {
+      "id": "log_756c97333561",
+      "timestamp": "2025-12-06T04:16:33Z",
+      "sessionId": null,
+      "action": "system_initialized",
+      "actor": "system",
+      "taskId": null,
+      "before": null,
+      "after": null,
+      "details": "CLAUDE-TODO system initialized for project: claude-todo"
+    },
+    {
+      "id": "log-1764994599-a8240f",
+      "timestamp": "2025-12-06T04:16:39Z",
+      "operation": "create",
+      "task_id": "T001",
+      "user": "system",
+      "details": {
+        "title": "Test task after fix",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "Test task after fix",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log-1764994615-802ffe",
+      "timestamp": "2025-12-06T04:16:55Z",
+      "operation": "create",
+      "task_id": "T002",
+      "user": "system",
+      "details": {
+        "title": "Second test task",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Second test task",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1764994615-ce4971",
+      "timestamp": "2025-12-06T04:16:55Z",
+      "operation": "create",
+      "task_id": "T003",
+      "user": "system",
+      "details": {
+        "title": "Third test task",
+        "status": "pending",
+        "priority": "low"
+      },
+      "before": null,
+      "after": {
+        "title": "Third test task",
+        "status": "pending",
+        "priority": "low"
+      }
+    },
+    {
+      "id": "log_2ea707418d90",
+      "timestamp": "2025-12-06T04:17:07Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T001",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-06T04:17:07Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log-1764994657-daabf0",
+      "timestamp": "2025-12-06T04:17:37Z",
+      "operation": "create",
+      "task_id": "T004",
+      "user": "system",
+      "details": {
+        "title": "Archive test 1",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "Archive test 1",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log-1764994657-04b634",
+      "timestamp": "2025-12-06T04:17:37Z",
+      "operation": "create",
+      "task_id": "T005",
+      "user": "system",
+      "details": {
+        "title": "Archive test 2",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "Archive test 2",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log-1764994657-da63d5",
+      "timestamp": "2025-12-06T04:17:37Z",
+      "operation": "create",
+      "task_id": "T006",
+      "user": "system",
+      "details": {
+        "title": "Archive test 3",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "Archive test 3",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log-1764994657-3ebf16",
+      "timestamp": "2025-12-06T04:17:37Z",
+      "operation": "create",
+      "task_id": "T007",
+      "user": "system",
+      "details": {
+        "title": "Archive test 4",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "Archive test 4",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log_7fef702ab2e9",
+      "timestamp": "2025-12-06T04:17:37Z",
+      "sessionId": "system",
+      "action": "task_archived",
+      "actor": "system",
+      "taskId": null,
+      "before": null,
+      "after": null,
+      "details": {
+        "count": 2,
+        "taskIds": [
+          "T004",
+          "T001"
+        ]
+      }
+    },
+    {
+      "id": "log-1764996647-d4d028",
+      "timestamp": "2025-12-06T04:50:47Z",
+      "operation": "create",
+      "task_id": "T008",
+      "user": "system",
+      "details": {
+        "title": "Fix runtime library dependency coupling",
+        "status": "pending",
+        "priority": "critical"
+      },
+      "before": null,
+      "after": {
+        "title": "Fix runtime library dependency coupling",
+        "status": "pending",
+        "priority": "critical"
+      }
+    },
+    {
+      "id": "log-1764996654-668193",
+      "timestamp": "2025-12-06T04:50:54Z",
+      "operation": "create",
+      "task_id": "T009",
+      "user": "system",
+      "details": {
+        "title": "Add platform compatibility layer for external tools",
+        "status": "pending",
+        "priority": "critical"
+      },
+      "before": null,
+      "after": {
+        "title": "Add platform compatibility layer for external tools",
+        "status": "pending",
+        "priority": "critical"
+      }
+    },
+    {
+      "id": "log-1764996663-ede789",
+      "timestamp": "2025-12-06T04:51:03Z",
+      "operation": "create",
+      "task_id": "T010",
+      "user": "system",
+      "details": {
+        "title": "Implement schema version migration system",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Implement schema version migration system",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1764996670-051c3c",
+      "timestamp": "2025-12-06T04:51:10Z",
+      "operation": "create",
+      "task_id": "T011",
+      "user": "system",
+      "details": {
+        "title": "Add config schema backward compatibility",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Add config schema backward compatibility",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1764996677-654ca8",
+      "timestamp": "2025-12-06T04:51:17Z",
+      "operation": "create",
+      "task_id": "T012",
+      "user": "system",
+      "details": {
+        "title": "Decouple CLI wrapper from hardcoded script mappings",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "Decouple CLI wrapper from hardcoded script mappings",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log-1764996684-a45aa3",
+      "timestamp": "2025-12-06T04:51:24Z",
+      "operation": "create",
+      "task_id": "T013",
+      "user": "system",
+      "details": {
+        "title": "Add log format versioning for future compatibility",
+        "status": "pending",
+        "priority": "low"
+      },
+      "before": null,
+      "after": {
+        "title": "Add log format versioning for future compatibility",
+        "status": "pending",
+        "priority": "low"
+      }
+    },
+    {
+      "id": "log-1764996691-bb2a05",
+      "timestamp": "2025-12-06T04:51:31Z",
+      "operation": "create",
+      "task_id": "T014",
+      "user": "system",
+      "details": {
+        "title": "Document template placeholder contract",
+        "status": "pending",
+        "priority": "low"
+      },
+      "before": null,
+      "after": {
+        "title": "Document template placeholder contract",
+        "status": "pending",
+        "priority": "low"
+      }
+    },
+    {
+      "id": "log-1764996940-083d62",
+      "timestamp": "2025-12-06T04:55:40Z",
+      "operation": "create",
+      "task_id": "T015",
+      "user": "system",
+      "details": {
+        "title": "Fix stats.sh schema mismatch bugs",
+        "status": "pending",
+        "priority": "critical"
+      },
+      "before": null,
+      "after": {
+        "title": "Fix stats.sh schema mismatch bugs",
+        "status": "pending",
+        "priority": "critical"
+      }
+    },
+    {
+      "id": "log_34afb191ce71",
+      "timestamp": "2025-12-06T05:08:21Z",
+      "sessionId": "system",
+      "action": "task_archived",
+      "actor": "system",
+      "taskId": null,
+      "before": null,
+      "after": null,
+      "details": {
+        "count": 3,
+        "taskIds": [
+          "T007",
+          "T006",
+          "T005"
+        ]
+      }
+    },
+    {
+      "id": "log-1764998310-461b8b",
+      "timestamp": "2025-12-06T05:18:30Z",
+      "operation": "create",
+      "task_id": "T016",
+      "user": "system",
+      "details": {
+        "title": "Fix task field names: title/description to content/activeForm",
+        "status": "pending",
+        "priority": "critical"
+      },
+      "before": null,
+      "after": {
+        "title": "Fix task field names: title/description to content/activeForm",
+        "status": "pending",
+        "priority": "critical"
+      }
+    },
+    {
+      "id": "log-1764998325-a1ab73",
+      "timestamp": "2025-12-06T05:18:45Z",
+      "operation": "create",
+      "task_id": "T017",
+      "user": "system",
+      "details": {
+        "title": "Fix task ID format in all doc examples",
+        "status": "pending",
+        "priority": "critical"
+      },
+      "before": null,
+      "after": {
+        "title": "Fix task ID format in all doc examples",
+        "status": "pending",
+        "priority": "critical"
+      }
+    },
+    {
+      "id": "log-1764998326-814f93",
+      "timestamp": "2025-12-06T05:18:46Z",
+      "operation": "create",
+      "task_id": "T018",
+      "user": "system",
+      "details": {
+        "title": "Fix archive.sh options in usage.md",
+        "status": "pending",
+        "priority": "critical"
+      },
+      "before": null,
+      "after": {
+        "title": "Fix archive.sh options in usage.md",
+        "status": "pending",
+        "priority": "critical"
+      }
+    },
+    {
+      "id": "log-1764998327-56a622",
+      "timestamp": "2025-12-06T05:18:47Z",
+      "operation": "create",
+      "task_id": "T019",
+      "user": "system",
+      "details": {
+        "title": "Fix complete-task.sh options in usage.md",
+        "status": "pending",
+        "priority": "critical"
+      },
+      "before": null,
+      "after": {
+        "title": "Fix complete-task.sh options in usage.md",
+        "status": "pending",
+        "priority": "critical"
+      }
+    },
+    {
+      "id": "log-1764998328-e5f082",
+      "timestamp": "2025-12-06T05:18:48Z",
+      "operation": "create",
+      "task_id": "T020",
+      "user": "system",
+      "details": {
+        "title": "Clarify description field is optional",
+        "status": "pending",
+        "priority": "critical"
+      },
+      "before": null,
+      "after": {
+        "title": "Clarify description field is optional",
+        "status": "pending",
+        "priority": "critical"
+      }
+    },
+    {
+      "id": "log-1764998353-4f3fe4",
+      "timestamp": "2025-12-06T05:19:13Z",
+      "operation": "create",
+      "task_id": "T021",
+      "user": "system",
+      "details": {
+        "title": "Update installation.md for automatic PATH config",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Update installation.md for automatic PATH config",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1764998355-8b781b",
+      "timestamp": "2025-12-06T05:19:15Z",
+      "operation": "create",
+      "task_id": "T022",
+      "user": "system",
+      "details": {
+        "title": "Document claude-todo CLI wrapper in README/usage",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Document claude-todo CLI wrapper in README/usage",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1764998356-b46099",
+      "timestamp": "2025-12-06T05:19:16Z",
+      "operation": "create",
+      "task_id": "T023",
+      "user": "system",
+      "details": {
+        "title": "Fix config field names in docs",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Fix config field names in docs",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1764998359-feadf9",
+      "timestamp": "2025-12-06T05:19:19Z",
+      "operation": "create",
+      "task_id": "T024",
+      "user": "system",
+      "details": {
+        "title": "Fix log entry structure in QUICK-REFERENCE.md",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Fix log entry structure in QUICK-REFERENCE.md",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1764998360-be3411",
+      "timestamp": "2025-12-06T05:19:20Z",
+      "operation": "create",
+      "task_id": "T025",
+      "user": "system",
+      "details": {
+        "title": "Add checksum verification diagram to DATA-FLOW-DIAGRAMS.md",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Add checksum verification diagram to DATA-FLOW-DIAGRAMS.md",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1764998361-29368d",
+      "timestamp": "2025-12-06T05:19:21Z",
+      "operation": "create",
+      "task_id": "T026",
+      "user": "system",
+      "details": {
+        "title": "Add design-principles.md to INDEX.md",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Add design-principles.md to INDEX.md",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1764998363-c08c4e",
+      "timestamp": "2025-12-06T05:19:23Z",
+      "operation": "create",
+      "task_id": "T027",
+      "user": "system",
+      "details": {
+        "title": "Improve archive.sh help text",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Improve archive.sh help text",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1764998364-14ae56",
+      "timestamp": "2025-12-06T05:19:24Z",
+      "operation": "create",
+      "task_id": "T028",
+      "user": "system",
+      "details": {
+        "title": "Remove/fix session protocol in WORKFLOW.md",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Remove/fix session protocol in WORKFLOW.md",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1764998388-d06d16",
+      "timestamp": "2025-12-06T05:19:48Z",
+      "operation": "create",
+      "task_id": "T029",
+      "user": "system",
+      "details": {
+        "title": "Remove non-existent list-tasks.sh options from docs",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "Remove non-existent list-tasks.sh options from docs",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log-1764998389-fb933d",
+      "timestamp": "2025-12-06T05:19:49Z",
+      "operation": "create",
+      "task_id": "T030",
+      "user": "system",
+      "details": {
+        "title": "Expand stats.sh help text",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "Expand stats.sh help text",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log-1764998390-a26aae",
+      "timestamp": "2025-12-06T05:19:50Z",
+      "operation": "create",
+      "task_id": "T031",
+      "user": "system",
+      "details": {
+        "title": "Document activeForm field in design-principles.md",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "Document activeForm field in design-principles.md",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log-1764998391-70aa2b",
+      "timestamp": "2025-12-06T05:19:51Z",
+      "operation": "create",
+      "task_id": "T032",
+      "user": "system",
+      "details": {
+        "title": "Fix archive metadata requirements in schema-reference.md",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "Fix archive metadata requirements in schema-reference.md",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log-1764998393-bc95d1",
+      "timestamp": "2025-12-06T05:19:53Z",
+      "operation": "create",
+      "task_id": "T033",
+      "user": "system",
+      "details": {
+        "title": "Add CONTRIBUTING.md for open source",
+        "status": "pending",
+        "priority": "low"
+      },
+      "before": null,
+      "after": {
+        "title": "Add CONTRIBUTING.md for open source",
+        "status": "pending",
+        "priority": "low"
+      }
+    },
+    {
+      "id": "log-1764998394-eb8919",
+      "timestamp": "2025-12-06T05:19:54Z",
+      "operation": "create",
+      "task_id": "T034",
+      "user": "system",
+      "details": {
+        "title": "Add CHANGELOG.md for version tracking",
+        "status": "pending",
+        "priority": "low"
+      },
+      "before": null,
+      "after": {
+        "title": "Add CHANGELOG.md for version tracking",
+        "status": "pending",
+        "priority": "low"
+      }
+    },
+    {
+      "id": "log-1764998395-1d4025",
+      "timestamp": "2025-12-06T05:19:55Z",
+      "operation": "create",
+      "task_id": "T035",
+      "user": "system",
+      "details": {
+        "title": "Verify or remove performance targets",
+        "status": "pending",
+        "priority": "low"
+      },
+      "before": null,
+      "after": {
+        "title": "Verify or remove performance targets",
+        "status": "pending",
+        "priority": "low"
+      }
+    },
+    {
+      "id": "log-1764998398-4d8aad",
+      "timestamp": "2025-12-06T05:19:58Z",
+      "operation": "create",
+      "task_id": "T036",
+      "user": "system",
+      "details": {
+        "title": "Fix error message format in troubleshooting.md",
+        "status": "pending",
+        "priority": "low"
+      },
+      "before": null,
+      "after": {
+        "title": "Fix error message format in troubleshooting.md",
+        "status": "pending",
+        "priority": "low"
+      }
+    },
+    {
+      "id": "log_f896024d5621",
+      "timestamp": "2025-12-06T05:38:02Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T002",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-06T05:38:02Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_17005e211f81",
+      "timestamp": "2025-12-06T05:38:03Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T003",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-06T05:38:03Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_5c14900203af",
+      "timestamp": "2025-12-06T05:38:14Z",
+      "sessionId": "system",
+      "action": "task_archived",
+      "actor": "system",
+      "taskId": null,
+      "before": null,
+      "after": null,
+      "details": {
+        "count": 2,
+        "taskIds": [
+          "T003",
+          "T002"
+        ]
+      }
+    },
+    {
+      "id": "log_e4d889630baa",
+      "timestamp": "2025-12-06T05:39:45Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T015",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-06T05:39:45Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_ee19e76da054",
+      "timestamp": "2025-12-06T05:53:10Z",
+      "sessionId": "system",
+      "action": "task_archived",
+      "actor": "system",
+      "taskId": null,
+      "before": null,
+      "after": null,
+      "details": {
+        "count": 1,
+        "taskIds": [
+          "T015"
+        ]
+      }
+    }
+  ]
+}
