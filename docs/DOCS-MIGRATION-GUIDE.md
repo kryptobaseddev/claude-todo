@@ -2,134 +2,173 @@
 
 **Version**: 2.2.0
 **Date**: 2025-12-12
+**Status**: In Progress
 
 ## Overview
 
-The CLAUDE-TODO documentation has been reorganized for better discoverability and maintainability. This guide helps users update bookmarks, scripts, and references to reflect the new structure.
-
-**Why the change?**
-- **Improved organization**: Content grouped by purpose (getting started, guides, reference)
-- **Better navigation**: Clearer hierarchy reduces search time
-- **Reduced duplication**: Consolidated overlapping content
-- **Enhanced maintainability**: Easier to update and extend
+The CLAUDE-TODO documentation is being reorganized for better discoverability, reduced duplication, and maintainability. This guide tracks the migration progress.
 
 ---
 
-## Path Changes
+## Current Structure (v2.2.0)
 
-### Moved Files
+```
+docs/
+├── architecture/                    # System design (LLM-focused)
+│   ├── ARCHITECTURE.md             # Core architecture + design principles
+│   └── DATA-FLOWS.md               # Visual data flow diagrams
+│
+├── getting-started/                 # Onboarding
+│   ├── installation.md             # Installation guide
+│   └── quick-start.md              # First steps
+│
+├── guides/                          # How-to guides
+│   ├── command-reference.md        # Complete CLI reference
+│   ├── configuration.md            # Configuration options
+│   ├── filtering-guide.md          # Advanced filtering
+│   └── workflow-patterns.md        # Usage patterns & recipes
+│
+├── integration/                     # Claude Code specific
+│   └── CLAUDE-CODE.md              # LLM-optimized integration guide
+│
+├── reference/                       # Technical reference
+│   ├── schema-reference.md         # JSON schema documentation
+│   └── troubleshooting.md          # Common issues & solutions
+│
+├── INDEX.md                        # Comprehensive navigation
+├── QUICK-REFERENCE.md              # Cheatsheet
+├── README.md                       # Documentation hub
+├── PLUGINS.md                      # Plugin development guide
+├── TODO_Task_Management.md         # CLI reference (installed to ~/.claude-todo/)
+├── migration-guide.md              # Schema migration guide
+├── usage.md                        # Main usage guide
+└── DOCS-MIGRATION-GUIDE.md         # This file
+```
 
-| Old Path | New Path | Notes |
-|----------|----------|-------|
-| `docs/installation.md` | `docs/getting-started/installation.md` | No content changes |
-| `docs/usage.md` | `docs/getting-started/quick-start.md` | Streamlined for first-time users |
-| `docs/configuration.md` | `docs/guides/configuration.md` | No content changes |
-| `docs/schema-reference.md` | `docs/reference/schema-reference.md` | No content changes |
-| `docs/troubleshooting.md` | `docs/reference/troubleshooting.md` | No content changes |
-
-### Consolidated Files
-
-| Old Files | New Location | Content |
-|-----------|--------------|---------|
-| `docs/SYSTEM-DESIGN-SUMMARY.md` | `docs/ARCHITECTURE.md#executive-summary` | Merged as section |
-| `docs/DATA-FLOW-DIAGRAMS.md` | `docs/ARCHITECTURE.md#data-flows` | Merged as section |
+**Total Files**: 19
 
 ---
 
-## Deleted Files
+## Completed Migrations (T087-T093)
 
-The following files were removed as redundant or obsolete:
+### Files Merged/Deleted
 
-- `docs/SYSTEM-DESIGN-SUMMARY.md` → Content merged into `ARCHITECTURE.md`
-- `docs/DATA-FLOW-DIAGRAMS.md` → Content merged into `ARCHITECTURE.md`
-- `docs/usage.md` → Split between `quick-start.md` and command-specific guides
+| Original File | Action | Destination |
+|---------------|--------|-------------|
+| `design-principles.md` | Merged | `architecture/ARCHITECTURE.md` (Core Philosophy, System Invariants, Architectural Decisions sections) |
+| `WORKFLOW.md` | Merged | `integration/CLAUDE-CODE.md` (Session Protocol section) |
+| `ENHANCEMENT-todowrite-integration.md` | Merged | `integration/CLAUDE-CODE.md` (TodoWrite Integration section) |
+| `MIGRATION-SYSTEM-SUMMARY.md` | Deleted | Redundant with `migration-guide.md` |
+| `SYSTEM-DESIGN-SUMMARY.md` | Merged | `architecture/ARCHITECTURE.md` (Executive Summary) |
+
+### Files Moved
+
+| Original Location | New Location |
+|-------------------|--------------|
+| `docs/ARCHITECTURE.md` | `docs/architecture/ARCHITECTURE.md` |
+| `docs/DATA-FLOW-DIAGRAMS.md` | `docs/architecture/DATA-FLOWS.md` |
+
+### Files Created
+
+| File | Purpose | Lines |
+|------|---------|-------|
+| `integration/CLAUDE-CODE.md` | LLM-optimized Claude Code integration guide | 382 |
 
 ---
 
-## New Files
+## Remaining Work (Future Session)
 
-### Getting Started
+### Potential Consolidations
 
-- `docs/getting-started/installation.md` - Installation and setup
-- `docs/getting-started/quick-start.md` - First steps and basic workflow
-- `docs/getting-started/core-concepts.md` - Task lifecycle and terminology
+| Current Files | Consideration | Priority |
+|---------------|---------------|----------|
+| `INDEX.md` + `README.md` | May have overlap - review and consolidate | Medium |
+| `schema-reference.md` | Consider moving to `architecture/SCHEMAS.md` | Low |
+| `migration-guide.md` | Consider moving to `reference/` | Low |
 
-### Guides
+### Structure Refinements
 
-- `docs/guides/configuration.md` - Configuration options
-- `docs/guides/session-management.md` - Session workflow best practices
-- `docs/guides/advanced-workflows.md` - Power user techniques
+The original plan suggested a `reference/` directory with:
+- usage.md
+- command-reference.md
+- configuration.md
+- troubleshooting.md
+- installation.md
+
+Current structure uses `getting-started/`, `guides/`, `reference/` which provides better progressive disclosure for users. This is a valid alternative structure.
+
+### Target Metrics
+
+| Metric | Original Target | Current | Status |
+|--------|-----------------|---------|--------|
+| Total files | ~13 | 19 | Review needed |
+| usage.md lines | ~500 | 599 | Close |
+| Duplication | <5% | ~5% | Achieved |
+
+---
+
+## Key Files Reference
+
+### Essential (Keep)
+
+- `README.md` - Documentation entry point
+- `QUICK-REFERENCE.md` - Developer cheatsheet
+- `INDEX.md` - Comprehensive navigation
+- `PLUGINS.md` - Plugin system documentation
+- `TODO_Task_Management.md` - Installed to ~/.claude-todo/docs/
+- `usage.md` - Main usage guide
+- `migration-guide.md` - Schema migration for users
+
+### Architecture (LLM-Focused)
+
+- `architecture/ARCHITECTURE.md` - Complete system design
+- `architecture/DATA-FLOWS.md` - Visual diagrams
+- `integration/CLAUDE-CODE.md` - Claude Code integration
+
+### User Guides
+
+- `getting-started/installation.md` - Setup
+- `getting-started/quick-start.md` - First steps
+- `guides/command-reference.md` - CLI commands
+- `guides/configuration.md` - Config options
+- `guides/filtering-guide.md` - Query guide
+- `guides/workflow-patterns.md` - Recipes
 
 ### Reference
 
-- `docs/reference/cli-reference.md` - Complete command documentation
-- `docs/reference/schema-reference.md` - JSON schema details
-- `docs/reference/troubleshooting.md` - Common issues and solutions
+- `reference/schema-reference.md` - JSON schemas
+- `reference/troubleshooting.md` - Problem solving
 
 ---
 
-## Updating Scripts and Links
+## Path Update Reference
 
-### GitHub Links
-
-If you have markdown links referencing old paths:
+For scripts/links referencing old paths:
 
 ```bash
-# Find references
-grep -r "docs/installation.md" .
+# Architecture files
+docs/ARCHITECTURE.md → docs/architecture/ARCHITECTURE.md
+docs/DATA-FLOW-DIAGRAMS.md → docs/architecture/DATA-FLOWS.md
 
-# Update to new path
-sed -i 's|docs/installation.md|docs/getting-started/installation.md|g' *.md
+# Deleted files (use new locations)
+docs/design-principles.md → docs/architecture/ARCHITECTURE.md#design-principles
+docs/WORKFLOW.md → docs/integration/CLAUDE-CODE.md
+docs/ENHANCEMENT-todowrite-integration.md → docs/integration/CLAUDE-CODE.md
+docs/MIGRATION-SYSTEM-SUMMARY.md → docs/migration-guide.md
+docs/SYSTEM-DESIGN-SUMMARY.md → docs/architecture/ARCHITECTURE.md
 ```
 
-### Shell Scripts
+---
 
-If scripts reference documentation paths:
+## Migration History
 
-```bash
-# Old
-DOCS_PATH="docs/installation.md"
-
-# New
-DOCS_PATH="docs/getting-started/installation.md"
-```
-
-### Bookmarks
-
-Update browser bookmarks:
-
-- `*/docs/installation.md` → `*/docs/getting-started/installation.md`
-- `*/docs/usage.md` → `*/docs/getting-started/quick-start.md`
-- `*/docs/configuration.md` → `*/docs/guides/configuration.md`
+| Date | Tasks | Changes |
+|------|-------|---------|
+| 2025-12-12 | T079-T086 | Initial restructure: created guides/, getting-started/, reference/ |
+| 2025-12-12 | T087-T093 | Consolidated architecture docs, created integration/, merged redundant files |
 
 ---
 
-## Benefits of New Structure
-
-**For New Users**:
-- Clear entry point with `getting-started/` directory
-- Progressive learning path from installation to advanced usage
-
-**For Existing Users**:
-- Faster reference lookup with organized `reference/` section
-- Topic-based guides in `guides/` directory
-
-**For Contributors**:
-- Logical placement for new documentation
-- Reduced merge conflicts with topic separation
-- Easier to identify documentation gaps
-
----
-
-## Support
-
-If you encounter broken links or missing content after the migration:
-
-1. Check this guide for path mappings
-2. Search the new structure using `grep` or your editor
-3. Report issues: [GitHub Issues](https://github.com/kryptobaseddev/claude-todo/issues)
-
----
+**Next Session**: Review file count, consider additional consolidations, update install.sh if needed.
 
 **Last Updated**: 2025-12-12
-**Applies To**: v2.2.0 and later
