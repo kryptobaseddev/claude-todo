@@ -26,6 +26,7 @@
 |----------|---------|--------------|
 | **[installation.md](reference/installation.md)** | Installation guide | Setting up the system |
 | **[usage.md](usage.md)** | Usage guide and examples | Learning system operations |
+| **[TODO_Task_Management.md](TODO_Task_Management.md)** | CLI reference (installed to ~/.claude-todo/docs/) | Quick CLI command reference |
 | **[configuration.md](reference/configuration.md)** | Configuration reference | Customizing system behavior |
 | **[schema-reference.md](architecture/SCHEMAS.md)** | Data schema documentation | Understanding data structures |
 | **[troubleshooting.md](reference/troubleshooting.md)** | Troubleshooting guide | Resolving issues |

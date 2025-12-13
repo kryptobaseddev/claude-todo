@@ -223,7 +223,7 @@ task_id="$1"
 # ~/.claude-todo/formatters/csv-export.sh
 format_csv() {
     local todo_file="$1"
-    jq -r '.todos[] | [.id, .status, .title] | @csv' "$todo_file"
+    jq -r '.tasks[] | [.id, .status, .title] | @csv' "$todo_file"
 }
 ```
 

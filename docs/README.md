@@ -35,6 +35,12 @@ Learn how to use CLAUDE-TODO effectively:
   - Query commands (list, stats)
   - Maintenance operations (validate, archive, backup)
 
+- **[CLI Reference (TODO_Task_Management.md)](TODO_Task_Management.md)** - Quick reference installed globally
+  - Installed to ~/.claude-todo/docs/ for global access
+  - CLI command quick reference
+  - Anti-hallucination rules
+  - Session protocols and common patterns
+
 ### Advanced Usage
 - **[Filtering Guide](guides/filtering-guide.md)** - Advanced filtering and search
   - Status, priority, label filters
@@ -101,6 +107,13 @@ Deep-dive into system internals:
 ```
 docs/
 ├── README.md                    # This file - Documentation hub
+├── INDEX.md                     # Comprehensive navigation index
+├── QUICK-REFERENCE.md           # Developer cheatsheet
+├── PLUGINS.md                   # Plugin development guide
+├── TODO_Task_Management.md      # CLI reference (installed to ~/.claude-todo/)
+├── migration-guide.md           # Schema migration guide
+├── usage.md                     # Main usage guide
+├── DOCS-MIGRATION-GUIDE.md      # Migration tracking (temporary)
 ├── architecture/
 │   ├── ARCHITECTURE.md          # System architecture and design
 │   ├── DATA-FLOWS.md            # Visual data flow diagrams

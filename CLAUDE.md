@@ -65,7 +65,7 @@ You cannot accurately predict time. Estimates create false precision and bad dec
 ## Docs
 - Architecture: @docs/architecture/ARCHITECTURE.md
 - Data Flows: @docs/architecture/DATA-FLOWS.md
-- Installation: @docs/getting-started/installation.md
+- Installation: @docs/reference/installation.md
 - Usage: @docs/usage.md
 
 <!-- CLAUDE-TODO:START -->

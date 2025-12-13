@@ -102,9 +102,9 @@ claude-todo/                        # Git repository (system files only)
 │
 ├── schemas/                        # JSON Schema definitions
 │   ├── todo.schema.json           # Main task list schema
-│   ├── todo-archive.schema.json   # Archive schema
-│   ├── todo-config.schema.json    # Configuration schema
-│   └── todo-log.schema.json       # Change log schema
+│   ├── archive.schema.json        # Archive schema
+│   ├── config.schema.json         # Configuration schema
+│   └── log.schema.json            # Change log schema
 │
 ├── templates/                      # Starter templates
 │   ├── todo.template.json         # Empty task list with examples
@@ -133,11 +133,18 @@ claude-todo/                        # Git repository (system files only)
 │   │   ├── DATA-FLOWS.md          # Visual diagrams
 │   │   └── SCHEMAS.md             # Schema documentation
 │   ├── integration/               # Claude Code integration
+│   │   ├── CLAUDE-CODE.md         # LLM-optimized guide
+│   │   └── WORKFLOWS.md           # Session workflows
+│   ├── getting-started/           # Onboarding
+│   │   └── quick-start.md         # First steps
+│   ├── guides/                    # How-to guides
+│   │   └── filtering-guide.md     # Query guide
 │   ├── reference/                 # Technical reference
-│   │   ├── installation.md        # Installation guide
-│   │   ├── configuration.md       # Configuration reference
-│   │   └── troubleshooting.md     # Common issues
-│   └── usage.md                   # Usage examples
+│   │   ├── command-reference.md   # CLI commands
+│   │   ├── configuration.md       # Config options
+│   │   ├── installation.md        # Setup guide
+│   │   └── troubleshooting.md     # Problem solving
+│   └── [8 root-level .md files]   # INDEX, README, usage, etc.
 │
 └── tests/                          # Test suite
     ├── test-validation.sh         # Schema validation tests
@@ -217,9 +224,9 @@ your-project/.claude/               # Per-project instance (NOT in git)
 | File | Read By | Written By | Validates Against |
 |------|---------|------------|-------------------|
 | `todo.json` | list, stats, complete, archive | add-task, complete-task, archive | todo.schema.json |
-| `todo-archive.json` | stats, list (--all) | archive | todo-archive.schema.json |
-| `todo-config.json` | ALL scripts | init, user edit | todo-config.schema.json |
-| `todo-log.json` | stats, troubleshooting | add-task, complete-task, archive | todo-log.schema.json |
+| `todo-archive.json` | stats, list (--all) | archive | archive.schema.json |
+| `todo-config.json` | ALL scripts | init, user edit | config.schema.json |
+| `todo-log.json` | stats, troubleshooting | add-task, complete-task, archive | log.schema.json |
 
 ---
 
@@ -460,7 +467,7 @@ Trigger → Load Config → Filter Tasks → Validate → Update Both Files → 
 
 ```json
 {
-  "$schema": "../schemas/todo-config.schema.json",
+  "$schema": "../schemas/config.schema.json",
   "version": "2.1.0",
   "archive": {
     "enabled": true,

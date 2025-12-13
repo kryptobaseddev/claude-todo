@@ -1,8 +1,10 @@
 # Documentation Migration Guide
 
+> **⚠️ INTERNAL DOCUMENT**: This is a temporary tracking document for the documentation restructuring effort. It is not part of the user-facing documentation and may be removed once migration is complete.
+
 **Version**: 2.2.0
 **Date**: 2025-12-12
-**Status**: In Progress
+**Status**: Internal/Temporary
 
 ## Overview
 

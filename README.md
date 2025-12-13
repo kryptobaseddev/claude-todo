@@ -318,10 +318,10 @@ Complete documentation is available in the [`docs/`](docs/) directory. Start wit
 
 | Category | Documents |
 |----------|-----------|
-| **Getting Started** | [Installation](docs/installation.md) · [Usage](docs/usage.md) · [Quick Reference](docs/QUICK-REFERENCE.md) |
-| **Architecture** | [System Architecture](docs/ARCHITECTURE.md) · [Design Principles](docs/design-principles.md) · [Data Flow Diagrams](docs/DATA-FLOW-DIAGRAMS.md) |
-| **Reference** | [Configuration](docs/configuration.md) · [Schema Reference](docs/schema-reference.md) · [Workflow Guide](docs/WORKFLOW.md) |
-| **Guides** | [Migration Guide](docs/migration-guide.md) · [Troubleshooting](docs/troubleshooting.md) |
+| **Getting Started** | [Installation](docs/getting-started/installation.md) · [Usage](docs/usage.md) · [Quick Reference](docs/QUICK-REFERENCE.md) |
+| **Architecture** | [System Architecture](docs/architecture/ARCHITECTURE.md) · [Data Flow Diagrams](docs/architecture/DATA-FLOWS.md) |
+| **Reference** | [Configuration](docs/reference/configuration.md) · [Schema Reference](docs/architecture/SCHEMAS.md) · [Workflow Guide](docs/integration/WORKFLOWS.md) |
+| **Guides** | [Migration Guide](docs/migration-guide.md) · [Troubleshooting](docs/reference/troubleshooting.md) |
 | **For Claude** | [CLAUDE.md](CLAUDE.md) - Protocol instructions for Claude Code integration |
 
 ## Testing
@@ -482,7 +482,7 @@ MIT License - See [LICENSE](LICENSE) file for details.
 
 - **Documentation**: [docs/INDEX.md](docs/INDEX.md) - Complete documentation navigation
 - **Quick Reference**: [docs/QUICK-REFERENCE.md](docs/QUICK-REFERENCE.md) - Cheat sheet for daily use
-- **Troubleshooting**: [docs/troubleshooting.md](docs/troubleshooting.md) - Common issues and solutions
+- **Troubleshooting**: [docs/reference/troubleshooting.md](docs/reference/troubleshooting.md) - Common issues and solutions
 - **Issues**: Open an issue on GitHub for bugs or feature requests
 
 ---
@@ -493,7 +493,7 @@ MIT License - See [LICENSE](LICENSE) file for details.
 
 <p align="center">
   <a href="docs/INDEX.md">Documentation</a> ·
-  <a href="docs/installation.md">Installation</a> ·
+  <a href="docs/getting-started/installation.md">Installation</a> ·
   <a href="docs/usage.md">Usage Guide</a> ·
   <a href="CONTRIBUTING.md">Contributing</a>
 </p>

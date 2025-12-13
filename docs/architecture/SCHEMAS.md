@@ -303,6 +303,73 @@ Default values for new tasks:
 | `showLogSummary` | boolean | true | Show recent log summary |
 | `warnStaleDays` | integer | 30 | Warn about tasks pending longer than N days |
 
+### CLI Configuration (cli)
+
+**Version**: Added in v0.6.0
+
+Command-line interface behavior, aliases, plugin system, and debug settings.
+
+#### Aliases (cli.aliases)
+
+Command aliases for faster workflows. Maps short names to full command names.
+
+**Default Aliases**:
+
+| Alias | Maps To | Description |
+|-------|---------|-------------|
+| `ls` | `list` | List tasks |
+| `done` | `complete` | Complete task |
+| `new` | `add` | Add task |
+| `edit` | `update` | Update task |
+| `rm` | `archive` | Archive tasks |
+| `check` | `validate` | Validate files |
+
+**Custom Aliases**: Additional aliases can be added via `additionalProperties`. Each alias must map to a valid command name (string value).
+
+**Example**:
+```json
+{
+  "cli": {
+    "aliases": {
+      "ls": "list",
+      "s": "stats",
+      "f": "focus"
+    }
+  }
+}
+```
+
+#### Plugins (cli.plugins)
+
+Plugin system configuration for extending CLI with custom commands.
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `enabled` | boolean | true | Enable plugin discovery and loading |
+| `directories` | array[string] | `["~/.claude-todo/plugins", "./.claude/plugins"]` | Directories to scan for plugins (in priority order) |
+| `autoDiscover` | boolean | true | Auto-discover plugins from configured directories |
+
+**Plugin Discovery**:
+- Plugins are executable scripts (`.sh`, `.py`, etc.) with `###PLUGIN` marker
+- Search order: project-local (`./.claude/plugins`) then global (`~/.claude-todo/plugins`)
+- Plugin name derived from filename (e.g., `my-report.sh` → `claude-todo my-report`)
+
+#### Debug (cli.debug)
+
+Debug and validation settings for CLI operations.
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `enabled` | boolean | false | Enable debug mode (verbose output, validation checks) |
+| `validateMappings` | boolean | true | Validate command-to-script mappings exist |
+| `checksumVerify` | boolean | true | Verify script checksums for integrity |
+| `showTimings` | boolean | false | Show command execution timings |
+
+**Debug Mode Triggers**:
+- `cli.debug.enabled: true` in config
+- `CLAUDE_TODO_DEBUG=1` environment variable
+- `--debug` CLI flag (if implemented)
+
 ---
 
 ## Log Schema (log.schema.json)
@@ -382,10 +449,13 @@ Required fields:
 
 | Field | Type | Description |
 |-------|------|-------------|
+| `formatVersion` | string | Log entry format version for future compatibility (pattern: `^\d+$`, default: "1") |
 | `totalEntries` | integer | Total log entry count (minimum: 0) |
 | `firstEntry` | string or null | Timestamp of oldest entry |
 | `lastEntry` | string or null | Timestamp of newest entry |
-| `entriesPruned` | integer | Count of entries removed by retention policy |
+| `entriesPruned` | integer | Count of entries removed by retention policy (default: 0) |
+
+**Format Version**: Increment when log entry structure changes to enable backward-compatible parsing.
 
 ---
 

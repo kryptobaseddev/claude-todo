@@ -44,7 +44,7 @@ claude-todo export --format todowrite      # Export to Claude Code format
 ### Add/Update Options
 | Option | Values | Purpose |
 |--------|--------|---------|
-| `--status` | pending, active, blocked | Task state (use focus for active) |
+| `--status` | pending, active, blocked, done | Task state (use focus for active) |
 | `--priority` | critical, high, medium, low | Urgency level |
 | `--labels` | comma-separated | Tags: `bug,security,sprint-12` |
 | `--depends` | task IDs | Dependencies: `T001,T002` |
