@@ -109,22 +109,29 @@ lock_file() {
     for fd in {200..210}; do
         if ! { true >&"$fd"; } 2>/dev/null; then
             # FD is available, use it
-            eval "exec $fd>'$lock_file'" 2>/dev/null || continue
+            if ! eval "exec $fd>'$lock_file'" 2>/dev/null; then
+                # Failed to open FD, try next
+                continue
+            fi
 
-            # Try to acquire lock
+            # Try to acquire lock with timeout
             if flock -w "$timeout" "$fd" 2>/dev/null; then
                 # Success - store FD in caller's variable
                 eval "$fd_var=$fd"
                 return $E_SUCCESS
             else
-                # Failed to lock, close FD and try next
+                # Failed to acquire lock (timeout or error)
+                # Close FD and exit immediately - don't try other FDs
                 eval "exec $fd>&-" 2>/dev/null || true
+                echo "Error: Failed to acquire lock on $file (timeout after ${timeout}s)" >&2
+                echo "Another process may be accessing this file." >&2
+                return $E_LOCK_FAILED
             fi
         fi
     done
 
-    echo "Error: Failed to acquire lock on $file (timeout after ${timeout}s)" >&2
-    echo "Another process may be accessing this file." >&2
+    # If we get here, no FD was available
+    echo "Error: No available file descriptors for locking" >&2
     return $E_LOCK_FAILED
 }
 

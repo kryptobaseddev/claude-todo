@@ -2,9 +2,9 @@
   "$schema": "./schemas/todo.schema.json",
   "version": "2.1.0",
   "project": "claude-todo",
-  "lastUpdated": "2025-12-13T18:51:18Z",
+  "lastUpdated": "2025-12-13T19:06:38Z",
   "_meta": {
-    "checksum": "2f9dacb6679287d7",
+    "checksum": "3125137bf419c6b2",
     "configVersion": "2.1.0",
     "lastSessionId": null,
     "activeSession": null,
@@ -873,7 +873,7 @@
     {
       "id": "T145",
       "title": "Fix orphaned dependency cleanup tests",
-      "status": "pending",
+      "status": "done",
       "priority": "medium",
       "createdAt": "2025-12-13T16:11:39Z",
       "description": "Tests failing: Unit T216, T217, Integration T42, T43. Tests: orphaned dependencies cleaned on archive, multiple orphaned dependencies all cleaned, orphaned dependency cleanup preserves other dependencies. Root cause: archive.sh dependency cleanup logic not handling all edge cases. See: scripts/archive.sh, lib/analysis.sh",
@@ -885,7 +885,12 @@
         "test",
         "v0.9.6"
       ],
-      "phase": "core"
+      "phase": "core",
+      "notes": [
+        "2025-12-13 18:56:08 UTC: Investigation complete. Tests are passing. Implementation was fixed in commit fc0fd7e (v0.8.3). Archive script correctly implements orphaned dependency cleanup at lines 249-259. All 24 unit tests and 14 integration tests passing.",
+        "[COMPLETED 2025-12-13T18:56:45Z] Tests already passing. Implementation fixed in commit fc0fd7e (v0.8.3). Archive script correctly cleans orphaned dependencies at lines 249-259. Manual verification confirms: T001/T002 archived → T003/T004 dependencies removed, T005 partial cleanup works correctly. All 24 unit + 14 integration tests passing."
+      ],
+      "completedAt": "2025-12-13T18:56:45Z"
     },
     {
       "id": "T146",
@@ -1147,7 +1152,11 @@
         "test",
         "v0.9.6"
       ],
-      "phase": "core"
+      "phase": "core",
+      "notes": [
+        "2025-12-13 19:04:44 UTC: Investigation: All validation.bats tests passing (28/28 ok). Need to identify which specific tests are actually failing per task description.",
+        "2025-12-13 19:06:38 UTC: FIXED: Added schema version validation (check 7.5) and required field validation (check 7.6) to validate.sh. Both failing tests now pass. No regressions in existing tests."
+      ]
     },
     {
       "id": "T161",
@@ -1233,6 +1242,61 @@
       ],
       "depends": [
         "T163"
+      ]
+    },
+    {
+      "id": "T166",
+      "title": "Add dependency check to install.sh before installation",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-13T19:06:35Z",
+      "phase": "core",
+      "description": "install.sh should check for required dependencies (jq, bash 4+) BEFORE installing. Currently installs without checking, leaving user with broken install. Add check_dependencies() function that: 1) Checks jq exists, 2) Checks bash version >= 4.0, 3) Provides platform-specific install instructions, 4) Optionally offers to install deps (apt/brew/yum).",
+      "labels": [
+        "dependencies",
+        "installation",
+        "v0.9.6"
+      ]
+    },
+    {
+      "id": "T167",
+      "title": "Add jq check to export.sh and migrate.sh",
+      "status": "pending",
+      "priority": "medium",
+      "createdAt": "2025-12-13T19:06:35Z",
+      "phase": "core",
+      "description": "export.sh and migrate.sh are missing 'command -v jq' checks that all other scripts have. Add standard check_deps() call at script start.",
+      "labels": [
+        "bug-fix",
+        "dependencies",
+        "v0.9.6"
+      ]
+    },
+    {
+      "id": "T168",
+      "title": "Add bash version check to platform-compat.sh",
+      "status": "pending",
+      "priority": "medium",
+      "createdAt": "2025-12-13T19:06:36Z",
+      "phase": "core",
+      "description": "Add check_bash_version() to platform-compat.sh that verifies BASH_VERSION >= 4.0. Required for associative arrays used in caching. Currently fails silently with cryptic errors on bash 3.x (macOS default).",
+      "labels": [
+        "dependencies",
+        "v0.9.6"
+      ]
+    },
+    {
+      "id": "T169",
+      "title": "Create dependency auto-installer option",
+      "status": "pending",
+      "priority": "low",
+      "createdAt": "2025-12-13T19:06:36Z",
+      "phase": "polish",
+      "description": "Add --install-deps flag to install.sh that automatically installs missing dependencies using detected package manager (apt, brew, yum, dnf). Include --dry-run to show what would be installed.",
+      "labels": [
+        "dependencies",
+        "installation",
+        "v0.10.0"
       ]
     }
   ],

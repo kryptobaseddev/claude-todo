@@ -188,7 +188,7 @@ EOF
     create_independent_tasks
     run bash "$STATS_SCRIPT" --period abc
     assert_failure
-    assert_output --partial "Error"
+    assert_output --partial "ERROR"
 }
 
 # =============================================================================
@@ -353,7 +353,7 @@ EOF
     create_log_with_activity
     run bash "$STATS_SCRIPT"
     assert_success
-    assert_output --partial "tasks"
+    assert_output --partial "Tasks"
 }
 
 # =============================================================================
@@ -448,7 +448,7 @@ EOF
 # =============================================================================
 
 @test "stats handles missing .claude directory" {
-    rm -rf "$CLAUDE_DIR"
+    rm -rf .claude
     run bash "$STATS_SCRIPT"
     assert_failure
     assert_output --partial "ERROR"

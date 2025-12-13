@@ -114,7 +114,14 @@ check_deps() {
   fi
 }
 
-# Generate unique task ID
+# Generate unique task ID with file locking to prevent race conditions
+# Arguments:
+#   $1 - lock_fd variable name (lock must be held by caller)
+# Returns:
+#   Task ID string (T###)
+# Notes:
+#   CRITICAL: Caller MUST hold lock on TODO_FILE before calling
+#   This prevents concurrent ID generation race conditions
 generate_task_id() {
   local existing_ids
   existing_ids=$(jq -r '[.tasks[].id] | @json' "$TODO_FILE" 2>/dev/null || echo '[]')
@@ -434,7 +441,20 @@ if [[ "$STATUS" == "active" ]]; then
   fi
 fi
 
-# Generate task ID
+# CRITICAL: Acquire lock BEFORE ID generation to prevent race conditions
+# Lock protects the entire ID generation → task creation sequence
+ADD_LOCK_FD=""
+if ! lock_file "$TODO_FILE" ADD_LOCK_FD 30; then
+  log_error "Cannot acquire lock for task creation (another process may be adding a task)"
+  echo "Try again in a moment or check for stuck processes" >&2
+  exit 2
+fi
+
+# Set up trap to ensure lock is released on exit/error
+# shellcheck disable=SC2064
+trap "unlock_file $ADD_LOCK_FD" EXIT ERR INT TERM
+
+# Generate task ID (lock is now held, preventing concurrent ID collisions)
 TASK_ID=$(generate_task_id)
 log_info "Generated task ID: $TASK_ID"
 
@@ -502,17 +522,67 @@ if [[ "$STATUS" == "done" ]]; then
   TASK_JSON=$(echo "$TASK_JSON" | jq --arg completed "$CREATED_AT" '.completedAt = $completed')
 fi
 
-# Add task to todo.json
-UPDATED_TODO=$(jq --argjson task "$TASK_JSON" '.tasks += [$task] | .lastUpdated = (now | strftime("%Y-%m-%dT%H:%M:%SZ"))' "$TODO_FILE")
+# Add task to todo.json and calculate checksum
+# Calculate checksum before adding to JSON (while still holding lock)
+CHECKSUM=$(jq -c --argjson task "$TASK_JSON" '.tasks + [$task]' "$TODO_FILE" | sha256sum | cut -c1-16)
 
-# Write atomically using library's save_json with file locking
-if ! save_json "$TODO_FILE" "$UPDATED_TODO"; then
-  log_error "Failed to write todo file"
+# Add task with updated checksum and timestamp
+UPDATED_TODO=$(jq \
+  --argjson task "$TASK_JSON" \
+  --arg cs "$CHECKSUM" \
+  '.tasks += [$task] | ._meta.checksum = $cs | .lastUpdated = (now | strftime("%Y-%m-%dT%H:%M:%SZ"))' \
+  "$TODO_FILE")
+
+# Write atomically (we already hold the lock, so we can't use save_json which would deadlock)
+# Instead, use the same atomic pattern save_json uses but without re-acquiring the lock
+TEMP_FILE="${TODO_FILE}${TEMP_SUFFIX}"
+
+# Validate JSON before writing
+if ! echo "$UPDATED_TODO" | jq empty 2>/dev/null; then
+  log_error "Generated invalid JSON content"
+  unlock_file "$ADD_LOCK_FD"
   exit 2
 fi
 
-# Update checksum
-update_checksum "$TODO_FILE"
+# Backup original file
+BACKUP_FILE=""
+if [[ -f "$TODO_FILE" ]]; then
+  BACKUP_FILE=$(backup_file "$TODO_FILE")
+  if [[ $? -ne 0 ]]; then
+    log_error "Failed to backup original file"
+    unlock_file "$ADD_LOCK_FD"
+    exit 2
+  fi
+fi
+
+# Write to temp file with pretty-printing
+if ! echo "$UPDATED_TODO" | jq '.' > "$TEMP_FILE" 2>/dev/null; then
+  log_error "Failed to write temp file"
+  rm -f "$TEMP_FILE" 2>/dev/null || true
+  unlock_file "$ADD_LOCK_FD"
+  exit 2
+fi
+
+# Atomic rename
+if ! mv "$TEMP_FILE" "$TODO_FILE" 2>/dev/null; then
+  log_error "Failed to move temp file to target"
+  # Attempt rollback
+  if [[ -n "$BACKUP_FILE" && -f "$BACKUP_FILE" ]]; then
+    cp "$BACKUP_FILE" "$TODO_FILE" 2>/dev/null || true
+  fi
+  rm -f "$TEMP_FILE" 2>/dev/null || true
+  unlock_file "$ADD_LOCK_FD"
+  exit 2
+fi
+
+# Set proper permissions
+chmod 644 "$TODO_FILE" 2>/dev/null || true
+
+# Release lock now that write is complete
+unlock_file "$ADD_LOCK_FD"
+
+# Clear the trap since we've manually released the lock
+trap - EXIT ERR INT TERM
 
 # Log operation
 task_details=$(jq -n \

@@ -236,8 +236,10 @@ CIRCULAR_DETECTED=false
 while IFS=':' read -r task_id deps; do
   if [[ -n "$task_id" && -n "$deps" ]]; then
     if ! validate_no_circular_deps "$TODO_FILE" "$task_id" "$deps" 2>/dev/null; then
-      # Capture error message for display
+      # Capture error message for display (disable pipefail to avoid grep exit code issues)
+      set +o pipefail
       ERROR_MSG=$(validate_no_circular_deps "$TODO_FILE" "$task_id" "$deps" 2>&1 | grep "ERROR:" | sed 's/ERROR: //')
+      set -o pipefail
       log_error "$ERROR_MSG"
       CIRCULAR_DETECTED=true
     fi
@@ -275,6 +277,57 @@ else
   log_info "All done tasks have completedAt"
 fi
 
+# 7.5. Check schema version compatibility
+SCHEMA_VERSION=$(jq -r '._meta.version // ""' "$TODO_FILE")
+if [[ -n "$SCHEMA_VERSION" ]]; then
+  # Extract major version (first number before dot)
+  MAJOR_VERSION=$(echo "$SCHEMA_VERSION" | cut -d. -f1)
+  # Current supported major version is 2
+  EXPECTED_MAJOR=2
+
+  if [[ "$MAJOR_VERSION" != "$EXPECTED_MAJOR" ]]; then
+    log_error "Incompatible schema version: $SCHEMA_VERSION (expected major version $EXPECTED_MAJOR)"
+  else
+    log_info "Schema version compatible ($SCHEMA_VERSION)"
+  fi
+else
+  log_warn "No schema version found in _meta.version"
+fi
+
+# 7.6. Check required task fields
+MISSING_FIELD_COUNT=0
+while IFS= read -r task_index; do
+  TASK_ID=$(jq -r ".tasks[$task_index].id // \"(unknown)\"" "$TODO_FILE")
+
+  # Check for required fields per schema: id, title, status, priority, createdAt
+  MISSING_FIELDS=()
+
+  if ! jq -e ".tasks[$task_index].id" "$TODO_FILE" >/dev/null 2>&1; then
+    MISSING_FIELDS+=("id")
+  fi
+  if ! jq -e ".tasks[$task_index].title" "$TODO_FILE" >/dev/null 2>&1; then
+    MISSING_FIELDS+=("title")
+  fi
+  if ! jq -e ".tasks[$task_index].status" "$TODO_FILE" >/dev/null 2>&1; then
+    MISSING_FIELDS+=("status")
+  fi
+  if ! jq -e ".tasks[$task_index].priority" "$TODO_FILE" >/dev/null 2>&1; then
+    MISSING_FIELDS+=("priority")
+  fi
+  if ! jq -e ".tasks[$task_index].createdAt" "$TODO_FILE" >/dev/null 2>&1; then
+    MISSING_FIELDS+=("createdAt")
+  fi
+
+  if [[ ${#MISSING_FIELDS[@]} -gt 0 ]]; then
+    log_error "Task $TASK_ID missing required fields: ${MISSING_FIELDS[*]}"
+    ((MISSING_FIELD_COUNT++))
+  fi
+done < <(jq -r 'range(0; .tasks | length)' "$TODO_FILE")
+
+if [[ "$MISSING_FIELD_COUNT" -eq 0 ]]; then
+  log_info "All tasks have required fields"
+fi
+
 # 8. Check focus.currentTask matches active task
 FOCUS_TASK=$(jq -r '.focus.currentTask // ""' "$TODO_FILE")
 ACTIVE_TASK=$(jq -r '[.tasks[] | select(.status == "active")][0].id // ""' "$TODO_FILE")
@@ -304,10 +357,16 @@ STORED_CHECKSUM=$(jq -r '._meta.checksum // ""' "$TODO_FILE")
 if [[ -n "$STORED_CHECKSUM" ]]; then
   COMPUTED_CHECKSUM=$(jq -c '.tasks' "$TODO_FILE" | sha256sum | cut -c1-16)
   if [[ "$STORED_CHECKSUM" != "$COMPUTED_CHECKSUM" ]]; then
-    log_error "Checksum mismatch: stored=$STORED_CHECKSUM, computed=$COMPUTED_CHECKSUM"
     if [[ "$FIX" == true ]]; then
-      jq --arg cs "$COMPUTED_CHECKSUM" '._meta.checksum = $cs' "$TODO_FILE" > "${TODO_FILE}.tmp" && mv "${TODO_FILE}.tmp" "$TODO_FILE"
-      echo "  Fixed: Updated checksum"
+      # Don't log error yet - try to fix first
+      if jq --arg cs "$COMPUTED_CHECKSUM" '._meta.checksum = $cs' "$TODO_FILE" > "${TODO_FILE}.tmp" && mv "${TODO_FILE}.tmp" "$TODO_FILE"; then
+        echo "  Fixed: Updated checksum (was: $STORED_CHECKSUM, now: $COMPUTED_CHECKSUM)"
+        log_info "Checksum valid (after fix)"
+      else
+        log_error "Checksum mismatch: stored=$STORED_CHECKSUM, computed=$COMPUTED_CHECKSUM (fix failed)"
+      fi
+    else
+      log_error "Checksum mismatch: stored=$STORED_CHECKSUM, computed=$COMPUTED_CHECKSUM"
     fi
   else
     log_info "Checksum valid"

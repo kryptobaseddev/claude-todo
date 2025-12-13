@@ -3,9 +3,9 @@
   "version": "2.1.0",
   "project": "claude-todo",
   "_meta": {
-    "totalEntries": 53,
+    "totalEntries": 57,
     "firstEntry": "2025-12-13T07:14:38Z",
-    "lastEntry": "2025-12-13T18:51:18Z",
+    "lastEntry": "2025-12-13T19:06:38Z",
     "entriesPruned": 0
   },
   "entries": [
@@ -2328,6 +2328,241 @@
           "critical-bug",
           "p0",
           "race-condition",
+          "v0.9.6"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_be96c07c9df9",
+      "timestamp": "2025-12-13T18:56:09Z",
+      "sessionId": null,
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T145",
+      "before": {
+        "title": "Fix orphaned dependency cleanup tests",
+        "status": "pending",
+        "priority": "medium",
+        "description": "Tests failing: Unit T216, T217, Integration T42, T43. Tests: orphaned dependencies cleaned on archive, multiple orphaned dependencies all cleaned, orphaned dependency cleanup preserves other dependencies. Root cause: archive.sh dependency cleanup logic not handling all edge cases. See: scripts/archive.sh, lib/analysis.sh",
+        "phase": "core",
+        "labels": [
+          "archive",
+          "bats",
+          "dependencies",
+          "issue",
+          "test",
+          "v0.9.6"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "after": {
+        "title": "Fix orphaned dependency cleanup tests",
+        "status": "pending",
+        "priority": "medium",
+        "description": "Tests failing: Unit T216, T217, Integration T42, T43. Tests: orphaned dependencies cleaned on archive, multiple orphaned dependencies all cleaned, orphaned dependency cleanup preserves other dependencies. Root cause: archive.sh dependency cleanup logic not handling all edge cases. See: scripts/archive.sh, lib/analysis.sh",
+        "phase": "core",
+        "labels": [
+          "archive",
+          "bats",
+          "dependencies",
+          "issue",
+          "test",
+          "v0.9.6"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_ad2985e7e229",
+      "timestamp": "2025-12-13T18:56:45Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T145",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-13T18:56:45Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_9b60fa3627f9",
+      "timestamp": "2025-12-13T19:04:44Z",
+      "sessionId": null,
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T160",
+      "before": {
+        "title": "Fix schema validation tests (invalid schema, missing fields)",
+        "status": "pending",
+        "priority": "medium",
+        "description": "2 tests failing: T51 (invalid schema version handled gracefully), T52 (missing required fields detected). Root cause: schema validation edge cases in migrate.sh or validate.sh not handling error conditions correctly.",
+        "phase": "core",
+        "labels": [
+          "bats",
+          "issue",
+          "schema",
+          "test",
+          "v0.9.6"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "after": {
+        "title": "Fix schema validation tests (invalid schema, missing fields)",
+        "status": "pending",
+        "priority": "medium",
+        "description": "2 tests failing: T51 (invalid schema version handled gracefully), T52 (missing required fields detected). Root cause: schema validation edge cases in migrate.sh or validate.sh not handling error conditions correctly.",
+        "phase": "core",
+        "labels": [
+          "bats",
+          "issue",
+          "schema",
+          "test",
+          "v0.9.6"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log-1765652795-5480c0",
+      "timestamp": "2025-12-13T19:06:35Z",
+      "operation": "create",
+      "task_id": "T166",
+      "user": "system",
+      "details": {
+        "title": "Add dependency check to install.sh before installation",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Add dependency check to install.sh before installation",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765652796-3ab65b",
+      "timestamp": "2025-12-13T19:06:36Z",
+      "operation": "create",
+      "task_id": "T167",
+      "user": "system",
+      "details": {
+        "title": "Add jq check to export.sh and migrate.sh",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "Add jq check to export.sh and migrate.sh",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log-1765652796-fc5b67",
+      "timestamp": "2025-12-13T19:06:36Z",
+      "operation": "create",
+      "task_id": "T168",
+      "user": "system",
+      "details": {
+        "title": "Add bash version check to platform-compat.sh",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "Add bash version check to platform-compat.sh",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log-1765652796-e056f2",
+      "timestamp": "2025-12-13T19:06:36Z",
+      "operation": "create",
+      "task_id": "T169",
+      "user": "system",
+      "details": {
+        "title": "Create dependency auto-installer option",
+        "status": "pending",
+        "priority": "low"
+      },
+      "before": null,
+      "after": {
+        "title": "Create dependency auto-installer option",
+        "status": "pending",
+        "priority": "low"
+      }
+    },
+    {
+      "id": "log_ade62659bfdc",
+      "timestamp": "2025-12-13T19:06:38Z",
+      "sessionId": null,
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T160",
+      "before": {
+        "title": "Fix schema validation tests (invalid schema, missing fields)",
+        "status": "pending",
+        "priority": "medium",
+        "description": "2 tests failing: T51 (invalid schema version handled gracefully), T52 (missing required fields detected). Root cause: schema validation edge cases in migrate.sh or validate.sh not handling error conditions correctly.",
+        "phase": "core",
+        "labels": [
+          "bats",
+          "issue",
+          "schema",
+          "test",
+          "v0.9.6"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "after": {
+        "title": "Fix schema validation tests (invalid schema, missing fields)",
+        "status": "pending",
+        "priority": "medium",
+        "description": "2 tests failing: T51 (invalid schema version handled gracefully), T52 (missing required fields detected). Root cause: schema validation edge cases in migrate.sh or validate.sh not handling error conditions correctly.",
+        "phase": "core",
+        "labels": [
+          "bats",
+          "issue",
+          "schema",
+          "test",
           "v0.9.6"
         ],
         "files": null,

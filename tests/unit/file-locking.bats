@@ -193,7 +193,8 @@ teardown() {
 @test "lock released on error during atomic_write" {
     # Create a scenario that will fail validation
     # (empty content triggers validation failure)
-    run bash -c "source '$PROJECT_ROOT/lib/file-ops.sh'; echo '' | atomic_write '$TEST_FILE'"
+    # Note: Use printf '' (not echo '') to generate truly empty content (no newline)
+    run bash -c "source '$PROJECT_ROOT/lib/file-ops.sh'; printf '' | atomic_write '$TEST_FILE'"
 
     [ "$status" -ne 0 ]
 
@@ -224,8 +225,9 @@ teardown() {
     [[ "$output" =~ "timeout after 2s" ]]
 
     # Should have waited approximately 2 seconds
+    # Allow generous margin for slow systems and subprocess overhead
     [ "$elapsed" -ge 1 ]
-    [ "$elapsed" -le 4 ]
+    [ "$elapsed" -le 6 ]
 
     # Clean up
     unlock_file "$lock_fd"

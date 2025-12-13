@@ -72,12 +72,12 @@ teardown() {
     notes=$(jq -r --arg id "$task_id" '.tasks[] | select(.id == $id) | .notes[-1]' "$TODO_FILE")
     [[ "$notes" == *"Integration test passed"* ]]
 
-    # Archive task
-    run bash "$SCRIPTS_DIR/archive.sh" --force
+    # Archive task (use --all for testing to bypass preserve count)
+    run bash "$SCRIPTS_DIR/archive.sh" --all
     assert_success
 
     # Verify task is in archive
-    run jq --arg id "$task_id" '.archivedTasks[] | select(.id == $id) | .id' "$ARCHIVE_FILE"
+    run jq -r --arg id "$task_id" '.archivedTasks[] | select(.id == $id) | .id' "$ARCHIVE_FILE"
     assert_output "$task_id"
 
     # Verify task removed from todo.json
@@ -107,8 +107,8 @@ teardown() {
     # Complete dependent
     bash "$COMPLETE_SCRIPT" "$task2" --skip-notes
 
-    # Archive both
-    bash "$SCRIPTS_DIR/archive.sh" --force
+    # Archive both (use --all to bypass preserve count in tests)
+    bash "$SCRIPTS_DIR/archive.sh" --all
 
     # Verify both archived
     local archived_count
@@ -138,7 +138,7 @@ teardown() {
     assert_success
 
     # Verify focus set
-    run jq -r '.focus.currentTaskId' "$TODO_FILE"
+    run jq -r '.focus.currentTask' "$TODO_FILE"
     assert_output "$task_id"
 
     # Add session note
@@ -176,7 +176,7 @@ teardown() {
     bash "$SCRIPTS_DIR/focus.sh" note "Switched to task 2"
 
     # Verify current focus is task2
-    run jq -r '.focus.currentTaskId' "$TODO_FILE"
+    run jq -r '.focus.currentTask' "$TODO_FILE"
     assert_output "$task2"
 
     # Complete both tasks
@@ -208,8 +208,8 @@ teardown() {
     assert_task_status "T002" "done"
     assert_task_status "T003" "done"
 
-    # Archive all
-    bash "$SCRIPTS_DIR/archive.sh" --force
+    # Archive all (use --all to bypass preserve count in tests)
+    bash "$SCRIPTS_DIR/archive.sh" --all
 
     # Verify all archived
     local archived_count
@@ -233,8 +233,8 @@ teardown() {
     # Complete independent
     bash "$COMPLETE_SCRIPT" T005 --skip-notes
 
-    # Archive
-    bash "$SCRIPTS_DIR/archive.sh" --force
+    # Archive (use --all to bypass preserve count in tests)
+    bash "$SCRIPTS_DIR/archive.sh" --all
 
     # Verify 5 tasks archived
     local archived_count
@@ -259,7 +259,7 @@ teardown() {
     assert_task_exists "T002"
 
     # Complete T002
-    bash "$COMPLETE_SCRIPT" T002 --skip-notes
+    run bash "$COMPLETE_SCRIPT" T002 --skip-notes
     assert_success
 }
 
@@ -279,7 +279,7 @@ teardown() {
     bash "$COMPLETE_SCRIPT" T002 --skip-notes
 
     # Now T003 can be completed
-    bash "$COMPLETE_SCRIPT" T003 --skip-notes
+    run bash "$COMPLETE_SCRIPT" T003 --skip-notes
     assert_success
     assert_task_status "T003" "done"
 }
@@ -402,7 +402,7 @@ teardown() {
     # Validate should catch circular dependency
     run bash "$VALIDATE_SCRIPT"
     assert_failure
-    assert_output --partial "circular"
+    assert_output --partial "Circular"
 }
 
 # =============================================================================
@@ -434,8 +434,8 @@ teardown() {
     completed_count=$(jq '[.tasks[] | select(.status == "done")] | length' "$TODO_FILE")
     [[ "$completed_count" -eq 10 ]]
 
-    # Batch archive
-    bash "$SCRIPTS_DIR/archive.sh" --force
+    # Batch archive (use --all to bypass preserve count in tests)
+    bash "$SCRIPTS_DIR/archive.sh" --all
 
     # Verify all archived
     local archived_count

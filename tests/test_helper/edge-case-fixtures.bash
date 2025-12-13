@@ -157,7 +157,7 @@ create_standard_tasks() {
     }
   ],
   "focus": {
-    "currentTaskId": "T002",
+    "currentTask": "T002",
     "sessionNote": "Working on active task"
   },
   "lastUpdated": "2025-12-01T12:00:00Z"
