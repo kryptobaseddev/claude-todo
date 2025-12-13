@@ -198,6 +198,7 @@ declare -A CMD_MAP=(
   [labels]="labels.sh"
   [deps]="deps-command.sh"
   [blockers]="blockers-command.sh"
+  [phases]="phases.sh"
 )
 
 # Brief descriptions for main help
@@ -222,6 +223,7 @@ declare -A CMD_DESC=(
   [labels]="List and analyze task labels/tags"
   [deps]="Visualize task dependency graphs and relationships"
   [blockers]="Analyze blocked tasks and dependency chains"
+  [phases]="Manage project phases (list/show/stats)"
 )
 
 # ============================================
