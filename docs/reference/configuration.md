@@ -719,7 +719,7 @@ claude-todo init --force
 claude-todo validate .claude/todo-config.json
 ```
 
-> **Note**: Automated migration scripts are not yet implemented. Manual backup and re-initialization is recommended.
+> **Note**: For automated schema migrations, see the [Migration Guide](migration-guide.md). The `claude-todo migrate` command handles version upgrades automatically with backup and rollback support.
 
 ## Best Practices
 

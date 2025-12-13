@@ -35,6 +35,7 @@ docs/
 │   ├── command-reference.md        # Complete CLI reference
 │   ├── configuration.md            # Configuration options
 │   ├── installation.md             # Installation guide
+│   ├── migration-guide.md          # Schema migration guide
 │   └── troubleshooting.md          # Common issues & solutions
 │
 ├── INDEX.md                        # Comprehensive navigation
@@ -42,7 +43,6 @@ docs/
 ├── README.md                       # Documentation hub
 ├── PLUGINS.md                      # Plugin development guide
 ├── TODO_Task_Management.md         # CLI reference (installed to ~/.claude-todo/)
-├── migration-guide.md              # Schema migration guide
 ├── usage.md                        # Main usage guide
 └── DOCS-MIGRATION-GUIDE.md         # This file
 ```
@@ -69,6 +69,7 @@ docs/
 |-------------------|--------------|
 | `docs/ARCHITECTURE.md` | `docs/architecture/ARCHITECTURE.md` |
 | `docs/DATA-FLOW-DIAGRAMS.md` | `docs/architecture/DATA-FLOWS.md` |
+| `docs/migration-guide.md` | `docs/reference/migration-guide.md` |
 
 ### Files Created
 
@@ -85,7 +86,7 @@ docs/
 | Current Files | Consideration | Priority |
 |---------------|---------------|----------|
 | `INDEX.md` + `README.md` | Both serve as navigation - consolidate to single entry point | Medium |
-| `migration-guide.md` | Consider moving to `reference/` | Low |
+| ~~`migration-guide.md`~~ | ~~Consider moving to `reference/`~~ | ✅ Done |
 | `integration/WORKFLOWS.md` | Consider merging into `CLAUDE-CODE.md` if overlapping | Low |
 
 ### Structure Notes

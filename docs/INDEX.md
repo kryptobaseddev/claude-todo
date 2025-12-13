@@ -31,7 +31,7 @@
 | **[schema-reference.md](architecture/SCHEMAS.md)** | Data schema documentation | Understanding data structures |
 | **[troubleshooting.md](reference/troubleshooting.md)** | Troubleshooting guide | Resolving issues |
 | **[integration/CLAUDE-CODE.md](integration/CLAUDE-CODE.md)** | Claude Code integration & session workflows | Understanding process flows |
-| **[migration-guide.md](migration-guide.md)** | Migration and upgrade guide | Upgrading between versions |
+| **[migration-guide.md](reference/migration-guide.md)** | Migration and upgrade guide | Upgrading between versions |
 
 ### 🔬 Technical Reference
 
@@ -39,7 +39,7 @@
 |----------|---------|--------------|
 | **[PLUGINS.md](PLUGINS.md)** | Plugin architecture and development | Extending the CLI with custom commands |
 | **[integration/CLAUDE-CODE.md](integration/CLAUDE-CODE.md)** | TodoWrite integration & session workflows | Understanding Claude Code integration |
-| **[migration-guide.md](migration-guide.md)** | Schema migration and upgrade guide | Understanding version migrations |
+| **[migration-guide.md](reference/migration-guide.md)** | Schema migration and upgrade guide | Understanding version migrations |
 
 ---
 

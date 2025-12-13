@@ -111,7 +111,6 @@ docs/
 ├── QUICK-REFERENCE.md           # Developer cheatsheet
 ├── PLUGINS.md                   # Plugin development guide
 ├── TODO_Task_Management.md      # CLI reference (installed to ~/.claude-todo/)
-├── migration-guide.md           # Schema migration guide
 ├── usage.md                     # Main usage guide
 ├── DOCS-MIGRATION-GUIDE.md      # Migration tracking (temporary)
 ├── architecture/
@@ -129,6 +128,7 @@ docs/
     ├── command-reference.md     # Complete command documentation
     ├── configuration.md         # Configuration reference
     ├── installation.md          # Installation and setup guide
+    ├── migration-guide.md       # Schema migration guide
     └── troubleshooting.md       # Problem resolution guide
 ```
 
