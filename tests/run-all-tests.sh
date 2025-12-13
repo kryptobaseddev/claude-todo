@@ -156,9 +156,11 @@ run_test_suite() {
 
     # Parse results from bats output
     # bats outputs lines like: "1..N" at start, "ok N" or "not ok N" for each test
-    local passed=$(echo "$output" | grep -c "^ok " || echo "0")
-    local failed=$(echo "$output" | grep -c "^not ok " || echo "0")
-    local skipped=$(echo "$output" | grep -c "# skip" || echo "0")
+    # Note: grep -c returns exit 1 if no matches, so we capture and default to 0
+    local passed failed skipped
+    passed=$(echo "$output" | grep -c "^ok " 2>/dev/null) || passed=0
+    failed=$(echo "$output" | grep -c "^not ok " 2>/dev/null) || failed=0
+    skipped=$(echo "$output" | grep -c "# skip" 2>/dev/null) || skipped=0
 
     TOTAL_PASSED=$((TOTAL_PASSED + passed))
     TOTAL_FAILED=$((TOTAL_FAILED + failed))
