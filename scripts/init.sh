@@ -74,7 +74,8 @@ EOF
 
 calculate_checksum() {
   # Calculate SHA-256 checksum of empty tasks array, truncated to 16 chars
-  echo -n '[]' | sha256sum | cut -c1-16
+  # Must match validate.sh: jq -c '.tasks' outputs with newline
+  echo '[]' | sha256sum | cut -c1-16
 }
 
 generate_timestamp() {
