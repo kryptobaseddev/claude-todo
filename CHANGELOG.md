@@ -5,6 +5,24 @@ All notable changes to the claude-todo system will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] - 2025-12-12
+
+### Fixed
+- **Documentation Links**: Fixed all broken cross-references throughout documentation
+  - Root README.md: Fixed 3 broken links to installation.md and migration-guide.md
+  - All docs now correctly reference `reference/` directory structure
+- **Final Documentation Structure**: Finalized structure with 19 files
+  - `architecture/`: ARCHITECTURE.md, DATA-FLOWS.md, SCHEMAS.md
+  - `integration/`: CLAUDE-CODE.md, WORKFLOWS.md
+  - `reference/`: installation.md, configuration.md, command-reference.md, troubleshooting.md, migration-guide.md
+  - `getting-started/`: quick-start.md
+  - `guides/`: filtering-guide.md
+
+### Changed
+- **SCHEMAS.md**: Added CLI configuration section (aliases, plugins, debug)
+- **DOCS-MIGRATION-GUIDE.md**: Marked as internal/temporary document
+- **INDEX.md**: Added TODO_Task_Management.md to user guides
+
 ## [0.7.0] - 2025-12-12
 
 ### Changed
