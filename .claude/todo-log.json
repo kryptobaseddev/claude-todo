@@ -3,9 +3,9 @@
   "version": "2.1.0",
   "project": "claude-todo",
   "_meta": {
-    "totalEntries": 90,
+    "totalEntries": 103,
     "firstEntry": "2025-12-13T07:14:38Z",
-    "lastEntry": "2025-12-13T19:53:55Z",
+    "lastEntry": "2025-12-13T22:38:17Z",
     "entriesPruned": 0
   },
   "entries": [
@@ -3720,6 +3720,212 @@
       "before": null,
       "after": null,
       "details": null
+    },
+    {
+      "id": "log_9ef042147177",
+      "timestamp": "2025-12-13T20:38:26Z",
+      "sessionId": "session_20251213_123826_a445e4",
+      "action": "session_start",
+      "actor": "system",
+      "taskId": null,
+      "before": null,
+      "after": null,
+      "details": "Session started"
+    },
+    {
+      "id": "log_862aeaf41e3e",
+      "timestamp": "2025-12-13T20:41:02Z",
+      "sessionId": "session_20251213_123826_a445e4",
+      "action": "session_end",
+      "actor": "system",
+      "taskId": null,
+      "before": null,
+      "after": null,
+      "details": null
+    },
+    {
+      "id": "log_02e77ddef0c0",
+      "timestamp": "2025-12-13T21:03:19Z",
+      "sessionId": "session_20251213_130319_66ae27",
+      "action": "session_start",
+      "actor": "system",
+      "taskId": null,
+      "before": null,
+      "after": null,
+      "details": "Session started"
+    },
+    {
+      "id": "log_e842cc7028d5",
+      "timestamp": "2025-12-13T21:10:25Z",
+      "sessionId": "session_20251213_130319_66ae27",
+      "action": "session_end",
+      "actor": "system",
+      "taskId": null,
+      "before": null,
+      "after": null,
+      "details": null
+    },
+    {
+      "id": "log_ba4e0fa2495c",
+      "timestamp": "2025-12-13T21:25:26Z",
+      "sessionId": "session_20251213_132526_6c45a6",
+      "action": "session_start",
+      "actor": "system",
+      "taskId": null,
+      "before": null,
+      "after": null,
+      "details": "Session started"
+    },
+    {
+      "id": "log_53d77a77f5e1",
+      "timestamp": "2025-12-13T21:37:48Z",
+      "sessionId": "session_20251213_132526_6c45a6",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T161",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-13T21:37:48Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_6044c7c749f5",
+      "timestamp": "2025-12-13T21:37:49Z",
+      "sessionId": "session_20251213_132526_6c45a6",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T075",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-13T21:37:49Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_61f405be0aa9",
+      "timestamp": "2025-12-13T21:37:51Z",
+      "sessionId": "session_20251213_132526_6c45a6",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T076",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-13T21:37:51Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_412435e6be78",
+      "timestamp": "2025-12-13T21:45:08Z",
+      "sessionId": "session_20251213_132526_6c45a6",
+      "action": "session_end",
+      "actor": "system",
+      "taskId": null,
+      "before": null,
+      "after": null,
+      "details": null
+    },
+    {
+      "id": "log_1a04fa8f9b52",
+      "timestamp": "2025-12-13T22:37:49Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T164",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-13T22:37:49Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_fc37dc7a11a6",
+      "timestamp": "2025-12-13T22:37:51Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T165",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-13T22:37:51Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_a74e0ad83df3",
+      "timestamp": "2025-12-13T22:38:15Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T162",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-13T22:38:15Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_e40986d8fcbe",
+      "timestamp": "2025-12-13T22:38:17Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T163",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-13T22:38:17Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
     }
   ]
 }

@@ -399,6 +399,7 @@ declare -A CMD_MAP=(
   [focus]="focus.sh"
   [export]="export.sh"
   [migrate]="migrate.sh"
+  [migrate-backups]="migrate-backups.sh"
   [update]="update-task.sh"
   [dash]="dash.sh"
   [next]="next.sh"
@@ -424,6 +425,7 @@ declare -A CMD_DESC=(
   [focus]="Manage task focus (set/clear/note/next)"
   [export]="Export tasks to TodoWrite/JSON/Markdown format"
   [migrate]="Migrate todo files to current schema version"
+  [migrate-backups]="Migrate legacy backups to unified taxonomy"
   [update]="Update existing task fields"
   [dash]="Show project dashboard (status, focus, phases, activity)"
   [next]="Suggest next task based on priority and dependencies"
@@ -583,7 +585,7 @@ show_main_help() {
   echo "       claude-todo help <command>    Show detailed command help"
   echo ""
   echo "Commands:"
-  for cmd in init add update complete list focus session archive validate stats backup restore export migrate log dash next labels deps blockers phases; do
+  for cmd in init add update complete list focus session archive validate stats backup restore export migrate migrate-backups log dash next labels deps blockers phases; do
     printf "  %-14s %s\n" "$cmd" "${CMD_DESC[$cmd]}"
   done
   echo "  version        Show version"

@@ -190,8 +190,10 @@ EOF
     create_archive_atomic_fixture
     bash "$ARCHIVE_SCRIPT" --force
 
+    # Check for backup directories in new unified taxonomy structure
+    # Archive backups go to .claude/backups/archive/ directory
     local backup_count
-    backup_count=$(find "$(dirname "$TODO_FILE")" -name "*.backup.*" 2>/dev/null | wc -l)
+    backup_count=$(find "$(dirname "$TODO_FILE")/backups/archive" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l)
     [ "$backup_count" -ge 1 ]
 }
 

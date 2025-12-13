@@ -10,6 +10,7 @@
 # - Backup via version control
 #
 # Only exclude backups and temp files (noise):
+.claude/backups/
 .claude/.backups/
 .claude/*.tmp
 .claude/*.lock

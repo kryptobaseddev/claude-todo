@@ -55,6 +55,7 @@
 |----------|---------|--------------|
 | **[PLUGINS.md](PLUGINS.md)** | Plugin architecture and development | Extending the CLI with custom commands |
 | **[integration/CLAUDE-CODE.md](integration/CLAUDE-CODE.md)** | TodoWrite integration & session workflows | Understanding Claude Code integration |
+| **[ci-cd-integration.md](ci-cd-integration.md)** | CI/CD pipeline integration guide | Integrating with GitHub Actions, GitLab CI, Jenkins, Azure DevOps |
 | **[migration-guide.md](reference/migration-guide.md)** | Schema migration and upgrade guide | Understanding version migrations |
 | **[testing.md](testing.md)** | BATS test suite guide | Writing and running tests |
 
@@ -299,6 +300,22 @@
 
 ---
 
+### ci-cd-integration.md
+**Purpose**: CI/CD pipeline integration guide with practical examples
+
+**Contents**:
+- GitHub Actions workflows (validation, deployment gates, reports)
+- GitLab CI pipeline configuration
+- Jenkins declarative and scripted pipelines
+- Azure DevOps YAML pipelines
+- Common patterns (blocking merges, archival, notifications)
+- Troubleshooting CI/CD issues
+- Best practices for pipeline integration
+
+**Best For**: DevOps integration, automated validation, deployment workflows, team automation
+
+---
+
 ### testing.md
 **Purpose**: BATS test suite guide and quick reference
 
@@ -361,6 +378,12 @@
 2. Read [ARCHITECTURE.md](architecture/ARCHITECTURE.md) extension points section
 3. Review [ARCHITECTURE.md#executive-summary](architecture/ARCHITECTURE.md#executive-summary) extension summary
 4. Check [QUICK-REFERENCE.md](QUICK-REFERENCE.md) extension patterns
+
+#### ...integrate with CI/CD
+1. Read [ci-cd-integration.md](ci-cd-integration.md) for complete integration guide
+2. Choose your platform examples (GitHub Actions, GitLab CI, Jenkins, Azure DevOps)
+3. Review [reference/cli-output-formats.md](reference/cli-output-formats.md) for JSON output parsing
+4. Check [troubleshooting.md](reference/troubleshooting.md) for common CI issues
 
 ---
 
@@ -514,6 +537,7 @@ You understand the CLAUDE-TODO system when you can:
 - **Extending**: [ARCHITECTURE.md](architecture/ARCHITECTURE.md) → Extension points
 - **Reviewing**: [ARCHITECTURE.md](architecture/ARCHITECTURE.md) → Complete design
 - **Data Structure**: [schema-reference.md](architecture/SCHEMAS.md) → Schema reference
+- **CI/CD Integration**: [ci-cd-integration.md](ci-cd-integration.md) → Pipeline automation
 
 ---
 
@@ -527,6 +551,7 @@ For questions about:
 - **Architecture**: See [ARCHITECTURE.md](architecture/ARCHITECTURE.md) and [ARCHITECTURE.md#executive-summary](architecture/ARCHITECTURE.md#executive-summary)
 - **Data Structures**: See [schema-reference.md](architecture/SCHEMAS.md)
 - **Workflows**: See [DATA-FLOW-DIAGRAMS.md](architecture/DATA-FLOWS.md)
+- **CI/CD Integration**: See [ci-cd-integration.md](ci-cd-integration.md)
 
 ---
 

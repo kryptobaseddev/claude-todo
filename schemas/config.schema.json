@@ -331,6 +331,59 @@
           }
         }
       }
+    },
+
+    "backup": {
+      "type": "object",
+      "description": "Backup system configuration for snapshots, safety backups, incremental backups, and archive backups.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable backup system globally."
+        },
+        "directory": {
+          "type": "string",
+          "default": ".claude/backups",
+          "description": "Directory for storing all backup types (snapshot, safety, incremental, archive, migration)."
+        },
+        "maxSnapshots": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "default": 10,
+          "description": "Maximum number of snapshot backups to retain (count-based retention)."
+        },
+        "maxSafetyBackups": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 50,
+          "default": 5,
+          "description": "Maximum number of safety backups to retain (count-based retention, works with safetyRetentionDays)."
+        },
+        "maxIncremental": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "default": 10,
+          "description": "Maximum number of incremental backups to retain (count-based retention)."
+        },
+        "maxArchiveBackups": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20,
+          "default": 3,
+          "description": "Maximum number of archive backups to retain (count-based retention)."
+        },
+        "safetyRetentionDays": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 365,
+          "default": 7,
+          "description": "Days to retain safety backups (time-based retention, works with maxSafetyBackups)."
+        }
+      }
     }
   }
 }

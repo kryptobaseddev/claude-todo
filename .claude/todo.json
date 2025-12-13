@@ -2,13 +2,13 @@
   "$schema": "./schemas/todo.schema.json",
   "version": "2.1.0",
   "project": "claude-todo",
-  "lastUpdated": "2025-12-13T19:53:09Z",
+  "lastUpdated": "2025-12-13T22:38:17Z",
   "_meta": {
-    "checksum": "2a4fbba6591f64f7",
+    "checksum": "b5a542a18ed58076",
     "configVersion": "2.1.0",
     "lastSessionId": null,
     "activeSession": null,
-    "lastModified": "2025-12-13T19:53:55Z"
+    "lastModified": "2025-12-13T21:45:08Z"
   },
   "focus": {
     "currentTask": null,
@@ -555,7 +555,7 @@
     {
       "id": "T075",
       "title": "Add CI/CD integration documentation and examples",
-      "status": "pending",
+      "status": "done",
       "priority": "low",
       "createdAt": "2025-12-12T20:24:25Z",
       "phase": "polish",
@@ -564,12 +564,16 @@
         "ci-cd",
         "docs",
         "v0.10.0"
+      ],
+      "completedAt": "2025-12-13T21:37:49Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T21:37:49Z] Created docs/ci-cd-integration.md (858 lines) for GitHub Actions, GitLab CI, Jenkins, Azure DevOps. Updated docs/INDEX.md."
       ]
     },
     {
       "id": "T076",
       "title": "Optimize performance for 1000+ task datasets",
-      "status": "pending",
+      "status": "done",
       "priority": "low",
       "createdAt": "2025-12-12T20:24:26Z",
       "phase": "polish",
@@ -578,6 +582,10 @@
         "optimization",
         "performance",
         "v0.10.0"
+      ],
+      "completedAt": "2025-12-13T21:37:51Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T21:37:51Z] Created benchmark-performance.sh, PERFORMANCE.md. Optimized list-tasks.sh with early filtering and pagination. Optimized stats.sh O(n²) to O(n)."
       ]
     },
     {
@@ -1167,7 +1175,7 @@
     {
       "id": "T161",
       "title": "Create unified lib/backup.sh library",
-      "status": "pending",
+      "status": "done",
       "priority": "high",
       "createdAt": "2025-12-13T18:41:23Z",
       "phase": "polish",
@@ -1178,13 +1186,15 @@
         "v0.10.0"
       ],
       "notes": [
-        "2025-12-13 18:42:51 UTC: Reference docs: claudedocs/BACKUP-ARCHITECTURE.md, claudedocs/BACKUP-SYSTEM-STATUS.md"
-      ]
+        "2025-12-13 18:42:51 UTC: Reference docs: claudedocs/BACKUP-ARCHITECTURE.md, claudedocs/BACKUP-SYSTEM-STATUS.md",
+        "[COMPLETED 2025-12-13T21:37:48Z] Created lib/backup.sh (872 lines) with 10 public functions. Added safe_checksum() to platform-compat.sh. All tests passing."
+      ],
+      "completedAt": "2025-12-13T21:37:48Z"
     },
     {
       "id": "T162",
       "title": "Integrate scripts with unified backup library",
-      "status": "pending",
+      "status": "done",
       "priority": "high",
       "createdAt": "2025-12-13T18:41:25Z",
       "phase": "polish",
@@ -1196,12 +1206,16 @@
       ],
       "depends": [
         "T161"
+      ],
+      "completedAt": "2025-12-13T22:38:15Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T22:38:15Z] Integrated complete-task.sh, archive.sh, migrate.sh, init.sh with lib/backup.sh. Fallback patterns for backward compatibility. Wave 2 validation passed."
       ]
     },
     {
       "id": "T163",
       "title": "Implement backup type taxonomy and directory structure",
-      "status": "pending",
+      "status": "done",
       "priority": "medium",
       "createdAt": "2025-12-13T18:41:26Z",
       "phase": "polish",
@@ -1213,12 +1227,16 @@
       ],
       "depends": [
         "T161"
+      ],
+      "completedAt": "2025-12-13T22:38:17Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T22:38:17Z] Created .claude/backups/{snapshot,safety,incremental,archive,migration}/ taxonomy. Templates and .gitignore updated. Wave 2 validation passed."
       ]
     },
     {
       "id": "T164",
       "title": "Add legacy backup migration command",
-      "status": "pending",
+      "status": "done",
       "priority": "medium",
       "createdAt": "2025-12-13T18:41:27Z",
       "phase": "polish",
@@ -1230,12 +1248,16 @@
       ],
       "depends": [
         "T162"
+      ],
+      "completedAt": "2025-12-13T22:37:49Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T22:37:49Z] Implemented migrate-backups.sh with detection, dry-run, migration, cleanup. 15/15 unit tests passing. CLI integrated. Code reviewed."
       ]
     },
     {
       "id": "T165",
       "title": "Extend config schema for backup settings",
-      "status": "pending",
+      "status": "done",
       "priority": "low",
       "createdAt": "2025-12-13T18:41:28Z",
       "phase": "polish",
@@ -1248,6 +1270,10 @@
       ],
       "depends": [
         "T163"
+      ],
+      "completedAt": "2025-12-13T22:37:51Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T22:37:51Z] Extended config schema with backup section (7 properties), updated template, comprehensive documentation. All validation tests passing."
       ]
     },
     {
@@ -1471,14 +1497,6 @@
       "notes": [
         "[COMPLETED 2025-12-13T19:53:09Z] Added --add-phase flag to add-task.sh and update-task.sh. Phase validation now lists valid phases on error. add_new_phase() creates phases on-the-fly with auto-generated names."
       ]
-    },
-    {
-      "id": "T180",
-      "title": "$(printf 'a%.0s' {1..145})",
-      "status": "pending",
-      "priority": "medium",
-      "createdAt": "2025-12-13T19:48:23Z",
-      "description": "test"
     }
   ],
   "phases": {

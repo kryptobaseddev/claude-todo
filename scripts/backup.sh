@@ -9,7 +9,7 @@ TODO_FILE="${TODO_FILE:-.claude/todo.json}"
 ARCHIVE_FILE="${ARCHIVE_FILE:-.claude/todo-archive.json}"
 CONFIG_FILE="${CONFIG_FILE:-.claude/todo-config.json}"
 LOG_FILE="${LOG_FILE:-.claude/todo-log.json}"
-BACKUP_DIR="${BACKUP_DIR:-.claude/.backups}"
+BACKUP_DIR="${BACKUP_DIR:-.claude/backups}"
 
 # Source logging library for should_use_color function
 LIB_DIR="${SCRIPT_DIR}/../lib"
@@ -43,7 +43,7 @@ Usage: $(basename "$0") [OPTIONS]
 Create timestamped backup of all todo system files.
 
 Options:
-  --destination DIR   Custom backup location (default: .claude/.backups)
+  --destination DIR   Custom backup location (default: .claude/backups)
   --compress          Create compressed tarball of backup
   --name NAME         Custom backup name (appended to timestamp)
   --list              List available backups

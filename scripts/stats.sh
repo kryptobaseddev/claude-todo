@@ -227,60 +227,47 @@ count_archived_in_period() {
 }
 
 # Calculate average completion time in hours
+# PERFORMANCE: O(n) single-pass algorithm using jq for all calculations
 calculate_avg_completion_time() {
     if [[ ! -f "$STATS_LOG_FILE" ]]; then
         echo "0"
         return
     fi
 
-    # Get all completion events with their task IDs
-    local completion_times
-    completion_times=$(jq -r '
-        [.entries[] |
-         select(.operation == "complete") |
-         {task_id: .task_id, completed_at: .timestamp}] |
-        unique_by(.task_id)
-    ' "$STATS_LOG_FILE" 2>/dev/null || echo "[]")
+    # Single-pass jq operation to build creation/completion map and calculate average
+    # This is O(n) instead of O(n²) by avoiding nested loops
+    local avg_hours
+    avg_hours=$(jq -r '
+        # Build map of task_id -> {created: timestamp, completed: timestamp}
+        reduce .entries[] as $entry ({};
+            if $entry.operation == "create" and ($entry.task_id | type == "string") then
+                .[$entry.task_id].created = $entry.timestamp
+            elif $entry.operation == "complete" and ($entry.task_id | type == "string") then
+                .[$entry.task_id].completed = $entry.timestamp
+            else
+                .
+            end
+        ) |
+        # Calculate completion times for tasks with both create and complete timestamps
+        [to_entries[] |
+         select(.value.created and .value.completed) |
+         {
+           created: (.value.created | sub("\\.[0-9]+Z$"; "Z") | fromdate),
+           completed: (.value.completed | sub("\\.[0-9]+Z$"; "Z") | fromdate),
+           task_id: .key
+         } |
+         select(.created > 0 and .completed > 0) |
+         .duration = (.completed - .created)
+        ] |
+        # Calculate average in hours
+        if length > 0 then
+            (map(.duration) | add / length / 3600 | . * 100 | round / 100)
+        else
+            0
+        end
+    ' "$STATS_LOG_FILE" 2>/dev/null || echo "0")
 
-    # Get creation times for those tasks
-    local total_seconds=0
-    local count=0
-
-    while IFS= read -r task_id; do
-        if [[ -z "$task_id" ]]; then
-            continue
-        fi
-
-        local created_at
-        created_at=$(jq -r --arg tid "$task_id" \
-            '.entries[] | select(.operation == "create" and .task_id == $tid) | .timestamp' \
-            "$STATS_LOG_FILE" 2>/dev/null | head -1)
-
-        local completed_at
-        completed_at=$(echo "$completion_times" | jq -r --arg tid "$task_id" \
-            '.[] | select(.task_id == $tid) | .completed_at' 2>/dev/null | head -1)
-
-        if [[ -n "$created_at" && -n "$completed_at" ]]; then
-            local created_sec
-            created_sec=$(iso_to_seconds "$created_at")
-            local completed_sec
-            completed_sec=$(iso_to_seconds "$completed_at")
-
-            if [[ "$created_sec" -gt 0 && "$completed_sec" -gt 0 ]]; then
-                local diff=$((completed_sec - created_sec))
-                total_seconds=$((total_seconds + diff))
-                count=$((count + 1))
-            fi
-        fi
-    done < <(echo "$completion_times" | jq -r '.[].task_id' 2>/dev/null)
-
-    if [[ "$count" -eq 0 ]]; then
-        echo "0"
-        return
-    fi
-
-    # Return average in hours
-    echo "scale=2; $total_seconds / $count / 3600" | bc
+    echo "$avg_hours"
 }
 
 # Get busiest day of week

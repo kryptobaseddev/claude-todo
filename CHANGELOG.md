@@ -5,6 +5,74 @@ All notable changes to the claude-todo system will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2025-12-13
+
+### Added
+- **lib/backup.sh**: Unified backup library with 10 public functions
+  - `create_snapshot_backup()` - Full state before risky operations
+  - `create_safety_backup()` - Automatic before all write operations
+  - `create_incremental_backup()` - Changed files only
+  - `create_archive_backup()` - Long-term storage
+  - `create_migration_backup()` - Schema migrations (never auto-deleted)
+  - `rotate_backups()`, `list_backups()`, `restore_backup()`, `get_backup_metadata()`, `prune_backups()`
+  - Configuration via todo-config.json with sensible defaults (T161)
+
+- **Backup type taxonomy**: Organized directory structure
+  - `.claude/backups/{snapshot,safety,incremental,archive,migration}/`
+  - Metadata.json for each backup with checksums, timestamps, trigger info
+  - Templates and .gitkeep files for new projects (T163)
+
+- **migrate-backups command**: Legacy backup migration tool
+  - `claude-todo migrate-backups --detect` - List and classify legacy backups
+  - `claude-todo migrate-backups --dry-run` - Preview migration plan
+  - `claude-todo migrate-backups --run` - Execute migration
+  - `claude-todo migrate-backups --cleanup` - Remove old .backups directory
+  - Classifies: snapshot, safety, archive, migration backup types
+  - Preserves original timestamps and paths in metadata (T164)
+
+- **Backup configuration schema**: Extended config.schema.json
+  - `backup.enabled` (boolean, default: true)
+  - `backup.directory` (string, default: ".claude/backups")
+  - `backup.maxSnapshots` (integer, 0-100, default: 10)
+  - `backup.maxSafetyBackups` (integer, 0-50, default: 5)
+  - `backup.maxIncremental` (integer, 0-100, default: 10)
+  - `backup.maxArchiveBackups` (integer, 0-20, default: 3)
+  - `backup.safetyRetentionDays` (integer, 0-365, default: 7) (T165)
+
+- **CI/CD integration documentation**: Comprehensive guide
+  - GitHub Actions, GitLab CI, Jenkins, CircleCI examples
+  - Test automation, artifact management, deployment patterns (T075)
+
+- **Performance optimization**: 1000+ task dataset improvements
+  - Caching layer for repeated operations
+  - Optimized jq queries and file operations
+  - Benchmark scripts for performance testing (T076)
+
+### Changed
+- **Script backup integration**: All write operations use lib/backup.sh
+  - `complete-task.sh` - Safety backup before task completion
+  - `archive.sh` - Archive backup before archiving tasks
+  - `migrate.sh` - Migration backup before schema changes
+  - `init.sh` - Creates backup directory structure
+  - Fallback patterns for backward compatibility (T162)
+
+### Documentation
+- **docs/reference/configuration.md**: Comprehensive backup settings documentation
+  - Field descriptions, value ranges, retention policies
+  - Configuration examples (conservative, aggressive, performance)
+  - Environment variable mappings
+- **docs/ci-cd-integration.md**: New CI/CD integration guide
+- **docs/PERFORMANCE.md**: Performance optimization documentation
+
+### Tasks Completed
+- T161: Create unified lib/backup.sh library
+- T162: Integrate scripts with unified backup library
+- T163: Implement backup type taxonomy and directory structure
+- T164: Add legacy backup migration command
+- T165: Extend config schema for backup settings
+- T075: Add CI/CD integration documentation and examples
+- T076: Optimize performance for 1000+ task datasets
+
 ## [0.9.9] - 2025-12-13
 
 ### Fixed

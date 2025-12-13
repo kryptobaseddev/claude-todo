@@ -44,6 +44,9 @@ fi
 if [[ -z "${_INIT_VALIDATION_SOURCED:-}" ]]; then
     [[ -f "$CLAUDE_TODO_HOME/lib/validation.sh" ]] && source "$CLAUDE_TODO_HOME/lib/validation.sh" && _INIT_VALIDATION_SOURCED=true || true
 fi
+if [[ -z "${_INIT_BACKUP_SOURCED:-}" ]]; then
+    [[ -f "$CLAUDE_TODO_HOME/lib/backup.sh" ]] && source "$CLAUDE_TODO_HOME/lib/backup.sh" && _INIT_BACKUP_SOURCED=true || true
+fi
 
 # Defaults
 FORCE=false
@@ -131,9 +134,38 @@ log_info "Initializing CLAUDE-TODO for project: $PROJECT_NAME"
 
 # Create .claude directory structure
 mkdir -p "$TODO_DIR"
-mkdir -p "$TODO_DIR/.backups"
 mkdir -p "$TODO_DIR/schemas"
-log_info "Created $TODO_DIR/ directory"
+
+# Copy backup directory structure from templates
+if [[ -d "$TEMPLATES_DIR/backups" ]]; then
+  # Create backups directory first
+  mkdir -p "$TODO_DIR/backups"
+  # Copy backup type directories and .gitkeep files
+  for backup_type in snapshot safety incremental archive migration; do
+    if [[ -d "$TEMPLATES_DIR/backups/$backup_type" ]]; then
+      mkdir -p "$TODO_DIR/backups/$backup_type"
+      # Copy .gitkeep if it exists
+      if [[ -f "$TEMPLATES_DIR/backups/$backup_type/.gitkeep" ]]; then
+        cp "$TEMPLATES_DIR/backups/$backup_type/.gitkeep" "$TODO_DIR/backups/$backup_type/"
+      fi
+    fi
+  done
+  log_info "Created $TODO_DIR/ directory with backup type subdirectories from templates"
+else
+  # Fallback: create directories manually if templates not available
+  mkdir -p "$TODO_DIR/backups/snapshot"
+  mkdir -p "$TODO_DIR/backups/safety"
+  mkdir -p "$TODO_DIR/backups/incremental"
+  mkdir -p "$TODO_DIR/backups/archive"
+  mkdir -p "$TODO_DIR/backups/migration"
+  # Create .gitkeep files to preserve directory structure in git
+  touch "$TODO_DIR/backups/snapshot/.gitkeep"
+  touch "$TODO_DIR/backups/safety/.gitkeep"
+  touch "$TODO_DIR/backups/incremental/.gitkeep"
+  touch "$TODO_DIR/backups/archive/.gitkeep"
+  touch "$TODO_DIR/backups/migration/.gitkeep"
+  log_info "Created $TODO_DIR/ directory with backup type subdirectories"
+fi
 
 # Copy schemas for local validation
 if [[ -n "$SCHEMAS_DIR" ]]; then
@@ -380,13 +412,18 @@ echo "  - .claude/todo-archive.json (completed tasks)"
 echo "  - .claude/todo-config.json  (settings)"
 echo "  - .claude/todo-log.json     (change history)"
 echo "  - .claude/schemas/          (JSON schemas for validation)"
-echo "  - .claude/.backups/         (automatic backups)"
+echo "  - .claude/backups/          (automatic backups)"
+echo "    ├── snapshot/             (point-in-time snapshots)"
+echo "    ├── safety/               (pre-operation backups)"
+echo "    ├── incremental/          (file version history)"
+echo "    ├── archive/              (long-term archives)"
+echo "    └── migration/            (schema migration backups)"
 echo ""
 echo "Add to .gitignore (recommended):"
 echo "  .claude/*.json"
-echo "  .claude/.backups/"
+echo "  .claude/backups/"
 echo ""
 echo "Next steps:"
-echo "  1. Add your first task to .claude/todo.json"
-echo "  2. Set focus.currentTask when starting work"
-echo "  3. Always verify checksum before modifying"
+echo "  1. claude-todo add \"Your first task\""
+echo "  2. claude-todo focus set <task-id>"
+echo "  3. claude-todo session start"

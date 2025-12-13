@@ -73,6 +73,15 @@ Configuration values are resolved in this order (later overrides earlier):
     "showArchiveCount": true,
     "showLogSummary": true,
     "warnStaleDays": 30
+  },
+  "backup": {
+    "enabled": true,
+    "directory": ".claude/backups",
+    "maxSnapshots": 10,
+    "maxSafetyBackups": 5,
+    "maxIncremental": 10,
+    "maxArchiveBackups": 3,
+    "safetyRetentionDays": 7
   }
 }
 ```
@@ -452,6 +461,110 @@ CLAUDE_TODO_DEBUG=1 claude-todo list
 claude-todo --list-commands
 ```
 
+### Backup Settings (v0.9.8+)
+
+Controls the backup system for task data protection and recovery.
+
+| Field | Type | Default | Range | Description |
+|-------|------|---------|-------|-------------|
+| `enabled` | boolean | `true` | - | Enable backup system globally |
+| `directory` | string | `".claude/backups"` | - | Root directory for all backup types |
+| `maxSnapshots` | integer | `10` | 0-100 | Maximum snapshot backups (count-based retention) |
+| `maxSafetyBackups` | integer | `5` | 0-50 | Maximum safety backups (count + time retention) |
+| `maxIncremental` | integer | `10` | 0-100 | Maximum incremental backups (count-based retention) |
+| `maxArchiveBackups` | integer | `3` | 0-20 | Maximum archive backups (count-based retention) |
+| `safetyRetentionDays` | integer | `7` | 0-365 | Safety backup time retention (works with maxSafetyBackups) |
+
+**Backup Types:**
+
+1. **Snapshot** - Full state before risky operations (pre-migration, bulk changes)
+2. **Safety** - Automatic before all write operations (atomic pattern protection)
+3. **Incremental** - Changed files only (performance optimization)
+4. **Archive** - Long-term storage of todo.json + todo-archive.json
+5. **Migration** - Schema version changes (NEVER auto-deleted)
+
+**Retention Policies:**
+- **Snapshot**: Count-based using `maxSnapshots` (oldest deleted first)
+- **Safety**: Hybrid - both time-based (`safetyRetentionDays`) AND count-based (`maxSafetyBackups`)
+- **Incremental**: Count-based using `maxIncremental`
+- **Archive**: Count-based using `maxArchiveBackups`
+- **Migration**: PERMANENT - never auto-deleted
+
+**Examples:**
+```json
+// Conservative: Keep more backups for safety
+{
+  "backup": {
+    "enabled": true,
+    "directory": ".claude/backups",
+    "maxSnapshots": 20,
+    "maxSafetyBackups": 10,
+    "maxIncremental": 20,
+    "maxArchiveBackups": 5,
+    "safetyRetentionDays": 14
+  }
+}
+
+// Aggressive: Minimal disk usage
+{
+  "backup": {
+    "enabled": true,
+    "directory": ".claude/backups",
+    "maxSnapshots": 3,
+    "maxSafetyBackups": 2,
+    "maxIncremental": 5,
+    "maxArchiveBackups": 1,
+    "safetyRetentionDays": 3
+  }
+}
+
+// Performance: Optimize for speed
+{
+  "backup": {
+    "enabled": true,
+    "directory": ".claude/backups",
+    "maxSnapshots": 5,
+    "maxSafetyBackups": 3,
+    "maxIncremental": 15,  // Use incremental more
+    "maxArchiveBackups": 2,
+    "safetyRetentionDays": 7
+  }
+}
+
+// Disable backups (NOT RECOMMENDED - removes safety net)
+{
+  "backup": {
+    "enabled": false
+  }
+}
+```
+
+**Backup System Integration:**
+
+The backup system is integrated into all write operations:
+- **Automatic**: Safety backups created before all file modifications
+- **Manual**: Use `claude-todo backup` command
+- **Recovery**: Use `claude-todo restore [backup]` command
+- **Listing**: Use `claude-todo backup --list` command
+
+**Disk Usage Considerations:**
+
+Typical backup sizes:
+- Safety backup: ~10-50 KB per backup
+- Snapshot backup: ~50-200 KB (full state)
+- Incremental backup: ~5-20 KB (changed files only)
+- Archive backup: ~20-100 KB
+
+With defaults (10 snapshots, 5 safety, 10 incremental, 3 archive):
+- Expected total: 1-5 MB
+- Cleanup runs automatically based on retention policies
+
+**Important Notes:**
+- Migration backups are NEVER deleted (rollback protection)
+- Setting retention to 0 disables that backup type
+- Safety backups use BOTH time and count retention (whichever triggers first)
+- Backup directory can be absolute or relative to `.claude/`
+
 ## Environment Variables
 
 Override configuration using environment variables with `CLAUDE_TODO_` prefix:
@@ -479,6 +592,15 @@ export CLAUDE_TODO_SESSION_AUTO_START_SESSION=true
 
 # Display settings
 export CLAUDE_TODO_DISPLAY_WARN_STALE_DAYS=7
+
+# Backup settings
+export CLAUDE_TODO_BACKUP_ENABLED=true
+export CLAUDE_TODO_BACKUP_DIRECTORY=".claude/backups"
+export CLAUDE_TODO_BACKUP_MAX_SNAPSHOTS=10
+export CLAUDE_TODO_BACKUP_MAX_SAFETY_BACKUPS=5
+export CLAUDE_TODO_BACKUP_MAX_INCREMENTAL=10
+export CLAUDE_TODO_BACKUP_MAX_ARCHIVE_BACKUPS=3
+export CLAUDE_TODO_BACKUP_SAFETY_RETENTION_DAYS=7
 ```
 
 **Environment Variable Naming Convention:**
@@ -652,6 +774,11 @@ Configuration files are validated against `config.schema.json` during:
 | `phase` | Pattern: `^[a-z][a-z0-9-]*$` | Lowercase with hyphens |
 | `sessionTimeoutHours` | 1-72 | Reasonable session duration |
 | `warnStaleDays` | 1-999 | Task staleness threshold |
+| `maxSnapshots` | 0-100 | Snapshot backup retention count |
+| `maxSafetyBackups` | 0-50 | Safety backup retention count |
+| `maxIncremental` | 0-100 | Incremental backup retention count |
+| `maxArchiveBackups` | 0-20 | Archive backup retention count |
+| `safetyRetentionDays` | 0-365 | Safety backup time retention |
 
 ### Schema Reference
 

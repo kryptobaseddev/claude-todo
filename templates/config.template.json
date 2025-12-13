@@ -77,5 +77,15 @@
       "checksumVerify": true,
       "showTimings": false
     }
+  },
+
+  "backup": {
+    "enabled": true,
+    "directory": ".claude/backups",
+    "maxSnapshots": 10,
+    "maxSafetyBackups": 5,
+    "maxIncremental": 10,
+    "maxArchiveBackups": 3,
+    "safetyRetentionDays": 7
   }
 }

@@ -27,6 +27,12 @@ if [[ -f "$LIB_DIR/logging.sh" ]]; then
   source "$LIB_DIR/logging.sh"
 fi
 
+# Source backup library for unified backup management
+if [[ -f "$LIB_DIR/backup.sh" ]]; then
+  # shellcheck source=../lib/backup.sh
+  source "$LIB_DIR/backup.sh"
+fi
+
 # Colors (respects NO_COLOR and FORCE_COLOR environment variables per https://no-color.org)
 if declare -f should_use_color >/dev/null 2>&1 && should_use_color; then
   RED='\033[0;31m'
@@ -305,11 +311,26 @@ for temp_file in "$ARCHIVE_TMP" "$TODO_TMP" ${LOG_TMP:+"$LOG_TMP"}; do
   fi
 done
 
-# Step 5: Create backups before committing changes
-BACKUP_SUFFIX=".backup.$(date +%s)"
-cp "$ARCHIVE_FILE" "${ARCHIVE_FILE}${BACKUP_SUFFIX}"
-cp "$TODO_FILE" "${TODO_FILE}${BACKUP_SUFFIX}"
-[[ -f "$LOG_FILE" ]] && cp "$LOG_FILE" "${LOG_FILE}${BACKUP_SUFFIX}"
+# Step 5: Create archive backup before committing changes using unified backup library
+if declare -f create_archive_backup >/dev/null 2>&1; then
+  BACKUP_PATH=$(create_archive_backup 2>&1) || {
+    log_warn "Backup library failed, using fallback backup method"
+    # Fallback to inline backup if library fails
+    BACKUP_SUFFIX=".backup.$(date +%s)"
+    cp "$ARCHIVE_FILE" "${ARCHIVE_FILE}${BACKUP_SUFFIX}"
+    cp "$TODO_FILE" "${TODO_FILE}${BACKUP_SUFFIX}"
+    [[ -f "$LOG_FILE" ]] && cp "$LOG_FILE" "${LOG_FILE}${BACKUP_SUFFIX}"
+  }
+  if [[ -n "$BACKUP_PATH" ]]; then
+    log_info "Archive backup created: $BACKUP_PATH"
+  fi
+else
+  # Fallback if backup library not available
+  BACKUP_SUFFIX=".backup.$(date +%s)"
+  cp "$ARCHIVE_FILE" "${ARCHIVE_FILE}${BACKUP_SUFFIX}"
+  cp "$TODO_FILE" "${TODO_FILE}${BACKUP_SUFFIX}"
+  [[ -f "$LOG_FILE" ]] && cp "$LOG_FILE" "${LOG_FILE}${BACKUP_SUFFIX}"
+fi
 
 # Step 6: Atomic commit - move all temp files to final locations
 mv "$ARCHIVE_TMP" "$ARCHIVE_FILE"

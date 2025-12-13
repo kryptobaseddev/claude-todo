@@ -67,6 +67,7 @@ LABEL_FILTER=""
 FORMAT="text"
 INCLUDE_ARCHIVE=false
 LIMIT=""
+OFFSET=0
 SINCE_DATE=""
 UNTIL_DATE=""
 SORT_FIELD=""
@@ -78,6 +79,7 @@ VERBOSE=false
 COMPACT=false
 QUIET=false
 GROUP_BY_PRIORITY=true
+DEFAULT_PAGE_SIZE=100
 
 # Valid format values
 VALID_FORMATS="text json jsonl markdown table"
@@ -97,6 +99,7 @@ Filters:
       --until DATE          Show tasks created before date (ISO 8601: YYYY-MM-DD)
       --all                 Include archived tasks
       --limit N             Show first N tasks only
+      --offset N            Skip first N tasks (for pagination)
 
 Sorting:
   --sort FIELD              Sort by field: status|priority|createdAt|title (default: priority)
@@ -122,6 +125,7 @@ Examples:
   claude-todo list --sort createdAt --reverse  # Newest first
   claude-todo list -f json                  # JSON output
   claude-todo list --all --limit 20         # Last 20 tasks including archive
+  claude-todo list --limit 50 --offset 50   # Second page (51-100)
   claude-todo list -v                       # Verbose mode with all details
   claude-todo list -s pending -p high -l backend  # Combined filters
   claude-todo list -q -f json               # Quiet mode with JSON output
@@ -153,6 +157,7 @@ while [[ $# -gt 0 ]]; do
     -f|--format) FORMAT="$2"; shift 2 ;;
     --all) INCLUDE_ARCHIVE=true; shift ;;
     --limit) LIMIT="$2"; shift 2 ;;
+    --offset) OFFSET="$2"; shift 2 ;;
     --notes) SHOW_NOTES=true; shift ;;
     --files) SHOW_FILES=true; shift ;;
     --acceptance) SHOW_ACCEPTANCE=true; shift ;;
@@ -181,13 +186,46 @@ if [[ ! -f "$TODO_FILE" ]]; then
   exit 1
 fi
 
-# Load tasks from todo.json
-TASKS=$(jq -c '.tasks[]' "$TODO_FILE" 2>/dev/null || echo "")
+# PERFORMANCE OPTIMIZATION: Build filter expression early to reduce task loading
+# Instead of loading all tasks then filtering, we filter during JSON read
+PRE_FILTER='.'
 
-# Load archived tasks if requested
+# Apply status filter early (most selective filter first)
+if [[ -n "$STATUS_FILTER" ]]; then
+  PRE_FILTER="$PRE_FILTER | select(.status == \"$STATUS_FILTER\")"
+fi
+
+# Apply priority filter early (second most selective)
+if [[ -n "$PRIORITY_FILTER" ]]; then
+  PRE_FILTER="$PRE_FILTER | select(.priority == \"$PRIORITY_FILTER\")"
+fi
+
+# Apply phase filter early
+if [[ -n "$PHASE_FILTER" ]]; then
+  PRE_FILTER="$PRE_FILTER | select(.phase == \"$PHASE_FILTER\")"
+fi
+
+# Apply label filter early
+if [[ -n "$LABEL_FILTER" ]]; then
+  PRE_FILTER="$PRE_FILTER | select(.labels // [] | index(\"$LABEL_FILTER\"))"
+fi
+
+# Apply date filters early
+if [[ -n "$SINCE_DATE" ]]; then
+  PRE_FILTER="$PRE_FILTER | select(.createdAt >= \"$SINCE_DATE\")"
+fi
+
+if [[ -n "$UNTIL_DATE" ]]; then
+  PRE_FILTER="$PRE_FILTER | select(.createdAt <= \"$UNTIL_DATE\")"
+fi
+
+# PERFORMANCE: Use -r for raw output to reduce overhead, then compact with -c only when needed
+# Load tasks with early filtering applied (reduces memory footprint)
 if [[ "$INCLUDE_ARCHIVE" == true ]] && [[ -f "$ARCHIVE_FILE" ]]; then
-  ARCHIVED=$(jq -c '.archivedTasks[]' "$ARCHIVE_FILE" 2>/dev/null || echo "")
-  TASKS=$(printf "%s\n%s" "$TASKS" "$ARCHIVED" | grep -v '^$' || echo "")
+  # Combine both files in single jq invocation (more efficient than separate calls)
+  TASKS=$(jq -c "((.tasks[] // empty), (input.archivedTasks[] // empty)) | $PRE_FILTER" "$TODO_FILE" "$ARCHIVE_FILE" 2>/dev/null || echo "")
+else
+  TASKS=$(jq -c ".tasks[] | $PRE_FILTER" "$TODO_FILE" 2>/dev/null || echo "")
 fi
 
 # Handle empty task list
@@ -222,33 +260,9 @@ if [[ -z "$TASKS" ]]; then
   exit 0
 fi
 
-# Build jq filter based on arguments
+# PERFORMANCE: Filters already applied during load (PRE_FILTER above)
+# No need to re-filter here - just pass through
 JQ_FILTER='.'
-
-if [[ -n "$STATUS_FILTER" ]]; then
-  JQ_FILTER="$JQ_FILTER | select(.status == \"$STATUS_FILTER\")"
-fi
-
-if [[ -n "$PRIORITY_FILTER" ]]; then
-  JQ_FILTER="$JQ_FILTER | select(.priority == \"$PRIORITY_FILTER\")"
-fi
-
-if [[ -n "$PHASE_FILTER" ]]; then
-  JQ_FILTER="$JQ_FILTER | select(.phase == \"$PHASE_FILTER\")"
-fi
-
-if [[ -n "$LABEL_FILTER" ]]; then
-  JQ_FILTER="$JQ_FILTER | select(.labels // [] | index(\"$LABEL_FILTER\"))"
-fi
-
-# Date-based filtering
-if [[ -n "$SINCE_DATE" ]]; then
-  JQ_FILTER="$JQ_FILTER | select(.createdAt >= \"$SINCE_DATE\")"
-fi
-
-if [[ -n "$UNTIL_DATE" ]]; then
-  JQ_FILTER="$JQ_FILTER | select(.createdAt <= \"$UNTIL_DATE\")"
-fi
 
 # Build sort expression
 SORT_EXPR=""
@@ -276,12 +290,24 @@ if [[ "$SORT_REVERSE" == true ]]; then
   SORT_EXPR="$SORT_EXPR | reverse"
 fi
 
-# Apply filters and sort
-FILTERED_TASKS=$(echo "$TASKS" | jq -s "map($JQ_FILTER) | $SORT_EXPR")
+# PERFORMANCE: Combine filter, sort, and pagination into single jq operation
+# This reduces memory usage and avoids multiple jq invocations
 
-# Apply limit if specified
-if [[ -n "$LIMIT" ]]; then
-  FILTERED_TASKS=$(echo "$FILTERED_TASKS" | jq ".[:$LIMIT]")
+# Build pagination slice expression
+PAGINATION_EXPR=""
+if [[ -n "$LIMIT" ]] && [[ "$OFFSET" -gt 0 ]]; then
+  PAGINATION_EXPR=".[$OFFSET:$((OFFSET + LIMIT))]"
+elif [[ -n "$LIMIT" ]]; then
+  PAGINATION_EXPR=".[:$LIMIT]"
+elif [[ "$OFFSET" -gt 0 ]]; then
+  PAGINATION_EXPR=".[$OFFSET:]"
+fi
+
+# Apply filter, sort, and pagination in single jq operation
+if [[ -n "$PAGINATION_EXPR" ]]; then
+  FILTERED_TASKS=$(echo "$TASKS" | jq -s "map($JQ_FILTER) | $SORT_EXPR | $PAGINATION_EXPR")
+else
+  FILTERED_TASKS=$(echo "$TASKS" | jq -s "map($JQ_FILTER) | $SORT_EXPR")
 fi
 
 TASK_COUNT=$(echo "$FILTERED_TASKS" | jq 'length')

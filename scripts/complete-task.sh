@@ -22,6 +22,12 @@ if [[ -f "$LIB_DIR/file-ops.sh" ]]; then
   source "$LIB_DIR/file-ops.sh"
 fi
 
+# Source backup library for unified backup management
+if [[ -f "$LIB_DIR/backup.sh" ]]; then
+  # shellcheck source=../lib/backup.sh
+  source "$LIB_DIR/backup.sh"
+fi
+
 # Colors (respects NO_COLOR and FORCE_COLOR environment variables per https://no-color.org)
 if declare -f should_use_color >/dev/null 2>&1 && should_use_color; then
   RED='\033[0;31m'
@@ -175,31 +181,25 @@ if [[ ! "$CURRENT_STATUS" =~ ^(pending|active|blocked)$ ]]; then
   exit 1
 fi
 
-# Create backup before modification
-BACKUP_DIR=".claude/.backups"
-mkdir -p "$BACKUP_DIR"
-BACKUP_FILE="${BACKUP_DIR}/todo.json.$(date +%Y%m%d_%H%M%S)"
-cp "$TODO_FILE" "$BACKUP_FILE"
-log_info "Backup created: $BACKUP_FILE"
-
-# Rotate old backups (keep max 10)
-MAX_COMPLETE_BACKUPS=10
-BACKUP_COUNT=$(find "$BACKUP_DIR" -maxdepth 1 -name "todo.json.*" -type f 2>/dev/null | wc -l)
-
-if [[ $BACKUP_COUNT -gt $MAX_COMPLETE_BACKUPS ]]; then
-  DELETE_COUNT=$((BACKUP_COUNT - MAX_COMPLETE_BACKUPS))
-  log_info "Rotating $DELETE_COUNT old backup(s) (keeping $MAX_COMPLETE_BACKUPS most recent)"
-
-  # Delete oldest backups by modification time
-  # Try GNU find first (Linux), fall back to stat-based sorting (macOS)
-  if find "$BACKUP_DIR" -maxdepth 1 -name "todo.json.*" -type f -printf '%T@ %p\n' 2>/dev/null | sort -n | head -n "$DELETE_COUNT" | cut -d' ' -f2- | xargs rm -f 2>/dev/null; then
-    : # Success with GNU find
-  else
-    # macOS fallback using stat
-    find "$BACKUP_DIR" -maxdepth 1 -name "todo.json.*" -type f 2>/dev/null | while read -r f; do
-      echo "$(stat -f %m "$f" 2>/dev/null || echo 0) $f"
-    done | sort -n | head -n "$DELETE_COUNT" | cut -d' ' -f2- | xargs rm -f 2>/dev/null || true
-  fi
+# Create safety backup before modification using unified backup library
+if declare -f create_safety_backup >/dev/null 2>&1; then
+  BACKUP_PATH=$(create_safety_backup "$TODO_FILE" "complete" 2>&1) || {
+    log_warn "Backup library failed, using fallback backup method"
+    # Fallback to inline backup if library fails
+    BACKUP_DIR=".claude/backups/safety"
+    mkdir -p "$BACKUP_DIR"
+    BACKUP_FILE="${BACKUP_DIR}/todo.json.$(date +%Y%m%d_%H%M%S)"
+    cp "$TODO_FILE" "$BACKUP_FILE"
+    BACKUP_PATH="$BACKUP_FILE"
+  }
+  log_info "Backup created: $BACKUP_PATH"
+else
+  # Fallback if backup library not available
+  BACKUP_DIR=".claude/backups/safety"
+  mkdir -p "$BACKUP_DIR"
+  BACKUP_FILE="${BACKUP_DIR}/todo.json.$(date +%Y%m%d_%H%M%S)"
+  cp "$TODO_FILE" "$BACKUP_FILE"
+  log_info "Backup created: $BACKUP_FILE"
 fi
 
 # Capture before state

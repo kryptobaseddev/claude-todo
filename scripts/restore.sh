@@ -9,7 +9,7 @@ TODO_FILE="${TODO_FILE:-.claude/todo.json}"
 ARCHIVE_FILE="${ARCHIVE_FILE:-.claude/todo-archive.json}"
 CONFIG_FILE="${CONFIG_FILE:-.claude/todo-config.json}"
 LOG_FILE="${LOG_FILE:-.claude/todo-log.json}"
-BACKUP_DIR="${BACKUP_DIR:-.claude/.backups}"
+BACKUP_DIR="${BACKUP_DIR:-.claude/backups}"
 
 # Source logging library for should_use_color function
 LIB_DIR="${SCRIPT_DIR}/../lib"
@@ -57,9 +57,9 @@ Safety:
   - Atomic operations prevent data loss
 
 Examples:
-  $(basename "$0") .claude/.backups/backup_20251205_120000
+  $(basename "$0") .claude/backups/snapshot/snapshot_20251205_120000
   $(basename "$0") /path/to/backup.tar.gz --force
-  $(basename "$0") .claude/.backups/backup_20251205_120000 --file todo.json
+  $(basename "$0") .claude/backups/safety/safety_20251205_120000_update_todo.json --file todo.json
 EOF
   exit 0
 }

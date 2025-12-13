@@ -9,6 +9,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIB_DIR="$SCRIPT_DIR/../lib"
 
 # Source required libraries
+# shellcheck source=lib/backup.sh
+if [[ -f "$LIB_DIR/backup.sh" ]]; then
+  source "$LIB_DIR/backup.sh"
+fi
+
 # shellcheck source=lib/migrate.sh
 source "$LIB_DIR/migrate.sh"
 
@@ -219,23 +224,47 @@ cmd_run() {
         fi
     fi
 
-    # Create project backup if requested
+    # Create project backup if requested using unified backup library
     if [[ "$create_backup" == "true" ]]; then
         echo "Creating project backup..."
-        local backup_dir="${claude_dir}/.backups/pre-migration-$(date +%Y%m%d-%H%M%S)"
-        mkdir -p "$backup_dir"
 
-        for file_spec in "${files[@]}"; do
-            IFS=':' read -r file file_type <<< "$file_spec"
-            if [[ -f "$file" ]]; then
-                cp "$file" "$backup_dir/" || {
-                    echo "ERROR: Failed to create backup" >&2
-                    exit 1
-                }
-            fi
-        done
+        # Try using unified backup library first
+        if declare -f create_migration_backup >/dev/null 2>&1; then
+            local target_version="$SCHEMA_VERSION_TODO"
+            BACKUP_PATH=$(create_migration_backup "$target_version" 2>&1) || {
+                echo "⚠ Backup library failed, using fallback backup method" >&2
+                # Fallback to inline backup if library fails
+                local backup_dir="${claude_dir}/backups/migration/pre-migration-$(date +%Y%m%d-%H%M%S)"
+                mkdir -p "$backup_dir"
 
-        echo "✓ Backup created: $backup_dir"
+                for file_spec in "${files[@]}"; do
+                    IFS=':' read -r file file_type <<< "$file_spec"
+                    if [[ -f "$file" ]]; then
+                        cp "$file" "$backup_dir/" || {
+                            echo "ERROR: Failed to create backup" >&2
+                            exit 1
+                        }
+                    fi
+                done
+                BACKUP_PATH="$backup_dir"
+            }
+            echo "✓ Backup created: $BACKUP_PATH"
+        else
+            # Fallback if backup library not available
+            local backup_dir="${claude_dir}/backups/migration/pre-migration-$(date +%Y%m%d-%H%M%S)"
+            mkdir -p "$backup_dir"
+
+            for file_spec in "${files[@]}"; do
+                IFS=':' read -r file file_type <<< "$file_spec"
+                if [[ -f "$file" ]]; then
+                    cp "$file" "$backup_dir/" || {
+                        echo "ERROR: Failed to create backup" >&2
+                        exit 1
+                    }
+                fi
+            done
+            echo "✓ Backup created: $backup_dir"
+        fi
         echo ""
     fi
 
@@ -276,7 +305,7 @@ cmd_run() {
 
     if [[ "$migration_failed" == "true" ]]; then
         echo "ERROR: Migration failed" >&2
-        echo "Backups available in: ${claude_dir}/.backups/" >&2
+        echo "Backups available in: ${claude_dir}/backups/migration/" >&2
         exit 1
     fi
 
