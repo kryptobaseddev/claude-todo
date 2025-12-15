@@ -7,7 +7,8 @@
     "daysUntilArchive": 7,
     "maxCompletedTasks": 15,
     "preserveRecentCount": 3,
-    "archiveOnSessionEnd": true
+    "archiveOnSessionEnd": true,
+    "autoArchiveOnComplete": false
   },
 
   "logging": {

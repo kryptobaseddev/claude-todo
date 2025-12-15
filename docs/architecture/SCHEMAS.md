@@ -249,6 +249,7 @@ All other properties optional with documented defaults.
 | `maxCompletedTasks` | integer | 15 | Max completed tasks before trigger (1-100) |
 | `preserveRecentCount` | integer | 3 | Always keep N recent completed tasks (0-20) |
 | `archiveOnSessionEnd` | boolean | true | Run archive check at session end |
+| `autoArchiveOnComplete` | boolean | false | Archive immediately when task completed |
 
 ### Logging Settings (logging)
 

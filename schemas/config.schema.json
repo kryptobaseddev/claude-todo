@@ -49,6 +49,11 @@
           "type": "boolean",
           "default": true,
           "description": "Run archive check at session end."
+        },
+        "autoArchiveOnComplete": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically archive completed task if eligible (age >= daysUntilArchive)."
         }
       }
     },

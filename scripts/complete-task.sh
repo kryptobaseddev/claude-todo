@@ -72,7 +72,7 @@ Examples:
   claude-todo complete T042 --notes "Fixed bug #123. PR merged."
   claude-todo complete T042 --skip-notes --skip-archive
 
-After completion, if auto_archive_on_complete is enabled in config,
+After completion, if autoArchiveOnComplete is enabled in config,
 the archive script will run automatically.
 EOF
   exit 0
@@ -317,7 +317,7 @@ fi
 
 # Check auto-archive configuration
 if [[ "$SKIP_ARCHIVE" == false ]]; then
-  AUTO_ARCHIVE=$(jq -r '.archive.auto_archive_on_complete // false' "$CONFIG_FILE")
+  AUTO_ARCHIVE=$(jq -r '.archive.autoArchiveOnComplete // false' "$CONFIG_FILE")
 
   if [[ "$AUTO_ARCHIVE" == "true" ]]; then
     echo ""

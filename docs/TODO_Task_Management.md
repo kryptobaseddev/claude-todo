@@ -2,15 +2,17 @@
 
 Use `claude-todo` CLI for **all** task operations. Single source of truth for persistent task tracking.
 
-## Anti-Hallucination Rules
+## Data Integrity Rules
 
 | Rule | Reason |
 |------|--------|
-| **CLI only** - Never read/edit `.claude/*.json` directly | Atomic writes, validation, checksums |
+| **CLI only** - Never read/edit `.claude/*.json` directly | Prevents staleness in multi-writer environment; ensures validation, checksums |
 | **One active task** - Use `focus set` (enforces single active) | Prevents context confusion |
 | **Verify state** - Use `list` before assuming task state | No stale data |
 | **Session discipline** - Start/end sessions properly | Audit trail, recovery |
 | **Validate after errors** - Run `validate` if something fails | Integrity check |
+
+**Note**: Direct file reads can lead to stale data when multiple writers (TodoWrite, claude-todo) modify the same files. CLI commands always read fresh data from disk.
 
 ## Command Reference
 

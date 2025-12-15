@@ -99,12 +99,16 @@ Controls automatic archiving behavior for completed tasks.
 | `maxCompletedTasks` | integer | `15` | 1-100 | Maximum completed tasks before triggering archive |
 | `preserveRecentCount` | integer | `3` | 0-20 | Number of recent completed tasks to always keep |
 | `archiveOnSessionEnd` | boolean | `true` | - | Check archive eligibility when session ends |
+| `autoArchiveOnComplete` | boolean | `false` | - | Archive immediately when task completed (if eligible) |
 
 **Archive Trigger Logic:**
 - Tasks become eligible for archive after `daysUntilArchive` days
 - Archive runs when completed tasks exceed `maxCompletedTasks`
 - Most recent `preserveRecentCount` completed tasks are always preserved
-- Can be triggered manually or automatically at session end
+- Can be triggered:
+  - Manually via `claude-todo archive`
+  - At session end (if `archiveOnSessionEnd: true`)
+  - Immediately on task completion (if `autoArchiveOnComplete: true`)
 
 **Examples:**
 ```json
@@ -126,7 +130,8 @@ Controls automatic archiving behavior for completed tasks.
     "daysUntilArchive": 1,
     "maxCompletedTasks": 5,
     "preserveRecentCount": 0,
-    "archiveOnSessionEnd": true
+    "archiveOnSessionEnd": true,
+    "autoArchiveOnComplete": true
   }
 }
 

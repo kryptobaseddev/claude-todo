@@ -15,7 +15,7 @@ ct exists <id>             # Verify task exists
 ct dash                    # Project overview
 ```
 
-### Anti-Hallucination
+### Data Integrity
 - **CLI only** - Never edit `.claude/*.json` directly
 - **Verify state** - Use `ct list` before assuming
 - **Session discipline** - Start/end sessions properly

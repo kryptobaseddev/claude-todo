@@ -8,6 +8,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 TODO_FILE="${TODO_FILE:-.claude/todo.json}"
 CONFIG_FILE="${CONFIG_FILE:-.claude/todo-config.json}"
+CLAUDE_TODO_HOME="${CLAUDE_TODO_HOME:-$HOME/.claude-todo}"
 
 # Source logging library for should_use_color function
 LIB_DIR="${SCRIPT_DIR}/../lib"
@@ -384,6 +385,28 @@ STALE_TASKS=$(jq --argjson threshold "$STALE_THRESHOLD" '
 STALE_COUNT=$(echo "$STALE_TASKS" | jq 'length')
 if [[ "$STALE_COUNT" -gt 0 ]]; then
   log_warn "$STALE_COUNT task(s) pending for >$STALE_DAYS days"
+fi
+
+# 11. Check CLAUDE.md injection version
+if [[ -f "CLAUDE.md" ]] && [[ -f "$CLAUDE_TODO_HOME/templates/CLAUDE-INJECTION.md" ]]; then
+  CURRENT_INJECTION_VERSION=$(grep -oP 'CLAUDE-TODO:START v\K[0-9.]+' CLAUDE.md 2>/dev/null || echo "")
+  INSTALLED_INJECTION_VERSION=$(grep -oP 'CLAUDE-TODO:START v\K[0-9.]+' "$CLAUDE_TODO_HOME/templates/CLAUDE-INJECTION.md" 2>/dev/null || echo "")
+
+  if [[ -z "$CURRENT_INJECTION_VERSION" ]]; then
+    log_warn "No CLAUDE-TODO injection found in CLAUDE.md"
+  elif [[ -n "$INSTALLED_INJECTION_VERSION" ]] && [[ "$CURRENT_INJECTION_VERSION" != "$INSTALLED_INJECTION_VERSION" ]]; then
+    log_warn "CLAUDE.md injection outdated (${CURRENT_INJECTION_VERSION} → ${INSTALLED_INJECTION_VERSION}). Run: claude-todo init --update-claude-md"
+  else
+    log_info "CLAUDE.md injection current (v${CURRENT_INJECTION_VERSION})"
+  fi
+elif [[ -f "CLAUDE.md" ]]; then
+  # CLAUDE.md exists but no injection template to compare against
+  CURRENT_INJECTION_VERSION=$(grep -oP 'CLAUDE-TODO:START v\K[0-9.]+' CLAUDE.md 2>/dev/null || echo "")
+  if [[ -n "$CURRENT_INJECTION_VERSION" ]]; then
+    log_info "CLAUDE.md injection present (v${CURRENT_INJECTION_VERSION})"
+  else
+    log_warn "CLAUDE.md exists but has no claude-todo injection"
+  fi
 fi
 
 # Summary

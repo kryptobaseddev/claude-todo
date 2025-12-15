@@ -2,19 +2,20 @@
   "$schema": "./schemas/todo.schema.json",
   "version": "2.1.0",
   "project": "claude-todo",
-  "lastUpdated": "2025-12-13T22:38:17Z",
+  "lastUpdated": "2025-12-15T18:48:47Z",
   "_meta": {
-    "checksum": "b5a542a18ed58076",
+    "checksum": "3ccc1b3a04009789",
     "configVersion": "2.1.0",
     "lastSessionId": null,
-    "activeSession": null,
-    "lastModified": "2025-12-13T21:45:08Z"
+    "activeSession": "session_20251215_103332_633a1f",
+    "lastModified": "2025-12-15T18:49:26Z",
+    "version": "2.0.0"
   },
   "focus": {
     "currentTask": null,
     "blockedUntil": null,
-    "sessionNote": "Completed all documentation tasks. 31/32 tasks done. T012 (CLI wrapper refactoring) deferred.",
-    "nextAction": "Complete T028 documentation review"
+    "sessionNote": "=== SESSION: 2025-12-15 (v0.12.3 prep) ===\n\n## COMPLETED THIS SESSION\n- T209, T210, T212: Resolved contested claims\n- T205-T208, T211: Closed REFUTED claims with verdicts\n- Fixed _meta.version WARN (added v2.0.0)\n- Added CLAUDE.md injection check to validate command\n- Researched history.sh integration (T224 created)\n\n## KEY CHANGES\n1. schemas/config.schema.json: autoArchiveOnComplete\n2. scripts/validate.sh: CLAUDE.md injection version check\n3. docs/: Renamed Anti-Hallucination → Data Integrity\n4. .claude/todo.json: _meta.version = 2.0.0\n\n## CONSENSUS INVESTIGATION: COMPLETE\n- 30 tasks done (investigation + claims)\n- 9 pending (T204 plugin + T224 history)\n\n## NEXT VERSION\nv0.12.3: Schema/doc fixes + validate enhancement\nv0.13.0: History command integration (T224)",
+    "nextAction": "Review contested claims T209/T210/T212 from consensus investigation"
   },
   "tasks": [
     {
@@ -1496,6 +1497,969 @@
       "completedAt": "2025-12-13T19:53:09Z",
       "notes": [
         "[COMPLETED 2025-12-13T19:53:09Z] Added --add-phase flag to add-task.sh and update-task.sh. Phase validation now lists valid phases on error. add_new_phase() creates phases on-the-fly with auto-generated names."
+      ]
+    },
+    {
+      "id": "T178",
+      "title": "Add list --archived flag to view archived tasks",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-14T00:26:55Z",
+      "phase": "polish",
+      "description": "The archive file contains completed tasks (.archivedTasks[]) but there's no way to view them via CLI. Add --archived flag to list command that reads from todo-archive.json instead of todo.json. Should support same filters (--priority, --label, --phase) and output formats (--format json/text/table). Archive has 35+ tasks with full metadata (completedAt, archivedAt, originalPhase, etc.)",
+      "labels": [
+        "feature",
+        "list-command",
+        "ux",
+        "v0.10.2"
+      ],
+      "completedAt": "2025-12-14T01:02:57Z",
+      "notes": [
+        "[COMPLETED 2025-12-14T01:02:57Z] Implemented --archived flag for list command. Shows archived tasks from todo-archive.json with [ARCHIVED] indicator. Supports all existing filters (status, priority, label, format). Tested with text, JSON, and compact output formats."
+      ]
+    },
+    {
+      "id": "T179",
+      "title": "Add log show/list subcommands for viewing log entries",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-14T00:27:04Z",
+      "phase": "polish",
+      "description": "The log command currently only writes entries (log --action). Need read capability: 'log show' or 'log list' to view entries. Features needed: --last N (show last N entries), --action TYPE (filter by action type), --task-id ID (filter by task), --since DATE, --format json/text. Log has 153 entries with actions: status_changed (49), task_updated (46), session_start/end (9), task_archived (4), system_initialized (1).",
+      "labels": [
+        "feature",
+        "log-command",
+        "ux",
+        "v0.10.2"
+      ],
+      "completedAt": "2025-12-14T01:05:16Z",
+      "notes": [
+        "[COMPLETED 2025-12-14T01:05:16Z] Implemented log list and log show subcommands with filtering (action, task-id, actor, since), pagination (limit), and JSON/text output formats. Commands work correctly on properly migrated log entries."
+      ]
+    },
+    {
+      "id": "T180",
+      "title": "Fix log entry schema inconsistency (action vs operation field)",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-14T00:27:13Z",
+      "phase": "polish",
+      "description": "Log entries have inconsistent field names: 44 entries use 'operation' field (from add-task.sh, update-task.sh), while 109 entries use 'action' field (from log.sh). This breaks stats counting and log queries. Need to: 1) Standardize on 'action' field (matches log.sh and schema), 2) Add migration to fix existing entries, 3) Update add-task.sh/update-task.sh/complete-task.sh to use 'action' instead of 'operation'. Affected files: scripts/add-task.sh, scripts/update-task.sh, scripts/complete-task.sh, scripts/log.sh",
+      "labels": [
+        "bug",
+        "log-command",
+        "schema",
+        "v0.10.2"
+      ],
+      "completedAt": "2025-12-14T01:25:44Z",
+      "notes": [
+        "[COMPLETED 2025-12-14T01:25:44Z] Implemented log schema migration: operation→action, user→actor, task_id→taskId. Fixed ID format migration. 9/9 unit tests pass."
+      ]
+    },
+    {
+      "id": "T181",
+      "title": "Add history/report command for project completion timeline",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-14T00:27:24Z",
+      "phase": "polish",
+      "description": "Need a command to show what was accomplished over time. 'claude-todo history' or 'report' should show: 1) Timeline of completed tasks grouped by day/week, 2) Summary of work done in period (--period week/month/quarter), 3) Completion velocity trends, 4) Top contributors/labels in period. Data sources: todo-log.json (153 entries), todo-archive.json (35 tasks with completedAt), todo.json (done tasks). Output formats: text (human readable), json (scripting), markdown (export). Similar to 'git log --oneline' but for tasks.",
+      "labels": [
+        "feature",
+        "reporting",
+        "ux",
+        "v0.10.2"
+      ],
+      "completedAt": "2025-12-14T01:20:02Z",
+      "notes": [
+        "[COMPLETED 2025-12-14T01:20:02Z] Implemented history command with completion timeline, phase/label analytics, velocity metrics, and flexible date ranges. Supports text/JSON output formats."
+      ]
+    },
+    {
+      "id": "T182",
+      "title": "Enhance dashboard to show archived tasks and completion history",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-14T00:34:51Z",
+      "phase": "polish",
+      "description": "Dashboard currently shows done count (81) but no details about archived tasks (35 in archive) or recent completions. Add: 1) ARCHIVED section showing total archived count and recent archives, 2) RECENT COMPLETIONS section listing last 3-5 completed tasks with dates, 3) --include-archived flag to show archived stats, 4) Consider adding 'What was accomplished' summary. Should integrate with archive (todo-archive.json) and log (todo-log.json) data. Related to T178 (list --archived) and T181 (history command).",
+      "labels": [
+        "dash-command",
+        "feature",
+        "ux",
+        "v0.10.2"
+      ],
+      "completedAt": "2025-12-14T01:25:49Z",
+      "notes": [
+        "[COMPLETED 2025-12-14T01:25:49Z] Enhanced dashboard with Archive section and Recent Completions. Shows today/week/month completion counts. JSON output includes archive+completions."
+      ]
+    },
+    {
+      "id": "T183",
+      "title": "Design Nexus Loom web UI with Kanban board",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-14T04:38:14Z",
+      "description": "Create comprehensive UI/UX specification for Nexus Loom web interface including information architecture, Kanban board design, dashboard, dependency graph visualization, and CLI-web sync",
+      "labels": [
+        "design",
+        "nexus-loom",
+        "web-ui"
+      ],
+      "completedAt": "2025-12-14T04:42:54Z",
+      "notes": [
+        "[COMPLETED 2025-12-14T04:42:54Z] Completed comprehensive web UI specification including:\n- Information architecture (7 primary routes)\n- Kanban board design with 5 columns (weaving metaphor)\n- Thread card component specification\n- Dashboard layout with 6 widgets\n- Pattern view (dependency graph) design\n- Fabric view (archive timeline) design\n- Spool view (backlog prioritization)\n- Sessions view (history and analytics)\n- Visual design system (colors, typography, icons, spacing)\n- Responsive design strategy (mobile/tablet/desktop)\n- CLI-web sync architecture with conflict resolution\n- WCAG 2.1 AA accessibility requirements\n- Performance targets and optimization strategies\n- Technology stack recommendations\n- 6-phase implementation roadmap\n- ASCII wireframes for all major views\n- Complete component hierarchy\n- API endpoint specifications\n\nDeliverable: docs/nexus-loom/WEB-UI-SPEC.md (50,119 tokens)"
+      ]
+    },
+    {
+      "id": "T184",
+      "title": "Phase 1: Evidence Collection - Establish ground truth before analysis",
+      "status": "done",
+      "priority": "critical",
+      "createdAt": "2025-12-15T04:28:12Z",
+      "phase": "setup",
+      "description": "Foundation phase: Read all docs, analyze codebase, reproduce bugs, extract metrics. Must complete before specialist analysis begins. Exit criteria: All 4 doc files indexed, lib/*.sh analyzed, bug reproduction tests run, baseline metrics captured.",
+      "labels": [
+        "consensus-framework",
+        "investigation",
+        "phase-1"
+      ],
+      "notes": [
+        "2025-12-15 04:33:45 UTC: DOCS: claudedocs/CONSENSUS-FRAMEWORK-SPEC.md contains full framework design, evidence standards, artifact templates. Read this first when resuming.",
+        "2025-12-15 05:33:02 UTC: Phase 1 complete. Evidence baseline: claudedocs/consensus/phase1-evidence.md"
+      ],
+      "completedAt": "2025-12-15T05:33:02Z"
+    },
+    {
+      "id": "T185",
+      "title": "P1.1: Document corpus indexing - Read TODO_Task_Management.md, usage.md, CLAUDE.md",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T04:28:29Z",
+      "phase": "setup",
+      "description": "Read and index key documentation files that govern LLM behavior with claude-todo. Files: docs/TODO_Task_Management.md (primary LLM instructions), docs/usage.md (user-facing docs), CLAUDE.md (project-level injected instructions). Identify contradictions, gaps, and claims to validate.",
+      "labels": [
+        "consensus-framework",
+        "docs",
+        "phase-1"
+      ],
+      "depends": [
+        "T184"
+      ],
+      "notes": [
+        "2025-12-15 04:34:05 UTC: TARGET DOCS TO READ: docs/TODO_Task_Management.md (primary LLM instructions), docs/usage.md (user-facing), CLAUDE.md (project injected). Cross-reference for contradictions.",
+        "2025-12-15 05:32:48 UTC: Indexed 44 docs, ~545KB, 23,970 lines"
+      ],
+      "completedAt": "2025-12-15T05:32:48Z"
+    },
+    {
+      "id": "T186",
+      "title": "P1.2: Implementation reality map - Analyze lib/*.sh and scripts/*.sh via Serena",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T04:28:31Z",
+      "phase": "setup",
+      "description": "Use Serena MCP to analyze all library and script files. Map functions, their purposes, actual behaviors vs documented behaviors. Key files: lib/file-ops.sh (atomic writes, locking), lib/logging.sh, lib/validation.sh, lib/backup.sh, lib/output-format.sh. Identify feature existence vs claims.",
+      "labels": [
+        "code-analysis",
+        "consensus-framework",
+        "phase-1"
+      ],
+      "depends": [
+        "T184"
+      ],
+      "notes": [
+        "2025-12-15 04:34:07 UTC: TARGET CODE: lib/file-ops.sh (atomic writes, locking), lib/logging.sh, lib/validation.sh, lib/backup.sh, lib/output-format.sh, scripts/*.sh. Use Serena MCP for symbol analysis.",
+        "2025-12-15 05:32:51 UTC: 12 lib files (221KB), 25 scripts (397KB), 20,695 LOC"
+      ],
+      "completedAt": "2025-12-15T05:32:51Z"
+    },
+    {
+      "id": "T187",
+      "title": "P1.3: Bug reproduction tests - Attempt to trigger jq argument limit, scaling issues",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T04:28:33Z",
+      "phase": "setup",
+      "description": "Reproduce claimed bugs: 1) Create 100+ task JSON, test jq piping vs argument expansion, 2) Measure actual token growth at 10/50/100/500 tasks, 3) Calculate metadata overhead %. Document test methodology and results. If bug cannot be reproduced, mark claim for REFUTED consideration.",
+      "labels": [
+        "consensus-framework",
+        "phase-1",
+        "testing"
+      ],
+      "depends": [
+        "T184"
+      ],
+      "notes": [
+        "2025-12-15 05:32:52 UTC: TEST: jq limit PASS, exists MISSING, log rotate NOT INTEGRATED"
+      ],
+      "completedAt": "2025-12-15T05:32:53Z"
+    },
+    {
+      "id": "T188",
+      "title": "P1.4: Baseline metrics extraction - Measure file sizes, token counts, overhead percentages",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T04:28:34Z",
+      "phase": "setup",
+      "description": "Extract quantitative baseline: Current .claude/*.json file sizes, task count, metadata vs content ratio, log entry growth rate, archive utilization. These metrics are reference points for all scaling/overhead claims. Store in evidence dossier format.",
+      "labels": [
+        "consensus-framework",
+        "metrics",
+        "phase-1"
+      ],
+      "depends": [
+        "T184"
+      ],
+      "notes": [
+        "2025-12-15 05:32:54 UTC: METRIC: 125 tasks @ 845 bytes/task, 58.8% overhead"
+      ],
+      "completedAt": "2025-12-15T05:32:54Z"
+    },
+    {
+      "id": "T189",
+      "title": "Phase 2: Specialist Analysis - 5 parallel domain investigations",
+      "status": "done",
+      "priority": "critical",
+      "createdAt": "2025-12-15T04:28:41Z",
+      "phase": "core",
+      "description": "Deploy 5 specialist agents for deep domain analysis. Each agent owns specific claims and produces evidence dossiers. Agents: Technical Validation, Design Philosophy, Documentation, Implementation, Challenge (Red Team). All run in parallel after Phase 1 gate passes.",
+      "labels": [
+        "consensus-framework",
+        "investigation",
+        "phase-2"
+      ],
+      "depends": [
+        "T185",
+        "T186",
+        "T187",
+        "T188"
+      ],
+      "notes": [
+        "2025-12-15 04:33:46 UTC: DOCS: claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Agent Roles section). Each agent has defined expertise, owned claims, and evidence standards.",
+        "2025-12-15 05:34:22 UTC: Phase 2 starting: spawning 5 worker agents in parallel",
+        "2025-12-15 05:42:34 UTC: Phase 2 COMPLETE. 5 agents finished: T190 Technical, T191 Design, T192 Docs, T193 Impl, T194 Challenge. Artifacts: claudedocs/consensus/agent-*-findings.md"
+      ],
+      "completedAt": "2025-12-15T05:42:35Z"
+    },
+    {
+      "id": "T190",
+      "title": "P2.1: Technical Validation Agent - jq limits, scaling, overhead analysis",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T04:29:02Z",
+      "phase": "core",
+      "description": "OWNS CLAIMS: jq 'Argument list too long' at >100 tasks, 545KB→8M token projection, 59% metadata overhead. PROTOCOL: 1) Reproduce jq arg limit with 100+ tasks, 2) Measure token growth model (linear/log/exp), 3) Calculate metadata overhead breakdown (timestamps, IDs, status). DELIVERABLE: Technical evidence dossier with test results, growth model, overhead % breakdown.",
+      "labels": [
+        "agent-technical",
+        "consensus-framework",
+        "phase-2"
+      ],
+      "depends": [
+        "T189"
+      ],
+      "notes": [
+        "2025-12-15 04:34:09 UTC: CLAIMS OWNED: T205 (jq bug), T206 (8M projection), T207 (59% overhead). Evidence in claudedocs/CONSENSUS-FRAMEWORK-SPEC.md Evidence Standards section.",
+        "2025-12-15 05:41:37 UTC: COMPLETE: agent-technical-findings.md generated. Claims: T205=REFUTED (jq uses --argjson), T206=REFUTED (realistic 940K tokens), T207=CONTESTED (40.4% vs 59%)"
+      ],
+      "completedAt": "2025-12-15T05:41:49Z"
+    },
+    {
+      "id": "T191",
+      "title": "P2.2: Design Philosophy Agent - command set, UX, alternatives analysis",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T04:29:03Z",
+      "phase": "core",
+      "description": "OWNS CLAIMS: 23 commands too many, TodoWrite+TASKS.md simpler, auto-archive missing, exists command needed. PROTOCOL: 1) Command frequency analysis (core vs edge-case), 2) Cognitive load assessment, 3) TodoWrite comparison matrix, 4) User flow friction analysis. DELIVERABLE: Minimal command set proposal, capability matrix, workflow diagrams.",
+      "labels": [
+        "agent-design",
+        "consensus-framework",
+        "phase-2"
+      ],
+      "depends": [
+        "T189"
+      ],
+      "notes": [
+        "2025-12-15 04:34:10 UTC: CLAIMS OWNED: T208 (23 commands), T209 (TodoWrite simpler), T212 (auto-archive), T213 (exists cmd). Compare with ~/.claude/TODO_Task_Management.md command reference.",
+        "2025-12-15 05:41:38 UTC: COMPLETE: agent-design-findings.md generated. Claims: T208=REFUTED (23 < git/docker/kubectl), T209=CONTESTED (complementary not competitive)"
+      ],
+      "completedAt": "2025-12-15T05:41:50Z"
+    },
+    {
+      "id": "T192",
+      "title": "P2.3: Documentation Agent - cross-reference audit, LLM instruction effectiveness",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T04:29:04Z",
+      "phase": "core",
+      "description": "OWNS CLAIMS: CLI-only rule doesn't prevent ID hallucinations, JSON reads should be allowed. PROTOCOL: 1) Cross-reference TODO_Task_Management.md vs CLAUDE.md vs usage.md, 2) Build contradiction matrix, 3) Evaluate anti-hallucination effectiveness, 4) Analyze read-only safety. DELIVERABLE: Consistency audit, CLI-only evaluation, proposed doc revisions.",
+      "labels": [
+        "agent-docs",
+        "consensus-framework",
+        "phase-2"
+      ],
+      "depends": [
+        "T189"
+      ],
+      "notes": [
+        "2025-12-15 04:34:08 UTC: REVIEW: docs/TODO_Task_Management.md lines 5-13 (Anti-Hallucination Rules), CLAUDE.md Task Management section. Evaluate CLI-only rule effectiveness and JSON read safety.",
+        "2025-12-15 05:41:40 UTC: COMPLETE: agent-docs-findings.md generated. Claims: T210=CONTESTED (prevents corruption not semantic), T211=REFUTED (multi-writer staleness risk)"
+      ],
+      "completedAt": "2025-12-15T05:41:50Z"
+    },
+    {
+      "id": "T193",
+      "title": "P2.4: Implementation Agent - code archaeology, feature gap detection",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T04:29:05Z",
+      "phase": "core",
+      "description": "OWNS CLAIMS: Feature existence vs docs, log rotation missing, auto-archive implementation gaps. PROTOCOL: 1) Symbol analysis of all lib/*.sh and scripts/*.sh, 2) Feature gap detection (claimed vs implemented), 3) Reverse-engineer actual behaviors, 4) Dependency mapping. DELIVERABLE: Function catalog, feature existence matrix, implementation gap list.",
+      "labels": [
+        "agent-impl",
+        "consensus-framework",
+        "phase-2"
+      ],
+      "depends": [
+        "T189"
+      ],
+      "notes": [
+        "2025-12-15 04:34:11 UTC: CLAIMS OWNED: T212 (auto-archive impl), T214 (log rotation). Search scripts/archive.sh, lib/logging.sh for existing implementation. Use Serena find_symbol.",
+        "2025-12-15 05:41:41 UTC: COMPLETE: agent-impl-findings.md generated. Claims: T212=CONTESTED (config schema bug), T213=PROVEN (command missing), T214=PROVEN (orphaned code)"
+      ],
+      "completedAt": "2025-12-15T05:41:50Z"
+    },
+    {
+      "id": "T194",
+      "title": "P2.5: Challenge Agent (Red Team) - adversarial validation of all findings",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T04:29:06Z",
+      "phase": "core",
+      "description": "OWNS CLAIMS: None (adversarial role). PROTOCOL: 1) Review all other agents' findings, 2) Identify assumptions without evidence, 3) Find logical contradictions, 4) Propose counter-examples, 5) Stress-test conclusions. DELIVERABLE: Challenge dossier with holes poked, alternative interpretations, edge cases, strength ratings per claim.",
+      "labels": [
+        "agent-challenge",
+        "consensus-framework",
+        "phase-2",
+        "red-team"
+      ],
+      "depends": [
+        "T189"
+      ],
+      "notes": [
+        "2025-12-15 05:41:42 UTC: COMPLETE: agent-challenge-findings.md (628 lines). Top 5 challenges: T205 shell limits, T212 config gap, T206 tokens/bytes, methodology bias, T207 cherry-picking"
+      ],
+      "completedAt": "2025-12-15T05:41:50Z"
+    },
+    {
+      "id": "T195",
+      "title": "Phase 3: Challenge & Consensus - Round-robin adversarial validation",
+      "status": "done",
+      "priority": "critical",
+      "createdAt": "2025-12-15T04:29:16Z",
+      "phase": "core",
+      "description": "Adversarial validation phase. ROUND 1: Each agent presents findings (max 200 tokens/claim with evidence citations). ROUND 2: Cross-examination (each agent challenges 2 others, format: 'Claim X assumes Y, but evidence Z contradicts'). ROUND 3: Consensus voting (PROVEN: 4/5 + reproducible evidence, REFUTED: counter-evidence invalidates, CONTESTED: 3/5 split). Gate: All 10 claims have verdict.",
+      "labels": [
+        "consensus",
+        "consensus-framework",
+        "phase-3"
+      ],
+      "depends": [
+        "T190",
+        "T191",
+        "T192",
+        "T193",
+        "T194"
+      ],
+      "notes": [
+        "2025-12-15 04:33:47 UTC: DOCS: claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Consensus Rules section). Voting thresholds: PROVEN=4/5, REFUTED=counter-evidence, CONTESTED=3/5 split.",
+        "2025-12-15 05:45:53 UTC: PREP: All Phase 1+2 complete. 6 artifacts ready. 4 contested claims need resolution. Synthesis Agent: project-supervisor-orchestrator",
+        "2025-12-15 16:03:17 UTC: Starting Phase 3: Spawning Synthesis Agent to consolidate 5 worker outputs",
+        "2025-12-15 16:09:38 UTC: Phase 3 complete. Outputs: synthesis-conflicts.md, synthesis-voting-matrix.md. HITL gate required for 3 contested issues."
+      ],
+      "completedAt": "2025-12-15T16:09:40Z"
+    },
+    {
+      "id": "T196",
+      "title": "P3.1: Initial Presentation Round - All agents present findings with evidence",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T04:29:29Z",
+      "phase": "core",
+      "description": "Each specialist agent (1-4) presents findings. FORMAT: Max 200 tokens per claim, evidence citations required (file:line, test results, measurements). Challenge Agent observes and takes notes. Gate: All 4 agents have presented, Challenge Agent has critique prepared.",
+      "labels": [
+        "consensus-framework",
+        "phase-3",
+        "round-1"
+      ],
+      "depends": [
+        "T195"
+      ],
+      "notes": [
+        "2025-12-15 16:09:26 UTC: DOC: claudedocs/consensus/synthesis-voting-matrix.md - All agents presented findings"
+      ],
+      "completedAt": "2025-12-15T16:09:26Z"
+    },
+    {
+      "id": "T197",
+      "title": "P3.2: Cross-Examination Round - Agents challenge each other's claims",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T04:29:31Z",
+      "phase": "core",
+      "description": "Each agent challenges 2 other agents' claims. FORMAT: 'Claim X assumes Y, but evidence Z contradicts.' Challenged agent responds with counter-evidence or concession. Challenge Agent presents overall critique. Gate: All challenges responded to, no unaddressed contradictions.",
+      "labels": [
+        "consensus-framework",
+        "phase-3",
+        "round-2"
+      ],
+      "depends": [
+        "T195"
+      ],
+      "notes": [
+        "2025-12-15 16:09:28 UTC: DOC: claudedocs/consensus/synthesis-conflicts.md - Cross-examination complete"
+      ],
+      "completedAt": "2025-12-15T16:09:28Z"
+    },
+    {
+      "id": "T198",
+      "title": "P3.3: Consensus Voting - Classify all 10 claims as PROVEN/REFUTED/CONTESTED",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T04:29:32Z",
+      "phase": "core",
+      "description": "VOTING RULES: PROVEN (4/5 agents + reproducible evidence), REFUTED (counter-evidence invalidates OR 2/5 agree), CONTESTED (3/5 split after 2 rounds). DEADLOCK: Implementation Agent runs tie-breaker test. If still deadlock, mark DEFERRED. Gate: All 10 claims classified, deadlocks resolved or documented.",
+      "labels": [
+        "consensus-framework",
+        "phase-3",
+        "voting"
+      ],
+      "depends": [
+        "T195"
+      ],
+      "notes": [
+        "2025-12-15 16:09:37 UTC: VOTING COMPLETE - PROVEN: T213,T214 | REFUTED: T205,T208,T211 | CONTESTED: T207,T209,T210,T212 | UNCLEAR: T206"
+      ],
+      "completedAt": "2025-12-15T16:09:37Z"
+    },
+    {
+      "id": "T199",
+      "title": "Phase 4: Synthesis - Generate final artifacts and recommendations",
+      "status": "done",
+      "priority": "critical",
+      "createdAt": "2025-12-15T04:29:39Z",
+      "phase": "polish",
+      "description": "Final output generation. ARTIFACTS: 1) Consensus Report (methodology, proven/refuted/contested claims, recommendations), 2) Feature Specs (for validated gaps like auto-archive, exists cmd), 3) Documentation Corrections (diffs for inaccurate claims), 4) Evidence Dossiers (per-claim transparency archive). Gate: All artifacts published, evidence archived.",
+      "labels": [
+        "consensus-framework",
+        "phase-4",
+        "synthesis"
+      ],
+      "depends": [
+        "T196",
+        "T197",
+        "T198"
+      ],
+      "notes": [
+        "2025-12-15 04:33:48 UTC: DOCS: claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Output Artifacts section). Templates for: consensus report, feature specs, doc corrections, evidence dossiers.",
+        "2025-12-15 16:40:16 UTC: Starting Phase 4: Generating final artifacts with HITL decisions incorporated",
+        "2025-12-15 16:50:12 UTC: Phase 4 complete. All artifacts generated: CONSENSUS-REPORT.md, 2 feature specs, doc-corrections.md, evidence-dossiers.md"
+      ],
+      "completedAt": "2025-12-15T16:50:12Z"
+    },
+    {
+      "id": "T200",
+      "title": "P4.1: Generate Consensus Report - Final verdicts with evidence citations",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T04:29:55Z",
+      "phase": "polish",
+      "description": "Create claude-todo-consensus-report.md with: Methodology section, Proven Claims (evidence, consensus count, recommendation), Refuted Claims (counter-evidence, correction), Contested Claims (both positions, next steps), Summary Statistics (claims investigated, proven/refuted/contested counts).",
+      "labels": [
+        "artifact-report",
+        "consensus-framework",
+        "phase-4"
+      ],
+      "depends": [
+        "T199"
+      ],
+      "notes": [
+        "2025-12-15 16:49:57 UTC: DOC: claudedocs/consensus/CONSENSUS-REPORT.md"
+      ],
+      "completedAt": "2025-12-15T16:49:57Z"
+    },
+    {
+      "id": "T201",
+      "title": "P4.2: Write Feature Specifications - For validated gaps (auto-archive, exists, log rotation)",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T04:29:56Z",
+      "phase": "polish",
+      "description": "For each PROVEN gap, create feature spec: Justification (evidence from consensus), Command syntax, Expected behavior, Implementation location (which files to modify), Test cases. Priority: auto-archive (config-based), exists command (ID validation), log rotation (monthly files).",
+      "labels": [
+        "artifact-specs",
+        "consensus-framework",
+        "phase-4"
+      ],
+      "depends": [
+        "T199"
+      ],
+      "notes": [
+        "2025-12-15 16:49:59 UTC: DOC: feature-spec-exists-command.md, feature-spec-log-rotation.md"
+      ],
+      "completedAt": "2025-12-15T16:49:59Z"
+    },
+    {
+      "id": "T202",
+      "title": "P4.3: Generate Documentation Corrections - Diffs for proven inaccuracies",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T04:29:58Z",
+      "phase": "polish",
+      "description": "For each REFUTED or PROVEN doc claim, generate diff: Original text, Corrected text, Rationale. Primary targets: TODO_Task_Management.md (CLI-only rule clarification, JSON read allowance), usage.md (command categorization), CLAUDE.md (injected instructions accuracy).",
+      "labels": [
+        "artifact-docs",
+        "consensus-framework",
+        "phase-4"
+      ],
+      "depends": [
+        "T199"
+      ],
+      "notes": [
+        "2025-12-15 16:50:08 UTC: DOC: claudedocs/consensus/doc-corrections.md"
+      ],
+      "completedAt": "2025-12-15T16:50:08Z"
+    },
+    {
+      "id": "T203",
+      "title": "P4.4: Archive Evidence Dossiers - Per-claim transparency records",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-15T04:29:59Z",
+      "phase": "polish",
+      "description": "For each of 10 claims, create evidence dossier: Claim statement, Investigation method, Test results (with commands run), Verdict, Recommendation. Store in claudedocs/ or .claude/evidence/ for future reference and reproducibility.",
+      "labels": [
+        "artifact-evidence",
+        "consensus-framework",
+        "phase-4"
+      ],
+      "depends": [
+        "T199"
+      ],
+      "notes": [
+        "2025-12-15 16:50:10 UTC: DOC: claudedocs/consensus/evidence-dossiers.md"
+      ],
+      "completedAt": "2025-12-15T16:50:10Z"
+    },
+    {
+      "id": "T204",
+      "title": "FEATURE: Multi-Phase Consensus Research Framework Plugin",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-15T04:30:21Z",
+      "phase": "setup",
+      "description": "Build a reusable plugin/command for claude-todo that implements the Multi-Phase Consensus Research Framework. This would be a programmatically callable tool with prompt-style instructions for any project to use when investigating claims, validating features, or planning complex work.\n\n## CONCEPT\nA repeatable, structured process for rigorous multi-agent investigation with:\n- Configurable phases (Discovery → Adversarial → Consolidation → Validation → Final)\n- Agent role definitions (Advocate/Challenger/Arbiter pattern)\n- Gate-based progression (scope approval, conflict resolution, archive approval, completeness sign-off)\n- Evidence standards and consensus thresholds\n- Artifact generation (reports, specs, corrections)\n\n## PROPOSED STRUCTURE\n| Round | Purpose | Agents | Gate |\n|-------|---------|--------|------|\n| Round 1 | Discovery & Inventory | 6 inventory agents | Gate 1: Scope approval |\n| Round 2 | Adversarial Challenge | 15 (5 domains × Advocate/Challenger/Arbiter) | Gate 2: Conflict resolution |\n| Round 3 | Consolidation | 7 merge agents | Gate 3: Archive approval |\n| Round 4 | Validation | 3 fresh validation agents | Gate 4: Completeness sign-off |\n| Round 5 | Final Spec | 2 finalization agents | Gate 5: Implementation GO |\n\n## INVOCATION\n```bash\nclaude-todo research --framework consensus \\\n  --claims 'claim1.md,claim2.md' \\\n  --evidence-dir ./evidence \\\n  --output-dir ./consensus-output \\\n  --agents 5 \\\n  --threshold 0.8\n```\n\n## KEY FEATURES\n1. Prompt-driven agent deployment (subagent_type patterns)\n2. Round-robin challenge protocol with configurable rounds\n3. Evidence standards (reproducible tests, measurements, citations)\n4. Consensus thresholds (4/5 default, configurable)\n5. Artifact templates (report, feature spec, doc correction, evidence dossier)\n6. Gate progression with approval checkpoints\n7. Deadlock resolution mechanisms\n8. Context handoff for long investigations\n\n## IMPLEMENTATION NOTES\n- Could be a Claude Code plugin or claude-todo subcommand\n- Needs integration with Task tool for agent deployment\n- Should support both interactive and batch modes\n- Evidence dossiers should be machine-readable (JSON) and human-readable (MD)\n- Consider Serena MCP integration for code analysis phases\n\n## SUCCESS CRITERIA\n- Repeatable: Same inputs produce consistent process\n- Valuable output: Single consolidated report, not scattered docs\n- Configurable: Adjust agents, rounds, thresholds per project\n- Transparent: Full evidence trail for all decisions",
+      "labels": [
+        "consensus-framework",
+        "feature-request",
+        "future",
+        "plugin"
+      ],
+      "notes": [
+        "2025-12-15 04:33:49 UTC: DOCS: claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Future Plugin Design section). Contains proposed invocation syntax, key features, success criteria for reusable plugin.",
+        "2025-12-15 05:01:35 UTC: ASSESSMENT: Current spec (v1.3.0) provides excellent reference implementation but is hardcoded to this investigation. For reusable plugin, need abstraction layer.",
+        "2025-12-15 05:01:42 UTC: SUFFICIENT: Process structure, Agent roles, Subagent mappings, Evidence standards, HITL gate triggers, Anti-consensus rules, Note conventions - all documented in CONSENSUS-FRAMEWORK-SPEC.md v1.3.0",
+        "2025-12-15 05:01:44 UTC: MISSING: Configuration schema, Parameterized prompt templates, State management, Output JSON schemas, Integration specs, Error recovery, Invocation modes - need abstraction for reusability",
+        "2025-12-15 05:03:32 UTC: SUBTASKS CREATED: T215 (Config Schema), T216 (Prompt Templates), T217 (State Management), T218 (Output Schemas), T219 (Integration Points), T220 (Error Recovery), T221 (Invocation Modes)",
+        "2025-12-15 16:53:33 UTC: DEFERRED: Plugin implementation after core fixes. Depends on T213, T214 implementation first. SPEC: CONSENSUS-FRAMEWORK-SPEC.md (Future Plugin Design section)"
+      ],
+      "files": [
+        "claudedocs/CONSENSUS-FRAMEWORK-SPEC.md"
+      ]
+    },
+    {
+      "id": "T205",
+      "title": "CLAIM-01: jq 'Argument list too long' at >100 tasks",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-15T04:30:42Z",
+      "description": "CLAIM: jq fails with 'Argument list too long' error when processing >100 tasks. INITIAL ASSESSMENT: LIKELY FALSE - technically impossible via pipe. OWNED BY: Technical Validation Agent (T190). EVIDENCE NEEDED: Reproducible test case with 100+ tasks. TEST: Create large todo.json, run 'claude-todo list --format json | jq .tasks[]'. STANDARD: Same result in 3/3 runs OR code analysis confirms.",
+      "labels": [
+        "claim",
+        "consensus-framework",
+        "technical"
+      ],
+      "notes": [
+        "2025-12-15 05:42:03 UTC: P2 VERDICT: REFUTED (HIGH confidence). Uses --argjson stdin pattern. 127 tasks running. Technical: shell variable limit ~2000 tasks. Challenge: needs stress test.",
+        "2025-12-15 16:53:18 UTC: VERDICT: REFUTED (5/5) - jq uses stdin, no arg limit. DOC: evidence-dossiers.md#t205",
+        "2025-12-15 18:48:46 UTC: VERDICT: REFUTED - See CONSENSUS-REPORT.md for evidence"
+      ],
+      "completedAt": "2025-12-15T18:48:46Z"
+    },
+    {
+      "id": "T206",
+      "title": "CLAIM-02: 545KB → 8M tokens in 6 months projection",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-15T04:30:43Z",
+      "description": "CLAIM: Current 545KB storage projects to 8M tokens in 6 months. INITIAL ASSESSMENT: FALSE - unrealistic linear extrapolation. OWNED BY: Technical Validation Agent (T190). EVIDENCE NEEDED: Growth model with actual data. TEST: Measure token growth at 10/50/100/500 tasks, fit model. STANDARD: R² > 0.9 OR bounded complexity analysis.",
+      "labels": [
+        "claim",
+        "consensus-framework",
+        "technical"
+      ],
+      "notes": [
+        "2025-12-15 05:42:04 UTC: P2 VERDICT: REFUTED (HIGH). Dev rate 65.8 tasks/day, realistic 5-10. Corrected projection: 940K tokens. Challenge: tokens vs bytes ambiguity.",
+        "2025-12-15 16:40:03 UTC: HITL DECISION: REFUTED - Storage interpretation applies. Growth is ~12KB/year, not 8M tokens.",
+        "2025-12-15 18:48:46 UTC: VERDICT: REFUTED - See CONSENSUS-REPORT.md for evidence"
+      ],
+      "completedAt": "2025-12-15T18:48:46Z"
+    },
+    {
+      "id": "T207",
+      "title": "CLAIM-03: 59% metadata overhead is excessive",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-15T04:30:44Z",
+      "description": "CLAIM: For every 1 token of useful content, 1.4 tokens of metadata. INITIAL ASSESSMENT: PARTIAL - metadata necessary but could optimize. OWNED BY: Technical Validation Agent (T190). EVIDENCE NEEDED: Actual overhead calculation with breakdown. TEST: Analyze .claude/todo.json, separate metadata vs content bytes. STANDARD: Reproducible measurement with methodology.",
+      "labels": [
+        "claim",
+        "consensus-framework",
+        "technical"
+      ],
+      "notes": [
+        "2025-12-15 05:42:05 UTC: P2 VERDICT: CONTESTED (MEDIUM). 59% by title+desc, 40.4% by user-facing data. Technical vs Challenge debate on methodology. Industry comparison needed.",
+        "2025-12-15 16:40:07 UTC: HITL DECISION: REFUTED - 59% overhead acceptable for feature set provided.",
+        "2025-12-15 18:48:46 UTC: VERDICT: REFUTED - See CONSENSUS-REPORT.md for evidence"
+      ],
+      "completedAt": "2025-12-15T18:48:46Z"
+    },
+    {
+      "id": "T208",
+      "title": "CLAIM-04: 23 commands is too many for LLM usage",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-15T04:30:45Z",
+      "description": "CLAIM: LLMs realistically need 6-11 commands, rest is noise causing confusion. INITIAL ASSESSMENT: PARTIAL - doc issue, not feature issue. OWNED BY: Design Philosophy Agent (T191). EVIDENCE NEEDED: Command frequency analysis, minimal set proposal. TEST: Analyze which commands are core vs edge-case. STANDARD: Comparative analysis with measurable advantage.",
+      "labels": [
+        "claim",
+        "consensus-framework",
+        "design"
+      ],
+      "notes": [
+        "2025-12-15 05:42:06 UTC: P2 VERDICT: REFUTED (HIGH). 23 < git(170), docker(44), kubectl(43). Well-organized taxonomy. Challenge: opinion not technical fact.",
+        "2025-12-15 16:53:18 UTC: VERDICT: REFUTED - 23 commands appropriate for feature set. DOC: evidence-dossiers.md#t208",
+        "2025-12-15 18:48:47 UTC: VERDICT: REFUTED - See CONSENSUS-REPORT.md for evidence"
+      ],
+      "completedAt": "2025-12-15T18:48:47Z"
+    },
+    {
+      "id": "T209",
+      "title": "CLAIM-05: TodoWrite + TASKS.md is simpler than claude-todo",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-15T04:30:47Z",
+      "description": "CLAIM: Hybrid TodoWrite + TASKS.md approach is simpler and more LLM-native. INITIAL ASSESSMENT: FALSE - actually more complex for same features. OWNED BY: Design Philosophy Agent (T191). EVIDENCE NEEDED: Feature capability matrix, complexity comparison. TEST: Map features of both approaches, count steps for common workflows. STANDARD: Alternative must have measurable advantage.",
+      "labels": [
+        "claim",
+        "consensus-framework",
+        "design"
+      ],
+      "notes": [
+        "2025-12-15 05:42:07 UTC: P2 VERDICT: CONTESTED (HIGH). TRUE for initial simplicity, FALSE as replacement. Systems are complementary. export --format todowrite bridges them.",
+        "2025-12-15 16:53:18 UTC: VERDICT: CONTESTED - Context-dependent comparison. DOC: evidence-dossiers.md#t209",
+        "2025-12-15 18:38:48 UTC: VERDICT: CONTESTED - Systems are complementary (TodoWrite for ephemeral session tasks, claude-todo for project management). No action needed."
+      ],
+      "completedAt": "2025-12-15T18:38:48Z"
+    },
+    {
+      "id": "T210",
+      "title": "CLAIM-06: CLI-only rule doesn't prevent ID hallucinations",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-15T04:31:05Z",
+      "description": "CLAIM: CLI-only enforcement doesn't prevent LLMs from hallucinating task IDs before verification. INITIAL ASSESSMENT: PARTIAL - CLI solves integrity, not hallucination (different problems). OWNED BY: Documentation Agent (T192). EVIDENCE NEEDED: Evaluate what CLI-only actually prevents. TEST: Analyze anti-hallucination rules in TODO_Task_Management.md. STANDARD: Code behavior analysis.",
+      "labels": [
+        "claim",
+        "consensus-framework",
+        "docs"
+      ],
+      "notes": [
+        "2025-12-15 05:42:20 UTC: P2 VERDICT: CONTESTED. Prevents ID duplication (write), doesn't prevent semantic hallucinations. Part of multi-layer strategy. Challenge: attacks strawman.",
+        "2025-12-15 16:40:05 UTC: HITL DECISION: CONTESTED - Data integrity placement OK. ACTION: Verify anti-hallucination section has correct placement.",
+        "[COMPLETED 2025-12-15T18:38:28Z] Renamed 'Anti-Hallucination Rules' to 'Data Integrity Rules' in docs/TODO_Task_Management.md and ~/.claude/TODO_Task_Management.md. Updated rationale to explain staleness prevention in multi-writer environment. Updated CLAUDE-INJECTION.md template."
+      ],
+      "completedAt": "2025-12-15T18:38:28Z"
+    },
+    {
+      "id": "T211",
+      "title": "CLAIM-07: JSON reads should be allowed (only writes via CLI)",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-15T04:31:07Z",
+      "description": "CLAIM: Allowing JSON reads doesn't compromise data integrity, only writes need CLI enforcement. INITIAL ASSESSMENT: VALID - read-only doesn't compromise integrity. OWNED BY: Documentation Agent (T192). EVIDENCE NEEDED: Safety analysis of read operations. TEST: What harm can JSON reads cause? None if no writes. STANDARD: Logical analysis of data integrity requirements.",
+      "labels": [
+        "claim",
+        "consensus-framework",
+        "docs"
+      ],
+      "notes": [
+        "2025-12-15 05:42:21 UTC: P2 VERDICT: REFUTED. Multi-writer (TodoWrite+CLI) creates staleness risk. Rationale incomplete - should cite staleness not checksums. Prohibition correct.",
+        "2025-12-15 16:53:18 UTC: VERDICT: REFUTED - JSON reads already allowed per docs. DOC: evidence-dossiers.md#t211",
+        "2025-12-15 18:48:47 UTC: VERDICT: REFUTED - See CONSENSUS-REPORT.md for evidence"
+      ],
+      "completedAt": "2025-12-15T18:48:47Z"
+    },
+    {
+      "id": "T212",
+      "title": "CLAIM-08: Auto-archive feature is missing",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-15T04:31:08Z",
+      "description": "CLAIM: No automatic archival causes 79% done tasks to accumulate, contributing to bloat. INITIAL ASSESSMENT: TRUE - legitimate feature gap. OWNED BY: Design Philosophy Agent (T191) + Implementation Agent (T193). EVIDENCE NEEDED: Code search confirming no auto-archive. TEST: Search scripts for automatic archival logic. STANDARD: No implementation found + doc doesn't mention.",
+      "labels": [
+        "claim",
+        "consensus-framework",
+        "feature-gap"
+      ],
+      "notes": [
+        "2025-12-15 05:42:22 UTC: P2 VERDICT: CONTESTED. Code exists (complete-task.sh:318) but config schema mismatch - auto_archive_on_complete not in schema. Feature implemented but inaccessible.",
+        "2025-12-15 16:53:19 UTC: VERDICT: CONTESTED - Feature exists but config schema bug (wrong field name). DOC: evidence-dossiers.md#t212",
+        "[COMPLETED 2025-12-15T18:36:59Z] Fixed auto-archive schema mismatch: added autoArchiveOnComplete to schema/template/docs. Code now matches schema convention (camelCase)."
+      ],
+      "completedAt": "2025-12-15T18:36:59Z"
+    },
+    {
+      "id": "T213",
+      "title": "CLAIM-09: Missing 'exists' command for ID validation",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-15T04:31:09Z",
+      "description": "CLAIM: No cheap verification mechanism exists - LLM must reference T091 before verifying it exists. INITIAL ASSESSMENT: TRUE - legitimate feature request. OWNED BY: Design Philosophy Agent (T191). EVIDENCE NEEDED: Command list audit. TEST: Search for ID validation command in help/docs. STANDARD: No implementation found. RECOMMENDATION: Add 'claude-todo exists T091' returning 0/1.",
+      "labels": [
+        "claim",
+        "consensus-framework",
+        "feature-gap"
+      ],
+      "notes": [
+        "2025-12-15 05:42:24 UTC: P2 VERDICT: PROVEN TRUE. Command doesn't exist. Workaround: jq query. DRY violation: 4+ scripts duplicate existence check. Low priority but valid gap.",
+        "2025-12-15 16:53:20 UTC: VERDICT: PROVEN - Missing exists command. SPEC: feature-spec-exists-command.md",
+        "2025-12-15 17:19:28 UTC: IMPLEMENTED: scripts/exists.sh + install.sh updates. All tests pass: basic, verbose, quiet, json, archive search modes.",
+        "[COMPLETED 2025-12-15T17:19:39Z] Implemented exists command per feature spec. All tests pass."
+      ],
+      "completedAt": "2025-12-15T17:19:39Z"
+    },
+    {
+      "id": "T214",
+      "title": "CLAIM-10: Log rotation is missing",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-15T04:31:10Z",
+      "description": "CLAIM: Log file grows unbounded (144 entries/day, 409KB in 2.4 days) with no rotation. INITIAL ASSESSMENT: TRUE - legitimate feature gap. OWNED BY: Implementation Agent (T193). EVIDENCE NEEDED: Code search for log rotation. TEST: Analyze lib/logging.sh and log.sh for rotation logic. STANDARD: No implementation found. RECOMMENDATION: Monthly rotation, keep 30 days active.",
+      "labels": [
+        "claim",
+        "consensus-framework",
+        "feature-gap"
+      ],
+      "notes": [
+        "2025-12-15 05:42:24 UTC: P2 VERDICT: PROVEN TRUE. rotate_log() exists at logging.sh:339 but never called. Orphaned code. Current: 279KB log. Medium-term risk, not urgent.",
+        "2025-12-15 16:53:20 UTC: VERDICT: PROVEN - Log rotation orphaned. SPEC: feature-spec-log-rotation.md",
+        "2025-12-15 17:29:12 UTC: IMPLEMENTED: session.sh integration + log rotate subcommand. Auto-rotation on session end, manual via 'claude-todo log rotate'",
+        "[COMPLETED 2025-12-15T17:29:13Z] Log rotation integrated per feature spec. Session.sh calls check_and_rotate_log, manual command via log rotate."
+      ],
+      "completedAt": "2025-12-15T17:29:13Z"
+    },
+    {
+      "id": "T215",
+      "title": "T204.1: Configuration Schema Design",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-15T05:01:58Z",
+      "phase": "setup",
+      "description": "Design YAML/JSON configuration schema for reusable consensus framework plugin.\n\n## DELIVERABLE\n`schemas/consensus-research-config.schema.json`\n\n## SCHEMA MUST DEFINE\n- claims: Array of claim definitions (id, title, description, category)\n- evidence_sources: Paths to evidence directories/files\n- agents: Agent configuration (count, types, subagent_type mappings)\n- thresholds: Consensus thresholds (proven, refuted, contested)\n- output: Output directory and file naming conventions\n- gates: HITL gate configuration (which gates, timeout, blocking)\n- phases: Phase definitions (which phases to run, order)\n\n## EXAMPLE CONFIG\n```yaml\nframework: consensus-research\nversion: 1.0\ninvestigation:\n  name: \"claude-todo-claims\"\n  claims_file: ./claims.yaml\n  evidence_dir: ./evidence\n  output_dir: ./consensus-output\nagents:\n  worker_count: 5\n  synthesis_type: project-supervisor-orchestrator\nthresholds:\n  proven: 0.8  # 4/5\n  refuted: 0.4  # 2/5\ngates:\n  - after_phase: 1\n    blocking: true\n    timeout: 24h\n```\n\n## REFERENCES\n- claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Execution Protocol section)\n- T204 parent task for context",
+      "labels": [
+        "consensus-framework",
+        "design",
+        "plugin"
+      ],
+      "depends": [
+        "T204"
+      ],
+      "notes": [
+        "2025-12-15 05:06:07 UTC: DOC: claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Execution Protocol, Subagent Mappings)"
+      ],
+      "files": [
+        "claudedocs/CONSENSUS-FRAMEWORK-SPEC.md"
+      ]
+    },
+    {
+      "id": "T216",
+      "title": "T204.2: Parameterized Prompt Templates",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-15T05:02:11Z",
+      "phase": "setup",
+      "description": "Create parameterized prompt templates for all 6 agent types.\n\n## DELIVERABLE\n`templates/consensus-research/` directory with:\n- agent-technical.prompt.md\n- agent-design.prompt.md\n- agent-docs.prompt.md\n- agent-impl.prompt.md\n- agent-challenge.prompt.md\n- agent-synthesis.prompt.md\n\n## TEMPLATE VARIABLES\nEach template must use placeholders:\n- `{INVESTIGATION_NAME}` - Name of the investigation\n- `{CLAIM_SET}` - List of claims assigned to this agent\n- `{EVIDENCE_PATH}` - Path to phase 1 evidence file\n- `{OUTPUT_PATH}` - Path where agent writes findings\n- `{EVIDENCE_STANDARDS}` - Standards for this claim type\n- `{CONSENSUS_THRESHOLD}` - Voting threshold\n- `{OTHER_AGENT_OUTPUTS}` - Paths to other agent files (for synthesis)\n\n## EXAMPLE TEMPLATE\n```markdown\n# {AGENT_ROLE} Agent\n\nYou are the {AGENT_ROLE} for the {INVESTIGATION_NAME} investigation.\n\n## Your Assigned Claims\n{CLAIM_SET}\n\n## Evidence Baseline\nRead evidence from: {EVIDENCE_PATH}\n\n## Your Task\nInvestigate your assigned claims using {EVIDENCE_STANDARDS}.\n\n## Output\nWrite findings to: {OUTPUT_PATH}\n\n## Output Format\n[structured template...]\n```\n\n## REFERENCES\n- claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Agent Roles, Evidence Passing Protocol)",
+      "labels": [
+        "consensus-framework",
+        "design",
+        "plugin"
+      ],
+      "depends": [
+        "T204"
+      ],
+      "notes": [
+        "2025-12-15 05:06:08 UTC: DOC: claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Agent Roles, Evidence Passing Protocol)"
+      ],
+      "files": [
+        "claudedocs/CONSENSUS-FRAMEWORK-SPEC.md"
+      ]
+    },
+    {
+      "id": "T217",
+      "title": "T204.3: State Management Design",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-15T05:02:26Z",
+      "phase": "setup",
+      "description": "Design state management system for tracking investigation progress.\n\n## DELIVERABLE\n`schemas/consensus-research-state.schema.json` + implementation spec\n\n## STATE FILE MUST TRACK\n- current_phase: Which phase is active (1-4)\n- phase_status: Per-phase completion status\n- claims: Per-claim status and verdicts\n- agents: Which agents have completed, their output paths\n- gates: Gate status (pending, approved, rejected)\n- questions: Collected questions with severity and status\n- suspicious_consensus: Flagged unanimous agreements\n- session: Current session ID, start time, last activity\n\n## STATE TRANSITIONS\n```\nPhase 1: pending → active → evidence_collected → gate_1_pending → gate_1_approved\nPhase 2: pending → agents_spawned → agents_complete → gate_2_pending → gate_2_approved\nPhase 3: pending → synthesis_active → voting_complete → gate_3_pending → gate_3_approved\nPhase 4: pending → artifacts_generating → complete → gate_4_approved\n```\n\n## PERSISTENCE\n- State file: `.consensus-research/state.json`\n- Atomic writes (temp file → validate → rename)\n- Checksum for integrity\n- Recovery from interrupted state\n\n## INTEGRATION WITH CLAUDE-TODO\n- Optionally create claude-todo tasks from state\n- Sync state ↔ task status\n- Export state to TodoWrite format\n\n## REFERENCES\n- claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Completion Criteria, Position Identification)",
+      "labels": [
+        "consensus-framework",
+        "design",
+        "plugin"
+      ],
+      "depends": [
+        "T204"
+      ],
+      "notes": [
+        "2025-12-15 05:06:09 UTC: DOC: claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Completion Criteria, Position Identification, Session Protocols)"
+      ],
+      "files": [
+        "claudedocs/CONSENSUS-FRAMEWORK-SPEC.md"
+      ]
+    },
+    {
+      "id": "T218",
+      "title": "T204.4: Output JSON Schemas",
+      "status": "pending",
+      "priority": "medium",
+      "createdAt": "2025-12-15T05:02:39Z",
+      "phase": "setup",
+      "description": "Define formal JSON schemas for all framework outputs.\n\n## DELIVERABLES\n`schemas/consensus-research/` directory:\n- voting-matrix.schema.json\n- evidence-dossier.schema.json\n- agent-findings.schema.json\n- questions.schema.json\n- consensus-report.schema.json\n\n## VOTING MATRIX SCHEMA\n```json\n{\n  \"claims\": [\n    {\n      \"id\": \"T205\",\n      \"title\": \"jq arg limit\",\n      \"votes\": {\n        \"technical\": \"REFUTED\",\n        \"design\": \"REFUTED\",\n        \"docs\": \"REFUTED\",\n        \"impl\": \"REFUTED\",\n        \"challenge\": \"REFUTED\"\n      },\n      \"consensus\": 5,\n      \"verdict\": \"REFUTED\",\n      \"evidence\": [\"phase1-evidence.md:L45\"]\n    }\n  ]\n}\n```\n\n## EVIDENCE DOSSIER SCHEMA\nPer-claim with: claim statement, investigation method, test results, citations, verdict, recommendation\n\n## AGENT FINDINGS SCHEMA\nStructured output format for worker agents: claims addressed, evidence found, verdict per claim, confidence level, citations\n\n## DUAL FORMAT\nAll outputs should generate both:\n- .json (machine-readable, for state tracking)\n- .md (human-readable, for review)\n\n## REFERENCES\n- claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Output Artifacts section)",
+      "labels": [
+        "consensus-framework",
+        "design",
+        "plugin"
+      ],
+      "depends": [
+        "T204"
+      ],
+      "notes": [
+        "2025-12-15 05:06:10 UTC: DOC: claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Output Artifacts section)"
+      ],
+      "files": [
+        "claudedocs/CONSENSUS-FRAMEWORK-SPEC.md"
+      ]
+    },
+    {
+      "id": "T219",
+      "title": "T204.5: Integration Points Specification",
+      "status": "pending",
+      "priority": "medium",
+      "createdAt": "2025-12-15T05:02:52Z",
+      "phase": "setup",
+      "description": "Define integration points with external systems.\n\n## DELIVERABLE\nDocumentation section in spec or separate integration-spec.md\n\n## TASK TOOL INTEGRATION\n- How to spawn worker agents via Task tool\n- Subagent_type selection based on config\n- Prompt construction from templates\n- Output collection from agent responses\n- Parallel vs sequential agent spawning\n\n## CLAUDE-TODO INTEGRATION\n- Auto-generate tasks for investigation phases\n- Sync state with task status\n- Use labels for filtering (consensus-framework-{investigation-name})\n- Link tasks to output artifacts via notes\n- Session start/end integration\n\n## SERENA MCP INTEGRATION\n- Code analysis during Phase 1\n- Symbol search for evidence collection\n- Memory persistence for cross-session context\n- Project activation requirements\n\n## FILE SYSTEM INTEGRATION\n- Directory structure creation\n- Atomic file writes\n- Output path resolution\n- Evidence file discovery (glob patterns)\n\n## HITL INTEGRATION\n- Gate request format\n- User notification mechanism\n- Response collection\n- Timeout handling\n\n## REFERENCES\n- claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Execution Protocol, Task Tracking Protocol)",
+      "labels": [
+        "consensus-framework",
+        "design",
+        "plugin"
+      ],
+      "depends": [
+        "T204"
+      ],
+      "notes": [
+        "2025-12-15 05:06:11 UTC: DOC: claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Execution Protocol, Task Tracking Protocol, Agent Execution Model)"
+      ],
+      "files": [
+        "claudedocs/CONSENSUS-FRAMEWORK-SPEC.md"
+      ]
+    },
+    {
+      "id": "T220",
+      "title": "T204.6: Error Recovery Protocols",
+      "status": "pending",
+      "priority": "medium",
+      "createdAt": "2025-12-15T05:03:07Z",
+      "phase": "setup",
+      "description": "Define error handling and recovery protocols for framework robustness.\n\n## DELIVERABLE\nError recovery section in spec + state recovery implementation\n\n## ERROR SCENARIOS\n\n### Agent Failure\n- Worker agent returns error or incomplete output\n- Mitigation: Retry with exponential backoff (max 3 attempts)\n- Fallback: Mark claim as INSUFFICIENT_EVIDENCE, flag for HITL\n\n### HITL Gate Timeout\n- User doesn't respond within timeout period\n- Mitigation: Reminder notification, extend timeout\n- Fallback: Auto-proceed with Synthesis Agent recommendation (if configured)\n- Alternative: Pause investigation, persist state for resume\n\n### Session Interruption\n- Context window exhausted mid-investigation\n- Mitigation: State file persists all progress\n- Recovery: New session reads state, resumes from last checkpoint\n- Phase checkpoints: After each phase completion\n\n### Conflicting Agent Outputs\n- Two agents give contradictory evidence for same claim\n- Mitigation: Challenge Agent reviews conflict\n- Escalation: SUSPICIOUS_CONSENSUS or HITL gate\n\n### Missing Evidence\n- Phase 1 cannot find sufficient evidence for claims\n- Mitigation: Flag claims as EVIDENCE_NEEDED\n- Options: Proceed with available evidence, request more sources, abort claim\n\n### State Corruption\n- State file corrupted or invalid\n- Mitigation: Checksum validation on read\n- Recovery: Reconstruct from output files + claude-todo tasks\n- Backup: Periodic state snapshots\n\n## RECOVERY COMMANDS\n```bash\nclaude-todo research --resume          # Resume from state file\nclaude-todo research --status          # Show current state\nclaude-todo research --recover         # Attempt state reconstruction\nclaude-todo research --abort           # Clean abort with state preservation\n```\n\n## REFERENCES\n- claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Risk Mitigation, Session Recovery)",
+      "labels": [
+        "consensus-framework",
+        "design",
+        "plugin"
+      ],
+      "depends": [
+        "T204"
+      ],
+      "notes": [
+        "2025-12-15 05:06:13 UTC: DOC: claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Risk Mitigation, Session Recovery, HITL Gate Protocol)"
+      ],
+      "files": [
+        "claudedocs/CONSENSUS-FRAMEWORK-SPEC.md"
+      ]
+    },
+    {
+      "id": "T221",
+      "title": "T204.7: Invocation Modes Specification",
+      "status": "pending",
+      "priority": "medium",
+      "createdAt": "2025-12-15T05:03:23Z",
+      "phase": "setup",
+      "description": "Define different invocation modes for the framework.\n\n## DELIVERABLE\nCLI specification section with all modes documented\n\n## INVOCATION MODES\n\n### Interactive Mode (Default)\n```bash\nclaude-todo research --framework consensus --config ./research.yaml\n```\n- Pauses at each HITL gate for user input\n- Shows progress in real-time\n- Allows mid-investigation adjustments\n\n### Batch Mode\n```bash\nclaude-todo research --framework consensus --config ./research.yaml --batch\n```\n- Runs without HITL pauses (uses Synthesis Agent recommendations)\n- Collects all questions for end-of-run review\n- Suitable for overnight/unattended runs\n\n### Dry Run Mode\n```bash\nclaude-todo research --framework consensus --config ./research.yaml --dry-run\n```\n- Validates config, shows execution plan\n- Lists claims, agents, phases, gates\n- No actual agent spawning\n\n### Resume Mode\n```bash\nclaude-todo research --resume [state-file]\n```\n- Resumes from persisted state\n- Validates state integrity before resuming\n- Shows what was completed, what remains\n\n### Status Mode\n```bash\nclaude-todo research --status [state-file]\n```\n- Shows current investigation status\n- Phase progress, claim verdicts, pending gates\n- No modification\n\n### Single Phase Mode\n```bash\nclaude-todo research --phase 2 --config ./research.yaml\n```\n- Run only specific phase\n- Requires prior phase outputs to exist\n- Useful for re-running failed phases\n\n## CLI OPTIONS\n| Option | Description |\n|--------|-------------|\n| --config | Path to config YAML |\n| --framework | Framework type (consensus, adversarial, etc.) |\n| --batch | Run without HITL pauses |\n| --dry-run | Validate and show plan only |\n| --resume | Resume from state file |\n| --status | Show investigation status |\n| --phase N | Run specific phase only |\n| --verbose | Detailed output |\n| --output-dir | Override output directory |\n\n## REFERENCES\n- T204 parent task\n- claude-todo existing CLI patterns",
+      "labels": [
+        "consensus-framework",
+        "design",
+        "plugin"
+      ],
+      "depends": [
+        "T204"
+      ],
+      "notes": [
+        "2025-12-15 05:06:15 UTC: DOC: claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Future Plugin Design section)"
+      ],
+      "files": [
+        "claudedocs/CONSENSUS-FRAMEWORK-SPEC.md"
+      ]
+    },
+    {
+      "id": "T222",
+      "title": "Test auto-archive feature",
+      "status": "done",
+      "priority": "low",
+      "createdAt": "2025-12-15T05:36:00Z",
+      "description": "Create test task to verify auto-archive on complete",
+      "completedAt": "2025-12-15T05:36:04Z"
+    },
+    {
+      "id": "T223",
+      "title": "Second test task",
+      "status": "done",
+      "priority": "low",
+      "createdAt": "2025-12-15T05:36:12Z",
+      "description": "Test if auto-archive works with new config field",
+      "completedAt": "2025-12-15T05:36:14Z"
+    },
+    {
+      "id": "T224",
+      "title": "Integrate history command into CLI",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-15T18:48:10Z",
+      "description": "history.sh (v0.10.2) exists but not registered. Steps: 1) Add to CMD_MAP in claude-todo script, 2) Add CMD_DESC, 3) Create docs/commands/history.md, 4) Add tests. Features: completion timeline, sparklines, velocity metrics.",
+      "labels": [
+        "cli",
+        "integration",
+        "v0.13.0"
       ]
     }
   ],
