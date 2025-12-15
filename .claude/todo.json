@@ -2,13 +2,13 @@
   "$schema": "./schemas/todo.schema.json",
   "version": "2.1.0",
   "project": "claude-todo",
-  "lastUpdated": "2025-12-15T22:13:28Z",
+  "lastUpdated": "2025-12-15T22:29:08Z",
   "_meta": {
-    "checksum": "512587a771298a42",
+    "checksum": "5877642a440e00cb",
     "configVersion": "2.1.0",
     "lastSessionId": null,
     "activeSession": null,
-    "lastModified": "2025-12-15T21:44:30Z",
+    "lastModified": "2025-12-15T22:24:06Z",
     "version": "2.0.0"
   },
   "focus": {
@@ -2720,6 +2720,38 @@
       "completedAt": "2025-12-15T22:13:28Z",
       "notes": [
         "[COMPLETED 2025-12-15T22:13:28Z] Orchestrator implemented with inject/extract/status/clear subcommands"
+      ]
+    },
+    {
+      "id": "T237",
+      "title": "Fix TodoWrite extraction tests - remove all skips",
+      "status": "done",
+      "priority": "critical",
+      "createdAt": "2025-12-15T22:23:53Z",
+      "phase": "core",
+      "description": "Extraction tests are skipped due to incomplete complete-task.sh integration. Must enable all 13 skipped tests and ensure they pass. No skipped tests acceptable.",
+      "labels": [
+        "bug",
+        "testing",
+        "todowrite",
+        "v0.14.0"
+      ],
+      "completedAt": "2025-12-15T22:29:08Z",
+      "notes": [
+        "[COMPLETED 2025-12-15T22:29:08Z] All 21 TodoWrite sync tests now pass. Fixed: (1) log functions return code with --quiet, (2) test assertions for WARN vs warning, (3) added --quiet flag to tests needing clean JSON output"
+      ]
+    },
+    {
+      "id": "T238",
+      "title": "Investigate and fix pre-existing migrate/log test failures",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-15T22:23:54Z",
+      "phase": "core",
+      "description": "17 pre-existing test failures in migrate.bats (12) and log-viewing.bats (5). These predate TodoWrite work but need resolution for complete working system.",
+      "labels": [
+        "bug",
+        "testing"
       ]
     }
   ],

@@ -233,7 +233,7 @@ EOF
 }
 
 @test "extract: marks completed tasks as done in claude-todo" {
-    skip "Not implemented - T227 design phase"
+    
     create_sync_test_fixture
     create_todowrite_state_fixture
 
@@ -248,7 +248,7 @@ EOF
 }
 
 @test "extract: creates new tasks for items without ID prefix" {
-    skip "Not implemented - T227 design phase"
+    
     create_sync_test_fixture
     create_todowrite_state_fixture
 
@@ -266,7 +266,7 @@ EOF
 }
 
 @test "extract: updates progress for in_progress items" {
-    skip "Not implemented - T227 design phase"
+    
     create_sync_test_fixture
     create_todowrite_state_fixture
 
@@ -281,7 +281,7 @@ EOF
 }
 
 @test "extract: logs removed items without deleting" {
-    skip "Not implemented - T227 design phase"
+    
     create_sync_test_fixture
 
     # Inject with T003 included
@@ -312,7 +312,7 @@ EOF
 # =============================================================================
 
 @test "conflict: claude-todo authoritative for existence" {
-    skip "Not implemented - T227 design phase"
+    
     create_sync_test_fixture
 
     # Inject
@@ -329,12 +329,12 @@ EOF
 
     # Should warn but not fail
     assert_success
-    assert_output --partial 'warning'
+    assert_output --partial 'WARN'
     assert_output --partial 'T001'
 }
 
 @test "conflict: already-done task stays done (idempotent)" {
-    skip "Not implemented - T227 design phase"
+    
     create_sync_test_fixture
 
     # Mark T001 as done before extraction
@@ -356,11 +356,11 @@ EOF
 # =============================================================================
 
 @test "workflow: complete inject-session-extract cycle" {
-    skip "Not implemented - T227 design phase"
+
     create_sync_test_fixture
 
-    # 1. Inject
-    run bash "$INJECT_SCRIPT"
+    # 1. Inject (use --quiet to get clean JSON)
+    run bash "$INJECT_SCRIPT" --quiet
     assert_success
     local injected="$output"
 
@@ -388,7 +388,7 @@ EOF
 }
 
 @test "workflow: sync command orchestrates full cycle" {
-    skip "Not implemented - T227 design phase"
+    
     create_sync_test_fixture
 
     # sync --inject should call inject script
@@ -409,10 +409,10 @@ EOF
 # =============================================================================
 
 @test "status: pending → pending" {
-    skip "Not implemented - T227 design phase"
+
     create_sync_test_fixture
 
-    run bash "$INJECT_SCRIPT"
+    run bash "$INJECT_SCRIPT" --quiet
     assert_success
 
     local pending_item
@@ -422,10 +422,10 @@ EOF
 }
 
 @test "status: active → in_progress" {
-    skip "Not implemented - T227 design phase"
+
     create_sync_test_fixture
 
-    run bash "$INJECT_SCRIPT"
+    run bash "$INJECT_SCRIPT" --quiet
     assert_success
 
     local active_item
@@ -435,10 +435,10 @@ EOF
 }
 
 @test "status: blocked → pending (with prefix)" {
-    skip "Not implemented - T227 design phase"
+
     create_sync_test_fixture
 
-    run bash "$INJECT_SCRIPT"
+    run bash "$INJECT_SCRIPT" --quiet
     assert_success
 
     local blocked_item
@@ -450,7 +450,7 @@ EOF
 }
 
 @test "status: in_progress → active (on extract)" {
-    skip "Not implemented - T227 design phase"
+    
     create_sync_test_fixture
     create_todowrite_state_fixture
 
@@ -465,7 +465,7 @@ EOF
 }
 
 @test "status: completed → done (on extract)" {
-    skip "Not implemented - T227 design phase"
+    
     create_sync_test_fixture
     create_todowrite_state_fixture
 

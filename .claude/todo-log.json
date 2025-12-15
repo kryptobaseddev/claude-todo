@@ -3,9 +3,9 @@
   "version": "0.10.1",
   "project": "claude-todo",
   "_meta": {
-    "totalEntries": 391,
+    "totalEntries": 393,
     "firstEntry": "2025-12-13T07:14:38Z",
-    "lastEntry": "2025-12-15T22:13:28Z",
+    "lastEntry": "2025-12-15T22:29:08Z",
     "entriesPruned": 0
   },
   "entries": [
@@ -10959,6 +10959,75 @@
       "after": {
         "status": "done",
         "completedAt": "2025-12-15T22:13:28Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log-1765837433-c7f279",
+      "timestamp": "2025-12-15T22:23:53Z",
+      "operation": "create",
+      "task_id": "T237",
+      "user": "system",
+      "details": {
+        "title": "Fix TodoWrite extraction tests - remove all skips",
+        "status": "pending",
+        "priority": "critical"
+      },
+      "before": null,
+      "after": {
+        "title": "Fix TodoWrite extraction tests - remove all skips",
+        "status": "pending",
+        "priority": "critical"
+      }
+    },
+    {
+      "id": "log-1765837434-13600f",
+      "timestamp": "2025-12-15T22:23:54Z",
+      "operation": "create",
+      "task_id": "T238",
+      "user": "system",
+      "details": {
+        "title": "Investigate and fix pre-existing migrate/log test failures",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Investigate and fix pre-existing migrate/log test failures",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log_5c9b4d736723",
+      "timestamp": "2025-12-15T22:24:06Z",
+      "sessionId": null,
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": null,
+      "after": {
+        "currentTask": "T237"
+      },
+      "details": null
+    },
+    {
+      "id": "log_8aff9227eb6b",
+      "timestamp": "2025-12-15T22:29:08Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T237",
+      "before": {
+        "status": "active",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-15T22:29:08Z"
       },
       "details": {
         "field": "status",
