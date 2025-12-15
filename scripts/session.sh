@@ -262,6 +262,12 @@ cmd_end() {
 
   log_step "Session ended: $current_session"
   [[ -n "$note" ]] && log_info "Note saved: $note" || true
+
+  # Check and rotate log if needed (T214)
+  if declare -f check_and_rotate_log >/dev/null 2>&1; then
+    local config_file="${CONFIG_FILE:-.claude/todo-config.json}"
+    [[ -f "$config_file" ]] && check_and_rotate_log "$config_file" "$LOG_FILE" 2>/dev/null || true
+  fi
 }
 
 # Show session status
