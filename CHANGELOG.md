@@ -5,6 +5,19 @@ All notable changes to the claude-todo system will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - 2025-12-15
+
+### Added
+- **exists command**: Check if a task ID exists without listing all tasks (T213)
+  - `claude-todo exists <task-id>` - Basic existence check
+  - `--quiet` - No output, exit code only (for scripting)
+  - `--verbose` - Show which file contains the task
+  - `--include-archive` - Search archive file too
+  - `--format json` - JSON output with metadata
+  - Exit codes: 0=exists, 1=not found, 2=invalid ID, 3=file error
+  - Eliminates DRY violation (existence checks duplicated across 4+ scripts)
+  - Clean API for shell scripting and CI/CD integration
+
 ## [0.10.1] - 2025-12-13
 
 ### Fixed
