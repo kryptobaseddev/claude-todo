@@ -449,6 +449,7 @@ migrate_todo_to_2_2_0() {
         }
     else
         # Migrate from string to object
+        # Canonical 5-phase structure: setup → core → testing → polish → maintenance
         jq '
             # Convert project string to object with phases
             if (.project | type) == "string" then
@@ -458,32 +459,40 @@ migrate_todo_to_2_2_0() {
                     "phases": {
                         "setup": {
                             "order": 1,
-                            "name": "Setup",
-                            "description": "Initial setup and configuration",
+                            "name": "Setup & Foundation",
+                            "description": "Initial project setup, dependencies, and configuration",
                             "status": "pending",
                             "startedAt": null,
                             "completedAt": null
                         },
                         "core": {
                             "order": 2,
-                            "name": "Core",
-                            "description": "Core feature implementation",
+                            "name": "Core Development",
+                            "description": "Build core functionality and features",
+                            "status": "pending",
+                            "startedAt": null,
+                            "completedAt": null
+                        },
+                        "testing": {
+                            "order": 3,
+                            "name": "Testing & Validation",
+                            "description": "Comprehensive testing, validation, and quality assurance",
                             "status": "pending",
                             "startedAt": null,
                             "completedAt": null
                         },
                         "polish": {
-                            "order": 3,
-                            "name": "Polish",
-                            "description": "Refinement and testing",
+                            "order": 4,
+                            "name": "Polish & Refinement",
+                            "description": "UX improvements, optimization, and documentation",
                             "status": "pending",
                             "startedAt": null,
                             "completedAt": null
                         },
-                        "release": {
-                            "order": 4,
-                            "name": "Release",
-                            "description": "Release preparation",
+                        "maintenance": {
+                            "order": 5,
+                            "name": "Maintenance & Support",
+                            "description": "Ongoing maintenance, bug fixes, and support",
                             "status": "pending",
                             "startedAt": null,
                             "completedAt": null

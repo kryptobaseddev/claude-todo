@@ -1,4 +1,4 @@
-<!-- CLAUDE-TODO:START v0.13.1 -->
+<!-- CLAUDE-TODO:START v0.13.2 -->
 ## Task Management (claude-todo)
 
 Use `ct` (alias for `claude-todo`) for all task operations. Full docs: `~/.claude-todo/docs/TODO_Task_Management.md`
@@ -15,7 +15,7 @@ ct exists <id>             # Verify task exists
 ct dash                    # Project overview
 ```
 
-### Phase Tracking (v0.13.1+)
+### Phase Tracking (v0.13.2+)
 ```bash
 ct phases                  # List phases with progress
 ct phase set <slug>        # Set current project phase

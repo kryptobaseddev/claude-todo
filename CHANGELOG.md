@@ -5,6 +5,18 @@ All notable changes to the claude-todo system will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.2] - 2025-12-16
+
+### Fixed
+- **Migration creates wrong phase structure**
+  - `lib/migrate.sh`: Was creating 4 phases (setup, core, polish, release)
+  - Fix: Now creates canonical 5-phase structure matching template:
+    1. setup - Setup & Foundation
+    2. core - Core Development
+    3. testing - Testing & Validation
+    4. polish - Polish & Refinement
+    5. maintenance - Maintenance & Support
+
 ## [0.13.1] - 2025-12-16
 
 ### Fixed
