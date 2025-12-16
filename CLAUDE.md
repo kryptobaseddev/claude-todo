@@ -89,7 +89,7 @@ You cannot accurately predict time. Estimates create false precision and bad dec
 - Usage: docs/usage.md
 
 
-<!-- CLAUDE-TODO:START v0.13.0 -->
+<!-- CLAUDE-TODO:START v0.13.3 -->
 ## Task Management (claude-todo)
 
 Use `ct` (alias for `claude-todo`) for all task operations. Full docs: `~/.claude-todo/docs/TODO_Task_Management.md`
@@ -106,7 +106,7 @@ ct exists <id>             # Verify task exists
 ct dash                    # Project overview
 ```
 
-### Phase Tracking (v0.13.0+)
+### Phase Tracking (v0.13.3+)
 ```bash
 ct phases                  # List phases with progress
 ct phase set <slug>        # Set current project phase

@@ -1,6 +1,6 @@
 {
   "$schema": "./schemas/todo.schema.json",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "project": {
     "name": "claude-todo",
     "currentPhase": "core",
@@ -9,44 +9,52 @@
         "name": "Setup",
         "description": "Initial setup and configuration",
         "status": "completed",
-        "order": 1
+        "order": 1,
+        "startedAt": null,
+        "completedAt": null
       },
       "core": {
         "name": "Core",
         "description": "Core feature implementation",
         "status": "active",
-        "order": 2
+        "order": 2,
+        "startedAt": null,
+        "completedAt": null
       },
       "polish": {
         "name": "Polish",
         "description": "Refinement and testing",
         "status": "pending",
-        "order": 3
+        "order": 3,
+        "startedAt": null,
+        "completedAt": null
       },
       "release": {
         "name": "Release",
         "description": "Release preparation",
         "status": "pending",
-        "order": 4
+        "order": 4,
+        "startedAt": null,
+        "completedAt": null
       }
     }
   },
-  "lastUpdated": "2025-12-16T15:28:59Z",
+  "lastUpdated": "2025-12-16T20:17:12Z",
   "_meta": {
-    "checksum": "4e5a0fbc1cb7ff0e",
+    "checksum": "a6f350743c6dca2a",
     "configVersion": "2.1.0",
     "lastSessionId": null,
     "activeSession": null,
-    "lastModified": "2025-12-16T15:44:39Z",
-    "version": "2.0.0",
+    "lastModified": "2025-12-16T20:18:08Z",
+    "version": "2.2.0",
     "schemaVersion": "2.2.0"
   },
   "focus": {
-    "currentTask": "T288",
+    "currentTask": "T302",
     "blockedUntil": null,
-    "sessionNote": "v0.13.0 feature-phase 90% complete. VERSION corrected from 2.2.0 to 0.13.0 (schema is 2.2.0). 8 tasks remain: T274-T276 (docs), T278-T279 (CLAUDE.md), T282 (E2E test), T286 (perf), T287 (review), T289 (_meta). NEXT SESSION: 1) ./install.sh --force 2) Test phase commands locally 3) Complete remaining docs 4) Final release",
-    "nextAction": "Test locally: claude-todo phase show, phase set, phases list. Then complete T278 (injection template) and T274-T276 (architecture docs)",
-    "currentPhase": null
+    "sessionNote": "SESSION 2025-12-16 HANDOFF - CRITICAL CONTEXT\n\n## Current Version: v0.13.3\n\n## CRITICAL ISSUE: This Project Has Wrong Phase Structure\n- .claude/todo.json has 4 phases (setup, core, polish, release)\n- SHOULD have 5 phases (setup, core, testing, polish, maintenance)\n- CANNOT be fixed manually - MUST use 'migrate repair' command (T302)\n- Proof: 'claude-todo add --phase testing' fails with 'phase not found'\n\n## Bugs Fixed This Session (v0.13.1-v0.13.3)\n1. IFS bug in migration (v0.13.1) - check_compatibility() failed\n2. 'Argument list too long' with 200+ tasks (v0.13.1) - list/history JSON\n3. Wrong 4-phase in migration function (v0.13.2) - now creates 5-phase\n4. Migration reads phases from template dynamically (v0.13.3)\n\n## Tasks Created This Session\n- T302: Implement 'migrate repair' command (MAIN TASK)\n- T303-T307: Subtasks for repair implementation\n- T308: Repair THIS project's phases using repair command\n- T309: Regenerate golden test fixtures\n\n## What 'migrate repair' Must Do\n1. Ensure canonical 5-phase structure\n2. Preserve existing phase status/timestamps\n3. Add missing _meta, focus, project fields\n4. Remove obsolete fields\n5. Be IDEMPOTENT (safe to run multiple times)\n6. Create backup before changes\n7. Log all changes\n\n## Test Results\n- Unit/Integration: 1015 passing\n- Golden: 6 failing (need regeneration after output changes)\n\n## Data Integrity Priority\n- NEVER lose task data\n- NEVER corrupt existing projects\n- ALWAYS backup before modification\n- ALWAYS use CLI commands, NOT manual edits",
+    "nextAction": "NEXT SESSION: 1) Implement T302 'migrate repair' command, 2) Use it to fix T308 (this project's phases), 3) Run T309 golden test regeneration, 4) Verify all 1015+ tests pass, 5) Commit and release v0.14.0 with repair feature",
+    "currentPhase": "core"
   },
   "tasks": [
     {
@@ -3509,7 +3517,7 @@
     {
       "id": "T274",
       "title": "Update docs/architecture/ARCHITECTURE.md with phase system",
-      "status": "pending",
+      "status": "done",
       "priority": "medium",
       "createdAt": "2025-12-16T04:42:51Z",
       "phase": "core",
@@ -3522,12 +3530,16 @@
       "depends": [
         "T240",
         "T241"
+      ],
+      "completedAt": "2025-12-16T15:53:20Z",
+      "notes": [
+        "[COMPLETED 2025-12-16T15:53:20Z] Added Phase Tracking System section, updated ToC, System Invariants, Directory Structure, Script Reference, Library Functions with phase system details for v2.2.0"
       ]
     },
     {
       "id": "T275",
       "title": "Update docs/architecture/DATA-FLOWS.md with phase data flows",
-      "status": "pending",
+      "status": "done",
       "priority": "medium",
       "createdAt": "2025-12-16T04:42:52Z",
       "phase": "core",
@@ -3542,12 +3554,16 @@
         "T255",
         "T257",
         "T258"
+      ],
+      "completedAt": "2025-12-16T15:54:34Z",
+      "notes": [
+        "[COMPLETED 2025-12-16T15:54:34Z] Added Phase Operation Data Flows section with: Phase Set, Task Inheritance, Phase Listing, TodoWrite Sync filtering flows, and Phase Operations file matrix"
       ]
     },
     {
       "id": "T276",
       "title": "Update docs/reference/schema.md for v2.2.0",
-      "status": "pending",
+      "status": "done",
       "priority": "medium",
       "createdAt": "2025-12-16T04:43:14Z",
       "phase": "core",
@@ -3561,6 +3577,10 @@
         "T241",
         "T242",
         "T243"
+      ],
+      "completedAt": "2025-12-16T15:56:01Z",
+      "notes": [
+        "[COMPLETED 2025-12-16T15:56:01Z] Updated SCHEMAS.md to v2.2.0: new project object structure, phase definitions, focus.currentPhase, phase log action types"
       ]
     },
     {
@@ -3588,7 +3608,7 @@
     {
       "id": "T278",
       "title": "Update CLAUDE.md injection template for v2.2.0",
-      "status": "pending",
+      "status": "done",
       "priority": "high",
       "createdAt": "2025-12-16T04:43:17Z",
       "phase": "core",
@@ -3600,12 +3620,16 @@
       ],
       "depends": [
         "T250"
+      ],
+      "completedAt": "2025-12-16T15:56:37Z",
+      "notes": [
+        "[COMPLETED 2025-12-16T15:56:37Z] Added Phase Tracking section with commands: phases, phase set, phase show, list --phase filter"
       ]
     },
     {
       "id": "T279",
       "title": "Update project CLAUDE.md with phase enhancement context",
-      "status": "pending",
+      "status": "done",
       "priority": "medium",
       "createdAt": "2025-12-16T04:43:19Z",
       "phase": "core",
@@ -3617,6 +3641,10 @@
       "depends": [
         "T246",
         "T250"
+      ],
+      "completedAt": "2025-12-16T15:57:20Z",
+      "notes": [
+        "[COMPLETED 2025-12-16T15:57:20Z] Added phase tracking commands to Commands section, updated Key Files with phase-tracking.sh and phase scripts, updated injection to v0.13.0 with phase commands"
       ]
     },
     {
@@ -3672,7 +3700,7 @@
     {
       "id": "T282",
       "title": "Create end-to-end phase workflow integration test",
-      "status": "pending",
+      "status": "done",
       "priority": "high",
       "createdAt": "2025-12-16T04:43:42Z",
       "phase": "core",
@@ -3684,6 +3712,10 @@
       ],
       "depends": [
         "T281"
+      ],
+      "completedAt": "2025-12-16T16:01:16Z",
+      "notes": [
+        "[COMPLETED 2025-12-16T16:01:16Z] Created phase-workflow-e2e.bats with 8 tests covering: full phase lifecycle, phase commands, validation, dashboard, next task, sync, multiple active phases, phase set. All tests passing."
       ]
     },
     {
@@ -3751,7 +3783,7 @@
     {
       "id": "T286",
       "title": "Performance testing for phase operations",
-      "status": "pending",
+      "status": "done",
       "priority": "medium",
       "createdAt": "2025-12-16T04:43:51Z",
       "phase": "core",
@@ -3765,12 +3797,16 @@
         "T248",
         "T250",
         "T257"
+      ],
+      "completedAt": "2025-12-16T16:01:54Z",
+      "notes": [
+        "[COMPLETED 2025-12-16T16:01:54Z] Performance tests passed: 100 tasks/5 phases. Read phase: 21ms, list phases: 23ms, filter by phase: 23ms, count per phase: 27ms. All within acceptable limits."
       ]
     },
     {
       "id": "T287",
       "title": "Review and validate all documentation",
-      "status": "pending",
+      "status": "done",
       "priority": "high",
       "createdAt": "2025-12-16T04:43:53Z",
       "phase": "core",
@@ -3792,12 +3828,16 @@
         "T278",
         "T279",
         "T280"
+      ],
+      "completedAt": "2025-12-16T16:02:42Z",
+      "notes": [
+        "[COMPLETED 2025-12-16T16:02:42Z] Review complete: 27 command docs, 111 INDEX.md links, ARCHITECTURE/DATA-FLOWS/SCHEMAS all at v2.2.0, injection at v0.13.0, phase terminology consistent (pending/active/completed)."
       ]
     },
     {
       "id": "T288",
       "title": "Final release preparation for v2.2.0",
-      "status": "active",
+      "status": "pending",
       "priority": "critical",
       "createdAt": "2025-12-16T04:44:01Z",
       "phase": "core",
@@ -3820,13 +3860,348 @@
     {
       "id": "T289",
       "title": "Investigate _meta.version field usage - verify if needed in template",
-      "status": "pending",
+      "status": "done",
       "priority": "high",
       "createdAt": "2025-12-16T04:55:14Z",
       "description": "During T245, removed _meta.version from todo.template.json. Need to verify: 1) Is it used in validation.sh or other scripts? 2) Is it referenced in schemas? 3) Should it be restored? Check grep for _meta.version usage across codebase.",
       "labels": [
         "feature-phase",
         "investigation"
+      ],
+      "notes": [
+        "2025-12-16 15:50:27 UTC: Investigation complete: _meta.version IS present in template (line 44), correctly set to 2.2.0. Used by validate.sh and migrate.sh. No action needed.",
+        "[COMPLETED 2025-12-16T15:50:58Z] Verified: _meta.version IS in template (line 44, 2.2.0). Used by validate.sh and migrate.sh. No changes needed."
+      ],
+      "completedAt": "2025-12-16T15:50:58Z"
+    },
+    {
+      "id": "T290",
+      "title": "Verify v2.1.0 → v2.2.0 migration with testing phase",
+      "status": "pending",
+      "priority": "critical",
+      "createdAt": "2025-12-16T16:14:36Z",
+      "phase": "core",
+      "description": "Test migration from v2.1.0 (no phases or old phase structure) to v2.2.0 (5-phase structure with testing phase). Verify: 1) Existing tasks preserve all fields during migration 2) Phase assignments are correctly added/updated 3) No data loss in task descriptions, notes, dependencies 4) Checksums are correctly recalculated 5) Timestamps are preserved 6) Log entries are created for migration events 7) Archive files are also migrated correctly. Test with real-world fixtures containing various task states.",
+      "labels": [
+        "data-integrity",
+        "feature-phase",
+        "migration",
+        "testing"
+      ],
+      "notes": [
+        "2025-12-16 20:16:54 UTC: Session 2025-12-16: Migration verified with critical bugs found and fixed:\n1. IFS bug preventing migration detection (FIXED v0.13.1)\n2. Argument list too long with 200+ tasks (FIXED v0.13.1)\n3. Wrong 4-phase structure in migration (FIXED v0.13.2)\n4. Existing projects with wrong phases need 'migrate repair' command (T302 created)\nMigration now works correctly for new projects. Existing projects with wrong 4-phase need repair."
+      ]
+    },
+    {
+      "id": "T291",
+      "title": "Update phase-sync.bats inline fixtures to 5-phase structure",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T16:14:56Z",
+      "phase": "core",
+      "description": "The phase-sync.bats file contains create_phased_project_fixture() with hardcoded 3-phase structure (setup, core, polish). Must update to 5-phase structure (setup, core, testing, polish, maintenance) with correct order numbers. Also verify test assertions match new phase names and structure. This is NOT a workaround - the fixture must reflect the actual schema structure.",
+      "labels": [
+        "feature-phase",
+        "fixture-update",
+        "testing"
+      ],
+      "depends": [
+        "T290"
+      ],
+      "notes": [
+        "2025-12-16 17:32:19 UTC: COMPLETED: Fixed phase-sync.bats (28/28 pass). Updated: 1) phases.sh to read .project.phases 2) focus.sh to sync both project.currentPhase and focus.currentPhase 3) phases JSON output includes status field"
+      ]
+    },
+    {
+      "id": "T292",
+      "title": "Verify logging with testing phase operations",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T16:14:58Z",
+      "phase": "core",
+      "description": "Ensure todo-log.json correctly captures: 1) Phase creation during init 2) Phase transitions (pending→active→completed) 3) Task phase assignments and changes 4) Phase-related errors and warnings 5) Migration events when upgrading schema. Verify log entries have correct action types, timestamps, and context.",
+      "labels": [
+        "data-integrity",
+        "feature-phase",
+        "logging",
+        "testing"
+      ],
+      "depends": [
+        "T290"
+      ]
+    },
+    {
+      "id": "T293",
+      "title": "Verify archiving with testing phase metadata",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T16:14:59Z",
+      "phase": "core",
+      "description": "Test that archive operations: 1) Preserve task phase field in archived tasks 2) Archive statistics include phase breakdown 3) Phase-filtered archiving works correctly 4) Migration of archived tasks to new schema works 5) No data loss during archive operations with new phase structure.",
+      "labels": [
+        "archiving",
+        "data-integrity",
+        "feature-phase",
+        "testing"
+      ],
+      "depends": [
+        "T290"
+      ]
+    },
+    {
+      "id": "T294",
+      "title": "Revert phase-commands.bats test fix and properly handle missing phases scenario",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T16:15:02Z",
+      "phase": "core",
+      "description": "The test 'phase handles missing project.phases' was incorrectly fixed using create_empty_todo_legacy as a bandaid. Proper fix requires: 1) Decide if missing phases should trigger migration or error 2) Implement proper behavior in phase.sh scripts 3) Update test to reflect actual expected behavior 4) Document the expected behavior for edge cases.",
+      "labels": [
+        "bug-fix",
+        "feature-phase",
+        "testing"
+      ],
+      "depends": [
+        "T290"
+      ],
+      "notes": [
+        "2025-12-16 17:32:22 UTC: IN PROGRESS: Test 773 'handles missing project.phases field' still failing. Need to handle edge case where project.phases is undefined/null in phase-commands.bats"
+      ]
+    },
+    {
+      "id": "T295",
+      "title": "Create comprehensive migration test suite for 5-phase schema",
+      "status": "pending",
+      "priority": "critical",
+      "createdAt": "2025-12-16T16:15:04Z",
+      "phase": "core",
+      "description": "Create tests/migration/test-5-phase-schema.bats with tests for: 1) Empty project migration (no tasks) 2) Project with tasks in old phases (setup, core, polish) 3) Project with tasks in non-existent phases 4) Project with custom phases that should be preserved 5) Verify order field updates for existing phases 6) Verify new phases (testing, maintenance) are added correctly 7) Test rollback capability if migration fails.",
+      "labels": [
+        "comprehensive",
+        "feature-phase",
+        "migration",
+        "testing"
+      ]
+    },
+    {
+      "id": "T296",
+      "title": "Fix validation.bats tests for 5-phase schema",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T16:15:20Z",
+      "phase": "core",
+      "description": "Multiple validation tests are failing due to schema changes: 1) validate reports success for valid structure 2) validate handles empty todo.json 3) validate --format json produces valid JSON 4) validate checks required fields. Must update test expectations and fixtures to match 5-phase schema structure. Verify validation logic is correct for new schema.",
+      "labels": [
+        "feature-phase",
+        "testing",
+        "validation"
+      ],
+      "notes": [
+        "2025-12-16 17:32:17 UTC: COMPLETED: Added _update_fixture_checksum() to fixtures.bash. Fixed all fixture generators to compute valid SHA256 checksums. 28 validation tests now pass."
+      ]
+    },
+    {
+      "id": "T297",
+      "title": "Update all documentation with 5-phase lifecycle",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T16:15:21Z",
+      "phase": "core",
+      "description": "Update all documentation files with 5-phase lifecycle (setup→core→testing→polish→maintenance): 1) docs/commands/phase.md - command examples 2) docs/commands/phases.md - phase list examples 3) docs/migration/v2.2.0-migration-guide.md - phase structure 4) docs/QUICK-REFERENCE.md - phase workflow 5) docs/usage.md - phase examples 6) README.md - phase tracking section 7) docs/architecture/ARCHITECTURE.md - phase diagrams 8) docs/architecture/SCHEMAS.md - phase definitions. Ensure consistent terminology and order numbers throughout.",
+      "labels": [
+        "documentation",
+        "feature-phase"
+      ]
+    },
+    {
+      "id": "T298",
+      "title": "Update T288 release blockers for 5-phase testing",
+      "status": "pending",
+      "priority": "critical",
+      "createdAt": "2025-12-16T16:15:23Z",
+      "phase": "core",
+      "description": "T288 (Final release preparation for v2.2.0) must now be blocked by the new 5-phase testing tasks (T290-T296). Update T288 dependencies to ensure: 1) All migration tests pass 2) All fixture updates complete 3) Documentation updated 4) No test workarounds or bandaids. Release should NOT proceed until comprehensive testing is complete.",
+      "labels": [
+        "blocking",
+        "feature-phase",
+        "release-management"
+      ]
+    },
+    {
+      "id": "T299",
+      "title": "CRITICAL: Fix workflow.bats 5-phase structure",
+      "status": "done",
+      "priority": "critical",
+      "createdAt": "2025-12-16T17:32:41Z",
+      "phase": "core",
+      "description": "create_empty_todo_no_phases uses WRONG 3-phase. MUST use 5-phase: setup,core,testing,polish,maintenance",
+      "completedAt": "2025-12-16T20:17:12Z",
+      "notes": [
+        "[COMPLETED 2025-12-16T20:17:12Z] FIXED in previous session: tests/test_helper/fixtures.bash now uses canonical 5-phase structure (setup→core→testing→polish→maintenance). Verified create_empty_todo() and create_empty_todo_no_phases() both have correct 5-phase."
+      ]
+    },
+    {
+      "id": "T300",
+      "title": "Test task for verification",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-16T19:13:42Z",
+      "phase": "core",
+      "description": "Temporary task to verify add command works",
+      "labels": [
+        "test-verification"
+      ],
+      "notes": [
+        "2025-12-16 19:13:52 UTC: Updated for testing",
+        "[COMPLETED 2025-12-16T19:14:12Z] Verified add/update/complete commands work correctly"
+      ],
+      "completedAt": "2025-12-16T19:14:12Z"
+    },
+    {
+      "id": "T301",
+      "title": "TECH DEBT: Audit and eliminate hardcoded values - enforce schema-driven design",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T20:00:59Z",
+      "phase": "core",
+      "description": "Found hardcoded phase structures in migration (fixed in v0.13.3), but this is likely systemic. Need comprehensive audit:\n\nKNOWN ISSUES:\n- lib/migrate.sh had hardcoded 4-phase structure (fixed - now reads from template)\n- lib/todowrite-integration.sh has verb mappings that may need review\n- scripts/benchmark-performance.sh has hardcoded phase array for tests\n- scripts/phases.sh has hardcoded examples in help text\n- Likely MORE throughout codebase\n\nAUDIT SCOPE:\n1. Find ALL hardcoded values that should derive from schemas/templates\n2. Identify validation logic duplicated across scripts vs centralized in lib/\n3. Check for magic strings/numbers that should be constants\n4. Review enum values (status, priority, phase status) - are they schema-derived?\n5. Check default values - do they match schema defaults?\n\nPRINCIPLES TO ENFORCE:\n- SINGLE SOURCE OF TRUTH: schemas/*.json and templates/*.json\n- DRY: No duplicate definitions of structures/enums/defaults\n- SOLID: Scripts should depend on abstractions (lib functions), not concrete values\n- Schema-driven: Runtime should validate against and derive from schemas\n\nDELIVERABLES:\n- Comprehensive grep/audit report of all hardcoded values\n- Prioritized list of violations by severity\n- Refactoring plan with helper functions to centralize\n- Tests to prevent regression (schema drift detection)\n\nRelated: v0.13.3 fix for migration phase hardcoding",
+      "labels": [
+        "architecture",
+        "code-smell",
+        "dry-violation",
+        "solid-violation",
+        "tech-debt"
+      ]
+    },
+    {
+      "id": "T302",
+      "title": "Implement 'migrate repair' command for full schema compliance",
+      "status": "active",
+      "priority": "critical",
+      "createdAt": "2025-12-16T20:15:45Z",
+      "phase": "core",
+      "description": "Create a comprehensive repair command that ensures all .claude/ files match their canonical schema structures. Must be idempotent (safe to run multiple times without data loss).\n\nSCOPE:\n1. Phase structure repair (canonical 5-phase: setup→core→testing→polish→maintenance)\n2. _meta field validation and repair (checksum, configVersion, schemaVersion, version)\n3. focus object structure validation\n4. project object structure (name, currentPhase, phases)\n5. Task field validation (required fields with defaults)\n6. Remove obsolete/invalid fields\n\nBEHAVIOR:\n- claude-todo migrate repair (interactive)\n- claude-todo migrate repair --auto (auto-apply)\n- claude-todo migrate repair --dry-run (preview only)\n\nDATA INTEGRITY REQUIREMENTS:\n- MUST preserve all existing task data\n- MUST preserve existing phase statuses/timestamps where valid\n- MUST create backup before any modifications\n- MUST be idempotent (running twice = same result)\n- MUST log all changes to todo-log.json\n\nIMPLEMENTATION:\n- Add repair subcommand to scripts/migrate.sh\n- Add repair functions to lib/migrate.sh\n- Add schema comparison logic\n- Add field-by-field repair with defaults",
+      "labels": [
+        "data-integrity",
+        "feature-phase",
+        "migration",
+        "schema"
+      ]
+    },
+    {
+      "id": "T303",
+      "title": "T302.1: Add repair subcommand to scripts/migrate.sh",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T20:16:11Z",
+      "phase": "core",
+      "description": "Add 'repair' subcommand handling to migrate.sh CLI:\n- Parse --dry-run, --auto flags\n- Call repair functions from lib/migrate.sh\n- Display changes in human-readable format\n- Handle backup creation before repair\n- Return appropriate exit codes",
+      "labels": [
+        "feature-phase",
+        "implementation",
+        "migration"
+      ],
+      "depends": [
+        "T302"
+      ]
+    },
+    {
+      "id": "T304",
+      "title": "T302.2: Implement schema comparison logic in lib/migrate.sh",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T20:16:13Z",
+      "phase": "core",
+      "description": "Create functions to compare actual file structure against canonical schema:\n- get_canonical_phases(): Return canonical 5-phase structure\n- compare_phases(): Find missing/extra/wrong phases\n- compare_meta(): Find missing/wrong _meta fields\n- compare_focus(): Find missing/wrong focus fields\n- compare_project(): Find missing/wrong project fields\n- generate_repair_plan(): Create list of all needed changes",
+      "labels": [
+        "feature-phase",
+        "implementation",
+        "migration"
+      ],
+      "depends": [
+        "T302"
+      ]
+    },
+    {
+      "id": "T305",
+      "title": "T302.3: Implement repair execution functions",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T20:16:15Z",
+      "phase": "core",
+      "description": "Create functions to execute repairs while preserving data:\n- repair_phases(): Add missing phases, remove invalid ones, preserve status/timestamps\n- repair_meta(): Add missing _meta fields with defaults\n- repair_focus(): Add missing focus fields\n- repair_project(): Ensure project object structure\n- apply_repairs(): Execute all repairs atomically with backup",
+      "labels": [
+        "feature-phase",
+        "implementation",
+        "migration"
+      ],
+      "depends": [
+        "T302"
+      ]
+    },
+    {
+      "id": "T306",
+      "title": "T302.5: Document migrate repair command",
+      "status": "pending",
+      "priority": "medium",
+      "createdAt": "2025-12-16T20:16:20Z",
+      "phase": "polish",
+      "description": "Create documentation for repair command:\n- Add to docs/commands/migrate.md\n- Add examples and use cases\n- Document what gets repaired\n- Document data integrity guarantees\n- Update CHANGELOG.md",
+      "labels": [
+        "documentation",
+        "feature-phase",
+        "migration"
+      ],
+      "depends": [
+        "T302"
+      ]
+    },
+    {
+      "id": "T307",
+      "title": "T302.4: Add comprehensive tests for migrate repair",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T20:16:34Z",
+      "phase": "core",
+      "description": "Create test suite for repair command:\n- Test repair of 4-phase → 5-phase structure\n- Test repair preserves existing phase statuses\n- Test repair adds missing _meta fields\n- Test repair is idempotent (run twice = same result)\n- Test --dry-run shows changes without applying\n- Test backup is created before repair\n- Test data integrity (no task data lost)",
+      "labels": [
+        "feature-phase",
+        "migration",
+        "testing"
+      ],
+      "depends": [
+        "T302"
+      ]
+    },
+    {
+      "id": "T308",
+      "title": "Repair this project's .claude/todo.json phase structure",
+      "status": "pending",
+      "priority": "critical",
+      "createdAt": "2025-12-16T20:16:37Z",
+      "phase": "core",
+      "description": "This project itself has the wrong 4-phase structure (setup, core, polish, release) instead of the canonical 5-phase (setup, core, testing, polish, maintenance).\n\nMUST be fixed using the new 'migrate repair' command - NOT manually.\n\nThis task proves the repair command works correctly on a real project with existing data.\n\nVERIFICATION:\n- All 200+ tasks preserved\n- All focus state preserved  \n- All log entries preserved\n- Phase structure corrected to 5-phase\n- Checksum updated correctly",
+      "labels": [
+        "data-integrity",
+        "feature-phase",
+        "self-repair"
+      ],
+      "depends": [
+        "T302"
+      ]
+    },
+    {
+      "id": "T309",
+      "title": "Regenerate golden test fixtures after phase structure fixes",
+      "status": "pending",
+      "priority": "medium",
+      "createdAt": "2025-12-16T20:16:56Z",
+      "phase": "core",
+      "description": "6 golden tests failing due to output format changes from v0.13.1/v0.13.2:\n- golden: list --format json\n- golden: list --format jsonl  \n- golden: phases\n- golden: phases --format json\n- golden: phases stats\n- golden: dash --compact\n\nNeed to regenerate golden files to match new output formats.",
+      "labels": [
+        "feature-phase",
+        "golden-tests",
+        "testing"
       ]
     }
   ],

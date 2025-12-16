@@ -1,11 +1,11 @@
 {
   "$schema": "./schemas/log.schema.json",
-  "version": "0.10.1",
+  "version": "2.1.0",
   "project": "claude-todo",
   "_meta": {
-    "totalEntries": 511,
+    "totalEntries": 580,
     "firstEntry": "2025-12-13T07:14:38Z",
-    "lastEntry": "2025-12-16T15:28:59Z",
+    "lastEntry": "2025-12-16T20:18:08Z",
     "entriesPruned": 0
   },
   "entries": [
@@ -13143,6 +13143,1547 @@
         "field": "status",
         "operation": "complete"
       }
+    },
+    {
+      "id": "log_79c4f7e657ef",
+      "timestamp": "2025-12-16T15:49:36Z",
+      "sessionId": "session_20251216_074936_ce4051",
+      "action": "session_start",
+      "actor": "system",
+      "taskId": null,
+      "before": null,
+      "after": null,
+      "details": "Session started"
+    },
+    {
+      "id": "log_4750aa499633",
+      "timestamp": "2025-12-16T15:49:46Z",
+      "sessionId": "session_20251216_074936_ce4051",
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": {
+        "currentTask": "T288"
+      },
+      "after": {
+        "currentTask": "T289"
+      },
+      "details": null
+    },
+    {
+      "id": "log_ba99dfc3f153",
+      "timestamp": "2025-12-16T15:50:27Z",
+      "sessionId": "session_20251216_074936_ce4051",
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T289",
+      "before": {
+        "title": "Investigate _meta.version field usage - verify if needed in template",
+        "status": "active",
+        "priority": "high",
+        "description": "During T245, removed _meta.version from todo.template.json. Need to verify: 1) Is it used in validation.sh or other scripts? 2) Is it referenced in schemas? 3) Should it be restored? Check grep for _meta.version usage across codebase.",
+        "phase": null,
+        "labels": [
+          "feature-phase",
+          "investigation"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "after": {
+        "title": "Investigate _meta.version field usage - verify if needed in template",
+        "status": "active",
+        "priority": "high",
+        "description": "During T245, removed _meta.version from todo.template.json. Need to verify: 1) Is it used in validation.sh or other scripts? 2) Is it referenced in schemas? 3) Should it be restored? Check grep for _meta.version usage across codebase.",
+        "phase": null,
+        "labels": [
+          "feature-phase",
+          "investigation"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_be073e674ead",
+      "timestamp": "2025-12-16T15:50:58Z",
+      "sessionId": "session_20251216_074936_ce4051",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T289",
+      "before": {
+        "status": "active",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T15:50:58Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_e78f145f266e",
+      "timestamp": "2025-12-16T15:51:07Z",
+      "sessionId": "session_20251216_074936_ce4051",
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": null,
+      "after": {
+        "currentTask": "T274"
+      },
+      "details": null
+    },
+    {
+      "id": "log_d95fb4cdd8f4",
+      "timestamp": "2025-12-16T15:53:20Z",
+      "sessionId": "session_20251216_074936_ce4051",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T274",
+      "before": {
+        "status": "active",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T15:53:20Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_d9f1d1ee10c2",
+      "timestamp": "2025-12-16T15:53:28Z",
+      "sessionId": "session_20251216_074936_ce4051",
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": null,
+      "after": {
+        "currentTask": "T275"
+      },
+      "details": null
+    },
+    {
+      "id": "log_fb3b3d9d7c85",
+      "timestamp": "2025-12-16T15:54:34Z",
+      "sessionId": "session_20251216_074936_ce4051",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T275",
+      "before": {
+        "status": "active",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T15:54:34Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_7f0a2922214c",
+      "timestamp": "2025-12-16T15:54:36Z",
+      "sessionId": "session_20251216_074936_ce4051",
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": null,
+      "after": {
+        "currentTask": "T276"
+      },
+      "details": null
+    },
+    {
+      "id": "log_085fa8683958",
+      "timestamp": "2025-12-16T15:56:01Z",
+      "sessionId": "session_20251216_074936_ce4051",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T276",
+      "before": {
+        "status": "active",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T15:56:01Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_8ec8a581ac1b",
+      "timestamp": "2025-12-16T15:56:03Z",
+      "sessionId": "session_20251216_074936_ce4051",
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": null,
+      "after": {
+        "currentTask": "T278"
+      },
+      "details": null
+    },
+    {
+      "id": "log_ed7b8aacd9da",
+      "timestamp": "2025-12-16T15:56:37Z",
+      "sessionId": "session_20251216_074936_ce4051",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T278",
+      "before": {
+        "status": "active",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T15:56:37Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_bc68cecfdeec",
+      "timestamp": "2025-12-16T15:56:39Z",
+      "sessionId": "session_20251216_074936_ce4051",
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": null,
+      "after": {
+        "currentTask": "T279"
+      },
+      "details": null
+    },
+    {
+      "id": "log_49cd1c58ccad",
+      "timestamp": "2025-12-16T15:57:20Z",
+      "sessionId": "session_20251216_074936_ce4051",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T279",
+      "before": {
+        "status": "active",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T15:57:20Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_85ff0132f8a8",
+      "timestamp": "2025-12-16T15:57:42Z",
+      "sessionId": "session_20251216_074936_ce4051",
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": null,
+      "after": {
+        "currentTask": "T282"
+      },
+      "details": null
+    },
+    {
+      "id": "log_adf4ba9cce09",
+      "timestamp": "2025-12-16T16:01:16Z",
+      "sessionId": "session_20251216_074936_ce4051",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T282",
+      "before": {
+        "status": "active",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T16:01:16Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_3d33e28fd13d",
+      "timestamp": "2025-12-16T16:01:18Z",
+      "sessionId": "session_20251216_074936_ce4051",
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": null,
+      "after": {
+        "currentTask": "T286"
+      },
+      "details": null
+    },
+    {
+      "id": "log_261e5b2e088a",
+      "timestamp": "2025-12-16T16:01:54Z",
+      "sessionId": "session_20251216_074936_ce4051",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T286",
+      "before": {
+        "status": "active",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T16:01:54Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_24db02b81456",
+      "timestamp": "2025-12-16T16:01:55Z",
+      "sessionId": "session_20251216_074936_ce4051",
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": null,
+      "after": {
+        "currentTask": "T287"
+      },
+      "details": null
+    },
+    {
+      "id": "log_1d76fb6a2413",
+      "timestamp": "2025-12-16T16:02:42Z",
+      "sessionId": "session_20251216_074936_ce4051",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T287",
+      "before": {
+        "status": "active",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T16:02:42Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_1755010630ae",
+      "timestamp": "2025-12-16T16:03:49Z",
+      "sessionId": "session_20251216_074936_ce4051",
+      "action": "session_end",
+      "actor": "system",
+      "taskId": null,
+      "before": null,
+      "after": null,
+      "details": null
+    },
+    {
+      "id": "log_2511dfe0294d",
+      "timestamp": "2025-12-16T16:07:37Z",
+      "sessionId": "session_20251216_080737_8eb808",
+      "action": "session_start",
+      "actor": "system",
+      "taskId": null,
+      "before": null,
+      "after": null,
+      "details": "Session started"
+    },
+    {
+      "id": "log-1765901676-69f29e",
+      "timestamp": "2025-12-16T16:14:36Z",
+      "action": "task_created",
+      "taskId": "T290",
+      "actor": "system",
+      "details": {
+        "title": "Verify v2.1.0 → v2.2.0 migration with testing phase",
+        "status": "pending",
+        "priority": "critical"
+      },
+      "before": null,
+      "after": {
+        "title": "Verify v2.1.0 → v2.2.0 migration with testing phase",
+        "status": "pending",
+        "priority": "critical"
+      }
+    },
+    {
+      "id": "log-1765901696-d66c77",
+      "timestamp": "2025-12-16T16:14:56Z",
+      "action": "task_created",
+      "taskId": "T291",
+      "actor": "system",
+      "details": {
+        "title": "Update phase-sync.bats inline fixtures to 5-phase structure",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Update phase-sync.bats inline fixtures to 5-phase structure",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765901698-bbdd8a",
+      "timestamp": "2025-12-16T16:14:58Z",
+      "action": "task_created",
+      "taskId": "T292",
+      "actor": "system",
+      "details": {
+        "title": "Verify logging with testing phase operations",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Verify logging with testing phase operations",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765901699-c2b5de",
+      "timestamp": "2025-12-16T16:14:59Z",
+      "action": "task_created",
+      "taskId": "T293",
+      "actor": "system",
+      "details": {
+        "title": "Verify archiving with testing phase metadata",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Verify archiving with testing phase metadata",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765901702-05e5b4",
+      "timestamp": "2025-12-16T16:15:02Z",
+      "action": "task_created",
+      "taskId": "T294",
+      "actor": "system",
+      "details": {
+        "title": "Revert phase-commands.bats test fix and properly handle missing phases scenario",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Revert phase-commands.bats test fix and properly handle missing phases scenario",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765901704-f5d63d",
+      "timestamp": "2025-12-16T16:15:04Z",
+      "action": "task_created",
+      "taskId": "T295",
+      "actor": "system",
+      "details": {
+        "title": "Create comprehensive migration test suite for 5-phase schema",
+        "status": "pending",
+        "priority": "critical"
+      },
+      "before": null,
+      "after": {
+        "title": "Create comprehensive migration test suite for 5-phase schema",
+        "status": "pending",
+        "priority": "critical"
+      }
+    },
+    {
+      "id": "log-1765901720-da0735",
+      "timestamp": "2025-12-16T16:15:20Z",
+      "action": "task_created",
+      "taskId": "T296",
+      "actor": "system",
+      "details": {
+        "title": "Fix validation.bats tests for 5-phase schema",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Fix validation.bats tests for 5-phase schema",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765901721-509f6e",
+      "timestamp": "2025-12-16T16:15:21Z",
+      "action": "task_created",
+      "taskId": "T297",
+      "actor": "system",
+      "details": {
+        "title": "Update all documentation with 5-phase lifecycle",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Update all documentation with 5-phase lifecycle",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765901723-3932ba",
+      "timestamp": "2025-12-16T16:15:23Z",
+      "action": "task_created",
+      "taskId": "T298",
+      "actor": "system",
+      "details": {
+        "title": "Update T288 release blockers for 5-phase testing",
+        "status": "pending",
+        "priority": "critical"
+      },
+      "before": null,
+      "after": {
+        "title": "Update T288 release blockers for 5-phase testing",
+        "status": "pending",
+        "priority": "critical"
+      }
+    },
+    {
+      "id": "log_97a0c236c622",
+      "timestamp": "2025-12-16T16:19:57Z",
+      "sessionId": "session_20251216_080737_8eb808",
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T290",
+      "before": {
+        "title": "Verify v2.1.0 → v2.2.0 migration with testing phase",
+        "status": "pending",
+        "priority": "critical",
+        "description": "Test migration from v2.1.0 (no phases or old phase structure) to v2.2.0 (5-phase structure with testing phase). Verify: 1) Existing tasks preserve all fields during migration 2) Phase assignments are correctly added/updated 3) No data loss in task descriptions, notes, dependencies 4) Checksums are correctly recalculated 5) Timestamps are preserved 6) Log entries are created for migration events 7) Archive files are also migrated correctly. Test with real-world fixtures containing various task states.",
+        "phase": "core",
+        "labels": [
+          "data-integrity",
+          "migration",
+          "testing"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "after": {
+        "title": "Verify v2.1.0 → v2.2.0 migration with testing phase",
+        "status": "pending",
+        "priority": "critical",
+        "description": "Test migration from v2.1.0 (no phases or old phase structure) to v2.2.0 (5-phase structure with testing phase). Verify: 1) Existing tasks preserve all fields during migration 2) Phase assignments are correctly added/updated 3) No data loss in task descriptions, notes, dependencies 4) Checksums are correctly recalculated 5) Timestamps are preserved 6) Log entries are created for migration events 7) Archive files are also migrated correctly. Test with real-world fixtures containing various task states.",
+        "phase": "core",
+        "labels": [
+          "data-integrity",
+          "feature-phase",
+          "migration",
+          "testing"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_49a417ccc3f9",
+      "timestamp": "2025-12-16T16:19:57Z",
+      "sessionId": "session_20251216_080737_8eb808",
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T291",
+      "before": {
+        "title": "Update phase-sync.bats inline fixtures to 5-phase structure",
+        "status": "pending",
+        "priority": "high",
+        "description": "The phase-sync.bats file contains create_phased_project_fixture() with hardcoded 3-phase structure (setup, core, polish). Must update to 5-phase structure (setup, core, testing, polish, maintenance) with correct order numbers. Also verify test assertions match new phase names and structure. This is NOT a workaround - the fixture must reflect the actual schema structure.",
+        "phase": "core",
+        "labels": [
+          "fixture-update",
+          "testing"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T290"
+        ],
+        "blockedBy": null
+      },
+      "after": {
+        "title": "Update phase-sync.bats inline fixtures to 5-phase structure",
+        "status": "pending",
+        "priority": "high",
+        "description": "The phase-sync.bats file contains create_phased_project_fixture() with hardcoded 3-phase structure (setup, core, polish). Must update to 5-phase structure (setup, core, testing, polish, maintenance) with correct order numbers. Also verify test assertions match new phase names and structure. This is NOT a workaround - the fixture must reflect the actual schema structure.",
+        "phase": "core",
+        "labels": [
+          "feature-phase",
+          "fixture-update",
+          "testing"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T290"
+        ],
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_49795e4615d6",
+      "timestamp": "2025-12-16T16:19:57Z",
+      "sessionId": "session_20251216_080737_8eb808",
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T292",
+      "before": {
+        "title": "Verify logging with testing phase operations",
+        "status": "pending",
+        "priority": "high",
+        "description": "Ensure todo-log.json correctly captures: 1) Phase creation during init 2) Phase transitions (pending→active→completed) 3) Task phase assignments and changes 4) Phase-related errors and warnings 5) Migration events when upgrading schema. Verify log entries have correct action types, timestamps, and context.",
+        "phase": "core",
+        "labels": [
+          "data-integrity",
+          "logging",
+          "testing"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T290"
+        ],
+        "blockedBy": null
+      },
+      "after": {
+        "title": "Verify logging with testing phase operations",
+        "status": "pending",
+        "priority": "high",
+        "description": "Ensure todo-log.json correctly captures: 1) Phase creation during init 2) Phase transitions (pending→active→completed) 3) Task phase assignments and changes 4) Phase-related errors and warnings 5) Migration events when upgrading schema. Verify log entries have correct action types, timestamps, and context.",
+        "phase": "core",
+        "labels": [
+          "data-integrity",
+          "feature-phase",
+          "logging",
+          "testing"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T290"
+        ],
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_4f15a539aae6",
+      "timestamp": "2025-12-16T16:19:57Z",
+      "sessionId": "session_20251216_080737_8eb808",
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T293",
+      "before": {
+        "title": "Verify archiving with testing phase metadata",
+        "status": "pending",
+        "priority": "high",
+        "description": "Test that archive operations: 1) Preserve task phase field in archived tasks 2) Archive statistics include phase breakdown 3) Phase-filtered archiving works correctly 4) Migration of archived tasks to new schema works 5) No data loss during archive operations with new phase structure.",
+        "phase": "core",
+        "labels": [
+          "archiving",
+          "data-integrity",
+          "testing"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T290"
+        ],
+        "blockedBy": null
+      },
+      "after": {
+        "title": "Verify archiving with testing phase metadata",
+        "status": "pending",
+        "priority": "high",
+        "description": "Test that archive operations: 1) Preserve task phase field in archived tasks 2) Archive statistics include phase breakdown 3) Phase-filtered archiving works correctly 4) Migration of archived tasks to new schema works 5) No data loss during archive operations with new phase structure.",
+        "phase": "core",
+        "labels": [
+          "archiving",
+          "data-integrity",
+          "feature-phase",
+          "testing"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T290"
+        ],
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_1e5d13a87983",
+      "timestamp": "2025-12-16T16:19:58Z",
+      "sessionId": "session_20251216_080737_8eb808",
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T294",
+      "before": {
+        "title": "Revert phase-commands.bats test fix and properly handle missing phases scenario",
+        "status": "pending",
+        "priority": "high",
+        "description": "The test 'phase handles missing project.phases' was incorrectly fixed using create_empty_todo_legacy as a bandaid. Proper fix requires: 1) Decide if missing phases should trigger migration or error 2) Implement proper behavior in phase.sh scripts 3) Update test to reflect actual expected behavior 4) Document the expected behavior for edge cases.",
+        "phase": "core",
+        "labels": [
+          "bug-fix",
+          "testing"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T290"
+        ],
+        "blockedBy": null
+      },
+      "after": {
+        "title": "Revert phase-commands.bats test fix and properly handle missing phases scenario",
+        "status": "pending",
+        "priority": "high",
+        "description": "The test 'phase handles missing project.phases' was incorrectly fixed using create_empty_todo_legacy as a bandaid. Proper fix requires: 1) Decide if missing phases should trigger migration or error 2) Implement proper behavior in phase.sh scripts 3) Update test to reflect actual expected behavior 4) Document the expected behavior for edge cases.",
+        "phase": "core",
+        "labels": [
+          "bug-fix",
+          "feature-phase",
+          "testing"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T290"
+        ],
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_87655ff72224",
+      "timestamp": "2025-12-16T16:19:58Z",
+      "sessionId": "session_20251216_080737_8eb808",
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T295",
+      "before": {
+        "title": "Create comprehensive migration test suite for 5-phase schema",
+        "status": "pending",
+        "priority": "critical",
+        "description": "Create tests/migration/test-5-phase-schema.bats with tests for: 1) Empty project migration (no tasks) 2) Project with tasks in old phases (setup, core, polish) 3) Project with tasks in non-existent phases 4) Project with custom phases that should be preserved 5) Verify order field updates for existing phases 6) Verify new phases (testing, maintenance) are added correctly 7) Test rollback capability if migration fails.",
+        "phase": "core",
+        "labels": [
+          "comprehensive",
+          "migration",
+          "testing"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "after": {
+        "title": "Create comprehensive migration test suite for 5-phase schema",
+        "status": "pending",
+        "priority": "critical",
+        "description": "Create tests/migration/test-5-phase-schema.bats with tests for: 1) Empty project migration (no tasks) 2) Project with tasks in old phases (setup, core, polish) 3) Project with tasks in non-existent phases 4) Project with custom phases that should be preserved 5) Verify order field updates for existing phases 6) Verify new phases (testing, maintenance) are added correctly 7) Test rollback capability if migration fails.",
+        "phase": "core",
+        "labels": [
+          "comprehensive",
+          "feature-phase",
+          "migration",
+          "testing"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_cdb2dba48d99",
+      "timestamp": "2025-12-16T16:19:58Z",
+      "sessionId": "session_20251216_080737_8eb808",
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T296",
+      "before": {
+        "title": "Fix validation.bats tests for 5-phase schema",
+        "status": "pending",
+        "priority": "high",
+        "description": "Multiple validation tests are failing due to schema changes: 1) validate reports success for valid structure 2) validate handles empty todo.json 3) validate --format json produces valid JSON 4) validate checks required fields. Must update test expectations and fixtures to match 5-phase schema structure. Verify validation logic is correct for new schema.",
+        "phase": "core",
+        "labels": [
+          "testing",
+          "validation"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "after": {
+        "title": "Fix validation.bats tests for 5-phase schema",
+        "status": "pending",
+        "priority": "high",
+        "description": "Multiple validation tests are failing due to schema changes: 1) validate reports success for valid structure 2) validate handles empty todo.json 3) validate --format json produces valid JSON 4) validate checks required fields. Must update test expectations and fixtures to match 5-phase schema structure. Verify validation logic is correct for new schema.",
+        "phase": "core",
+        "labels": [
+          "feature-phase",
+          "testing",
+          "validation"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_f69823ada458",
+      "timestamp": "2025-12-16T16:19:58Z",
+      "sessionId": "session_20251216_080737_8eb808",
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T297",
+      "before": {
+        "title": "Update all documentation with 5-phase lifecycle",
+        "status": "pending",
+        "priority": "high",
+        "description": "Update all documentation files with 5-phase lifecycle (setup→core→testing→polish→maintenance): 1) docs/commands/phase.md - command examples 2) docs/commands/phases.md - phase list examples 3) docs/migration/v2.2.0-migration-guide.md - phase structure 4) docs/QUICK-REFERENCE.md - phase workflow 5) docs/usage.md - phase examples 6) README.md - phase tracking section 7) docs/architecture/ARCHITECTURE.md - phase diagrams 8) docs/architecture/SCHEMAS.md - phase definitions. Ensure consistent terminology and order numbers throughout.",
+        "phase": "core",
+        "labels": [
+          "documentation"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "after": {
+        "title": "Update all documentation with 5-phase lifecycle",
+        "status": "pending",
+        "priority": "high",
+        "description": "Update all documentation files with 5-phase lifecycle (setup→core→testing→polish→maintenance): 1) docs/commands/phase.md - command examples 2) docs/commands/phases.md - phase list examples 3) docs/migration/v2.2.0-migration-guide.md - phase structure 4) docs/QUICK-REFERENCE.md - phase workflow 5) docs/usage.md - phase examples 6) README.md - phase tracking section 7) docs/architecture/ARCHITECTURE.md - phase diagrams 8) docs/architecture/SCHEMAS.md - phase definitions. Ensure consistent terminology and order numbers throughout.",
+        "phase": "core",
+        "labels": [
+          "documentation",
+          "feature-phase"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_9001ba9d8532",
+      "timestamp": "2025-12-16T16:19:58Z",
+      "sessionId": "session_20251216_080737_8eb808",
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T298",
+      "before": {
+        "title": "Update T288 release blockers for 5-phase testing",
+        "status": "pending",
+        "priority": "critical",
+        "description": "T288 (Final release preparation for v2.2.0) must now be blocked by the new 5-phase testing tasks (T290-T296). Update T288 dependencies to ensure: 1) All migration tests pass 2) All fixture updates complete 3) Documentation updated 4) No test workarounds or bandaids. Release should NOT proceed until comprehensive testing is complete.",
+        "phase": "core",
+        "labels": [
+          "blocking",
+          "release-management"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "after": {
+        "title": "Update T288 release blockers for 5-phase testing",
+        "status": "pending",
+        "priority": "critical",
+        "description": "T288 (Final release preparation for v2.2.0) must now be blocked by the new 5-phase testing tasks (T290-T296). Update T288 dependencies to ensure: 1) All migration tests pass 2) All fixture updates complete 3) Documentation updated 4) No test workarounds or bandaids. Release should NOT proceed until comprehensive testing is complete.",
+        "phase": "core",
+        "labels": [
+          "blocking",
+          "feature-phase",
+          "release-management"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_71841f0a595a",
+      "timestamp": "2025-12-16T16:34:05Z",
+      "sessionId": "session_20251216_080737_8eb808",
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": null,
+      "after": {
+        "currentTask": "T296"
+      },
+      "details": null
+    },
+    {
+      "id": "log_9acb75cdd858",
+      "timestamp": "2025-12-16T17:32:17Z",
+      "sessionId": "session_20251216_080737_8eb808",
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T296",
+      "before": {
+        "title": "Fix validation.bats tests for 5-phase schema",
+        "status": "active",
+        "priority": "high",
+        "description": "Multiple validation tests are failing due to schema changes: 1) validate reports success for valid structure 2) validate handles empty todo.json 3) validate --format json produces valid JSON 4) validate checks required fields. Must update test expectations and fixtures to match 5-phase schema structure. Verify validation logic is correct for new schema.",
+        "phase": "core",
+        "labels": [
+          "feature-phase",
+          "testing",
+          "validation"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "after": {
+        "title": "Fix validation.bats tests for 5-phase schema",
+        "status": "active",
+        "priority": "high",
+        "description": "Multiple validation tests are failing due to schema changes: 1) validate reports success for valid structure 2) validate handles empty todo.json 3) validate --format json produces valid JSON 4) validate checks required fields. Must update test expectations and fixtures to match 5-phase schema structure. Verify validation logic is correct for new schema.",
+        "phase": "core",
+        "labels": [
+          "feature-phase",
+          "testing",
+          "validation"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_4d0c22d7148e",
+      "timestamp": "2025-12-16T17:32:19Z",
+      "sessionId": "session_20251216_080737_8eb808",
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T291",
+      "before": {
+        "title": "Update phase-sync.bats inline fixtures to 5-phase structure",
+        "status": "pending",
+        "priority": "high",
+        "description": "The phase-sync.bats file contains create_phased_project_fixture() with hardcoded 3-phase structure (setup, core, polish). Must update to 5-phase structure (setup, core, testing, polish, maintenance) with correct order numbers. Also verify test assertions match new phase names and structure. This is NOT a workaround - the fixture must reflect the actual schema structure.",
+        "phase": "core",
+        "labels": [
+          "feature-phase",
+          "fixture-update",
+          "testing"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T290"
+        ],
+        "blockedBy": null
+      },
+      "after": {
+        "title": "Update phase-sync.bats inline fixtures to 5-phase structure",
+        "status": "pending",
+        "priority": "high",
+        "description": "The phase-sync.bats file contains create_phased_project_fixture() with hardcoded 3-phase structure (setup, core, polish). Must update to 5-phase structure (setup, core, testing, polish, maintenance) with correct order numbers. Also verify test assertions match new phase names and structure. This is NOT a workaround - the fixture must reflect the actual schema structure.",
+        "phase": "core",
+        "labels": [
+          "feature-phase",
+          "fixture-update",
+          "testing"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T290"
+        ],
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_e8339a1f4788",
+      "timestamp": "2025-12-16T17:32:22Z",
+      "sessionId": "session_20251216_080737_8eb808",
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T294",
+      "before": {
+        "title": "Revert phase-commands.bats test fix and properly handle missing phases scenario",
+        "status": "pending",
+        "priority": "high",
+        "description": "The test 'phase handles missing project.phases' was incorrectly fixed using create_empty_todo_legacy as a bandaid. Proper fix requires: 1) Decide if missing phases should trigger migration or error 2) Implement proper behavior in phase.sh scripts 3) Update test to reflect actual expected behavior 4) Document the expected behavior for edge cases.",
+        "phase": "core",
+        "labels": [
+          "bug-fix",
+          "feature-phase",
+          "testing"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T290"
+        ],
+        "blockedBy": null
+      },
+      "after": {
+        "title": "Revert phase-commands.bats test fix and properly handle missing phases scenario",
+        "status": "pending",
+        "priority": "high",
+        "description": "The test 'phase handles missing project.phases' was incorrectly fixed using create_empty_todo_legacy as a bandaid. Proper fix requires: 1) Decide if missing phases should trigger migration or error 2) Implement proper behavior in phase.sh scripts 3) Update test to reflect actual expected behavior 4) Document the expected behavior for edge cases.",
+        "phase": "core",
+        "labels": [
+          "bug-fix",
+          "feature-phase",
+          "testing"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T290"
+        ],
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log-1765906361-b9887c",
+      "timestamp": "2025-12-16T17:32:41Z",
+      "action": "task_created",
+      "taskId": "T299",
+      "actor": "system",
+      "details": {
+        "title": "CRITICAL: Fix workflow.bats 5-phase structure",
+        "status": "pending",
+        "priority": "critical"
+      },
+      "before": null,
+      "after": {
+        "title": "CRITICAL: Fix workflow.bats 5-phase structure",
+        "status": "pending",
+        "priority": "critical"
+      }
+    },
+    {
+      "id": "log_9790bb6d3708",
+      "timestamp": "2025-12-16T17:33:51Z",
+      "sessionId": "session_20251216_080737_8eb808",
+      "action": "session_end",
+      "actor": "system",
+      "taskId": null,
+      "before": null,
+      "after": null,
+      "details": null
+    },
+    {
+      "id": "log-1765912422-960fdc",
+      "timestamp": "2025-12-16T19:13:42Z",
+      "action": "task_created",
+      "taskId": "T300",
+      "actor": "system",
+      "details": {
+        "title": "Test task for verification",
+        "status": "pending",
+        "priority": "low"
+      },
+      "before": null,
+      "after": {
+        "title": "Test task for verification",
+        "status": "pending",
+        "priority": "low"
+      }
+    },
+    {
+      "id": "log_3275b15a5f03",
+      "timestamp": "2025-12-16T19:13:52Z",
+      "sessionId": null,
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T300",
+      "before": {
+        "title": "Test task for verification",
+        "status": "pending",
+        "priority": "low",
+        "description": "Temporary task to verify add command works",
+        "phase": "core",
+        "labels": [
+          "test-verification"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "after": {
+        "title": "Test task for verification",
+        "status": "pending",
+        "priority": "medium",
+        "description": "Temporary task to verify add command works",
+        "phase": "core",
+        "labels": [
+          "test-verification"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_34bb7084ffd2",
+      "timestamp": "2025-12-16T19:14:12Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T300",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T19:14:12Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_1d7d7db0e374",
+      "timestamp": "2025-12-16T19:14:35Z",
+      "sessionId": null,
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": {
+        "currentTask": "T296"
+      },
+      "after": {
+        "currentTask": "T290"
+      },
+      "details": null
+    },
+    {
+      "id": "log_d1eeac1e7daf",
+      "timestamp": "2025-12-16T19:14:48Z",
+      "sessionId": "session_20251216_111448_3277bf",
+      "action": "session_start",
+      "actor": "system",
+      "taskId": null,
+      "before": null,
+      "after": null,
+      "details": "Session started"
+    },
+    {
+      "id": "log_65aac75e3236",
+      "timestamp": "2025-12-16T19:14:51Z",
+      "sessionId": "session_20251216_111448_3277bf",
+      "action": "session_end",
+      "actor": "system",
+      "taskId": null,
+      "before": null,
+      "after": null,
+      "details": null
+    },
+    {
+      "id": "log_8ab299c1fed9",
+      "timestamp": "2025-12-16T19:14:58Z",
+      "sessionId": null,
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": {
+        "currentTask": "T290"
+      },
+      "after": null,
+      "details": null
+    },
+    {
+      "id": "log_18a4d88572d3",
+      "timestamp": "2025-12-16T19:15:28Z",
+      "sessionId": null,
+      "action": "phase_changed",
+      "actor": "human",
+      "taskId": null,
+      "before": {
+        "currentPhase": "core"
+      },
+      "after": {
+        "currentPhase": "setup"
+      },
+      "details": {
+        "transitionType": "set",
+        "fromPhase": "core",
+        "toPhase": "setup"
+      }
+    },
+    {
+      "id": "log_0fc3bb5e074a",
+      "timestamp": "2025-12-16T19:15:31Z",
+      "sessionId": null,
+      "action": "phase_changed",
+      "actor": "human",
+      "taskId": null,
+      "before": {
+        "currentPhase": "setup"
+      },
+      "after": {
+        "currentPhase": "core"
+      },
+      "details": {
+        "transitionType": "set",
+        "fromPhase": "setup",
+        "toPhase": "core"
+      }
+    },
+    {
+      "id": "log-1765915259-cd0548",
+      "timestamp": "2025-12-16T20:00:59Z",
+      "action": "task_created",
+      "taskId": "T301",
+      "actor": "system",
+      "details": {
+        "title": "TECH DEBT: Audit and eliminate hardcoded values - enforce schema-driven design",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "TECH DEBT: Audit and eliminate hardcoded values - enforce schema-driven design",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765916145-b39763",
+      "timestamp": "2025-12-16T20:15:45Z",
+      "action": "task_created",
+      "taskId": "T302",
+      "actor": "system",
+      "details": {
+        "title": "Implement 'migrate repair' command for full schema compliance",
+        "status": "pending",
+        "priority": "critical"
+      },
+      "before": null,
+      "after": {
+        "title": "Implement 'migrate repair' command for full schema compliance",
+        "status": "pending",
+        "priority": "critical"
+      }
+    },
+    {
+      "id": "log-1765916171-4452fe",
+      "timestamp": "2025-12-16T20:16:11Z",
+      "action": "task_created",
+      "taskId": "T303",
+      "actor": "system",
+      "details": {
+        "title": "T302.1: Add repair subcommand to scripts/migrate.sh",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "T302.1: Add repair subcommand to scripts/migrate.sh",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765916173-958d1d",
+      "timestamp": "2025-12-16T20:16:13Z",
+      "action": "task_created",
+      "taskId": "T304",
+      "actor": "system",
+      "details": {
+        "title": "T302.2: Implement schema comparison logic in lib/migrate.sh",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "T302.2: Implement schema comparison logic in lib/migrate.sh",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765916175-d4dce4",
+      "timestamp": "2025-12-16T20:16:15Z",
+      "action": "task_created",
+      "taskId": "T305",
+      "actor": "system",
+      "details": {
+        "title": "T302.3: Implement repair execution functions",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "T302.3: Implement repair execution functions",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765916180-97fdc0",
+      "timestamp": "2025-12-16T20:16:20Z",
+      "action": "task_created",
+      "taskId": "T306",
+      "actor": "system",
+      "details": {
+        "title": "T302.5: Document migrate repair command",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "T302.5: Document migrate repair command",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log-1765916194-b1a3d5",
+      "timestamp": "2025-12-16T20:16:34Z",
+      "action": "task_created",
+      "taskId": "T307",
+      "actor": "system",
+      "details": {
+        "title": "T302.4: Add comprehensive tests for migrate repair",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "T302.4: Add comprehensive tests for migrate repair",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765916197-56d70b",
+      "timestamp": "2025-12-16T20:16:37Z",
+      "action": "task_created",
+      "taskId": "T308",
+      "actor": "system",
+      "details": {
+        "title": "Repair this project's .claude/todo.json phase structure",
+        "status": "pending",
+        "priority": "critical"
+      },
+      "before": null,
+      "after": {
+        "title": "Repair this project's .claude/todo.json phase structure",
+        "status": "pending",
+        "priority": "critical"
+      }
+    },
+    {
+      "id": "log_bf28f5a38fb6",
+      "timestamp": "2025-12-16T20:16:54Z",
+      "sessionId": null,
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T290",
+      "before": {
+        "title": "Verify v2.1.0 → v2.2.0 migration with testing phase",
+        "status": "pending",
+        "priority": "critical",
+        "description": "Test migration from v2.1.0 (no phases or old phase structure) to v2.2.0 (5-phase structure with testing phase). Verify: 1) Existing tasks preserve all fields during migration 2) Phase assignments are correctly added/updated 3) No data loss in task descriptions, notes, dependencies 4) Checksums are correctly recalculated 5) Timestamps are preserved 6) Log entries are created for migration events 7) Archive files are also migrated correctly. Test with real-world fixtures containing various task states.",
+        "phase": "core",
+        "labels": [
+          "data-integrity",
+          "feature-phase",
+          "migration",
+          "testing"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "after": {
+        "title": "Verify v2.1.0 → v2.2.0 migration with testing phase",
+        "status": "pending",
+        "priority": "critical",
+        "description": "Test migration from v2.1.0 (no phases or old phase structure) to v2.2.0 (5-phase structure with testing phase). Verify: 1) Existing tasks preserve all fields during migration 2) Phase assignments are correctly added/updated 3) No data loss in task descriptions, notes, dependencies 4) Checksums are correctly recalculated 5) Timestamps are preserved 6) Log entries are created for migration events 7) Archive files are also migrated correctly. Test with real-world fixtures containing various task states.",
+        "phase": "core",
+        "labels": [
+          "data-integrity",
+          "feature-phase",
+          "migration",
+          "testing"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log-1765916216-b80a30",
+      "timestamp": "2025-12-16T20:16:56Z",
+      "action": "task_created",
+      "taskId": "T309",
+      "actor": "system",
+      "details": {
+        "title": "Regenerate golden test fixtures after phase structure fixes",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "Regenerate golden test fixtures after phase structure fixes",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log_06b736153cf0",
+      "timestamp": "2025-12-16T20:17:12Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T299",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T20:17:12Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_c92df3f59816",
+      "timestamp": "2025-12-16T20:17:18Z",
+      "sessionId": "session_20251216_121718_4e2ded",
+      "action": "session_start",
+      "actor": "system",
+      "taskId": null,
+      "before": null,
+      "after": null,
+      "details": "Session started"
+    },
+    {
+      "id": "log_18128739c935",
+      "timestamp": "2025-12-16T20:17:20Z",
+      "sessionId": "session_20251216_121718_4e2ded",
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": null,
+      "after": {
+        "currentTask": "T302"
+      },
+      "details": null
+    },
+    {
+      "id": "log_3a7ee8065cae",
+      "timestamp": "2025-12-16T20:18:08Z",
+      "sessionId": "session_20251216_121718_4e2ded",
+      "action": "session_end",
+      "actor": "system",
+      "taskId": null,
+      "before": null,
+      "after": null,
+      "details": null
     }
   ]
 }
