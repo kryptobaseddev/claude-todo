@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "claude-todo-schema-v2.1",
+  "$id": "claude-todo-schema-v2.2",
   "title": "CLAUDE-TODO Task Schema",
   "description": "LLM-optimized task tracking with integrity verification, session tracking, and anti-hallucination safeguards.",
   "type": "object",
@@ -14,9 +14,31 @@
       "description": "Schema version (semver)"
     },
     "project": {
-      "type": "string",
-      "minLength": 1,
-      "description": "Project identifier for cross-session context."
+      "type": "object",
+      "required": ["name", "phases"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Project identifier for cross-session context."
+        },
+        "currentPhase": {
+          "type": ["string", "null"],
+          "pattern": "^[a-z][a-z0-9-]*$",
+          "description": "Slug of currently active phase. Must match a phase with status=active."
+        },
+        "phases": {
+          "type": "object",
+          "description": "Phase definitions with lifecycle tracking.",
+          "patternProperties": {
+            "^[a-z][a-z0-9-]*$": {
+              "$ref": "#/definitions/phaseDefinition"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
     },
     "lastUpdated": {
       "type": "string",
@@ -58,6 +80,11 @@
           "pattern": "^T\\d{3,}$",
           "description": "Task ID being worked on. MUST match the only task with status='active'. Null if no active task."
         },
+        "currentPhase": {
+          "type": ["string", "null"],
+          "pattern": "^[a-z][a-z0-9-]*$",
+          "description": "Phase of currently focused task. Cached for quick reference."
+        },
         "blockedUntil": {
           "type": ["string", "null"],
           "description": "Global blocker if entire project is blocked."
@@ -79,22 +106,6 @@
       "description": "Flat array of all active tasks. Completed tasks archived via archive-todo.sh.",
       "items": { "$ref": "#/definitions/task" }
     },
-    "phases": {
-      "type": "object",
-      "description": "Optional phase definitions. Keys are slugs referenced by task.phase.",
-      "patternProperties": {
-        "^[a-z][a-z0-9-]*$": {
-          "type": "object",
-          "required": ["order", "name"],
-          "additionalProperties": false,
-          "properties": {
-            "order": { "type": "integer", "minimum": 1 },
-            "name": { "type": "string", "maxLength": 50 }
-          }
-        }
-      },
-      "additionalProperties": false
-    },
     "labels": {
       "type": "object",
       "description": "Computed label-to-task-ID index. Derived from task.labels. Regenerate if stale.",
@@ -109,6 +120,54 @@
   },
 
   "definitions": {
+    "phaseDefinition": {
+      "type": "object",
+      "required": ["order", "name", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "order": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Display order for phase sequencing."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50,
+          "description": "Human-readable phase name."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Phase purpose and scope."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "active", "completed"],
+          "description": "Phase lifecycle state. Only one phase can be active."
+        },
+        "startedAt": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "When phase became active."
+        },
+        "completedAt": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "When phase was completed."
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "enum": ["active", "completed"] } } },
+          "then": { "required": ["startedAt"] }
+        },
+        {
+          "if": { "properties": { "status": { "const": "completed" } } },
+          "then": { "required": ["completedAt"] }
+        }
+      ]
+    },
     "task": {
       "type": "object",
       "required": ["id", "title", "status", "priority", "createdAt"],

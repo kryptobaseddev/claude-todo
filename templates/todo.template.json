@@ -1,26 +1,59 @@
 {
   "$schema": "../schemas/todo.schema.json",
-  "version": "2.1.0",
-  "project": "{{PROJECT_NAME}}",
+  "version": "2.2.0",
+  "project": {
+    "name": "{{PROJECT_NAME}}",
+    "currentPhase": "setup",
+    "phases": {
+      "setup": {
+        "order": 1,
+        "name": "Setup & Foundation",
+        "description": "Initial project setup, dependencies, and configuration",
+        "status": "active",
+        "startedAt": "{{TIMESTAMP}}",
+        "completedAt": null
+      },
+      "core": {
+        "order": 2,
+        "name": "Core Development",
+        "description": "Build core functionality and features",
+        "status": "pending",
+        "startedAt": null,
+        "completedAt": null
+      },
+      "polish": {
+        "order": 3,
+        "name": "Polish & Launch",
+        "description": "Refinement, testing, and release preparation",
+        "status": "pending",
+        "startedAt": null,
+        "completedAt": null
+      },
+      "maintenance": {
+        "order": 4,
+        "name": "Maintenance",
+        "description": "Bug fixes, updates, and ongoing support",
+        "status": "pending",
+        "startedAt": null,
+        "completedAt": null
+      }
+    }
+  },
   "lastUpdated": "{{TIMESTAMP}}",
   "_meta": {
-    "version": "2.0.0",
+    "version": "2.2.0",
     "checksum": "{{CHECKSUM}}",
-    "configVersion": "2.1.0",
+    "configVersion": "2.2.0",
     "lastSessionId": null,
     "activeSession": null
   },
   "focus": {
     "currentTask": null,
+    "currentPhase": "setup",
     "blockedUntil": null,
     "sessionNote": null,
     "nextAction": null
   },
   "tasks": [],
-  "phases": {
-    "setup": { "order": 1, "name": "Setup & Foundation" },
-    "core": { "order": 2, "name": "Core Development" },
-    "polish": { "order": 3, "name": "Polish & Launch" }
-  },
   "labels": {}
 }

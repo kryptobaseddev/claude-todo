@@ -37,6 +37,15 @@ claude-todo session end                    # End session
 claude-todo session status                 # Show session info
 ```
 
+### TodoWrite Sync
+```bash
+claude-todo sync --inject                  # Prepare tasks for TodoWrite (session start)
+claude-todo sync --inject --focused-only   # Inject only focused task
+claude-todo sync --extract <file>          # Merge TodoWrite state back (session end)
+claude-todo sync --extract --dry-run <file> # Preview changes without applying
+claude-todo sync --status                  # Show sync session state
+```
+
 ### Analysis & Planning
 ```bash
 claude-todo dash                           # Project dashboard overview
@@ -339,7 +348,9 @@ claude-todo help <command>  # Detailed command help
 | **claude-todo** | Durable task tracking | Survives sessions, full metadata |
 | **TodoWrite** | Ephemeral session tasks | Session-only, simplified format |
 
-Use `claude-todo export --format todowrite` to sync persistent tasks to TodoWrite.
+**Workflows:**
+- One-way export: `claude-todo export --format todowrite`
+- Bidirectional sync: `claude-todo sync --inject` (start) and `sync --extract` (end)
 
 ---
 *Full documentation: `claude-todo help <command>` or `~/.claude-todo/docs/`*

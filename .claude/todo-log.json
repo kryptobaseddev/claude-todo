@@ -3,9 +3,9 @@
   "version": "0.10.1",
   "project": "claude-todo",
   "_meta": {
-    "totalEntries": 395,
+    "totalEntries": 511,
     "firstEntry": "2025-12-13T07:14:38Z",
-    "lastEntry": "2025-12-15T22:35:53Z",
+    "lastEntry": "2025-12-16T15:28:59Z",
     "entriesPruned": 0
   },
   "entries": [
@@ -11061,6 +11061,2083 @@
       "after": {
         "status": "done",
         "completedAt": "2025-12-15T22:35:53Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_a56ff31c6f45",
+      "timestamp": "2025-12-16T01:53:51Z",
+      "sessionId": null,
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": null,
+      "after": {
+        "currentTask": "T193"
+      },
+      "details": null
+    },
+    {
+      "id": "log_7bd054444711",
+      "timestamp": "2025-12-16T01:54:13Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T193",
+      "before": {
+        "status": "active",
+        "completedAt": "2025-12-15T05:41:50Z"
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T01:54:12Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_b5ee78c24c14",
+      "timestamp": "2025-12-16T01:54:13Z",
+      "sessionId": null,
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T204",
+      "before": {
+        "title": "FEATURE: Multi-Phase Consensus Research Framework Plugin",
+        "status": "pending",
+        "priority": "high",
+        "description": "Build a reusable plugin/command for claude-todo that implements the Multi-Phase Consensus Research Framework. This would be a programmatically callable tool with prompt-style instructions for any project to use when investigating claims, validating features, or planning complex work.\n\n## CONCEPT\nA repeatable, structured process for rigorous multi-agent investigation with:\n- Configurable phases (Discovery → Adversarial → Consolidation → Validation → Final)\n- Agent role definitions (Advocate/Challenger/Arbiter pattern)\n- Gate-based progression (scope approval, conflict resolution, archive approval, completeness sign-off)\n- Evidence standards and consensus thresholds\n- Artifact generation (reports, specs, corrections)\n\n## PROPOSED STRUCTURE\n| Round | Purpose | Agents | Gate |\n|-------|---------|--------|------|\n| Round 1 | Discovery & Inventory | 6 inventory agents | Gate 1: Scope approval |\n| Round 2 | Adversarial Challenge | 15 (5 domains × Advocate/Challenger/Arbiter) | Gate 2: Conflict resolution |\n| Round 3 | Consolidation | 7 merge agents | Gate 3: Archive approval |\n| Round 4 | Validation | 3 fresh validation agents | Gate 4: Completeness sign-off |\n| Round 5 | Final Spec | 2 finalization agents | Gate 5: Implementation GO |\n\n## INVOCATION\n```bash\nclaude-todo research --framework consensus \\\n  --claims 'claim1.md,claim2.md' \\\n  --evidence-dir ./evidence \\\n  --output-dir ./consensus-output \\\n  --agents 5 \\\n  --threshold 0.8\n```\n\n## KEY FEATURES\n1. Prompt-driven agent deployment (subagent_type patterns)\n2. Round-robin challenge protocol with configurable rounds\n3. Evidence standards (reproducible tests, measurements, citations)\n4. Consensus thresholds (4/5 default, configurable)\n5. Artifact templates (report, feature spec, doc correction, evidence dossier)\n6. Gate progression with approval checkpoints\n7. Deadlock resolution mechanisms\n8. Context handoff for long investigations\n\n## IMPLEMENTATION NOTES\n- Could be a Claude Code plugin or claude-todo subcommand\n- Needs integration with Task tool for agent deployment\n- Should support both interactive and batch modes\n- Evidence dossiers should be machine-readable (JSON) and human-readable (MD)\n- Consider Serena MCP integration for code analysis phases\n\n## SUCCESS CRITERIA\n- Repeatable: Same inputs produce consistent process\n- Valuable output: Single consolidated report, not scattered docs\n- Configurable: Adjust agents, rounds, thresholds per project\n- Transparent: Full evidence trail for all decisions",
+        "phase": "setup",
+        "labels": [
+          "consensus-framework",
+          "feature-request",
+          "future",
+          "plugin"
+        ],
+        "files": [
+          "claudedocs/CONSENSUS-FRAMEWORK-SPEC.md"
+        ],
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "after": {
+        "title": "FEATURE: Multi-Phase Consensus Research Framework Plugin",
+        "status": "active",
+        "priority": "high",
+        "description": "Build a reusable plugin/command for claude-todo that implements the Multi-Phase Consensus Research Framework. This would be a programmatically callable tool with prompt-style instructions for any project to use when investigating claims, validating features, or planning complex work.\n\n## CONCEPT\nA repeatable, structured process for rigorous multi-agent investigation with:\n- Configurable phases (Discovery → Adversarial → Consolidation → Validation → Final)\n- Agent role definitions (Advocate/Challenger/Arbiter pattern)\n- Gate-based progression (scope approval, conflict resolution, archive approval, completeness sign-off)\n- Evidence standards and consensus thresholds\n- Artifact generation (reports, specs, corrections)\n\n## PROPOSED STRUCTURE\n| Round | Purpose | Agents | Gate |\n|-------|---------|--------|------|\n| Round 1 | Discovery & Inventory | 6 inventory agents | Gate 1: Scope approval |\n| Round 2 | Adversarial Challenge | 15 (5 domains × Advocate/Challenger/Arbiter) | Gate 2: Conflict resolution |\n| Round 3 | Consolidation | 7 merge agents | Gate 3: Archive approval |\n| Round 4 | Validation | 3 fresh validation agents | Gate 4: Completeness sign-off |\n| Round 5 | Final Spec | 2 finalization agents | Gate 5: Implementation GO |\n\n## INVOCATION\n```bash\nclaude-todo research --framework consensus \\\n  --claims 'claim1.md,claim2.md' \\\n  --evidence-dir ./evidence \\\n  --output-dir ./consensus-output \\\n  --agents 5 \\\n  --threshold 0.8\n```\n\n## KEY FEATURES\n1. Prompt-driven agent deployment (subagent_type patterns)\n2. Round-robin challenge protocol with configurable rounds\n3. Evidence standards (reproducible tests, measurements, citations)\n4. Consensus thresholds (4/5 default, configurable)\n5. Artifact templates (report, feature spec, doc correction, evidence dossier)\n6. Gate progression with approval checkpoints\n7. Deadlock resolution mechanisms\n8. Context handoff for long investigations\n\n## IMPLEMENTATION NOTES\n- Could be a Claude Code plugin or claude-todo subcommand\n- Needs integration with Task tool for agent deployment\n- Should support both interactive and batch modes\n- Evidence dossiers should be machine-readable (JSON) and human-readable (MD)\n- Consider Serena MCP integration for code analysis phases\n\n## SUCCESS CRITERIA\n- Repeatable: Same inputs produce consistent process\n- Valuable output: Single consolidated report, not scattered docs\n- Configurable: Adjust agents, rounds, thresholds per project\n- Transparent: Full evidence trail for all decisions",
+        "phase": "setup",
+        "labels": [
+          "consensus-framework",
+          "feature-request",
+          "future",
+          "plugin"
+        ],
+        "files": [
+          "claudedocs/CONSENSUS-FRAMEWORK-SPEC.md"
+        ],
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log-1765850053-5f2841",
+      "timestamp": "2025-12-16T01:54:13Z",
+      "action": "task_created",
+      "taskId": "T239",
+      "actor": "system",
+      "details": {
+        "title": "Review TodoWrite sync implementation",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "Review TodoWrite sync implementation",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log_d5e5b028c07e",
+      "timestamp": "2025-12-16T02:04:29Z",
+      "sessionId": null,
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T204",
+      "before": {
+        "title": "FEATURE: Multi-Phase Consensus Research Framework Plugin",
+        "status": "active",
+        "priority": "high",
+        "description": "Build a reusable plugin/command for claude-todo that implements the Multi-Phase Consensus Research Framework. This would be a programmatically callable tool with prompt-style instructions for any project to use when investigating claims, validating features, or planning complex work.\n\n## CONCEPT\nA repeatable, structured process for rigorous multi-agent investigation with:\n- Configurable phases (Discovery → Adversarial → Consolidation → Validation → Final)\n- Agent role definitions (Advocate/Challenger/Arbiter pattern)\n- Gate-based progression (scope approval, conflict resolution, archive approval, completeness sign-off)\n- Evidence standards and consensus thresholds\n- Artifact generation (reports, specs, corrections)\n\n## PROPOSED STRUCTURE\n| Round | Purpose | Agents | Gate |\n|-------|---------|--------|------|\n| Round 1 | Discovery & Inventory | 6 inventory agents | Gate 1: Scope approval |\n| Round 2 | Adversarial Challenge | 15 (5 domains × Advocate/Challenger/Arbiter) | Gate 2: Conflict resolution |\n| Round 3 | Consolidation | 7 merge agents | Gate 3: Archive approval |\n| Round 4 | Validation | 3 fresh validation agents | Gate 4: Completeness sign-off |\n| Round 5 | Final Spec | 2 finalization agents | Gate 5: Implementation GO |\n\n## INVOCATION\n```bash\nclaude-todo research --framework consensus \\\n  --claims 'claim1.md,claim2.md' \\\n  --evidence-dir ./evidence \\\n  --output-dir ./consensus-output \\\n  --agents 5 \\\n  --threshold 0.8\n```\n\n## KEY FEATURES\n1. Prompt-driven agent deployment (subagent_type patterns)\n2. Round-robin challenge protocol with configurable rounds\n3. Evidence standards (reproducible tests, measurements, citations)\n4. Consensus thresholds (4/5 default, configurable)\n5. Artifact templates (report, feature spec, doc correction, evidence dossier)\n6. Gate progression with approval checkpoints\n7. Deadlock resolution mechanisms\n8. Context handoff for long investigations\n\n## IMPLEMENTATION NOTES\n- Could be a Claude Code plugin or claude-todo subcommand\n- Needs integration with Task tool for agent deployment\n- Should support both interactive and batch modes\n- Evidence dossiers should be machine-readable (JSON) and human-readable (MD)\n- Consider Serena MCP integration for code analysis phases\n\n## SUCCESS CRITERIA\n- Repeatable: Same inputs produce consistent process\n- Valuable output: Single consolidated report, not scattered docs\n- Configurable: Adjust agents, rounds, thresholds per project\n- Transparent: Full evidence trail for all decisions",
+        "phase": "setup",
+        "labels": [
+          "consensus-framework",
+          "feature-request",
+          "future",
+          "plugin"
+        ],
+        "files": [
+          "claudedocs/CONSENSUS-FRAMEWORK-SPEC.md"
+        ],
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "after": {
+        "title": "FEATURE: Multi-Phase Consensus Research Framework Plugin",
+        "status": "pending",
+        "priority": "high",
+        "description": "Build a reusable plugin/command for claude-todo that implements the Multi-Phase Consensus Research Framework. This would be a programmatically callable tool with prompt-style instructions for any project to use when investigating claims, validating features, or planning complex work.\n\n## CONCEPT\nA repeatable, structured process for rigorous multi-agent investigation with:\n- Configurable phases (Discovery → Adversarial → Consolidation → Validation → Final)\n- Agent role definitions (Advocate/Challenger/Arbiter pattern)\n- Gate-based progression (scope approval, conflict resolution, archive approval, completeness sign-off)\n- Evidence standards and consensus thresholds\n- Artifact generation (reports, specs, corrections)\n\n## PROPOSED STRUCTURE\n| Round | Purpose | Agents | Gate |\n|-------|---------|--------|------|\n| Round 1 | Discovery & Inventory | 6 inventory agents | Gate 1: Scope approval |\n| Round 2 | Adversarial Challenge | 15 (5 domains × Advocate/Challenger/Arbiter) | Gate 2: Conflict resolution |\n| Round 3 | Consolidation | 7 merge agents | Gate 3: Archive approval |\n| Round 4 | Validation | 3 fresh validation agents | Gate 4: Completeness sign-off |\n| Round 5 | Final Spec | 2 finalization agents | Gate 5: Implementation GO |\n\n## INVOCATION\n```bash\nclaude-todo research --framework consensus \\\n  --claims 'claim1.md,claim2.md' \\\n  --evidence-dir ./evidence \\\n  --output-dir ./consensus-output \\\n  --agents 5 \\\n  --threshold 0.8\n```\n\n## KEY FEATURES\n1. Prompt-driven agent deployment (subagent_type patterns)\n2. Round-robin challenge protocol with configurable rounds\n3. Evidence standards (reproducible tests, measurements, citations)\n4. Consensus thresholds (4/5 default, configurable)\n5. Artifact templates (report, feature spec, doc correction, evidence dossier)\n6. Gate progression with approval checkpoints\n7. Deadlock resolution mechanisms\n8. Context handoff for long investigations\n\n## IMPLEMENTATION NOTES\n- Could be a Claude Code plugin or claude-todo subcommand\n- Needs integration with Task tool for agent deployment\n- Should support both interactive and batch modes\n- Evidence dossiers should be machine-readable (JSON) and human-readable (MD)\n- Consider Serena MCP integration for code analysis phases\n\n## SUCCESS CRITERIA\n- Repeatable: Same inputs produce consistent process\n- Valuable output: Single consolidated report, not scattered docs\n- Configurable: Adjust agents, rounds, thresholds per project\n- Transparent: Full evidence trail for all decisions",
+        "phase": "setup",
+        "labels": [
+          "consensus-framework",
+          "feature-request",
+          "future",
+          "plugin"
+        ],
+        "files": [
+          "claudedocs/CONSENSUS-FRAMEWORK-SPEC.md"
+        ],
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_4a30cad420d8",
+      "timestamp": "2025-12-16T04:40:04Z",
+      "sessionId": "session_20251215_204004_3f5068",
+      "action": "session_start",
+      "actor": "system",
+      "taskId": null,
+      "before": null,
+      "after": null,
+      "details": "Session started"
+    },
+    {
+      "id": "log-1765860021-60e9ca",
+      "timestamp": "2025-12-16T04:40:21Z",
+      "action": "task_created",
+      "taskId": "T240",
+      "actor": "system",
+      "details": {
+        "title": "Design project.phases schema structure for v2.2.0",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Design project.phases schema structure for v2.2.0",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765860023-b5e704",
+      "timestamp": "2025-12-16T04:40:23Z",
+      "action": "task_created",
+      "taskId": "T241",
+      "actor": "system",
+      "details": {
+        "title": "Update todo.schema.json to v2.2.0 with project object",
+        "status": "pending",
+        "priority": "critical"
+      },
+      "before": null,
+      "after": {
+        "title": "Update todo.schema.json to v2.2.0 with project object",
+        "status": "pending",
+        "priority": "critical"
+      }
+    },
+    {
+      "id": "log-1765860025-42ef4c",
+      "timestamp": "2025-12-16T04:40:25Z",
+      "action": "task_created",
+      "taskId": "T242",
+      "actor": "system",
+      "details": {
+        "title": "Update log.schema.json for phase action types",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Update log.schema.json for phase action types",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765860026-6650c7",
+      "timestamp": "2025-12-16T04:40:26Z",
+      "action": "task_created",
+      "taskId": "T243",
+      "actor": "system",
+      "details": {
+        "title": "Update archive.schema.json to v2.2.0",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Update archive.schema.json to v2.2.0",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765860028-ac5f84",
+      "timestamp": "2025-12-16T04:40:28Z",
+      "action": "task_created",
+      "taskId": "T244",
+      "actor": "system",
+      "details": {
+        "title": "Update config.schema.json with phase defaults",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "Update config.schema.json with phase defaults",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log-1765860030-0b4ce1",
+      "timestamp": "2025-12-16T04:40:30Z",
+      "action": "task_created",
+      "taskId": "T245",
+      "actor": "system",
+      "details": {
+        "title": "Update todo.template.json with project object",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Update todo.template.json with project object",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765860048-1bb694",
+      "timestamp": "2025-12-16T04:40:48Z",
+      "action": "task_created",
+      "taskId": "T246",
+      "actor": "system",
+      "details": {
+        "title": "Create lib/phase-tracking.sh library",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Create lib/phase-tracking.sh library",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765860050-fa7b19",
+      "timestamp": "2025-12-16T04:40:50Z",
+      "action": "task_created",
+      "taskId": "T247",
+      "actor": "system",
+      "details": {
+        "title": "Update lib/validation.sh for phase validation",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Update lib/validation.sh for phase validation",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765860053-757cf5",
+      "timestamp": "2025-12-16T04:40:53Z",
+      "action": "task_created",
+      "taskId": "T248",
+      "actor": "system",
+      "details": {
+        "title": "Update lib/cache.sh with phase indexing",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "Update lib/cache.sh with phase indexing",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log-1765860055-560a6c",
+      "timestamp": "2025-12-16T04:40:55Z",
+      "action": "task_created",
+      "taskId": "T249",
+      "actor": "system",
+      "details": {
+        "title": "Update lib/logging.sh with phase action types",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Update lib/logging.sh with phase action types",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765860056-97cc1e",
+      "timestamp": "2025-12-16T04:40:56Z",
+      "action": "task_created",
+      "taskId": "T250",
+      "actor": "system",
+      "details": {
+        "title": "Create scripts/phase.sh command",
+        "status": "pending",
+        "priority": "critical"
+      },
+      "before": null,
+      "after": {
+        "title": "Create scripts/phase.sh command",
+        "status": "pending",
+        "priority": "critical"
+      }
+    },
+    {
+      "id": "log-1765860058-0daad7",
+      "timestamp": "2025-12-16T04:40:58Z",
+      "action": "task_created",
+      "taskId": "T251",
+      "actor": "system",
+      "details": {
+        "title": "Add phase command to CLI wrapper",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Add phase command to CLI wrapper",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765860077-c93473",
+      "timestamp": "2025-12-16T04:41:17Z",
+      "action": "task_created",
+      "taskId": "T252",
+      "actor": "system",
+      "details": {
+        "title": "Update scripts/phases.sh with current phase indicator",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "Update scripts/phases.sh with current phase indicator",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log-1765860079-d00a74",
+      "timestamp": "2025-12-16T04:41:19Z",
+      "action": "task_created",
+      "taskId": "T253",
+      "actor": "system",
+      "details": {
+        "title": "Update scripts/next.sh to use currentPhase",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Update scripts/next.sh to use currentPhase",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765860080-fd83b2",
+      "timestamp": "2025-12-16T04:41:20Z",
+      "action": "task_created",
+      "taskId": "T254",
+      "actor": "system",
+      "details": {
+        "title": "Update scripts/dash.sh to display current phase",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Update scripts/dash.sh to display current phase",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765860082-760cdb",
+      "timestamp": "2025-12-16T04:41:22Z",
+      "action": "task_created",
+      "taskId": "T255",
+      "actor": "system",
+      "details": {
+        "title": "Update scripts/add-task.sh for phase inheritance",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Update scripts/add-task.sh for phase inheritance",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765860083-2c49a1",
+      "timestamp": "2025-12-16T04:41:23Z",
+      "action": "task_created",
+      "taskId": "T256",
+      "actor": "system",
+      "details": {
+        "title": "Update scripts/focus.sh to track currentPhase",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "Update scripts/focus.sh to track currentPhase",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log-1765860085-471e59",
+      "timestamp": "2025-12-16T04:41:25Z",
+      "action": "task_created",
+      "taskId": "T257",
+      "actor": "system",
+      "details": {
+        "title": "Update scripts/inject-todowrite.sh with phase filtering",
+        "status": "pending",
+        "priority": "critical"
+      },
+      "before": null,
+      "after": {
+        "title": "Update scripts/inject-todowrite.sh with phase filtering",
+        "status": "pending",
+        "priority": "critical"
+      }
+    },
+    {
+      "id": "log-1765860105-43c164",
+      "timestamp": "2025-12-16T04:41:45Z",
+      "action": "task_created",
+      "taskId": "T258",
+      "actor": "system",
+      "details": {
+        "title": "Update scripts/extract-todowrite.sh with phase inheritance",
+        "status": "pending",
+        "priority": "critical"
+      },
+      "before": null,
+      "after": {
+        "title": "Update scripts/extract-todowrite.sh with phase inheritance",
+        "status": "pending",
+        "priority": "critical"
+      }
+    },
+    {
+      "id": "log-1765860107-e21ee5",
+      "timestamp": "2025-12-16T04:41:47Z",
+      "action": "task_created",
+      "taskId": "T259",
+      "actor": "system",
+      "details": {
+        "title": "Update sync state file format for phase metadata",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Update sync state file format for phase metadata",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765860109-41fac0",
+      "timestamp": "2025-12-16T04:41:49Z",
+      "action": "task_created",
+      "taskId": "T260",
+      "actor": "system",
+      "details": {
+        "title": "Implement migrate_todo_to_2_2_0() function",
+        "status": "pending",
+        "priority": "critical"
+      },
+      "before": null,
+      "after": {
+        "title": "Implement migrate_todo_to_2_2_0() function",
+        "status": "pending",
+        "priority": "critical"
+      }
+    },
+    {
+      "id": "log-1765860111-d39411",
+      "timestamp": "2025-12-16T04:41:51Z",
+      "action": "task_created",
+      "taskId": "T261",
+      "actor": "system",
+      "details": {
+        "title": "Add version detection and auto-migration trigger",
+        "status": "pending",
+        "priority": "critical"
+      },
+      "before": null,
+      "after": {
+        "title": "Add version detection and auto-migration trigger",
+        "status": "pending",
+        "priority": "critical"
+      }
+    },
+    {
+      "id": "log-1765860113-719f62",
+      "timestamp": "2025-12-16T04:41:53Z",
+      "action": "task_created",
+      "taskId": "T262",
+      "actor": "system",
+      "details": {
+        "title": "Create migration rollback capability",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Create migration rollback capability",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765860114-000610",
+      "timestamp": "2025-12-16T04:41:54Z",
+      "action": "task_created",
+      "taskId": "T263",
+      "actor": "system",
+      "details": {
+        "title": "Create tests/unit/test-phase-commands.bats",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Create tests/unit/test-phase-commands.bats",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765860133-5f8a52",
+      "timestamp": "2025-12-16T04:42:13Z",
+      "action": "task_created",
+      "taskId": "T264",
+      "actor": "system",
+      "details": {
+        "title": "Create tests/unit/test-phase-tracking.bats",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Create tests/unit/test-phase-tracking.bats",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765860135-1fd9bb",
+      "timestamp": "2025-12-16T04:42:15Z",
+      "action": "task_created",
+      "taskId": "T265",
+      "actor": "system",
+      "details": {
+        "title": "Create tests/integration/phase-sync.bats",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Create tests/integration/phase-sync.bats",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765860138-fd86db",
+      "timestamp": "2025-12-16T04:42:18Z",
+      "action": "task_created",
+      "taskId": "T266",
+      "actor": "system",
+      "details": {
+        "title": "Create tests/migration/test-2.2.0-migration.bats",
+        "status": "pending",
+        "priority": "critical"
+      },
+      "before": null,
+      "after": {
+        "title": "Create tests/migration/test-2.2.0-migration.bats",
+        "status": "pending",
+        "priority": "critical"
+      }
+    },
+    {
+      "id": "log-1765860140-5821c2",
+      "timestamp": "2025-12-16T04:42:20Z",
+      "action": "task_created",
+      "taskId": "T267",
+      "actor": "system",
+      "details": {
+        "title": "Create tests/edge-cases/phase-edge-cases.bats",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Create tests/edge-cases/phase-edge-cases.bats",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765860142-dd7a27",
+      "timestamp": "2025-12-16T04:42:22Z",
+      "action": "task_created",
+      "taskId": "T268",
+      "actor": "system",
+      "details": {
+        "title": "Update tests/integration/workflow.bats with phase operations",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "Update tests/integration/workflow.bats with phase operations",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log-1765860143-5cf682",
+      "timestamp": "2025-12-16T04:42:23Z",
+      "action": "task_created",
+      "taskId": "T269",
+      "actor": "system",
+      "details": {
+        "title": "Update tests/golden/schema-validation.bats for v2.2.0",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Update tests/golden/schema-validation.bats for v2.2.0",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765860163-ba4574",
+      "timestamp": "2025-12-16T04:42:43Z",
+      "action": "task_created",
+      "taskId": "T270",
+      "actor": "system",
+      "details": {
+        "title": "Create docs/commands/phase.md documentation",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Create docs/commands/phase.md documentation",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765860165-8ad530",
+      "timestamp": "2025-12-16T04:42:45Z",
+      "action": "task_created",
+      "taskId": "T271",
+      "actor": "system",
+      "details": {
+        "title": "Update docs/commands/phases.md for project-level tracking",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Update docs/commands/phases.md for project-level tracking",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765860167-1a1c54",
+      "timestamp": "2025-12-16T04:42:47Z",
+      "action": "task_created",
+      "taskId": "T272",
+      "actor": "system",
+      "details": {
+        "title": "Update docs/commands/sync.md with phase filtering",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Update docs/commands/sync.md with phase filtering",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765860169-d397cd",
+      "timestamp": "2025-12-16T04:42:49Z",
+      "action": "task_created",
+      "taskId": "T273",
+      "actor": "system",
+      "details": {
+        "title": "Update docs/usage.md with phase workflow examples",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "Update docs/usage.md with phase workflow examples",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log-1765860171-207893",
+      "timestamp": "2025-12-16T04:42:51Z",
+      "action": "task_created",
+      "taskId": "T274",
+      "actor": "system",
+      "details": {
+        "title": "Update docs/architecture/ARCHITECTURE.md with phase system",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "Update docs/architecture/ARCHITECTURE.md with phase system",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log-1765860172-a14624",
+      "timestamp": "2025-12-16T04:42:52Z",
+      "action": "task_created",
+      "taskId": "T275",
+      "actor": "system",
+      "details": {
+        "title": "Update docs/architecture/DATA-FLOWS.md with phase data flows",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "Update docs/architecture/DATA-FLOWS.md with phase data flows",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log-1765860194-09af17",
+      "timestamp": "2025-12-16T04:43:14Z",
+      "action": "task_created",
+      "taskId": "T276",
+      "actor": "system",
+      "details": {
+        "title": "Update docs/reference/schema.md for v2.2.0",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "Update docs/reference/schema.md for v2.2.0",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log-1765860196-8b608e",
+      "timestamp": "2025-12-16T04:43:16Z",
+      "action": "task_created",
+      "taskId": "T277",
+      "actor": "system",
+      "details": {
+        "title": "Update docs/QUICK-REFERENCE.md with phase commands",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "Update docs/QUICK-REFERENCE.md with phase commands",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log-1765860197-fef0af",
+      "timestamp": "2025-12-16T04:43:17Z",
+      "action": "task_created",
+      "taskId": "T278",
+      "actor": "system",
+      "details": {
+        "title": "Update CLAUDE.md injection template for v2.2.0",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Update CLAUDE.md injection template for v2.2.0",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765860199-b22151",
+      "timestamp": "2025-12-16T04:43:19Z",
+      "action": "task_created",
+      "taskId": "T279",
+      "actor": "system",
+      "details": {
+        "title": "Update project CLAUDE.md with phase enhancement context",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "Update project CLAUDE.md with phase enhancement context",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log-1765860201-4843b3",
+      "timestamp": "2025-12-16T04:43:21Z",
+      "action": "task_created",
+      "taskId": "T280",
+      "actor": "system",
+      "details": {
+        "title": "Create docs/migration/v2.2.0-migration-guide.md",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Create docs/migration/v2.2.0-migration-guide.md",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765860203-607292",
+      "timestamp": "2025-12-16T04:43:23Z",
+      "action": "task_created",
+      "taskId": "T281",
+      "actor": "system",
+      "details": {
+        "title": "Run full test suite and fix failures",
+        "status": "pending",
+        "priority": "critical"
+      },
+      "before": null,
+      "after": {
+        "title": "Run full test suite and fix failures",
+        "status": "pending",
+        "priority": "critical"
+      }
+    },
+    {
+      "id": "log-1765860222-ca01fa",
+      "timestamp": "2025-12-16T04:43:42Z",
+      "action": "task_created",
+      "taskId": "T282",
+      "actor": "system",
+      "details": {
+        "title": "Create end-to-end phase workflow integration test",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Create end-to-end phase workflow integration test",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765860224-e9da20",
+      "timestamp": "2025-12-16T04:43:44Z",
+      "action": "task_created",
+      "taskId": "T283",
+      "actor": "system",
+      "details": {
+        "title": "Update install.sh for v2.2.0",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Update install.sh for v2.2.0",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765860226-bc86b3",
+      "timestamp": "2025-12-16T04:43:46Z",
+      "action": "task_created",
+      "taskId": "T284",
+      "actor": "system",
+      "details": {
+        "title": "Create CHANGELOG entry for v2.2.0",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "Create CHANGELOG entry for v2.2.0",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log-1765860228-6ee608",
+      "timestamp": "2025-12-16T04:43:48Z",
+      "action": "task_created",
+      "taskId": "T285",
+      "actor": "system",
+      "details": {
+        "title": "Update README.md with phase feature showcase",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "Update README.md with phase feature showcase",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log-1765860231-6de0ee",
+      "timestamp": "2025-12-16T04:43:51Z",
+      "action": "task_created",
+      "taskId": "T286",
+      "actor": "system",
+      "details": {
+        "title": "Performance testing for phase operations",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "Performance testing for phase operations",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log-1765860233-eac03f",
+      "timestamp": "2025-12-16T04:43:53Z",
+      "action": "task_created",
+      "taskId": "T287",
+      "actor": "system",
+      "details": {
+        "title": "Review and validate all documentation",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Review and validate all documentation",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1765860241-c4bbc2",
+      "timestamp": "2025-12-16T04:44:01Z",
+      "action": "task_created",
+      "taskId": "T288",
+      "actor": "system",
+      "details": {
+        "title": "Final release preparation for v2.2.0",
+        "status": "pending",
+        "priority": "critical"
+      },
+      "before": null,
+      "after": {
+        "title": "Final release preparation for v2.2.0",
+        "status": "pending",
+        "priority": "critical"
+      }
+    },
+    {
+      "id": "log_77a2cceefaa2",
+      "timestamp": "2025-12-16T04:44:30Z",
+      "sessionId": "session_20251215_204004_3f5068",
+      "action": "session_end",
+      "actor": "system",
+      "taskId": null,
+      "before": null,
+      "after": null,
+      "details": null
+    },
+    {
+      "id": "log_5ec2756cecad",
+      "timestamp": "2025-12-16T04:48:30Z",
+      "sessionId": "session_20251215_204830_ad6174",
+      "action": "session_start",
+      "actor": "system",
+      "taskId": null,
+      "before": null,
+      "after": null,
+      "details": "Session started"
+    },
+    {
+      "id": "log_ceef7c324ca0",
+      "timestamp": "2025-12-16T04:48:30Z",
+      "sessionId": "session_20251215_204830_ad6174",
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": null,
+      "after": {
+        "currentTask": "T241"
+      },
+      "details": null
+    },
+    {
+      "id": "log-1765860914-450e87",
+      "timestamp": "2025-12-16T04:55:14Z",
+      "action": "task_created",
+      "taskId": "T289",
+      "actor": "system",
+      "details": {
+        "title": "Investigate _meta.version field usage - verify if needed in template",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Investigate _meta.version field usage - verify if needed in template",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log_aeaa6e08795c",
+      "timestamp": "2025-12-16T05:00:03Z",
+      "sessionId": "session_20251215_204830_ad6174",
+      "action": "session_end",
+      "actor": "system",
+      "taskId": null,
+      "before": null,
+      "after": null,
+      "details": null
+    },
+    {
+      "id": "log_2cee925dd348",
+      "timestamp": "2025-12-16T05:07:10Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T250",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T05:07:10Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_80deffea103e",
+      "timestamp": "2025-12-16T05:07:10Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T252",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T05:07:10Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_8c99813e6e5f",
+      "timestamp": "2025-12-16T05:07:10Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T253",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T05:07:10Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_9055a6eea28e",
+      "timestamp": "2025-12-16T05:07:11Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T254",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T05:07:10Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_344c0c46d832",
+      "timestamp": "2025-12-16T05:07:11Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T255",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T05:07:11Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_d144773f52e7",
+      "timestamp": "2025-12-16T05:09:08Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T251",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T05:09:08Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_bf89e112825d",
+      "timestamp": "2025-12-16T05:09:09Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T256",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T05:09:09Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_cf64e1be159e",
+      "timestamp": "2025-12-16T05:18:50Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T257",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T05:18:50Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_412e66b03cf1",
+      "timestamp": "2025-12-16T05:18:50Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T258",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T05:18:50Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_23e3529d50ca",
+      "timestamp": "2025-12-16T05:18:50Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T259",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T05:18:50Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_b6fbe9ac26e8",
+      "timestamp": "2025-12-16T05:18:50Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T260",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T05:18:50Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_d3a493ac4d44",
+      "timestamp": "2025-12-16T05:18:51Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T261",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T05:18:51Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_9c8d7368b59f",
+      "timestamp": "2025-12-16T05:18:51Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T262",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T05:18:51Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_7241a5267578",
+      "timestamp": "2025-12-16T05:23:23Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T277",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T05:23:23Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_31432f62f139",
+      "timestamp": "2025-12-16T05:24:01Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T270",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T05:24:01Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_c0a3d999331c",
+      "timestamp": "2025-12-16T05:43:17Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T264",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T05:43:17Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_2d438efebf84",
+      "timestamp": "2025-12-16T05:43:19Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T265",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T05:43:18Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_364e68025b23",
+      "timestamp": "2025-12-16T05:43:20Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T266",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T05:43:20Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_135092394ce8",
+      "timestamp": "2025-12-16T05:43:22Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T280",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T05:43:21Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_cf7be2793b72",
+      "timestamp": "2025-12-16T05:44:09Z",
+      "sessionId": "session_20251215_214409_8a1ddc",
+      "action": "session_start",
+      "actor": "system",
+      "taskId": null,
+      "before": null,
+      "after": null,
+      "details": "Session started"
+    },
+    {
+      "id": "log_1757422c3d08",
+      "timestamp": "2025-12-16T05:44:11Z",
+      "sessionId": "session_20251215_214409_8a1ddc",
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": {
+        "currentTask": "T241"
+      },
+      "after": {
+        "currentTask": "T281"
+      },
+      "details": null
+    },
+    {
+      "id": "log_de8fc1030a7d",
+      "timestamp": "2025-12-16T05:44:40Z",
+      "sessionId": "session_20251215_214409_8a1ddc",
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": {
+        "currentTask": "T281"
+      },
+      "after": {
+        "currentTask": "T267"
+      },
+      "details": null
+    },
+    {
+      "id": "log_bd4669ee5a56",
+      "timestamp": "2025-12-16T05:45:49Z",
+      "sessionId": "session_20251215_214409_8a1ddc",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T267",
+      "before": {
+        "status": "active",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T05:45:49Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_b177569affbe",
+      "timestamp": "2025-12-16T05:45:55Z",
+      "sessionId": "session_20251215_214409_8a1ddc",
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": null,
+      "after": {
+        "currentTask": "T268"
+      },
+      "details": null
+    },
+    {
+      "id": "log_158f2c0596bc",
+      "timestamp": "2025-12-16T05:46:46Z",
+      "sessionId": "session_20251215_214409_8a1ddc",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T268",
+      "before": {
+        "status": "active",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T05:46:46Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_b08ae5218898",
+      "timestamp": "2025-12-16T05:46:54Z",
+      "sessionId": "session_20251215_214409_8a1ddc",
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": null,
+      "after": {
+        "currentTask": "T269"
+      },
+      "details": null
+    },
+    {
+      "id": "log_c48ba60ea1e8",
+      "timestamp": "2025-12-16T05:47:52Z",
+      "sessionId": "session_20251215_214409_8a1ddc",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T269",
+      "before": {
+        "status": "active",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T05:47:52Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_b96a746fb7b2",
+      "timestamp": "2025-12-16T05:48:03Z",
+      "sessionId": "session_20251215_214409_8a1ddc",
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": null,
+      "after": {
+        "currentTask": "T271"
+      },
+      "details": null
+    },
+    {
+      "id": "log_cbf85d711892",
+      "timestamp": "2025-12-16T05:48:55Z",
+      "sessionId": "session_20251215_214409_8a1ddc",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T271",
+      "before": {
+        "status": "active",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T05:48:55Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_4f1c888cc736",
+      "timestamp": "2025-12-16T05:55:32Z",
+      "sessionId": "session_20251215_214409_8a1ddc",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T281",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T05:55:32Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_2a924b160856",
+      "timestamp": "2025-12-16T05:55:37Z",
+      "sessionId": "session_20251215_214409_8a1ddc",
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": null,
+      "after": {
+        "currentTask": "T283"
+      },
+      "details": null
+    },
+    {
+      "id": "log_597410f2b75c",
+      "timestamp": "2025-12-16T05:56:37Z",
+      "sessionId": "session_20251215_214409_8a1ddc",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T283",
+      "before": {
+        "status": "active",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T05:56:37Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_08d676777c61",
+      "timestamp": "2025-12-16T05:56:42Z",
+      "sessionId": "session_20251215_214409_8a1ddc",
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": null,
+      "after": {
+        "currentTask": "T284"
+      },
+      "details": null
+    },
+    {
+      "id": "log_0c1c6c5ba93d",
+      "timestamp": "2025-12-16T05:57:28Z",
+      "sessionId": "session_20251215_214409_8a1ddc",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T284",
+      "before": {
+        "status": "active",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T05:57:28Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_3b666da7de29",
+      "timestamp": "2025-12-16T05:57:33Z",
+      "sessionId": "session_20251215_214409_8a1ddc",
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": null,
+      "after": {
+        "currentTask": "T285"
+      },
+      "details": null
+    },
+    {
+      "id": "log_138cd9520c98",
+      "timestamp": "2025-12-16T05:58:14Z",
+      "sessionId": "session_20251215_214409_8a1ddc",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T285",
+      "before": {
+        "status": "active",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T05:58:14Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_9e81faf21ce8",
+      "timestamp": "2025-12-16T05:58:20Z",
+      "sessionId": "session_20251215_214409_8a1ddc",
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": null,
+      "after": {
+        "currentTask": "T287"
+      },
+      "details": null
+    },
+    {
+      "id": "log_c5c493c9618e",
+      "timestamp": "2025-12-16T05:58:30Z",
+      "sessionId": "session_20251215_214409_8a1ddc",
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": {
+        "currentTask": "T287"
+      },
+      "after": {
+        "currentTask": "T288"
+      },
+      "details": null
+    },
+    {
+      "id": "log_89619663f22d",
+      "timestamp": "2025-12-16T05:59:05Z",
+      "sessionId": "session_20251215_214409_8a1ddc",
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T288",
+      "before": {
+        "title": "Final release preparation for v2.2.0",
+        "status": "active",
+        "priority": "critical",
+        "description": "Pre-release checklist: all tests passing, documentation complete, CHANGELOG finalized, version numbers updated across all files, install.sh tested, migration tested on real projects. Create release tag. Prepare release notes.",
+        "phase": "core",
+        "labels": [
+          "feature-phase",
+          "release"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T282",
+          "T283",
+          "T284",
+          "T285",
+          "T287"
+        ],
+        "blockedBy": null
+      },
+      "after": {
+        "title": "Final release preparation for v2.2.0",
+        "status": "active",
+        "priority": "critical",
+        "description": "Pre-release checklist: all tests passing, documentation complete, CHANGELOG finalized, version numbers updated across all files, install.sh tested, migration tested on real projects. Create release tag. Prepare release notes.",
+        "phase": "core",
+        "labels": [
+          "feature-phase",
+          "release"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T282",
+          "T283",
+          "T284",
+          "T285",
+          "T287"
+        ],
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_0c3a6c8d06a0",
+      "timestamp": "2025-12-16T05:59:11Z",
+      "sessionId": "session_20251215_214409_8a1ddc",
+      "action": "session_end",
+      "actor": "system",
+      "taskId": null,
+      "before": null,
+      "after": null,
+      "details": null
+    },
+    {
+      "id": "log_6a30a7516a07",
+      "timestamp": "2025-12-16T15:27:18Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T240",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T15:27:18Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_3628033e06d9",
+      "timestamp": "2025-12-16T15:27:18Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T242",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T15:27:18Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_dc925ad13962",
+      "timestamp": "2025-12-16T15:27:19Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T243",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T15:27:19Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_7c7489b5e458",
+      "timestamp": "2025-12-16T15:27:19Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T244",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T15:27:19Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_ab9d005096cb",
+      "timestamp": "2025-12-16T15:27:19Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T245",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T15:27:19Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_a97c98d11b92",
+      "timestamp": "2025-12-16T15:27:19Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T246",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T15:27:19Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_40269a293880",
+      "timestamp": "2025-12-16T15:27:19Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T247",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T15:27:19Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_8e7a0c7317c9",
+      "timestamp": "2025-12-16T15:27:20Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T248",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T15:27:20Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_15277f733da0",
+      "timestamp": "2025-12-16T15:27:20Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T249",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T15:27:20Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_2924d77da5e9",
+      "timestamp": "2025-12-16T15:28:12Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T272",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T15:28:11Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_885e600d4862",
+      "timestamp": "2025-12-16T15:28:59Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T273",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-16T15:28:59Z"
       },
       "details": {
         "field": "status",

@@ -246,6 +246,43 @@ apply_changes() {
 
     local changes_made=0
 
+    # Phase inheritance for new tasks (T258)
+    # Strategy: focus task phase → most active phase → project.currentPhase (via add-task.sh)
+    local inherit_phase=""
+    local phase_source=""
+
+    # 1. Try focused task's phase from session metadata
+    if [[ -f "$STATE_FILE" ]]; then
+        local focus_id
+        focus_id=$(jq -r '.injected_tasks[0] // ""' "$STATE_FILE" 2>/dev/null || echo "")
+
+        if [[ -n "$focus_id" ]]; then
+            inherit_phase=$(jq -r ".task_metadata.\"$focus_id\".phase // \"\"" "$STATE_FILE" 2>/dev/null || echo "")
+            if [[ -n "$inherit_phase" && "$inherit_phase" != "null" ]]; then
+                phase_source="focus"
+            fi
+        fi
+    fi
+
+    # 2. Fallback to most active phase (phase with most non-done tasks)
+    if [[ -z "$inherit_phase" || "$inherit_phase" == "null" ]]; then
+        inherit_phase=$(jq -r '
+            [.tasks[] | select(.status != "done") | .phase // empty] |
+            group_by(.) |
+            map({phase: .[0], count: length}) |
+            sort_by(-.count) |
+            .[0].phase // ""
+        ' "$todo_file" 2>/dev/null || echo "")
+
+        if [[ -n "$inherit_phase" && "$inherit_phase" != "null" ]]; then
+            phase_source="most-active"
+        else
+            inherit_phase=""
+        fi
+    fi
+
+    # 3. Final fallback to project.currentPhase handled by add-task.sh
+
     # Process completed tasks
     while IFS= read -r task_id; do
         [[ -z "$task_id" ]] && continue
@@ -305,6 +342,10 @@ apply_changes() {
     done <<< "$progressed"
 
     # Process new tasks
+    # Phase inheritance strategy:
+    # 1. Use focused task's phase from session metadata (if available)
+    # 2. Fall back to project.currentPhase (automatic via add-task.sh)
+    # 3. Fall back to config.defaults.phase (automatic via add-task.sh)
     while IFS= read -r title; do
         [[ -z "$title" ]] && continue
 
@@ -312,9 +353,25 @@ apply_changes() {
             log_info "[DRY RUN] Would create: $title"
         else
             local new_id
-            new_id=$("$SCRIPT_DIR/add-task.sh" "$title" --labels "session-created" --description "Created during TodoWrite session" --quiet 2>/dev/null || echo "")
+            local add_args=(
+                "$title"
+                --labels "session-created"
+                --description "Created during TodoWrite session"
+                --quiet
+            )
+
+            # Add phase flag if we have phase metadata from session
+            if [[ -n "$inherit_phase" ]]; then
+                add_args+=(--phase "$inherit_phase")
+            fi
+
+            new_id=$("$SCRIPT_DIR/add-task.sh" "${add_args[@]}" 2>/dev/null || echo "")
             if [[ -n "$new_id" ]]; then
-                log_info "Created: $new_id - $title"
+                if [[ -n "$inherit_phase" ]]; then
+                    log_info "Created: $new_id - $title (phase: $inherit_phase, source: $phase_source)"
+                else
+                    log_info "Created: $new_id - $title (no phase inherited)"
+                fi
             else
                 log_warn "Failed to create task: $title"
             fi

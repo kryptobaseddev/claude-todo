@@ -32,10 +32,12 @@ claude-todo init                      # Initialize project
 
 # TASKS
 claude-todo add "Task description"    # Create task
+claude-todo add "Task" --phase core   # Create task in specific phase
 claude-todo complete <id> --notes "What was done"  # Complete with notes (required)
 claude-todo complete <id> --skip-notes             # Quick complete (bypass notes)
 claude-todo list                      # List all tasks
 claude-todo list --status pending     # Filter by status
+claude-todo list --phase core         # Filter by phase
 claude-todo next                      # Get next task suggestion
 claude-todo next --explain            # Show why task is suggested
 
@@ -47,6 +49,19 @@ claude-todo focus clear               # Clear current focus
 claude-todo focus show                # Show current focus
 claude-todo focus note "text"         # Set session progress note
 claude-todo focus next "text"         # Set suggested next action
+
+# PHASE MANAGEMENT (Project-Level)
+claude-todo phase show                # Show current project phase
+claude-todo phase set <slug>          # Set current phase
+claude-todo phase start <slug>        # Start phase (pending → active)
+claude-todo phase complete <slug>     # Complete phase (active → completed)
+claude-todo phase advance             # Complete current & start next phase
+claude-todo phase list                # List all phases with status
+
+# PHASE ANALYTICS (Task-Level)
+claude-todo phases                    # List phases with progress bars
+claude-todo phases show <phase>       # Show all tasks in phase
+claude-todo phases stats              # Detailed phase statistics
 
 # DASHBOARD & ANALYTICS
 claude-todo dash                      # Full dashboard overview
@@ -593,6 +608,67 @@ jq -e . .claude/todo.json && echo "Valid JSON"
 | Validation | < 200ms | 100 tasks |
 | List | < 50ms | 100 tasks |
 
+## Phase Workflow Guide
+
+### Phase Concepts
+
+**Project-level phases** (`phase` command): Track overall project progression
+- Set current phase, start/complete phases, advance through workflow
+- Stored in `.project.currentPhase` and `.project.phases[].status`
+
+**Task-level phases** (`phases` command): Organize and analyze tasks by phase
+- Assign tasks to phases, view phase progress, track completion
+- Stored per-task in `.tasks[].phase`
+
+### Typical Workflow
+
+```bash
+# 1. Set up project phases (one-time)
+# Edit .claude/todo.json to define phases:
+# "phases": {
+#   "setup": {"name": "Setup", "order": 1},
+#   "core": {"name": "Core Development", "order": 2},
+#   "polish": {"name": "Polish", "order": 3}
+# }
+
+# 2. Start first phase
+claude-todo phase start setup
+claude-todo phase show                # Verify current phase
+
+# 3. Add tasks to phases
+claude-todo add "Configure DB" --phase setup
+claude-todo add "Build API" --phase core
+claude-todo add "Write tests" --phase polish
+
+# 4. Work within current phase
+claude-todo phases show setup         # See all setup tasks
+claude-todo next                      # Get suggested task
+claude-todo focus set T001            # Focus on task
+
+# 5. Track progress
+claude-todo phases                    # Visual progress bars
+claude-todo dash                      # Full dashboard
+
+# 6. Advance when phase complete
+claude-todo phase advance             # Complete setup, start core
+# Or manually:
+claude-todo phase complete setup
+claude-todo phase start core
+
+# 7. Continue through phases
+claude-todo phases stats              # Detailed analytics
+```
+
+### Phase Options in Other Commands
+
+| Command | Phase Option | Purpose |
+|---------|--------------|---------|
+| `add` | `--phase SLUG` | Create task in specific phase |
+| `update` | `--phase SLUG` | Move task to different phase |
+| `list` | `--phase SLUG` | Filter tasks by phase |
+| `focus` | Auto-syncs | Focus inherits task phase |
+| `dash` | Auto-shows | Dashboard shows phase progress |
+
 ## Best Practices
 
 1. **Always validate** before committing changes
@@ -675,6 +751,7 @@ chmod 600 .claude/.backups/*.json
 | **dash** | **[commands/dash.md](commands/dash.md)** | Dashboard and project overview |
 | **labels** | **[commands/labels.md](commands/labels.md)** | Label analytics and management |
 | **next** | **[commands/next.md](commands/next.md)** | Intelligent task suggestions |
+| **phases** | **[commands/phases.md](commands/phases.md)** | Task-level phase analytics and visualization |
 
 ## Upgrade Path
 

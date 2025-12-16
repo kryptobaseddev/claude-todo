@@ -1,16 +1,36 @@
 {
   "$schema": "../../schemas/todo.schema.json",
-  "version": "0.1.0",
-  "project": "test-project",
+  "version": "2.2.0",
+  "project": {
+    "name": "test-project",
+    "phases": {
+      "setup": {
+        "order": 1,
+        "name": "Setup",
+        "status": "pending"
+      },
+      "core": {
+        "order": 2,
+        "name": "Core Development",
+        "status": "pending"
+      },
+      "polish": {
+        "order": 3,
+        "name": "Polish",
+        "status": "pending"
+      }
+    }
+  },
   "lastUpdated": "2025-12-05T12:00:00Z",
   "_meta": {
     "checksum": "d41d8cd98f00b204",
-    "configVersion": "0.1.0",
+    "configVersion": "0.12.0",
     "lastSessionId": null,
     "activeSession": null
   },
   "focus": {
     "currentTask": null,
+    "currentPhase": null,
     "blockedUntil": null,
     "sessionNote": null,
     "nextAction": null

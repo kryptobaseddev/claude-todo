@@ -87,9 +87,13 @@
             "config_changed",
             "validation_run",
             "checksum_updated",
-            "error_occurred"
+            "error_occurred",
+            "phase_changed",
+            "phase_started",
+            "phase_completed",
+            "phase_rollback"
           ],
-          "description": "Type of action logged."
+          "description": "Type of action logged. Phase actions: phase_changed (project phase modified), phase_started (phase activated), phase_completed (phase marked complete), phase_rollback (reverted to previous phase)."
         },
         "actor": {
           "type": "string",

@@ -5,9 +5,10 @@
 #
 # Generates a comprehensive dashboard view showing:
 # - Project status overview
+# - Current phase (if set in project.currentPhase)
 # - Current focus task
 # - Task counts by status and priority
-# - Phase progress with visual bars
+# - Phase progress with visual bars (highlights current phase)
 # - Blocked tasks
 # - Top labels
 # - Recent activity metrics
@@ -28,7 +29,7 @@
 #   summary      - Task counts by status
 #   priority     - High/critical priority tasks
 #   blocked      - Blocked tasks
-#   phases       - Phase progress bars
+#   phases       - Phase progress bars (with current phase highlighted)
 #   labels       - Top labels with counts
 #   activity     - Recent activity metrics
 #   archive      - Archived task count and date range
@@ -42,9 +43,9 @@
 #   dash.sh --sections focus,blocked     # Only focus and blocked sections
 #   dash.sh --format json                # JSON output for scripting
 #
-# Version: 0.8.2
+# Version: 0.8.3
 # Part of: claude-todo CLI Output Enhancement (Phase 2)
-# Enhanced: Added archive and completion history sections
+# Enhanced: Added current phase display (T254)
 #####################################################################
 
 set -euo pipefail
@@ -117,12 +118,18 @@ Sections:
     summary      - Task counts by status
     priority     - High/critical priority tasks
     blocked      - Blocked tasks with blocking reason
-    phases       - Phase progress bars
+    phases       - Phase progress bars (highlights current phase)
     labels       - Top labels with counts
     activity     - Recent activity metrics (created/completed)
     archive      - Archived task count and date range
     completions  - Recent completion history
     all          - All sections (default)
+
+Dashboard Features:
+    - Displays current phase in header (if project.currentPhase is set)
+    - Highlights current phase with ★ symbol in phases section
+    - Shows phase name in compact mode
+    - Gracefully handles both legacy (string) and new (object) project format
 EOF
   exit 0
 }
@@ -370,7 +377,44 @@ get_activity_metrics() {
 
 # Get project name
 get_project_name() {
-  jq -r '.project // "Unknown Project"' "$TODO_FILE" 2>/dev/null || echo "Unknown Project"
+  local project
+  project=$(jq -r '.project' "$TODO_FILE" 2>/dev/null || echo "null")
+
+  # Handle legacy string format vs new object format
+  if [[ "$project" == "null" ]]; then
+    echo "Unknown Project"
+  elif echo "$project" | jq -e 'type == "object"' &>/dev/null; then
+    # New format: extract .name
+    echo "$project" | jq -r '.name // "Unknown Project"'
+  else
+    # Legacy format: project is a string
+    echo "$project"
+  fi
+}
+
+# Get current phase information
+get_current_phase() {
+  local project
+  project=$(jq -r '.project' "$TODO_FILE" 2>/dev/null || echo "null")
+
+  # Only works with new object format
+  if echo "$project" | jq -e 'type == "object"' &>/dev/null; then
+    local current_phase_slug
+    current_phase_slug=$(echo "$project" | jq -r '.currentPhase // empty')
+
+    if [[ -n "$current_phase_slug" && "$current_phase_slug" != "null" ]]; then
+      local phase_name
+      phase_name=$(jq -r --arg slug "$current_phase_slug" '.phases[$slug].name // $slug' "$TODO_FILE" 2>/dev/null)
+
+      # Return JSON object with slug and name
+      jq -n --arg slug "$current_phase_slug" --arg name "$phase_name" \
+        '{slug: $slug, name: $name}'
+      return
+    fi
+  fi
+
+  # No current phase set
+  echo '{"slug": null, "name": null}'
 }
 
 # Get session status
@@ -480,6 +524,11 @@ output_compact() {
   local project
   project=$(get_project_name)
 
+  local current_phase_info
+  current_phase_info=$(get_current_phase)
+  local current_phase_name
+  current_phase_name=$(echo "$current_phase_info" | jq -r '.name // ""')
+
   local unicode
   detect_unicode_support 2>/dev/null && unicode="true" || unicode="false"
 
@@ -495,8 +544,15 @@ output_compact() {
   fi
 
   if detect_color_support 2>/dev/null; then
-    printf "${BOLD}%s${NC} | ${CYAN}%s${NC}%d ${GREEN}%s${NC}%d (%d%%) | ${DIM}Archived: %d${NC} | ${GREEN}Today: %d completed${NC}" \
-      "$project" "$sym_active" "$active" "$sym_done" "$done" "$done_pct" "$archived_count" "$today_completed"
+    printf "${BOLD}%s${NC}" "$project"
+
+    # Add current phase if set
+    if [[ -n "$current_phase_name" && "$current_phase_name" != "null" ]]; then
+      printf " | ${BLUE}Phase: %s${NC}" "$current_phase_name"
+    fi
+
+    printf " | ${CYAN}%s${NC}%d ${GREEN}%s${NC}%d (%d%%) | ${DIM}Archived: %d${NC} | ${GREEN}Today: %d completed${NC}" \
+      "$sym_active" "$active" "$sym_done" "$done" "$done_pct" "$archived_count" "$today_completed"
 
     if [[ -n "$focus_id" && "$focus_id" != "null" ]]; then
       printf " | Focus: ${CYAN}%s${NC}" "$focus_id"
@@ -510,8 +566,15 @@ output_compact() {
       printf " | ${RED}Blocked: %d${NC}" "$blocked_count"
     fi
   else
-    printf "%s | %s%d %s%d (%d%%) | Archived: %d | Today: %d completed" \
-      "$project" "$sym_active" "$active" "$sym_done" "$done" "$done_pct" "$archived_count" "$today_completed"
+    printf "%s" "$project"
+
+    # Add current phase if set
+    if [[ -n "$current_phase_name" && "$current_phase_name" != "null" ]]; then
+      printf " | Phase: %s" "$current_phase_name"
+    fi
+
+    printf " | %s%d %s%d (%d%%) | Archived: %d | Today: %d completed" \
+      "$sym_active" "$active" "$sym_done" "$done" "$done_pct" "$archived_count" "$today_completed"
 
     if [[ -n "$focus_id" && "$focus_id" != "null" ]]; then
       printf " | Focus: %s" "$focus_id"
@@ -542,10 +605,23 @@ output_text_format() {
   local timestamp
   timestamp=$(date "+%Y-%m-%d %H:%M:%S")
 
+  local current_phase_info
+  current_phase_info=$(get_current_phase)
+  local current_phase_name
+  current_phase_name=$(echo "$current_phase_info" | jq -r '.name // ""')
+  local current_phase_slug
+  current_phase_slug=$(echo "$current_phase_info" | jq -r '.slug // ""')
+
   # Header
   print_box_top "$width"
   print_box_line "${BOLD}  PROJECT DASHBOARD${NC}" "$width"
   print_box_line "  ${DIM}$project${NC}" "$width"
+
+  # Add current phase if set
+  if [[ -n "$current_phase_name" && "$current_phase_name" != "null" ]]; then
+    print_box_line "  ${BLUE}Current Phase: $current_phase_name${NC} ${DIM}($current_phase_slug)${NC}" "$width"
+  fi
+
   print_box_line "  ${DIM}Last updated: $timestamp${NC}" "$width"
 
   # Focus Section
@@ -688,7 +764,15 @@ output_text_format() {
           display_name="${display_name:0:10}.."
         fi
 
-        printf -v line_content "  %-12s %s %d/%d" "$display_name" "$progress_str" "$done_count" "$total"
+        # Check if this is the current phase
+        local is_current=""
+        if [[ "$slug" == "$current_phase_slug" && -n "$current_phase_slug" ]]; then
+          is_current="${BOLD}★${NC} "
+        else
+          is_current="  "
+        fi
+
+        printf -v line_content "%s%-12s %s %d/%d" "$is_current" "$display_name" "$progress_str" "$done_count" "$total"
         print_box_line "$line_content" "$width"
       done
     fi
@@ -821,6 +905,9 @@ output_json_format() {
   local project
   project=$(get_project_name)
 
+  local current_phase_info
+  current_phase_info=$(get_current_phase)
+
   local pending=$(count_by_status "pending")
   local active=$(count_by_status "active")
   local blocked=$(count_by_status "blocked")
@@ -866,6 +953,7 @@ output_json_format() {
   jq -n \
     --arg project "$project" \
     --arg timestamp "$(get_timestamp)" \
+    --argjson currentPhase "$current_phase_info" \
     --argjson pending "$pending" \
     --argjson active "$active" \
     --argjson blocked "$blocked" \
@@ -893,6 +981,7 @@ output_json_format() {
         "periodDays": $periodDays
       },
       "project": $project,
+      "currentPhase": $currentPhase,
       "session": (if $session == "" then null else $session end),
       "focus": {
         "current": $focus,

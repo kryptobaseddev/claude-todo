@@ -3,7 +3,7 @@
 > **A production-grade task management system for Claude Code with automatic archiving, comprehensive validation, and anti-hallucination protection.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.12.9-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.13.0-blue.svg)](CHANGELOG.md)
 [![Bash](https://img.shields.io/badge/bash-4.0%2B-green.svg)](https://www.gnu.org/software/bash/)
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)](tests/)
 
@@ -32,6 +32,7 @@ CLAUDE-TODO is a robust, schema-validated task management system specifically de
 
 ### Key Features
 
+- **Project Phase Tracking**: Built-in phase lifecycle management (pending/active/done)
 - **Anti-Hallucination Protection**: Multi-layer validation prevents AI-generated errors
 - **Automatic Archiving**: Configurable policies for completed task archiving
 - **Complete Audit Trail**: Immutable change log tracks every operation
@@ -122,6 +123,39 @@ claude-todo --validate      # Check scripts, aliases, checksums
 claude-todo --list-commands # Show all available commands
 CLAUDE_TODO_DEBUG=1 claude-todo list  # Verbose output
 ```
+
+### Phase Tracking (v2.2.0+)
+
+Organize your project with built-in phase lifecycle management:
+
+```bash
+# Add a task to a phase (creates phase if it doesn't exist)
+claude-todo add "Design API" --phase planning --add-phase
+
+# Set current project phase
+claude-todo phase set planning
+
+# View phase overview
+claude-todo phases
+
+# See phase statistics
+claude-todo phases stats
+
+# Advance to next phase
+claude-todo phase advance
+
+# View tasks in a specific phase
+claude-todo phases show core
+
+# Complete a phase
+claude-todo phase complete planning
+```
+
+**Phase Benefits:**
+- Automatic phase inheritance for new tasks
+- Visual phase progress in dashboard (`claude-todo dash`)
+- Phase-based task filtering and analytics
+- Lifecycle tracking (pending → active → done) with timestamps
 
 ## Architecture
 

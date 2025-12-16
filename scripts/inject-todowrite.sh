@@ -19,6 +19,7 @@
 # Options:
 #   --max-tasks N     Maximum tasks to inject (default: 8)
 #   --focused-only    Only inject the focused task
+#   --phase SLUG      Filter tasks to specific phase (default: project.currentPhase)
 #   --output FILE     Write to file instead of stdout
 #   --save-state      Save session state for extraction (default: true)
 #   --help, -h        Show this help
@@ -56,6 +57,7 @@ SYNC_DIR=".claude/sync"
 STATE_FILE="${SYNC_DIR}/todowrite-session.json"
 MAX_TASKS=8
 FOCUSED_ONLY=false
+PHASE_FILTER=""
 OUTPUT_FILE=""
 SAVE_STATE=true
 QUIET=false
@@ -84,6 +86,7 @@ DESCRIPTION
 OPTIONS
     --max-tasks N     Maximum tasks to inject (default: 8)
     --focused-only    Only inject the currently focused task
+    --phase SLUG      Filter to specific phase (default: project.currentPhase if set)
     --output FILE     Write JSON to file instead of stdout
     --no-save-state   Don't save session state file
     --quiet, -q       Suppress info messages
@@ -104,6 +107,7 @@ CONTENT PREFIX FORMAT
     [T###]           Task ID (always present)
     [!]              High/critical priority marker
     [BLOCKED]        Blocked status (mapped to pending)
+    [phase]          Phase slug (if task has phase)
 
 EXAMPLES
     # Inject focused task and dependencies
@@ -111,6 +115,9 @@ EXAMPLES
 
     # Inject only focused task
     claude-todo sync --inject --focused-only
+
+    # Inject tasks for specific phase
+    claude-todo sync --inject --phase core
 
     # Save to file for debugging
     claude-todo sync --inject --output /tmp/inject.json
@@ -132,6 +139,10 @@ parse_args() {
             --focused-only)
                 FOCUSED_ONLY=true
                 shift
+                ;;
+            --phase)
+                PHASE_FILTER="$2"
+                shift 2
                 ;;
             --output)
                 OUTPUT_FILE="$2"
@@ -166,6 +177,7 @@ format_task_content() {
     local title="$2"
     local priority="$3"
     local status="$4"
+    local phase="${5:-}"
 
     local content="[${id}]"
 
@@ -179,6 +191,11 @@ format_task_content() {
         content="${content} [BLOCKED]"
     fi
 
+    # Add phase marker if present
+    if [[ -n "$phase" ]]; then
+        content="${content} [${phase}]"
+    fi
+
     content="${content} ${title}"
     echo "$content"
 }
@@ -188,10 +205,17 @@ get_tasks_to_inject() {
     local todo_file="$1"
     local max_tasks="$2"
     local focused_only="$3"
+    local phase_filter="$4"
 
     # Get focused task ID
     local focus_id
-    focus_id=$(jq -r '.focus.taskId // ""' "$todo_file")
+    focus_id=$(jq -r '.focus.currentTask // ""' "$todo_file")
+
+    # Determine phase filter: explicit --phase > project.currentPhase > no filter
+    local effective_phase="$phase_filter"
+    if [[ -z "$effective_phase" ]]; then
+        effective_phase=$(jq -r '.project.currentPhase // ""' "$todo_file")
+    fi
 
     if [[ "$focused_only" == "true" && -n "$focus_id" ]]; then
         # Only return focused task
@@ -205,13 +229,14 @@ get_tasks_to_inject() {
         focus_phase=$(jq -r ".tasks[] | select(.id == \"$focus_id\") | .phase // \"\"" "$todo_file")
     fi
 
-    # Build task list with tiers
-    jq -c --arg focus_id "$focus_id" --arg focus_phase "$focus_phase" --argjson max "$max_tasks" '
+    # Build task list with tiers and phase filtering
+    jq -c --arg focus_id "$focus_id" --arg focus_phase "$focus_phase" --arg phase_filter "$effective_phase" --argjson max "$max_tasks" '
         # Get focused task (tier 1)
         (.tasks[] | select(.id == $focus_id and .status != "done")) as $focused |
 
-        # Get all non-done tasks
-        [.tasks[] | select(.status != "done")] |
+        # Get all non-done tasks, optionally filtered by phase
+        [.tasks[] | select(.status != "done") |
+         if $phase_filter != "" then select(.phase == $phase_filter) else . end] |
 
         # Sort by tier priority
         sort_by(
@@ -240,10 +265,11 @@ convert_to_todowrite() {
         local title=$(echo "$task" | jq -r '.title // ""')
         local status=$(echo "$task" | jq -r '.status // "pending"')
         local priority=$(echo "$task" | jq -r '.priority // "medium"')
+        local phase=$(echo "$task" | jq -r '.phase // ""')
 
-        # Format content with ID prefix
+        # Format content with ID prefix and phase
         local content
-        content=$(format_task_content "$id" "$title" "$priority" "$status")
+        content=$(format_task_content "$id" "$title" "$priority" "$status" "$phase")
 
         # Get activeForm
         local active_form
@@ -279,16 +305,22 @@ save_session_state() {
     local session_id
     session_id=$(jq -r '._meta.activeSession // "manual"' "$TODO_FILE" 2>/dev/null || echo "manual")
 
+    # Build task metadata map (id -> {phase, priority, status})
+    local task_metadata
+    task_metadata=$(jq -c '[.tasks[] | {id, phase, priority, status}] | map({(.id): {phase, priority, status}}) | add' "$TODO_FILE")
+
     jq -n \
         --arg session_id "$session_id" \
         --arg injected_at "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
         --argjson injected_ids "$injected_ids" \
         --argjson snapshot "$output_json" \
+        --argjson task_metadata "$task_metadata" \
         '{
             session_id: $session_id,
             injected_at: $injected_at,
             injected_tasks: $injected_ids,
-            snapshot: $snapshot
+            snapshot: $snapshot,
+            task_metadata: $task_metadata
         }' > "$STATE_FILE"
 
     log_info "Session state saved: $STATE_FILE"
@@ -306,9 +338,19 @@ main() {
         exit 1
     fi
 
+    # Determine effective phase filter
+    local effective_phase="$PHASE_FILTER"
+    if [[ -z "$effective_phase" ]]; then
+        effective_phase=$(jq -r '.project.currentPhase // ""' "$TODO_FILE")
+    fi
+
+    if [[ -n "$effective_phase" ]]; then
+        log_info "Phase filter: $effective_phase"
+    fi
+
     # Get tasks to inject
     local tasks_json
-    tasks_json=$(get_tasks_to_inject "$TODO_FILE" "$MAX_TASKS" "$FOCUSED_ONLY")
+    tasks_json=$(get_tasks_to_inject "$TODO_FILE" "$MAX_TASKS" "$FOCUSED_ONLY" "$PHASE_FILTER")
 
     local task_count
     task_count=$(echo "$tasks_json" | jq 'length')

@@ -40,6 +40,7 @@ fi
 
 readonly VALID_STATUSES=("pending" "active" "done" "blocked")
 readonly VALID_OPERATIONS=("create" "update" "complete" "archive" "restore" "delete" "validate" "backup")
+readonly VALID_PHASE_STATUSES=("pending" "active" "completed")
 
 # Exit codes
 readonly EXIT_SUCCESS=0
@@ -221,6 +222,29 @@ _validate_schema_jq() {
 # ============================================================================
 # VERSION VALIDATION
 # ============================================================================
+
+# Detect if file needs v2.2.0 migration (string project -> object project)
+# Args: $1 = file path
+# Returns: 0 if needs migration, 1 if already migrated or not applicable
+needs_v2_2_0_migration() {
+    local file="$1"
+
+    if [[ ! -f "$file" ]]; then
+        return 1
+    fi
+
+    # Check if .project field exists and is a string
+    local project_type
+    project_type=$(jq -r 'if has("project") then (.project | type) else "null" end' "$file" 2>/dev/null)
+
+    if [[ "$project_type" == "string" ]]; then
+        # Old format detected - needs migration
+        return 0
+    fi
+
+    # Already object format or no project field
+    return 1
+}
 
 # Validate file version and trigger migration if needed
 # Args: $1 = file path, $2 = schema type
@@ -787,6 +811,122 @@ check_circular_dependencies() {
 }
 
 # ============================================================================
+# PHASE VALIDATION
+# ============================================================================
+
+# Validate only one phase is active
+# Args: $1 = todo file path
+# Returns: 0 if valid, 1 if multiple active phases
+validate_single_active_phase() {
+    local todo_file="$1"
+    local active_count
+
+    active_count=$(jq '[.project.phases | to_entries[] | select(.value.status == "active")] | length' "$todo_file" 2>/dev/null || echo 0)
+
+    if [[ "$active_count" -gt 1 ]]; then
+        echo "ERROR: Multiple phases marked as active ($active_count found, only 1 allowed)" >&2
+        echo "Fix: Use 'claude-todo phase set <slug>' to set a single active phase" >&2
+        return 1
+    fi
+
+    return 0
+}
+
+# Validate currentPhase consistency
+# Args: $1 = todo file path
+# Returns: 0 if valid, 1 if currentPhase doesn't match active phase
+validate_current_phase_consistency() {
+    local todo_file="$1"
+    local current_phase
+    local phase_status
+
+    # Get currentPhase (handles both old and new schema)
+    current_phase=$(jq -r '.project.currentPhase // null' "$todo_file" 2>/dev/null)
+
+    if [[ "$current_phase" == "null" || -z "$current_phase" ]]; then
+        return 0  # No current phase set is valid
+    fi
+
+    # Check if referenced phase exists
+    if ! jq -e --arg slug "$current_phase" '.project.phases[$slug]' "$todo_file" >/dev/null 2>&1; then
+        echo "ERROR: Current phase '$current_phase' does not exist in phases definition" >&2
+        echo "Fix: Set currentPhase to an existing phase slug" >&2
+        return 1
+    fi
+
+    # Check if current phase has status=active
+    phase_status=$(jq -r --arg slug "$current_phase" '.project.phases[$slug].status // "unknown"' "$todo_file")
+
+    if [[ "$phase_status" != "active" ]]; then
+        echo "ERROR: Current phase '$current_phase' has status '$phase_status', expected 'active'" >&2
+        echo "Fix: Either change phase status to 'active' or set a different currentPhase" >&2
+        return 1
+    fi
+
+    return 0
+}
+
+# Validate phase timestamp ordering
+# Args: $1 = todo file path
+# Returns: 0 if valid, 1 if timestamps are out of order
+validate_phase_timestamps() {
+    local todo_file="$1"
+    local errors=0
+
+    # Check each phase for timestamp ordering
+    while IFS=: read -r slug started completed; do
+        if [[ -n "$started" && -n "$completed" && "$started" != "null" && "$completed" != "null" ]]; then
+            if [[ "$started" > "$completed" ]]; then
+                echo "ERROR: Phase '$slug': startedAt ($started) is after completedAt ($completed)" >&2
+                ((errors++))
+            fi
+        fi
+    done < <(jq -r '.project.phases | to_entries[] | "\(.key):\(.value.startedAt // "null"):\(.value.completedAt // "null")"' "$todo_file" 2>/dev/null)
+
+    if [[ $errors -gt 0 ]]; then
+        echo "Fix: Correct timestamp ordering in phase definitions" >&2
+        return 1
+    fi
+
+    return 0
+}
+
+# Validate phase status requirements
+# Args: $1 = todo file path
+# Returns: 0 if valid, 1 if status requirements not met
+validate_phase_status_requirements() {
+    local todo_file="$1"
+    local errors=0
+
+    # Check active/completed phases have startedAt
+    while IFS=: read -r slug status started; do
+        if [[ "$status" == "active" || "$status" == "completed" ]]; then
+            if [[ "$started" == "null" || -z "$started" ]]; then
+                echo "ERROR: Phase '$slug' with status '$status' requires startedAt timestamp" >&2
+                ((errors++))
+            fi
+        fi
+    done < <(jq -r '.project.phases | to_entries[] | "\(.key):\(.value.status):\(.value.startedAt // "null")"' "$todo_file" 2>/dev/null)
+
+    # Check completed phases have completedAt
+    while IFS=: read -r slug status completed; do
+        if [[ "$status" == "completed" ]]; then
+            if [[ "$completed" == "null" || -z "$completed" ]]; then
+                echo "ERROR: Phase '$slug' with status 'completed' requires completedAt timestamp" >&2
+                ((errors++))
+            fi
+        fi
+    done < <(jq -r '.project.phases | to_entries[] | "\(.key):\(.value.status):\(.value.completedAt // "null")"' "$todo_file" 2>/dev/null)
+
+    [[ $errors -eq 0 ]]
+}
+
+export -f validate_single_active_phase
+export -f validate_current_phase_consistency
+export -f validate_phase_timestamps
+export -f validate_phase_status_requirements
+
+# ============================================================================
 # COMPREHENSIVE VALIDATION
 # ============================================================================
 
@@ -807,7 +947,7 @@ validate_all() {
 
     # 0. Version Check (non-blocking warning)
     if [[ "$MIGRATION_AVAILABLE" == "true" ]]; then
-        echo "[0/7] Checking schema version..."
+        echo "[0/9] Checking schema version..."
         if ! validate_version "$file" "$schema_type"; then
             echo "⚠ WARNING: Version check failed"
         else
@@ -818,7 +958,7 @@ validate_all() {
     fi
 
     # 1. JSON Syntax Validation
-    echo "[1/7] Checking JSON syntax..."
+    echo "[1/9] Checking JSON syntax..."
     if ! validate_json_syntax "$file"; then
         ((schema_errors++))
         echo "✗ FAILED: JSON syntax invalid"
@@ -827,7 +967,7 @@ validate_all() {
     fi
 
     # 2. Schema Validation
-    echo "[2/7] Checking schema compliance..."
+    echo "[2/9] Checking schema compliance..."
     if ! validate_schema "$file" "$schema_type"; then
         ((schema_errors++))
         echo "✗ FAILED: Schema validation failed"
@@ -845,7 +985,7 @@ validate_all() {
 
     # 3. ID Uniqueness Check
     if [[ "$schema_type" == "todo" || "$schema_type" == "archive" ]]; then
-        echo "[3/7] Checking ID uniqueness..."
+        echo "[3/9] Checking ID uniqueness..."
         if ! check_id_uniqueness "$file" "$archive_file"; then
             ((semantic_errors++))
             echo "✗ FAILED: Duplicate IDs found"
@@ -853,12 +993,12 @@ validate_all() {
             echo "✓ PASSED: All IDs unique"
         fi
     else
-        echo "[3/7] Skipping ID uniqueness check (not applicable)"
+        echo "[3/9] Skipping ID uniqueness check (not applicable)"
     fi
 
     # 4. Individual Task Validation
     if [[ "$schema_type" == "todo" ]]; then
-        echo "[4/7] Validating individual tasks..."
+        echo "[4/9] Validating individual tasks..."
         local task_count
         task_count=$(jq '.tasks | length' "$file")
         local task_errors=0
@@ -877,12 +1017,12 @@ validate_all() {
             echo "✓ PASSED: All tasks valid ($task_count tasks)"
         fi
     else
-        echo "[4/7] Skipping task validation (not applicable)"
+        echo "[4/9] Skipping task validation (not applicable)"
     fi
 
     # 5. Content Duplicate Check
     if [[ "$schema_type" == "todo" ]]; then
-        echo "[5/7] Checking for duplicate content..."
+        echo "[5/9] Checking for duplicate content..."
         local duplicate_content
         duplicate_content=$(jq -r '.tasks[].content' "$file" | sort | uniq -d)
 
@@ -895,12 +1035,47 @@ validate_all() {
             echo "✓ PASSED: No duplicate content"
         fi
     else
-        echo "[5/7] Skipping duplicate content check (not applicable)"
+        echo "[5/9] Skipping duplicate content check (not applicable)"
     fi
 
-    # 6. Circular Dependency Check
+    # 6. Phase Validation (v2.2.0+)
     if [[ "$schema_type" == "todo" ]]; then
-        echo "[6/8] Checking for circular dependencies..."
+        if jq -e '.project.phases' "$file" >/dev/null 2>&1; then
+            echo "[6/9] Validating phase configuration..."
+            local phase_errors=0
+
+            if ! validate_single_active_phase "$file"; then
+                ((phase_errors++))
+            fi
+
+            if ! validate_current_phase_consistency "$file"; then
+                ((phase_errors++))
+            fi
+
+            if ! validate_phase_timestamps "$file"; then
+                ((phase_errors++))
+            fi
+
+            if ! validate_phase_status_requirements "$file"; then
+                ((phase_errors++))
+            fi
+
+            if [[ $phase_errors -gt 0 ]]; then
+                ((semantic_errors++))
+                echo "✗ FAILED: Phase validation ($phase_errors issues)"
+            else
+                echo "✓ PASSED: Phase configuration valid"
+            fi
+        else
+            echo "[6/9] Skipping phase validation (no phases defined)"
+        fi
+    else
+        echo "[6/9] Skipping phase validation (not applicable)"
+    fi
+
+    # 7. Circular Dependency Check
+    if [[ "$schema_type" == "todo" ]]; then
+        echo "[7/9] Checking for circular dependencies..."
         local cycle_errors=0
 
         # Check each task with dependencies
@@ -925,12 +1100,12 @@ validate_all() {
             echo "✓ PASSED: No circular dependencies"
         fi
     else
-        echo "[6/8] Skipping circular dependency check (not applicable)"
+        echo "[7/9] Skipping circular dependency check (not applicable)"
     fi
 
-    # 7. Done Status Consistency
+    # 8. Done Status Consistency
     if [[ "$schema_type" == "todo" ]]; then
-        echo "[7/8] Checking done status consistency..."
+        echo "[8/9] Checking done status consistency..."
         local invalid_done
         invalid_done=$(jq -r '.tasks[] | select(.status == "done" and (.completed_at == null or .completed_at == "")) | .id // "unknown"' "$file")
 
@@ -943,7 +1118,7 @@ validate_all() {
             echo "✓ PASSED: Done status consistent"
         fi
     elif [[ "$schema_type" == "archive" ]]; then
-        echo "[7/8] Checking archive contains only done tasks..."
+        echo "[8/9] Checking archive contains only done tasks..."
         local non_done
         non_done=$(jq -r '.archived_tasks[] | select(.status != "done") | .id // "unknown"' "$file")
 
@@ -956,16 +1131,16 @@ validate_all() {
             echo "✓ PASSED: Archive valid"
         fi
     else
-        echo "[7/8] Skipping status consistency check (not applicable)"
+        echo "[8/9] Skipping status consistency check (not applicable)"
     fi
 
-    # 8. Config-Specific Validation
+    # 9. Config-Specific Validation
     if [[ "$schema_type" == "config" ]]; then
-        echo "[8/8] Checking configuration backward compatibility..."
+        echo "[9/9] Checking configuration backward compatibility..."
         # Additional config-specific checks can be added here
         echo "✓ PASSED: Configuration valid"
     else
-        echo "[8/8] Skipping config-specific checks (not applicable)"
+        echo "[9/9] Skipping config-specific checks (not applicable)"
     fi
 
     # Summary

@@ -187,6 +187,10 @@ cmd_set() {
   local timestamp
   timestamp=$(get_timestamp)
 
+  # Get task's phase
+  local task_phase
+  task_phase=$(jq -r --arg id "$task_id" '.tasks[] | select(.id == $id) | .phase // empty' "$TODO_FILE")
+
   # Set focus and mark task as active
   local updated_todo
   updated_todo=$(jq --arg id "$task_id" --arg ts "$timestamp" '
@@ -194,6 +198,13 @@ cmd_set() {
     ._meta.lastModified = $ts |
     .tasks = [.tasks[] | if .id == $id then .status = "active" else . end]
   ' "$TODO_FILE")
+
+  # Update project.currentPhase if task has phase
+  if [[ -n "$task_phase" && "$task_phase" != "null" ]]; then
+    updated_todo=$(echo "$updated_todo" | jq --arg phase "$task_phase" '.project.currentPhase = $phase')
+    log_info "Phase changed to: $task_phase"
+  fi
+
   save_json "$TODO_FILE" "$updated_todo" || {
     log_error "Failed to set focus"
     exit 1
@@ -270,10 +281,12 @@ cmd_show() {
     local current_task
     local session_note
     local next_action
+    local current_phase
 
     current_task=$(jq -r '.focus.currentTask // ""' "$TODO_FILE")
     session_note=$(jq -r '.focus.sessionNote // ""' "$TODO_FILE")
     next_action=$(jq -r '.focus.nextAction // ""' "$TODO_FILE")
+    current_phase=$(jq -r '.project.currentPhase // ""' "$TODO_FILE")
 
     echo ""
     echo "=== Current Focus ==="
@@ -288,6 +301,10 @@ cmd_show() {
       echo "  Status: $task_status"
     else
       echo -e "Task: ${YELLOW}None${NC}"
+    fi
+
+    if [[ -n "$current_phase" ]]; then
+      echo "  Phase: $current_phase"
     fi
 
     echo ""

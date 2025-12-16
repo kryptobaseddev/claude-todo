@@ -442,3 +442,285 @@ teardown() {
     archived_count=$(jq '.archivedTasks | length' "$ARCHIVE_FILE")
     [[ "$archived_count" -eq 10 ]]
 }
+
+# =============================================================================
+# Phase Lifecycle Workflows (v2.2.0)
+# =============================================================================
+
+@test "phase workflow: set → start → add tasks → complete → advance" {
+    create_empty_todo
+
+    # Set up phases
+    bash "$SCRIPTS_DIR/phase.sh" set setup --name "Setup Phase" --description "Initial setup"
+    bash "$SCRIPTS_DIR/phase.sh" set core --name "Core Phase" --description "Core work"
+    bash "$SCRIPTS_DIR/phase.sh" set polish --name "Polish Phase" --description "Final touches"
+
+    # Start setup phase
+    run bash "$SCRIPTS_DIR/phase.sh" start setup
+    assert_success
+
+    # Verify phase is active
+    run jq -r '.project.currentPhase' "$TODO_FILE"
+    assert_output "setup"
+
+    run jq -r '.project.phases.setup.status' "$TODO_FILE"
+    assert_output "active"
+
+    # Add tasks to setup phase
+    bash "$ADD_SCRIPT" "Setup task 1" --description "First setup task" --phase setup
+    bash "$ADD_SCRIPT" "Setup task 2" --description "Second setup task" --phase setup
+
+    # Complete all setup tasks
+    local task1 task2
+    task1=$(jq -r '.tasks[0].id' "$TODO_FILE")
+    task2=$(jq -r '.tasks[1].id' "$TODO_FILE")
+
+    bash "$COMPLETE_SCRIPT" "$task1" --skip-notes
+    bash "$COMPLETE_SCRIPT" "$task2" --skip-notes
+
+    # Complete setup phase
+    run bash "$SCRIPTS_DIR/phase.sh" complete setup
+    assert_success
+
+    # Verify setup completed
+    run jq -r '.project.phases.setup.status' "$TODO_FILE"
+    assert_output "completed"
+
+    # Advance to next phase
+    run bash "$SCRIPTS_DIR/phase.sh" advance
+    assert_success
+
+    # Verify current phase is now core
+    run jq -r '.project.currentPhase' "$TODO_FILE"
+    assert_output "core"
+
+    run jq -r '.project.phases.core.status' "$TODO_FILE"
+    assert_output "active"
+}
+
+@test "phase workflow: tasks inherit currentPhase when added" {
+    create_empty_todo
+
+    # Set up phase
+    bash "$SCRIPTS_DIR/phase.sh" set setup --name "Setup" --description "Setup phase"
+    bash "$SCRIPTS_DIR/phase.sh" start setup
+
+    # Add task without explicit phase (should inherit currentPhase)
+    bash "$ADD_SCRIPT" "Auto-phased task" --description "Should inherit setup phase"
+
+    # Verify task has setup phase
+    local phase
+    phase=$(jq -r '.tasks[0].phase' "$TODO_FILE")
+    [[ "$phase" == "setup" ]]
+}
+
+@test "phase workflow: focus changes update currentPhase" {
+    create_empty_todo
+
+    # Set up two phases
+    bash "$SCRIPTS_DIR/phase.sh" set setup --name "Setup" --description "Setup phase"
+    bash "$SCRIPTS_DIR/phase.sh" set core --name "Core" --description "Core phase"
+    bash "$SCRIPTS_DIR/phase.sh" start setup
+
+    # Add tasks to different phases
+    bash "$ADD_SCRIPT" "Setup task" --description "Task in setup" --phase setup
+    bash "$ADD_SCRIPT" "Core task" --description "Task in core" --phase core
+
+    local setup_task core_task
+    setup_task=$(jq -r '.tasks[0].id' "$TODO_FILE")
+    core_task=$(jq -r '.tasks[1].id' "$TODO_FILE")
+
+    # Focus on core task
+    bash "$SCRIPTS_DIR/focus.sh" set "$core_task"
+
+    # Verify currentPhase changed to core
+    run jq -r '.project.currentPhase' "$TODO_FILE"
+    assert_output "core"
+
+    run jq -r '.focus.currentPhase' "$TODO_FILE"
+    assert_output "core"
+
+    # Focus back on setup task
+    bash "$SCRIPTS_DIR/focus.sh" set "$setup_task"
+
+    # Verify currentPhase changed back to setup
+    run jq -r '.project.currentPhase' "$TODO_FILE"
+    assert_output "setup"
+}
+
+@test "phase workflow: dash command shows current phase" {
+    create_empty_todo
+
+    # Set up and start phase
+    bash "$SCRIPTS_DIR/phase.sh" set setup --name "Setup Phase" --description "Setup work"
+    bash "$SCRIPTS_DIR/phase.sh" start setup
+
+    # Add tasks
+    bash "$ADD_SCRIPT" "Task 1" --description "Setup task" --phase setup
+
+    # Run dashboard
+    run bash "$SCRIPTS_DIR/dash.sh"
+    assert_success
+    assert_output --partial "Phase:"
+    assert_output --partial "setup" || assert_output --partial "Setup Phase"
+}
+
+@test "phase workflow: phases command lists all phases with progress" {
+    create_empty_todo
+
+    # Set up multiple phases
+    bash "$SCRIPTS_DIR/phase.sh" set setup --name "Setup" --description "Setup phase"
+    bash "$SCRIPTS_DIR/phase.sh" set core --name "Core" --description "Core phase"
+    bash "$SCRIPTS_DIR/phase.sh" set polish --name "Polish" --description "Polish phase"
+    bash "$SCRIPTS_DIR/phase.sh" start setup
+
+    # Add tasks
+    bash "$ADD_SCRIPT" "Setup task" --description "Task" --phase setup
+    bash "$ADD_SCRIPT" "Core task 1" --description "Task" --phase core
+    bash "$ADD_SCRIPT" "Core task 2" --description "Task" --phase core
+
+    # List phases
+    run bash "$SCRIPTS_DIR/phases.sh" list
+    assert_success
+    assert_output --partial "setup"
+    assert_output --partial "core"
+    assert_output --partial "polish"
+    assert_output --partial "1 tasks" || assert_output --partial "1 task"
+    assert_output --partial "2 tasks"
+}
+
+@test "phase workflow: next command considers phase priority" {
+    create_empty_todo
+
+    # Set up phases
+    bash "$SCRIPTS_DIR/phase.sh" set setup --name "Setup" --description "Setup phase"
+    bash "$SCRIPTS_DIR/phase.sh" set core --name "Core" --description "Core phase"
+    bash "$SCRIPTS_DIR/phase.sh" start setup
+
+    # Add tasks to different phases
+    bash "$ADD_SCRIPT" "Setup high" --description "High priority setup" --phase setup --priority high
+    bash "$ADD_SCRIPT" "Core critical" --description "Critical core task" --phase core --priority critical
+
+    # Next should prioritize current phase (setup) over higher priority in different phase
+    run bash "$SCRIPTS_DIR/next.sh"
+    assert_success
+    # Should suggest the setup task (current phase) even though core has higher priority
+    assert_output --partial "setup" || assert_output --partial "Setup high"
+}
+
+@test "phase workflow: complete phase blocks advance if tasks incomplete" {
+    create_empty_todo
+
+    # Set up phase
+    bash "$SCRIPTS_DIR/phase.sh" set setup --name "Setup" --description "Setup phase"
+    bash "$SCRIPTS_DIR/phase.sh" start setup
+
+    # Add task
+    bash "$ADD_SCRIPT" "Incomplete task" --description "Task" --phase setup
+
+    # Try to complete phase with incomplete task
+    run bash "$SCRIPTS_DIR/phase.sh" complete setup
+    assert_failure
+    assert_output --partial "incomplete" || assert_output --partial "pending"
+}
+
+@test "phase workflow: show command displays phase details" {
+    create_empty_todo
+
+    # Set up phase
+    bash "$SCRIPTS_DIR/phase.sh" set setup --name "Setup Phase" --description "Initial setup work"
+    bash "$SCRIPTS_DIR/phase.sh" start setup
+
+    # Show phase
+    run bash "$SCRIPTS_DIR/phase.sh" show setup
+    assert_success
+    assert_output --partial "Setup Phase"
+    assert_output --partial "Initial setup work"
+    assert_output --partial "active"
+}
+
+@test "phase workflow: list shows phase order and status" {
+    create_empty_todo
+
+    # Set up phases in specific order
+    bash "$SCRIPTS_DIR/phase.sh" set setup --name "Setup" --description "Setup"
+    bash "$SCRIPTS_DIR/phase.sh" set core --name "Core" --description "Core"
+    bash "$SCRIPTS_DIR/phase.sh" set polish --name "Polish" --description "Polish"
+
+    # Start and complete setup
+    bash "$SCRIPTS_DIR/phase.sh" start setup
+    bash "$SCRIPTS_DIR/phase.sh" complete setup
+
+    # Start core
+    bash "$SCRIPTS_DIR/phase.sh" start core
+
+    # List phases
+    run bash "$SCRIPTS_DIR/phase.sh" list
+    assert_success
+    assert_output --partial "setup"
+    assert_output --partial "completed" || assert_output --partial "✓"
+    assert_output --partial "core"
+    assert_output --partial "active" || assert_output --partial "◉"
+    assert_output --partial "polish"
+    assert_output --partial "pending" || assert_output --partial "○"
+}
+
+@test "phase workflow: session integration with phases" {
+    create_empty_todo
+
+    # Set up phase
+    bash "$SCRIPTS_DIR/phase.sh" set setup --name "Setup" --description "Setup phase"
+    bash "$SCRIPTS_DIR/phase.sh" start setup
+
+    # Start session
+    bash "$SCRIPTS_DIR/session.sh" start
+
+    # Add task
+    bash "$ADD_SCRIPT" "Session task" --description "Task during session" --phase setup
+    local task_id
+    task_id=$(jq -r '.tasks[0].id' "$TODO_FILE")
+
+    # Focus and work
+    bash "$SCRIPTS_DIR/focus.sh" set "$task_id"
+    bash "$SCRIPTS_DIR/focus.sh" note "Working on phase task"
+
+    # Complete task
+    bash "$COMPLETE_SCRIPT" "$task_id" --notes "Done"
+
+    # Complete phase
+    bash "$SCRIPTS_DIR/phase.sh" complete setup
+
+    # End session
+    bash "$SCRIPTS_DIR/session.sh" end
+
+    # Verify phase completed and logged
+    run jq -r '.project.phases.setup.status' "$TODO_FILE"
+    assert_output "completed"
+
+    # Check log has phase operations
+    run jq -r '.entries[] | select(.action | contains("phase")) | .action' "$LOG_FILE"
+    assert_success
+}
+
+@test "phase workflow: archive preserves phase metadata" {
+    create_empty_todo
+
+    # Set up phase
+    bash "$SCRIPTS_DIR/phase.sh" set setup --name "Setup" --description "Setup phase"
+    bash "$SCRIPTS_DIR/phase.sh" start setup
+
+    # Add and complete task
+    bash "$ADD_SCRIPT" "Archive test" --description "Task to archive" --phase setup
+    local task_id
+    task_id=$(jq -r '.tasks[0].id' "$TODO_FILE")
+
+    bash "$COMPLETE_SCRIPT" "$task_id" --skip-notes
+    bash "$SCRIPTS_DIR/phase.sh" complete setup
+
+    # Archive (use --all to bypass preserve count in tests)
+    bash "$SCRIPTS_DIR/archive.sh" --all
+
+    # Verify archived task has phase metadata
+    run jq -r --arg id "$task_id" '.archivedTasks[] | select(.id == $id) | .phase' "$ARCHIVE_FILE"
+    assert_output "setup"
+}

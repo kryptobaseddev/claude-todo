@@ -683,7 +683,7 @@ teardown() {
 
 @test "list handles tasks with all optional fields" {
     create_empty_todo
-    jq '.phases = {"test": {"name": "Test"}}' "$TODO_FILE" > "${TODO_FILE}.tmp" && mv "${TODO_FILE}.tmp" "$TODO_FILE"
+    jq '.project.phases = {"test": {"name": "Test", "description": "Test phase", "order": 1}}' "$TODO_FILE" > "${TODO_FILE}.tmp" && mv "${TODO_FILE}.tmp" "$TODO_FILE"
     bash "$ADD_SCRIPT" "Full task" \
         --priority high \
         --description "Full description" \

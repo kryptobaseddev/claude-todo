@@ -201,27 +201,41 @@ Output structure:
 }
 ```
 
-## Phase Configuration
+## Phase Configuration (v2.2.0)
 
-Phases are defined in `.claude/todo.json` under the `phases` key:
+Since v2.2.0, phases are defined in `.claude/todo.json` under the `project.phases` key with project-level tracking:
 
 ```json
 {
-  "phases": {
-    "setup": {
-      "name": "Setup",
-      "description": "Initial project setup and configuration",
-      "order": 1
-    },
-    "core": {
-      "name": "Core Development",
-      "description": "Build core functionality and features",
-      "order": 2
-    },
-    "polish": {
-      "name": "Polish & Testing",
-      "description": "Refine, test, and prepare for release",
-      "order": 3
+  "version": "2.2.0",
+  "project": {
+    "name": "my-project",
+    "currentPhase": "core",
+    "phases": {
+      "setup": {
+        "order": 1,
+        "name": "Setup",
+        "description": "Initial project setup and configuration",
+        "status": "completed",
+        "startedAt": "2025-12-01T10:00:00Z",
+        "completedAt": "2025-12-10T15:00:00Z"
+      },
+      "core": {
+        "order": 2,
+        "name": "Core Development",
+        "description": "Build core functionality and features",
+        "status": "active",
+        "startedAt": "2025-12-10T15:00:00Z",
+        "completedAt": null
+      },
+      "polish": {
+        "order": 3,
+        "name": "Polish & Testing",
+        "description": "Refine, test, and prepare for release",
+        "status": "pending",
+        "startedAt": null,
+        "completedAt": null
+      }
     }
   }
 }
@@ -229,11 +243,43 @@ Phases are defined in `.claude/todo.json` under the `phases` key:
 
 ### Phase Definition Fields
 
-| Field | Type | Description | Required |
-|-------|------|-------------|----------|
-| `name` | string | Display name for the phase | No (defaults to slug) |
-| `description` | string | Detailed description of the phase purpose | No |
-| `order` | number | Sort order for phase display | No (defaults to 999) |
+| Field | Type | Description | Required | Notes |
+|-------|------|-------------|----------|-------|
+| `order` | integer | Sort order for phase display (≥1) | **Yes** | Determines sequence |
+| `name` | string | Display name for the phase | **Yes** | Max 50 characters |
+| `status` | string | Phase status: `pending`, `active`, `completed` | **Yes** | Enum value |
+| `description` | string | Detailed description of the phase purpose | No | Max 200 characters |
+| `startedAt` | string | ISO 8601 timestamp when phase started | No* | Required if `status` is `active` or `completed` |
+| `completedAt` | string | ISO 8601 timestamp when phase completed | No* | Required if `status` is `completed` |
+
+\* **Conditional Requirements**:
+- `pending` phases: Both `startedAt` and `completedAt` must be `null`
+- `active` phases: `startedAt` required, `completedAt` must be `null`
+- `completed` phases: Both `startedAt` and `completedAt` required
+
+### Project-Level Fields
+
+| Field | Type | Description | Notes |
+|-------|------|-------------|-------|
+| `project.currentPhase` | string\|null | Slug of currently active phase | Must match a key in `project.phases` |
+| `project.name` | string | Project name | Required in v2.2.0+ |
+| `project.phases` | object | Phase definitions keyed by slug | Required in v2.2.0+ |
+
+### Phase Lifecycle States
+
+Phases follow a strict lifecycle with state transitions managed by the `phase` command:
+
+```
+pending → active → completed
+   ↓         ↓
+(start)  (complete)
+```
+
+**State Rules**:
+1. Only ONE phase can be `active` at a time
+2. `pending` → `active`: Sets `startedAt`, updates `currentPhase`
+3. `active` → `completed`: Sets `completedAt`, requires all tasks in phase to be `done`
+4. `completed` phases cannot return to `active` or `pending`
 
 ## Use Cases
 
@@ -581,7 +627,45 @@ claude-todo validate
 jq '.tasks[] | select(.status != "pending" and .status != "active" and .status != "blocked" and .status != "done")' .claude/todo.json
 ```
 
+## Managing Phases with `phase` Command (v2.2.0)
+
+v2.2.0 introduces the `phase` command for project-level phase management:
+
+```bash
+# Set/create a phase
+claude-todo phase set <slug> --name "Phase Name" --description "Phase description"
+
+# Start a phase (marks as active)
+claude-todo phase start <slug>
+
+# Complete a phase (marks as completed, requires all tasks done)
+claude-todo phase complete <slug>
+
+# Advance to next phase in sequence
+claude-todo phase advance
+
+# Show phase details
+claude-todo phase show <slug>
+
+# List all phases
+claude-todo phase list
+```
+
+See `docs/commands/phase.md` for complete `phase` command documentation.
+
+### Phase vs Phases Command
+
+| Command | Purpose | Scope |
+|---------|---------|-------|
+| `phase` | **Manage** phase lifecycle (set, start, complete, advance) | Project-level state |
+| `phases` | **View** phase progress and task distribution | Task-level analytics |
+
+Use `phase` to control which phase you're in, and `phases` to see progress across all phases.
+
 ## Version History
 
+- **v2.2.0**: Added project-level phase tracking with `status`, `startedAt`, `completedAt`
+- **v2.2.0**: Introduced `phase` command for phase lifecycle management
+- **v2.2.0**: `currentPhase` now tracked at project level in `project.currentPhase`
 - **v0.9.0**: Initial implementation with list, show, and stats subcommands
 - **v0.9.0**: Added visual progress bars and priority breakdown in stats

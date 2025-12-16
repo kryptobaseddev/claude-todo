@@ -1,0 +1,995 @@
+{
+  "session_id": "manual",
+  "injected_at": "2025-12-16T05:19:47Z",
+  "injected_tasks": [
+    "T241",
+    "T246",
+    "T247"
+  ],
+  "snapshot": {
+    "todos": [
+      {
+        "content": "[T241] [!] [core] Update todo.schema.json to v2.2.0 with project object",
+        "activeForm": "Updating todo.schema.json to v2.2.0 with project object",
+        "status": "in_progress"
+      },
+      {
+        "content": "[T246] [!] [core] Create lib/phase-tracking.sh library",
+        "activeForm": "Creating lib/phase-tracking.sh library",
+        "status": "pending"
+      },
+      {
+        "content": "[T247] [!] [core] Update lib/validation.sh for phase validation",
+        "activeForm": "Updating lib/validation.sh for phase validation",
+        "status": "pending"
+      }
+    ]
+  },
+  "task_metadata": {
+    "T012": {
+      "phase": null,
+      "priority": "medium",
+      "status": "done"
+    },
+    "T045": {
+      "phase": null,
+      "priority": "critical",
+      "status": "done"
+    },
+    "T046": {
+      "phase": null,
+      "priority": "critical",
+      "status": "done"
+    },
+    "T047": {
+      "phase": null,
+      "priority": "high",
+      "status": "done"
+    },
+    "T048": {
+      "phase": null,
+      "priority": "medium",
+      "status": "done"
+    },
+    "T049": {
+      "phase": null,
+      "priority": "high",
+      "status": "done"
+    },
+    "T050": {
+      "phase": null,
+      "priority": "high",
+      "status": "done"
+    },
+    "T051": {
+      "phase": null,
+      "priority": "high",
+      "status": "done"
+    },
+    "T052": {
+      "phase": null,
+      "priority": "medium",
+      "status": "done"
+    },
+    "T053": {
+      "phase": null,
+      "priority": "medium",
+      "status": "done"
+    },
+    "T054": {
+      "phase": null,
+      "priority": "low",
+      "status": "done"
+    },
+    "T055": {
+      "phase": null,
+      "priority": "medium",
+      "status": "done"
+    },
+    "T056": {
+      "phase": null,
+      "priority": "medium",
+      "status": "done"
+    },
+    "T057": {
+      "phase": null,
+      "priority": "medium",
+      "status": "done"
+    },
+    "T058": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T059": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T060": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T061": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T062": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "done"
+    },
+    "T063": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "done"
+    },
+    "T064": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T065": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T066": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T067": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "done"
+    },
+    "T068": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "done"
+    },
+    "T069": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "done"
+    },
+    "T070": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "done"
+    },
+    "T071": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "done"
+    },
+    "T072": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "done"
+    },
+    "T073": {
+      "phase": "core",
+      "priority": "low",
+      "status": "done"
+    },
+    "T074": {
+      "phase": "polish",
+      "priority": "medium",
+      "status": "done"
+    },
+    "T075": {
+      "phase": "polish",
+      "priority": "low",
+      "status": "done"
+    },
+    "T076": {
+      "phase": "polish",
+      "priority": "low",
+      "status": "done"
+    },
+    "T077": {
+      "phase": "polish",
+      "priority": "medium",
+      "status": "done"
+    },
+    "T078": {
+      "phase": "polish",
+      "priority": "medium",
+      "status": "done"
+    },
+    "T132": {
+      "phase": "core",
+      "priority": "critical",
+      "status": "done"
+    },
+    "T133": {
+      "phase": null,
+      "priority": "critical",
+      "status": "done"
+    },
+    "T134": {
+      "phase": null,
+      "priority": "critical",
+      "status": "done"
+    },
+    "T135": {
+      "phase": null,
+      "priority": "critical",
+      "status": "done"
+    },
+    "T136": {
+      "phase": null,
+      "priority": "critical",
+      "status": "done"
+    },
+    "T137": {
+      "phase": null,
+      "priority": "critical",
+      "status": "done"
+    },
+    "T138": {
+      "phase": null,
+      "priority": "critical",
+      "status": "done"
+    },
+    "T139": {
+      "phase": null,
+      "priority": "high",
+      "status": "done"
+    },
+    "T140": {
+      "phase": null,
+      "priority": "high",
+      "status": "done"
+    },
+    "T141": {
+      "phase": null,
+      "priority": "high",
+      "status": "done"
+    },
+    "T142": {
+      "phase": null,
+      "priority": "high",
+      "status": "done"
+    },
+    "T143": {
+      "phase": null,
+      "priority": "high",
+      "status": "done"
+    },
+    "T144": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "done"
+    },
+    "T145": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "done"
+    },
+    "T146": {
+      "phase": "core",
+      "priority": "low",
+      "status": "done"
+    },
+    "T147": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "done"
+    },
+    "T148": {
+      "phase": null,
+      "priority": "high",
+      "status": "done"
+    },
+    "T149": {
+      "phase": null,
+      "priority": "critical",
+      "status": "done"
+    },
+    "T150": {
+      "phase": null,
+      "priority": "medium",
+      "status": "done"
+    },
+    "T151": {
+      "phase": null,
+      "priority": "medium",
+      "status": "done"
+    },
+    "T152": {
+      "phase": "core",
+      "priority": "critical",
+      "status": "done"
+    },
+    "T153": {
+      "phase": "core",
+      "priority": "critical",
+      "status": "done"
+    },
+    "T154": {
+      "phase": "core",
+      "priority": "critical",
+      "status": "done"
+    },
+    "T155": {
+      "phase": "core",
+      "priority": "critical",
+      "status": "done"
+    },
+    "T156": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T157": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T158": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T159": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "done"
+    },
+    "T160": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "done"
+    },
+    "T161": {
+      "phase": "polish",
+      "priority": "high",
+      "status": "done"
+    },
+    "T162": {
+      "phase": "polish",
+      "priority": "high",
+      "status": "done"
+    },
+    "T163": {
+      "phase": "polish",
+      "priority": "medium",
+      "status": "done"
+    },
+    "T164": {
+      "phase": "polish",
+      "priority": "medium",
+      "status": "done"
+    },
+    "T165": {
+      "phase": "polish",
+      "priority": "low",
+      "status": "done"
+    },
+    "T166": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T167": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "done"
+    },
+    "T168": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "done"
+    },
+    "T169": {
+      "phase": "polish",
+      "priority": "low",
+      "status": "done"
+    },
+    "T170": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T171": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T172": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T173": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "done"
+    },
+    "T174": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T175": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T176": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T177": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T178": {
+      "phase": "polish",
+      "priority": "high",
+      "status": "done"
+    },
+    "T179": {
+      "phase": "polish",
+      "priority": "high",
+      "status": "done"
+    },
+    "T180": {
+      "phase": "polish",
+      "priority": "medium",
+      "status": "done"
+    },
+    "T181": {
+      "phase": "polish",
+      "priority": "medium",
+      "status": "done"
+    },
+    "T182": {
+      "phase": "polish",
+      "priority": "medium",
+      "status": "done"
+    },
+    "T183": {
+      "phase": null,
+      "priority": "high",
+      "status": "done"
+    },
+    "T184": {
+      "phase": "setup",
+      "priority": "critical",
+      "status": "done"
+    },
+    "T185": {
+      "phase": "setup",
+      "priority": "high",
+      "status": "done"
+    },
+    "T186": {
+      "phase": "setup",
+      "priority": "high",
+      "status": "done"
+    },
+    "T187": {
+      "phase": "setup",
+      "priority": "high",
+      "status": "done"
+    },
+    "T188": {
+      "phase": "setup",
+      "priority": "high",
+      "status": "done"
+    },
+    "T189": {
+      "phase": "core",
+      "priority": "critical",
+      "status": "done"
+    },
+    "T190": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T191": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T192": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T193": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T194": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T195": {
+      "phase": "core",
+      "priority": "critical",
+      "status": "done"
+    },
+    "T196": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T197": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T198": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T199": {
+      "phase": "polish",
+      "priority": "critical",
+      "status": "done"
+    },
+    "T200": {
+      "phase": "polish",
+      "priority": "high",
+      "status": "done"
+    },
+    "T201": {
+      "phase": "polish",
+      "priority": "high",
+      "status": "done"
+    },
+    "T202": {
+      "phase": "polish",
+      "priority": "high",
+      "status": "done"
+    },
+    "T203": {
+      "phase": "polish",
+      "priority": "medium",
+      "status": "done"
+    },
+    "T204": {
+      "phase": "setup",
+      "priority": "high",
+      "status": "pending"
+    },
+    "T205": {
+      "phase": null,
+      "priority": "medium",
+      "status": "done"
+    },
+    "T206": {
+      "phase": null,
+      "priority": "medium",
+      "status": "done"
+    },
+    "T207": {
+      "phase": null,
+      "priority": "medium",
+      "status": "done"
+    },
+    "T208": {
+      "phase": null,
+      "priority": "medium",
+      "status": "done"
+    },
+    "T209": {
+      "phase": null,
+      "priority": "medium",
+      "status": "done"
+    },
+    "T210": {
+      "phase": null,
+      "priority": "medium",
+      "status": "done"
+    },
+    "T211": {
+      "phase": null,
+      "priority": "medium",
+      "status": "done"
+    },
+    "T212": {
+      "phase": null,
+      "priority": "medium",
+      "status": "done"
+    },
+    "T213": {
+      "phase": null,
+      "priority": "medium",
+      "status": "done"
+    },
+    "T214": {
+      "phase": null,
+      "priority": "medium",
+      "status": "done"
+    },
+    "T215": {
+      "phase": "setup",
+      "priority": "high",
+      "status": "pending"
+    },
+    "T216": {
+      "phase": "setup",
+      "priority": "high",
+      "status": "pending"
+    },
+    "T217": {
+      "phase": "setup",
+      "priority": "high",
+      "status": "pending"
+    },
+    "T218": {
+      "phase": "setup",
+      "priority": "medium",
+      "status": "pending"
+    },
+    "T219": {
+      "phase": "setup",
+      "priority": "medium",
+      "status": "pending"
+    },
+    "T220": {
+      "phase": "setup",
+      "priority": "medium",
+      "status": "pending"
+    },
+    "T221": {
+      "phase": "setup",
+      "priority": "medium",
+      "status": "pending"
+    },
+    "T222": {
+      "phase": null,
+      "priority": "low",
+      "status": "done"
+    },
+    "T223": {
+      "phase": null,
+      "priority": "low",
+      "status": "done"
+    },
+    "T224": {
+      "phase": null,
+      "priority": "high",
+      "status": "done"
+    },
+    "T225": {
+      "phase": "setup",
+      "priority": "medium",
+      "status": "done"
+    },
+    "T226": {
+      "phase": "polish",
+      "priority": "high",
+      "status": "done"
+    },
+    "T227": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T228": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T229": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T230": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T231": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "done"
+    },
+    "T232": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "done"
+    },
+    "T233": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "done"
+    },
+    "T234": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T235": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T236": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T237": {
+      "phase": "core",
+      "priority": "critical",
+      "status": "done"
+    },
+    "T238": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T239": {
+      "phase": null,
+      "priority": "medium",
+      "status": "pending"
+    },
+    "T240": {
+      "phase": "core",
+      "priority": "high",
+      "status": "pending"
+    },
+    "T241": {
+      "phase": "core",
+      "priority": "critical",
+      "status": "active"
+    },
+    "T242": {
+      "phase": "core",
+      "priority": "high",
+      "status": "pending"
+    },
+    "T243": {
+      "phase": "core",
+      "priority": "high",
+      "status": "pending"
+    },
+    "T244": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "pending"
+    },
+    "T245": {
+      "phase": "core",
+      "priority": "high",
+      "status": "pending"
+    },
+    "T246": {
+      "phase": "core",
+      "priority": "high",
+      "status": "pending"
+    },
+    "T247": {
+      "phase": "core",
+      "priority": "high",
+      "status": "pending"
+    },
+    "T248": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "pending"
+    },
+    "T249": {
+      "phase": "core",
+      "priority": "high",
+      "status": "pending"
+    },
+    "T250": {
+      "phase": "core",
+      "priority": "critical",
+      "status": "done"
+    },
+    "T251": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T252": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "done"
+    },
+    "T253": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T254": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T255": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T256": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "done"
+    },
+    "T257": {
+      "phase": "core",
+      "priority": "critical",
+      "status": "done"
+    },
+    "T258": {
+      "phase": "core",
+      "priority": "critical",
+      "status": "done"
+    },
+    "T259": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T260": {
+      "phase": "core",
+      "priority": "critical",
+      "status": "done"
+    },
+    "T261": {
+      "phase": "core",
+      "priority": "critical",
+      "status": "done"
+    },
+    "T262": {
+      "phase": "core",
+      "priority": "high",
+      "status": "done"
+    },
+    "T263": {
+      "phase": "core",
+      "priority": "high",
+      "status": "pending"
+    },
+    "T264": {
+      "phase": "core",
+      "priority": "high",
+      "status": "pending"
+    },
+    "T265": {
+      "phase": "core",
+      "priority": "high",
+      "status": "pending"
+    },
+    "T266": {
+      "phase": "core",
+      "priority": "critical",
+      "status": "pending"
+    },
+    "T267": {
+      "phase": "core",
+      "priority": "high",
+      "status": "pending"
+    },
+    "T268": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "pending"
+    },
+    "T269": {
+      "phase": "core",
+      "priority": "high",
+      "status": "pending"
+    },
+    "T270": {
+      "phase": "core",
+      "priority": "high",
+      "status": "pending"
+    },
+    "T271": {
+      "phase": "core",
+      "priority": "high",
+      "status": "pending"
+    },
+    "T272": {
+      "phase": "core",
+      "priority": "high",
+      "status": "pending"
+    },
+    "T273": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "pending"
+    },
+    "T274": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "pending"
+    },
+    "T275": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "pending"
+    },
+    "T276": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "pending"
+    },
+    "T277": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "pending"
+    },
+    "T278": {
+      "phase": "core",
+      "priority": "high",
+      "status": "pending"
+    },
+    "T279": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "pending"
+    },
+    "T280": {
+      "phase": "core",
+      "priority": "high",
+      "status": "pending"
+    },
+    "T281": {
+      "phase": "core",
+      "priority": "critical",
+      "status": "pending"
+    },
+    "T282": {
+      "phase": "core",
+      "priority": "high",
+      "status": "pending"
+    },
+    "T283": {
+      "phase": "core",
+      "priority": "high",
+      "status": "pending"
+    },
+    "T284": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "pending"
+    },
+    "T285": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "pending"
+    },
+    "T286": {
+      "phase": "core",
+      "priority": "medium",
+      "status": "pending"
+    },
+    "T287": {
+      "phase": "core",
+      "priority": "high",
+      "status": "pending"
+    },
+    "T288": {
+      "phase": "core",
+      "priority": "critical",
+      "status": "pending"
+    },
+    "T289": {
+      "phase": null,
+      "priority": "high",
+      "status": "pending"
+    }
+  }
+}

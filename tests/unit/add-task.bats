@@ -131,7 +131,7 @@ teardown() {
 @test "add task with --phase" {
     create_empty_todo
     # Add phase to todo.json first
-    jq '.phases = {"core": {"name": "Core"}}' "$TODO_FILE" > "${TODO_FILE}.tmp" && mv "${TODO_FILE}.tmp" "$TODO_FILE"
+    jq '.project.phases = {"core": {"name": "Core", "description": "Core development", "order": 1}}' "$TODO_FILE" > "${TODO_FILE}.tmp" && mv "${TODO_FILE}.tmp" "$TODO_FILE"
 
     run bash "$ADD_SCRIPT" "Phased task" --phase core
     assert_success
@@ -212,7 +212,7 @@ teardown() {
 
 @test "add task with all options" {
     create_empty_todo
-    jq '.phases = {"testing": {"name": "Testing"}}' "$TODO_FILE" > "${TODO_FILE}.tmp" && mv "${TODO_FILE}.tmp" "$TODO_FILE"
+    jq '.project.phases = {"testing": {"name": "Testing", "description": "Testing phase", "order": 1}}' "$TODO_FILE" > "${TODO_FILE}.tmp" && mv "${TODO_FILE}.tmp" "$TODO_FILE"
 
     run bash "$ADD_SCRIPT" "Complete task" \
         --priority high \

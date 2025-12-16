@@ -5,6 +5,42 @@ All notable changes to the claude-todo system will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0] - 2025-12-16
+
+### Added
+- **Project-Level Phase Tracking System**
+  - `project.phases` object in todo.json schema for defining project phases
+  - `project.currentPhase` field to track active project phase
+  - Phase lifecycle tracking with status (pending/active/done), startedAt, completedAt
+  - Phase validation in add-task.sh and update-task.sh (validates against project.phases)
+  - `--add-phase` flag to create phases on-demand
+  - `phase` command for phase lifecycle management (show/set/start/complete/advance)
+  - `phases` command for phase overview (list/show/stats)
+  - Phase support in templates/todo.template.json
+
+- **Library Enhancements**
+  - `lib/phase-tracking.sh`: Core phase management functions
+  - Phase validation in `lib/validation.sh`
+  - Phase indexing in `lib/cache.sh`
+
+- **Migration Support**
+  - Schema migration to v2.2.0 in `scripts/migrate.sh`
+  - Automatic conversion of legacy phase data structures
+  - Backward compatibility with pre-2.2.0 task data
+
+### Changed
+- **Schema Version**: Bumped to 2.2.0
+- **Template Structure**: todo.template.json now includes project.phases structure
+- **Test Suites**: Updated phase-related tests to use project.phases path
+  - Fixed add-task.bats phase setup (2 tests)
+  - Fixed list-tasks.bats optional fields test
+  - Fixed update-task.bats phase test
+  - Fixed error-recovery.bats config handling
+
+### Fixed
+- Phase validation handles null/undefined project.phases gracefully
+- add-task.sh and update-task.sh use `(.project.phases // {})` for safe jq operations
+
 ## [0.12.9] - 2025-12-15
 
 ### Added

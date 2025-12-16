@@ -1,0 +1,3683 @@
+{
+  "$schema": "./schemas/todo.schema.json",
+  "version": "2.1.0",
+  "project": "claude-todo",
+  "lastUpdated": "2025-12-16T05:09:09Z",
+  "_meta": {
+    "checksum": "e4ad588ff8cee8b3",
+    "configVersion": "2.1.0",
+    "lastSessionId": null,
+    "activeSession": null,
+    "lastModified": "2025-12-16T05:00:45Z",
+    "version": "2.0.0"
+  },
+  "focus": {
+    "currentTask": "T241",
+    "blockedUntil": null,
+    "sessionNote": "Wave 3: T250 DONE (phase.sh), T255 DONE (add-task.sh), T252/T253/T254 agents still running. Need: T251, T256, then validate.",
+    "nextAction": "Check Wave 3 agent results, then launch T251, T256, then Wave 3 validation/testing",
+    "currentPhase": null
+  },
+  "tasks": [
+    {
+      "id": "T012",
+      "title": "Decouple CLI wrapper from hardcoded script mappings",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-06T04:51:17Z",
+      "description": "MEDIUM RISK: The claude-todo wrapper has hardcoded case statement mapping commands to scripts. If scripts are renamed (like we almost did with -todo suffix), wrapper breaks silently. FIX: Generate wrapper from script directory listing, use config file for mappings, or convention-based routing (command name = script name).",
+      "labels": [
+        "fragile-coupling",
+        "medium"
+      ],
+      "notes": [
+        "2025-12-09 01:15:23 UTC: Testing update script",
+        "2025-12-09 01:17:53 UTC: Verified update command works through CLI"
+      ],
+      "completedAt": "2025-12-12T19:41:28Z"
+    },
+    {
+      "id": "T045",
+      "title": "Create TODO_Task_Management.md documentation file",
+      "status": "done",
+      "priority": "critical",
+      "createdAt": "2025-12-12T16:56:07Z",
+      "description": "Create concise (~100 lines) task management documentation for CLAUDE.md import",
+      "labels": [
+        "documentation",
+        "task-management"
+      ],
+      "completedAt": "2025-12-12T16:56:59Z"
+    },
+    {
+      "id": "T046",
+      "title": "Update CLAUDE.md injection with missing commands",
+      "status": "done",
+      "priority": "critical",
+      "createdAt": "2025-12-12T16:56:08Z",
+      "description": "Add update, export --format todowrite, and update --notes to Quick Reference",
+      "labels": [
+        "documentation",
+        "task-management"
+      ],
+      "completedAt": "2025-12-12T16:57:33Z"
+    },
+    {
+      "id": "T047",
+      "title": "Update install.sh to install TODO_Task_Management.md",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-12T16:56:09Z",
+      "description": "Ensure docs are copied during global installation",
+      "labels": [
+        "installation",
+        "task-management"
+      ],
+      "completedAt": "2025-12-12T16:57:56Z"
+    },
+    {
+      "id": "T048",
+      "title": "Test task for verification",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-12T18:47:18Z",
+      "description": "Testing the full add/update/complete workflow",
+      "labels": [
+        "test",
+        "verification"
+      ],
+      "notes": [
+        "2025-12-12 18:47:26 UTC: Updated via test"
+      ],
+      "completedAt": "2025-12-12T18:47:26Z"
+    },
+    {
+      "id": "T049",
+      "title": "Add Task Management documentation with auto-install",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-12T19:47:01Z",
+      "description": "Created TODO_Task_Management.md, install copies to ~/.claude/, auto-appends reference to CLAUDE.md",
+      "labels": [
+        "docs",
+        "feature",
+        "release-050"
+      ],
+      "completedAt": "2025-12-12T19:47:09Z"
+    },
+    {
+      "id": "T050",
+      "title": "Implement CLI command aliases",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-12T19:47:01Z",
+      "description": "Added ls, done, new, edit, rm, check aliases with config override support",
+      "labels": [
+        "feature",
+        "cli",
+        "release-060"
+      ],
+      "completedAt": "2025-12-12T19:47:10Z"
+    },
+    {
+      "id": "T051",
+      "title": "Implement plugin system foundation",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-12T19:47:01Z",
+      "description": "Auto-discovery from ~/.claude-todo/plugins/ and ./.claude/plugins/, plugin metadata format",
+      "labels": [
+        "feature",
+        "plugins",
+        "release-060"
+      ],
+      "completedAt": "2025-12-12T19:47:10Z"
+    },
+    {
+      "id": "T052",
+      "title": "Add CLI debug validation mode",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-12T19:47:01Z",
+      "description": "Added --validate/--debug flags, checksum verification, mapping validation",
+      "labels": [
+        "feature",
+        "cli",
+        "release-060"
+      ],
+      "completedAt": "2025-12-12T19:47:10Z"
+    },
+    {
+      "id": "T053",
+      "title": "Extend config schema with CLI section",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-12T19:47:01Z",
+      "description": "Added cli.aliases, cli.plugins, cli.debug sections to config schema",
+      "labels": [
+        "schema",
+        "config",
+        "release-060"
+      ],
+      "completedAt": "2025-12-12T19:47:10Z"
+    },
+    {
+      "id": "T054",
+      "title": "Test version labels",
+      "status": "done",
+      "priority": "low",
+      "createdAt": "2025-12-12T19:58:05Z",
+      "labels": [
+        "v0.6.0",
+        "feature"
+      ],
+      "completedAt": "2025-12-12T19:58:16Z"
+    },
+    {
+      "id": "T055",
+      "title": "Fix label pattern to allow version tags",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-12T19:59:29Z",
+      "labels": [
+        "v0.6.1",
+        "schema",
+        "bug-fix"
+      ],
+      "completedAt": "2025-12-12T19:59:37Z"
+    },
+    {
+      "id": "T056",
+      "title": "Create PLUGINS.md architecture documentation",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-12T19:59:31Z",
+      "labels": [
+        "v0.6.1",
+        "documentation"
+      ],
+      "completedAt": "2025-12-12T19:59:37Z"
+    },
+    {
+      "id": "T057",
+      "title": "Update schema-reference.md with label pattern changes",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-12T19:59:32Z",
+      "labels": [
+        "v0.6.1",
+        "documentation"
+      ],
+      "completedAt": "2025-12-12T19:59:37Z"
+    },
+    {
+      "id": "T058",
+      "title": "Add short flags to CLI commands (-s, -p, -l, -f, -v, -c, -q)",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-12T20:23:20Z",
+      "phase": "core",
+      "description": "Add short flag variants for all common options: -s STATUS, -p PRIORITY, -l LABEL, -f FORMAT, -v verbose, -c compact, -q quiet. Update help text and documentation.",
+      "labels": [
+        "cli",
+        "output",
+        "v0.7.0"
+      ],
+      "completedAt": "2025-12-13T08:08:21Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T08:08:21Z] Verified: Short flags implemented in list-tasks.sh (-s, -p, -l, -f, -c, -v, -q), add-task.sh (-s, -p, -d, -l, -P, -D, -q), export.sh (-f, -s, -p, -l, -m, -o, -d, -q). All documented in --help."
+      ]
+    },
+    {
+      "id": "T059",
+      "title": "Implement NO_COLOR environment variable support",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-12T20:23:21Z",
+      "phase": "core",
+      "description": "Respect the NO_COLOR environment variable standard (no-color.org) to disable all ANSI color codes. Also add FORCE_COLOR for override.",
+      "labels": [
+        "cli",
+        "accessibility",
+        "v0.7.0"
+      ],
+      "notes": [
+        {
+          "timestamp": "2025-12-13T07:57:10Z",
+          "content": "Verified implemented during v0.8.3 review"
+        }
+      ],
+      "completedAt": "2025-12-13T07:57:23Z"
+    },
+    {
+      "id": "T060",
+      "title": "Create lib/output-format.sh shared library",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-12T20:23:23Z",
+      "phase": "core",
+      "description": "Create shared library with: detect_color_support(), detect_unicode_support(), get_terminal_width(), resolve_format(), status_color(), status_symbol(), progress_bar(), draw_box(). Used by all output commands.",
+      "labels": [
+        "cli",
+        "library",
+        "v0.7.0"
+      ],
+      "notes": [
+        {
+          "timestamp": "2025-12-13T07:57:10Z",
+          "content": "Verified implemented during v0.8.3 review"
+        }
+      ],
+      "completedAt": "2025-12-13T07:57:23Z"
+    },
+    {
+      "id": "T061",
+      "title": "Add JSON output envelope with _meta section",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-12T20:23:24Z",
+      "phase": "core",
+      "description": "Enhance JSON output with envelope pattern: _meta (version, command, timestamp, checksum, execution_ms), filters applied, summary counts, then tasks array. Improves LLM anti-hallucination.",
+      "labels": [
+        "output",
+        "json",
+        "v0.7.0"
+      ],
+      "notes": [
+        {
+          "timestamp": "2025-12-13T07:57:10Z",
+          "content": "Verified implemented during v0.8.3 review"
+        }
+      ],
+      "completedAt": "2025-12-13T07:57:23Z"
+    },
+    {
+      "id": "T062",
+      "title": "Implement JSONL streaming output format",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-12T20:23:25Z",
+      "phase": "core",
+      "description": "Add --format jsonl for newline-delimited JSON output. Each line is valid JSON: meta line, task lines, summary line. Better for large datasets and piping.",
+      "labels": [
+        "output",
+        "json",
+        "streaming",
+        "v0.7.0"
+      ],
+      "completedAt": "2025-12-13T08:08:22Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T08:08:22Z] Verified: JSONL streaming output works. list-tasks.sh --format jsonl outputs each task as separate JSON line with _type field. Proper streaming format."
+      ]
+    },
+    {
+      "id": "T063",
+      "title": "Add CSV and TSV export formats",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-12T20:23:26Z",
+      "phase": "core",
+      "description": "Add --format csv and --format tsv to export.sh. RFC 4180 compliant CSV. Include headers option, configurable delimiter. Essential for spreadsheet integration.",
+      "labels": [
+        "output",
+        "export",
+        "v0.7.0"
+      ],
+      "notes": [
+        {
+          "timestamp": "2025-12-13T07:57:10Z",
+          "content": "Verified implemented during v0.8.3 review"
+        }
+      ],
+      "completedAt": "2025-12-13T07:57:23Z"
+    },
+    {
+      "id": "T064",
+      "title": "Implement dash (dashboard) command",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-12T20:23:41Z",
+      "phase": "core",
+      "description": "New command showing: status overview, current focus, phase progress with bars, weekly stats. Options: --compact, --period N, --no-chart. Uses box-drawing for borders.",
+      "labels": [
+        "command",
+        "dashboard",
+        "v0.8.0"
+      ],
+      "notes": [
+        {
+          "timestamp": "2025-12-13T07:57:10Z",
+          "content": "Verified implemented during v0.8.3 review"
+        }
+      ],
+      "completedAt": "2025-12-13T07:57:23Z"
+    },
+    {
+      "id": "T065",
+      "title": "Implement next command for task suggestion",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-12T20:23:43Z",
+      "phase": "core",
+      "description": "Suggest next task to work on. Algorithm: filter pending+unblocked, sort by priority/deps/created. Options: --explain, --count N. Show reasoning for suggestion.",
+      "labels": [
+        "command",
+        "suggestion",
+        "v0.8.0"
+      ],
+      "notes": [
+        {
+          "timestamp": "2025-12-13T07:57:10Z",
+          "content": "Verified implemented during v0.8.3 review"
+        }
+      ],
+      "completedAt": "2025-12-13T07:57:23Z"
+    },
+    {
+      "id": "T066",
+      "title": "Implement labels command for tag management",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-12T20:23:44Z",
+      "phase": "core",
+      "description": "List all labels with counts and bar visualization. Subcommands: show LABEL. Show critical task counts per label. Alias: tags.",
+      "labels": [
+        "command",
+        "labels",
+        "v0.8.0"
+      ],
+      "notes": [
+        {
+          "timestamp": "2025-12-13T07:57:10Z",
+          "content": "Verified implemented during v0.8.3 review"
+        }
+      ],
+      "completedAt": "2025-12-13T07:57:23Z"
+    },
+    {
+      "id": "T067",
+      "title": "Add ASCII progress bar and box-drawing support",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-12T20:23:46Z",
+      "phase": "core",
+      "description": "Progress bars with Unicode blocks (██░) and percentages. Box-drawing borders for tables (╭╮╰╯─│). ASCII fallback for non-UTF8 terminals.",
+      "labels": [
+        "output",
+        "visualization",
+        "v0.8.0"
+      ],
+      "notes": [
+        {
+          "timestamp": "2025-12-13T07:57:10Z",
+          "content": "Verified implemented during v0.8.3 review"
+        }
+      ],
+      "completedAt": "2025-12-13T07:57:23Z"
+    },
+    {
+      "id": "T068",
+      "title": "Add output.* configuration options",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-12T20:23:47Z",
+      "phase": "core",
+      "description": "Add to config.schema.json: output.defaultFormat, output.colorEnabled, output.unicodeEnabled, output.progressBars, output.csvDelimiter, output.dateFormat. Integrate into output-format.sh.",
+      "labels": [
+        "config",
+        "output",
+        "v0.8.0"
+      ],
+      "notes": [
+        {
+          "timestamp": "2025-12-13T07:57:10Z",
+          "content": "Verified implemented during v0.8.3 review"
+        }
+      ],
+      "completedAt": "2025-12-13T07:57:23Z"
+    },
+    {
+      "id": "T069",
+      "title": "Implement phases command for phase management",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-12T20:24:02Z",
+      "phase": "core",
+      "description": "Phase summary with progress. Subcommands: show PHASE, stats. Table with phase name, task counts by status, progress bar, overall status (Pending/InProgress/Completed).",
+      "labels": [
+        "command",
+        "phases",
+        "v0.9.0"
+      ],
+      "notes": [
+        "2025-12-13 08:08:32 UTC: Phase 4 verification: No phases.sh script exists. Phases are displayed in 'dash' command but no dedicated management command. Needs implementation.",
+        "[COMPLETED 2025-12-13T08:14:31Z] Implemented: scripts/phases.sh with list, show, stats subcommands. Supports text and JSON output. Shows progress bars, status counts, priority breakdown."
+      ],
+      "completedAt": "2025-12-13T08:14:31Z"
+    },
+    {
+      "id": "T070",
+      "title": "Implement blockers command for blocker analysis",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-12T20:24:03Z",
+      "phase": "core",
+      "description": "List blocked tasks and what blocks them. Subcommand: analyze - show critical path, chain length, impact assessment, recommendations. Help identify bottlenecks.",
+      "labels": [
+        "command",
+        "blockers",
+        "v0.9.0"
+      ],
+      "notes": [
+        {
+          "timestamp": "2025-12-13T07:57:10Z",
+          "content": "Verified implemented during v0.8.3 review"
+        }
+      ],
+      "completedAt": "2025-12-13T07:57:23Z"
+    },
+    {
+      "id": "T071",
+      "title": "Implement deps command with dependency tree visualization",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-12T20:24:04Z",
+      "phase": "core",
+      "description": "ASCII dependency tree (├─►). Subcommands: show TASK_ID, check (validate/detect cycles), blocked (tasks with incomplete deps). Options: --depth N, --reverse. Topological sorting.",
+      "labels": [
+        "command",
+        "dependencies",
+        "v0.9.0"
+      ],
+      "notes": [
+        {
+          "timestamp": "2025-12-13T07:57:10Z",
+          "content": "Verified implemented during v0.8.3 review"
+        }
+      ],
+      "completedAt": "2025-12-13T07:57:23Z"
+    },
+    {
+      "id": "T072",
+      "title": "Implement circular dependency detection",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-12T20:24:05Z",
+      "phase": "core",
+      "description": "Detect circular dependencies using Tarjan's SCC algorithm. Warn on cycle detection. Block task creation that would create cycles. Report cycle chain in deps check.",
+      "labels": [
+        "validation",
+        "dependencies",
+        "v0.9.0"
+      ],
+      "notes": [
+        {
+          "timestamp": "2025-12-13T07:57:10Z",
+          "content": "Verified implemented during v0.8.3 review"
+        }
+      ],
+      "completedAt": "2025-12-13T07:57:23Z"
+    },
+    {
+      "id": "T073",
+      "title": "Implement critical path analysis",
+      "status": "done",
+      "priority": "low",
+      "createdAt": "2025-12-12T20:24:07Z",
+      "phase": "core",
+      "description": "Identify longest dependency chain (critical path) that determines minimum project completion. Show in blockers analyze. Highlight tasks on critical path.",
+      "labels": [
+        "analysis",
+        "dependencies",
+        "v0.9.0"
+      ],
+      "completedAt": "2025-12-13T08:12:41Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T08:12:41Z] Verified: find_critical_path() in lib/analysis.sh works correctly. Tested with 4-level dependency chain, returns proper path and length. Used by blockers-command.sh analyze."
+      ]
+    },
+    {
+      "id": "T074",
+      "title": "Implement index caching for labels and phases",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-12T20:24:21Z",
+      "phase": "polish",
+      "description": "Cache label-to-task and phase-to-task indices in .claude/.cache/. Checksum-based staleness detection. Lazy regeneration on first query after changes. O(1) lookups.",
+      "labels": [
+        "performance",
+        "caching"
+      ],
+      "notes": [
+        "2025-12-13 08:08:33 UTC: Phase 4 verification: No cache files (.cache*) found, no caching code in lib/*.sh. Index caching not implemented.",
+        "[COMPLETED 2025-12-13T08:15:43Z] Implemented: lib/cache.sh with checksum-based staleness detection, lazy regeneration, O(1) lookups. Cache files in .claude/.cache/ (labels.index.json, phases.index.json, checksum.txt, metadata.json). Tested with 68 labels and 2 phases."
+      ],
+      "completedAt": "2025-12-13T08:15:43Z"
+    },
+    {
+      "id": "T075",
+      "title": "Add CI/CD integration documentation and examples",
+      "status": "done",
+      "priority": "low",
+      "createdAt": "2025-12-12T20:24:25Z",
+      "phase": "polish",
+      "description": "Add docs/ci-cd-integration.md with examples for: GitHub Actions, GitLab CI, Jenkins, Azure DevOps. Task validation, report generation, pre-deployment checks.",
+      "labels": [
+        "ci-cd",
+        "docs",
+        "v0.10.0"
+      ],
+      "completedAt": "2025-12-13T21:37:49Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T21:37:49Z] Created docs/ci-cd-integration.md (858 lines) for GitHub Actions, GitLab CI, Jenkins, Azure DevOps. Updated docs/INDEX.md."
+      ]
+    },
+    {
+      "id": "T076",
+      "title": "Optimize performance for 1000+ task datasets",
+      "status": "done",
+      "priority": "low",
+      "createdAt": "2025-12-12T20:24:26Z",
+      "phase": "polish",
+      "description": "Ensure all commands meet performance targets (<100ms list, <1s stats) for 1000+ tasks. Streaming jq for large files, pagination defaults, lazy loading.",
+      "labels": [
+        "optimization",
+        "performance",
+        "v0.10.0"
+      ],
+      "completedAt": "2025-12-13T21:37:51Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T21:37:51Z] Created benchmark-performance.sh, PERFORMANCE.md. Optimized list-tasks.sh with early filtering and pagination. Optimized stats.sh O(n²) to O(n)."
+      ]
+    },
+    {
+      "id": "T077",
+      "title": "Add BATS test suite for output formats",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-12T20:24:34Z",
+      "phase": "polish",
+      "description": "BATS tests for: all output formats (json, jsonl, csv, tsv, table, markdown), color modes (NO_COLOR, FORCE_COLOR), terminal width adaptation, JSON schema validation with ajv-cli.",
+      "labels": [
+        "testing",
+        "output"
+      ],
+      "completedAt": "2025-12-13T08:08:23Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T08:08:23Z] Verified: 796 BATS tests across 25 test files. Coverage: unit tests for all commands, integration tests for workflow, circular-deps, error-recovery, archive-atomic."
+      ]
+    },
+    {
+      "id": "T078",
+      "title": "Create golden file tests for output regression",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-12T20:24:35Z",
+      "phase": "polish",
+      "description": "Golden file tests in tests/golden/. Snapshot expected output for list, stats, dash, deps commands. UPDATE_GOLDEN=1 workflow. Normalize timestamps and paths.",
+      "labels": [
+        "testing",
+        "golden-files"
+      ],
+      "notes": [
+        "2025-12-13 08:08:34 UTC: Phase 4 verification: No golden files (*.expected, *.golden, *snapshot*) found in tests/. Golden file regression testing not implemented.",
+        "[COMPLETED 2025-12-13T08:17:20Z] Implemented: tests/golden/ with 16 golden file tests covering list, stats, labels, phases, dash, deps, blockers, export commands. UPDATE_GOLDEN=1 workflow. Timestamp/checksum normalization. All tests passing."
+      ],
+      "completedAt": "2025-12-13T08:17:20Z"
+    },
+    {
+      "id": "T132",
+      "title": "P0: Fix task ID collision under concurrent operations",
+      "status": "done",
+      "priority": "critical",
+      "createdAt": "2025-12-13T05:49:34Z",
+      "description": "File locking exists but ID generation happens BEFORE lock acquisition. Under concurrent load (5 parallel adds), all processes generate same ID causing 80% data loss. Solution: Move ID generation inside locked critical section. See claudedocs/P0-1-RACE-CONDITION-ISSUE.md for full root cause analysis, fix requirements, and implementation plan.",
+      "labels": [
+        "architectural-change",
+        "critical-bug",
+        "p0",
+        "race-condition",
+        "v0.9.6"
+      ],
+      "notes": [
+        {
+          "timestamp": "2025-12-13T07:58:48Z",
+          "content": "Full documentation: claudedocs/P0-1-RACE-CONDITION-ISSUE.md - Requires architectural change to make ID generation atomic inside locked section"
+        }
+      ],
+      "phase": "core",
+      "completedAt": "2025-12-13T19:28:24Z"
+    },
+    {
+      "id": "T133",
+      "title": "P0: Fix archive --all JSON corruption",
+      "status": "done",
+      "priority": "critical",
+      "createdAt": "2025-12-13T05:49:36Z",
+      "description": "Fix atomic write operation in archive.sh causing JSON corruption during --all operation",
+      "labels": [
+        "critical-bug",
+        "p0",
+        "archive"
+      ],
+      "notes": [
+        {
+          "timestamp": "2025-12-13T07:58:27Z",
+          "content": "Verified fixed during v0.8.3 comprehensive review"
+        }
+      ],
+      "completedAt": "2025-12-13T07:58:27Z"
+    },
+    {
+      "id": "T134",
+      "title": "P0: Fix log.sh readonly variable conflict",
+      "status": "done",
+      "priority": "critical",
+      "createdAt": "2025-12-13T05:49:37Z",
+      "description": "Remove redefinition of readonly VALID_ACTIONS in log.sh:46 causing all log operations to fail",
+      "labels": [
+        "critical-bug",
+        "p0",
+        "log"
+      ],
+      "notes": [
+        {
+          "timestamp": "2025-12-13T07:57:17Z",
+          "content": "Fixed and verified during v0.8.3 comprehensive fix"
+        }
+      ],
+      "completedAt": "2025-12-13T07:57:23Z"
+    },
+    {
+      "id": "T135",
+      "title": "P0: Fix orphaned dependencies after archiving",
+      "status": "done",
+      "priority": "critical",
+      "createdAt": "2025-12-13T05:49:38Z",
+      "description": "Clean up dependency references before archiving to prevent referential integrity violations",
+      "labels": [
+        "critical-bug",
+        "p0",
+        "archive"
+      ],
+      "completedAt": "2025-12-13T08:12:41Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T08:12:41Z] Verified: Archive correctly cleans orphaned dependencies. Tested: T001 archived, T002's depends changed from [T001] to null, T003's from [T001,T002] to [T002]. Code in archive.sh lines 249-258."
+      ]
+    },
+    {
+      "id": "T136",
+      "title": "P0: Add duplicate ID detection to validate.sh",
+      "status": "done",
+      "priority": "critical",
+      "createdAt": "2025-12-13T05:49:39Z",
+      "description": "Add duplicate ID check to validate.sh - currently duplicate IDs pass validation causing data corruption risk",
+      "labels": [
+        "critical-bug",
+        "p0",
+        "validate"
+      ],
+      "notes": [
+        {
+          "timestamp": "2025-12-13T07:58:27Z",
+          "content": "Verified fixed during v0.8.3 comprehensive review"
+        }
+      ],
+      "completedAt": "2025-12-13T07:58:27Z"
+    },
+    {
+      "id": "T137",
+      "title": "P0: Fix init.sh checksum generation",
+      "status": "done",
+      "priority": "critical",
+      "createdAt": "2025-12-13T05:49:40Z",
+      "description": "Compute checksum as final step in init.sh - currently creates invalid checksum causing fresh projects to fail validation",
+      "labels": [
+        "critical-bug",
+        "p0",
+        "init"
+      ],
+      "notes": [
+        {
+          "timestamp": "2025-12-13T07:58:27Z",
+          "content": "Verified fixed during v0.8.3 comprehensive review"
+        }
+      ],
+      "completedAt": "2025-12-13T07:58:27Z"
+    },
+    {
+      "id": "T138",
+      "title": "P0: Fix complete --skip-notes invalid JSON",
+      "status": "done",
+      "priority": "critical",
+      "createdAt": "2025-12-13T05:49:41Z",
+      "description": "Debug JSON generation in complete-task.sh when --skip-notes is used - generates invalid JSON causing rollback",
+      "labels": [
+        "critical-bug",
+        "p0",
+        "complete"
+      ],
+      "notes": [
+        {
+          "timestamp": "2025-12-13T07:58:27Z",
+          "content": "Verified fixed during v0.8.3 comprehensive review"
+        }
+      ],
+      "completedAt": "2025-12-13T07:58:27Z"
+    },
+    {
+      "id": "T139",
+      "title": "P1: Update 12 scripts to show claude-todo in error messages",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-13T05:49:54Z",
+      "description": "Scripts show script.sh in errors instead of claude-todo <cmd>. Update all usage() functions.",
+      "labels": [
+        "high-priority",
+        "p1",
+        "ux"
+      ],
+      "notes": [
+        {
+          "timestamp": "2025-12-13T07:57:17Z",
+          "content": "Fixed and verified during v0.8.3 comprehensive fix"
+        }
+      ],
+      "completedAt": "2025-12-13T07:57:23Z"
+    },
+    {
+      "id": "T140",
+      "title": "P1: Add _meta.format json field to all JSON outputs",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-13T05:49:55Z",
+      "description": "All JSON outputs missing format: json field in _meta envelope",
+      "labels": [
+        "high-priority",
+        "p1",
+        "json"
+      ],
+      "notes": [
+        {
+          "timestamp": "2025-12-13T07:57:17Z",
+          "content": "Fixed and verified during v0.8.3 comprehensive fix"
+        }
+      ],
+      "completedAt": "2025-12-13T07:57:23Z"
+    },
+    {
+      "id": "T141",
+      "title": "P1: Fix labels command JSON output",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-13T05:49:56Z",
+      "description": "Labels JSON output completely broken - outputs 28 nulls instead of proper JSON",
+      "labels": [
+        "high-priority",
+        "p1",
+        "labels"
+      ],
+      "notes": [
+        {
+          "timestamp": "2025-12-13T07:58:27Z",
+          "content": "Verified fixed during v0.8.3 comprehensive review"
+        }
+      ],
+      "completedAt": "2025-12-13T07:58:27Z"
+    },
+    {
+      "id": "T142",
+      "title": "P1: Add format validation to list command",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-13T05:49:57Z",
+      "description": "list --format invalid silently falls back to text instead of showing error",
+      "labels": [
+        "high-priority",
+        "p1",
+        "list"
+      ],
+      "notes": [
+        {
+          "timestamp": "2025-12-13T07:58:27Z",
+          "content": "Verified fixed during v0.8.3 comprehensive review"
+        }
+      ],
+      "completedAt": "2025-12-13T07:58:27Z"
+    },
+    {
+      "id": "T143",
+      "title": "P1: Fix unicodeEnabled config option",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-13T05:49:59Z",
+      "description": "unicodeEnabled config ignored - Unicode box-drawing shown even when false",
+      "labels": [
+        "high-priority",
+        "p1",
+        "config"
+      ],
+      "notes": [
+        {
+          "timestamp": "2025-12-13T07:57:17Z",
+          "content": "Fixed and verified during v0.8.3 comprehensive fix"
+        }
+      ],
+      "completedAt": "2025-12-13T07:57:23Z"
+    },
+    {
+      "id": "T144",
+      "title": "Fix validate checksum recovery test",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-13T16:11:31Z",
+      "description": "Tests failing: Unit T211, Integration T33, T34. Tests: validate --fix recovers from checksum mismatch, validate --fix preserves task data. Root cause: checksum recalculation or file handling in validate.sh --fix mode. See: scripts/validate.sh, lib/validation.sh",
+      "labels": [
+        "bats",
+        "issue",
+        "test",
+        "v0.9.6",
+        "validation"
+      ],
+      "phase": "core",
+      "completedAt": "2025-12-13T19:28:24Z"
+    },
+    {
+      "id": "T145",
+      "title": "Fix orphaned dependency cleanup tests",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-13T16:11:39Z",
+      "description": "Tests failing: Unit T216, T217, Integration T42, T43. Tests: orphaned dependencies cleaned on archive, multiple orphaned dependencies all cleaned, orphaned dependency cleanup preserves other dependencies. Root cause: archive.sh dependency cleanup logic not handling all edge cases. See: scripts/archive.sh, lib/analysis.sh",
+      "labels": [
+        "archive",
+        "bats",
+        "dependencies",
+        "issue",
+        "test",
+        "v0.9.6"
+      ],
+      "phase": "core",
+      "notes": [
+        "2025-12-13 18:56:08 UTC: Investigation complete. Tests are passing. Implementation was fixed in commit fc0fd7e (v0.8.3). Archive script correctly implements orphaned dependency cleanup at lines 249-259. All 24 unit tests and 14 integration tests passing.",
+        "[COMPLETED 2025-12-13T18:56:45Z] Tests already passing. Implementation fixed in commit fc0fd7e (v0.8.3). Archive script correctly cleans orphaned dependencies at lines 249-259. Manual verification confirms: T001/T002 archived → T003/T004 dependencies removed, T005 partial cleanup works correctly. All 24 unit + 14 integration tests passing."
+      ],
+      "completedAt": "2025-12-13T18:56:45Z"
+    },
+    {
+      "id": "T146",
+      "title": "Fix file locking concurrency tests",
+      "status": "done",
+      "priority": "low",
+      "createdAt": "2025-12-13T16:11:41Z",
+      "description": "Tests failing: Unit T274, T279, T280, T283. Tests: concurrent lock timeout, lock released on error, lock timeout configurable, race condition prevention. Root cause: timing-sensitive tests that depend on system load and flock behavior. May need test isolation or mocking. See: lib/file-ops.sh lock_file() unlock_file()",
+      "labels": [
+        "bats",
+        "concurrency",
+        "flaky",
+        "issue",
+        "test",
+        "v0.9.6"
+      ],
+      "phase": "core",
+      "notes": [
+        "2025-12-13 18:42:49 UTC: Reference docs: claudedocs/FILE-LOCKING-ANALYSIS.md, claudedocs/file-locking-quick-reference.md"
+      ],
+      "completedAt": "2025-12-13T19:28:24Z"
+    },
+    {
+      "id": "T147",
+      "title": "Fix stats command tests",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-13T16:11:42Z",
+      "description": "Tests failing: Unit T606, T621, T631. Tests: stats --period invalid shows error, stats shows 'tasks' for count > 1 (pluralization), stats handles missing .claude directory. Root cause: stats.sh validation and edge case handling. See: scripts/stats.sh",
+      "labels": [
+        "bats",
+        "issue",
+        "stats",
+        "test",
+        "v0.9.6"
+      ],
+      "phase": "core",
+      "completedAt": "2025-12-13T19:28:24Z"
+    },
+    {
+      "id": "T148",
+      "title": "Test task",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-13T16:11:57Z",
+      "labels": [],
+      "completedAt": "2025-12-13T18:50:59Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T18:50:59Z] Test task - cleaning up"
+      ]
+    },
+    {
+      "id": "T149",
+      "title": "Test with options",
+      "status": "done",
+      "priority": "critical",
+      "createdAt": "2025-12-13T16:12:06Z",
+      "description": "This is a test",
+      "labels": [
+        "bug",
+        "security"
+      ],
+      "completedAt": "2025-12-13T16:12:12Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T16:12:12Z] Test completion"
+      ]
+    },
+    {
+      "id": "T150",
+      "title": "Test",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-13T16:12:22Z",
+      "files": [
+        "src/file.ts",
+        "lib/util.js"
+      ],
+      "labels": [],
+      "completedAt": "2025-12-13T18:50:59Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T18:50:59Z] Test task - cleaning up"
+      ]
+    },
+    {
+      "id": "T151",
+      "title": "Test",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-13T16:12:31Z",
+      "labels": [],
+      "completedAt": "2025-12-13T18:50:59Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T18:50:59Z] Test task - cleaning up"
+      ]
+    },
+    {
+      "id": "T152",
+      "title": "Fix complete-task.sh backup rotation (no rotation bug)",
+      "status": "done",
+      "priority": "critical",
+      "createdAt": "2025-12-13T18:09:20Z",
+      "phase": "core",
+      "description": "Line 181 creates unlimited backup files with no cleanup. Add rotation after backup creation. See claudedocs/BACKUP-ARCHITECTURE.md Issue 1. Verify: ls .claude/.backups/todo.json.* | wc -l should stay under configured max.",
+      "labels": [
+        "backup-system",
+        "bug-fix",
+        "critical"
+      ],
+      "completedAt": "2025-12-13T18:40:11Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T18:40:11Z] Implemented rotation logic in complete-task.sh (lines 185-203). MAX_COMPLETE_BACKUPS=10 with mtime-based sorting. Cross-platform support for GNU find and macOS stat. Commit: ebdf524"
+      ]
+    },
+    {
+      "id": "T153",
+      "title": "Fix file-ops.sh path calculation bug (nested directories)",
+      "status": "done",
+      "priority": "critical",
+      "createdAt": "2025-12-13T18:09:21Z",
+      "phase": "core",
+      "description": "Lines 180, 231 concatenate paths incorrectly creating .claude/.claude/.backups/. Change BACKUP_DIR to relative .backups OR use absolute path calculation. See claudedocs/BACKUP-ARCHITECTURE.md Issue 2. Verify: no nested .claude/.claude/ should exist.",
+      "labels": [
+        "backup-system",
+        "bug-fix",
+        "critical"
+      ],
+      "completedAt": "2025-12-13T18:40:12Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T18:40:12Z] Changed BACKUP_DIR from '.claude/.backups' to '.backups' (relative path). Fixes nested directory bug. Updated file-ops.sh line 24. Cleaned up legacy .claude/.claude/ directory. Commit: ebdf524"
+      ]
+    },
+    {
+      "id": "T154",
+      "title": "Fix safe_find edge cases with mtime-based sorting",
+      "status": "done",
+      "priority": "critical",
+      "createdAt": "2025-12-13T18:09:22Z",
+      "phase": "core",
+      "description": "Lines 250, 409, 540 in file-ops.sh use filename-based sorting that fails with mixed formats. Add safe_find_sorted_by_mtime() to platform-compat.sh using find -printf for mtime sorting. See claudedocs/BACKUP-ARCHITECTURE.md Issue 3 for full implementation.",
+      "labels": [
+        "backup-system",
+        "bug-fix",
+        "critical"
+      ],
+      "completedAt": "2025-12-13T18:40:14Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T18:40:14Z] Added safe_find_sorted_by_mtime() function to platform-compat.sh (lines 309-337). Updated file-ops.sh rotate_backups(), restore_backup(), list_backups() to use mtime sorting. Cross-platform: GNU find -printf + BSD stat fallback. Commit: ebdf524"
+      ]
+    },
+    {
+      "id": "T155",
+      "title": "Create docs/commands/restore.md documentation",
+      "status": "done",
+      "priority": "critical",
+      "createdAt": "2025-12-13T18:09:24Z",
+      "phase": "core",
+      "description": "scripts/restore.sh exists and works but has no user documentation. Create comprehensive restore.md with: full command reference, step-by-step procedures, compressed backup restoration, selective file restore, rollback procedures. Use backup.md as template. See claudedocs/BACKUP-ARCHITECTURE.md Issue 4.",
+      "labels": [
+        "backup-system",
+        "critical",
+        "documentation"
+      ],
+      "completedAt": "2025-12-13T18:40:15Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T18:40:15Z] Created comprehensive docs/commands/restore.md (937 lines). Includes: full command reference, step-by-step procedures, recovery scenarios, troubleshooting, best practices. Modeled after backup.md. Commit: ebdf524"
+      ]
+    },
+    {
+      "id": "T156",
+      "title": "Update QUICK-REFERENCE.md with restore commands",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-13T18:09:25Z",
+      "phase": "core",
+      "description": "Add restore command examples to docs/QUICK-REFERENCE.md. Include: claude-todo restore <backup-id>, claude-todo restore --file todo.json, backup/restore quick reference section.",
+      "labels": [
+        "backup-system",
+        "documentation"
+      ],
+      "depends": [
+        "T152",
+        "T153",
+        "T154",
+        "T155"
+      ],
+      "completedAt": "2025-12-13T18:40:26Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T18:40:26Z] Updated docs/QUICK-REFERENCE.md with restore commands. Added: claude-todo restore <backup-path>, --file, --force options. Updated docs/INDEX.md with restore.md reference. Commit: ebdf524"
+      ]
+    },
+    {
+      "id": "T157",
+      "title": "Test backup system fixes end-to-end",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-13T18:09:26Z",
+      "phase": "core",
+      "description": "Run all backup fix verification tests: 1) Rotation works (create 15 tasks, verify backup count), 2) No nested directories, 3) mtime sorting works with mixed formats, 4) Full backup/restore cycle. See prompt instructions STEP 5 in session notes.",
+      "labels": [
+        "backup-system",
+        "testing"
+      ],
+      "depends": [
+        "T152",
+        "T153",
+        "T154"
+      ],
+      "completedAt": "2025-12-13T18:40:27Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T18:40:27Z] All tests verified: 1) Syntax validation passed (5 files), 2) Rotation working (log shows 'Rotating N old backup(s)'), 3) No nested directories after cleanup, 4) safe_find_sorted_by_mtime exists and exported, 5) BATS 96.6% pass rate (27 pre-existing failures unrelated to backup changes). Commit: ebdf524"
+      ]
+    },
+    {
+      "id": "T158",
+      "title": "Bump version to 0.9.5 and update CHANGELOG for backup fixes",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-13T18:09:27Z",
+      "phase": "core",
+      "description": "After all fixes verified: 1) Bump VERSION to 0.9.5, 2) Update CHANGELOG.md with: Fixed complete-task.sh rotation, Fixed file-ops.sh path bug, Fixed safe_find edge cases, Added restore.md documentation.",
+      "labels": [
+        "backup-system",
+        "release"
+      ],
+      "depends": [
+        "T156",
+        "T157"
+      ],
+      "completedAt": "2025-12-13T18:40:28Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T18:40:28Z] VERSION bumped 0.9.4 → 0.9.5. CHANGELOG.md updated with: Fixed complete-task.sh rotation, Fixed file-ops.sh path bug, Fixed safe_find edge cases, Added docs/commands/restore.md. Commit: ebdf524"
+      ]
+    },
+    {
+      "id": "T159",
+      "title": "Fix integration workflow tests (full lifecycle, dependencies)",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-13T18:40:41Z",
+      "description": "14 integration tests failing: T57-64 (lifecycle/dependency workflows), T69-71 (validation workflows). Tests: full task lifecycle, multiple tasks with dependencies, session workflows, dependency chain completion, unblock workflows, validation workflows, batch operations. Root cause: likely timing or state management issues in complex multi-step scenarios.",
+      "labels": [
+        "bats",
+        "integration",
+        "issue",
+        "test",
+        "v0.9.6"
+      ],
+      "phase": "core",
+      "completedAt": "2025-12-13T19:28:24Z"
+    },
+    {
+      "id": "T160",
+      "title": "Fix schema validation tests (invalid schema, missing fields)",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-13T18:40:42Z",
+      "description": "2 tests failing: T51 (invalid schema version handled gracefully), T52 (missing required fields detected). Root cause: schema validation edge cases in migrate.sh or validate.sh not handling error conditions correctly.",
+      "labels": [
+        "bats",
+        "issue",
+        "schema",
+        "test",
+        "v0.9.6"
+      ],
+      "phase": "core",
+      "notes": [
+        "2025-12-13 19:04:44 UTC: Investigation: All validation.bats tests passing (28/28 ok). Need to identify which specific tests are actually failing per task description.",
+        "2025-12-13 19:06:38 UTC: FIXED: Added schema version validation (check 7.5) and required field validation (check 7.6) to validate.sh. Both failing tests now pass. No regressions in existing tests."
+      ],
+      "completedAt": "2025-12-13T19:28:24Z"
+    },
+    {
+      "id": "T161",
+      "title": "Create unified lib/backup.sh library",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-13T18:41:23Z",
+      "phase": "polish",
+      "description": "Phase 1 of unified backup architecture. Create centralized backup library with: create_backup(type, file, options), restore_backup(backup_id, options), rotate_backups(type, max), list_backups(type), get_backup_metadata(backup_id). Types: snapshot, safety, incremental, archive, migration. See: claudedocs/BACKUP-ARCHITECTURE.md for full spec.",
+      "labels": [
+        "architecture",
+        "backup-system",
+        "v0.10.0"
+      ],
+      "notes": [
+        "2025-12-13 18:42:51 UTC: Reference docs: claudedocs/BACKUP-ARCHITECTURE.md, claudedocs/BACKUP-SYSTEM-STATUS.md",
+        "[COMPLETED 2025-12-13T21:37:48Z] Created lib/backup.sh (872 lines) with 10 public functions. Added safe_checksum() to platform-compat.sh. All tests passing."
+      ],
+      "completedAt": "2025-12-13T21:37:48Z"
+    },
+    {
+      "id": "T162",
+      "title": "Integrate scripts with unified backup library",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-13T18:41:25Z",
+      "phase": "polish",
+      "description": "Phase 2 of unified backup architecture. Update all scripts to use lib/backup.sh: complete-task.sh, archive.sh, migrate.sh, init.sh. Remove inline backup code, use centralized functions. See: claudedocs/BACKUP-ARCHITECTURE.md Phase 2.",
+      "labels": [
+        "architecture",
+        "backup-system",
+        "v0.10.0"
+      ],
+      "depends": [
+        "T161"
+      ],
+      "completedAt": "2025-12-13T22:38:15Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T22:38:15Z] Integrated complete-task.sh, archive.sh, migrate.sh, init.sh with lib/backup.sh. Fallback patterns for backward compatibility. Wave 2 validation passed."
+      ]
+    },
+    {
+      "id": "T163",
+      "title": "Implement backup type taxonomy and directory structure",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-13T18:41:26Z",
+      "phase": "polish",
+      "description": "New directory structure: .claude/backups/snapshot/, .claude/backups/safety/, .claude/backups/incremental/, .claude/backups/archive/, .claude/backups/migration/. Each backup includes metadata JSON with timestamp, type, source, checksum, description. See: claudedocs/BACKUP-ARCHITECTURE.md unified directory structure.",
+      "labels": [
+        "architecture",
+        "backup-system",
+        "v0.10.0"
+      ],
+      "depends": [
+        "T161"
+      ],
+      "completedAt": "2025-12-13T22:38:17Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T22:38:17Z] Created .claude/backups/{snapshot,safety,incremental,archive,migration}/ taxonomy. Templates and .gitignore updated. Wave 2 validation passed."
+      ]
+    },
+    {
+      "id": "T164",
+      "title": "Add legacy backup migration command",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-13T18:41:27Z",
+      "phase": "polish",
+      "description": "Phase 3 of unified architecture. Create 'claude-todo backup migrate-legacy' command to move old backups from .claude/.backups/ to new .claude/backups/ structure. Classify by age/type, generate metadata. See: claudedocs/BACKUP-ARCHITECTURE.md Phase 3.",
+      "labels": [
+        "backup-system",
+        "migration",
+        "v0.10.0"
+      ],
+      "depends": [
+        "T162"
+      ],
+      "completedAt": "2025-12-13T22:37:49Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T22:37:49Z] Implemented migrate-backups.sh with detection, dry-run, migration, cleanup. 15/15 unit tests passing. CLI integrated. Code reviewed."
+      ]
+    },
+    {
+      "id": "T165",
+      "title": "Extend config schema for backup settings",
+      "status": "done",
+      "priority": "low",
+      "createdAt": "2025-12-13T18:41:28Z",
+      "phase": "polish",
+      "description": "Add backup configuration to todo-config.json: maxBackups per type, retentionDays per type, compressionEnabled, autoCleanup settings. Update schemas/todo-config.schema.json. See: claudedocs/BACKUP-ARCHITECTURE.md config extensions.",
+      "labels": [
+        "backup-system",
+        "config",
+        "schema",
+        "v0.10.0"
+      ],
+      "depends": [
+        "T163"
+      ],
+      "completedAt": "2025-12-13T22:37:51Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T22:37:51Z] Extended config schema with backup section (7 properties), updated template, comprehensive documentation. All validation tests passing."
+      ]
+    },
+    {
+      "id": "T166",
+      "title": "Add dependency check to install.sh before installation",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-13T19:06:35Z",
+      "phase": "core",
+      "description": "Add comprehensive dependency check to install.sh before installation begins. This is the master dependency validation that calls individual checks for: jq, bash 4+, sha256sum/shasum, tar, flock, numfmt, date/find. Must run BEFORE any files are copied. Provides clear error messages with platform-specific install instructions (apt/brew/yum/dnf). Exit code 1 if critical deps missing.",
+      "labels": [
+        "dependencies",
+        "installation",
+        "v0.9.7"
+      ],
+      "completedAt": "2025-12-13T19:38:30Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T19:38:30Z] Implemented master dependency check in install.sh with validate_all_dependencies function"
+      ]
+    },
+    {
+      "id": "T167",
+      "title": "Add jq check to export.sh and migrate.sh",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-13T19:06:35Z",
+      "phase": "core",
+      "description": "export.sh and migrate.sh are missing 'command -v jq' checks that all other scripts have. Add standard check_deps() call at script start.",
+      "labels": [
+        "bug-fix",
+        "dependencies",
+        "v0.9.7"
+      ],
+      "completedAt": "2025-12-13T19:38:31Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T19:38:31Z] Added jq check to export.sh and migrate.sh with platform-specific install hints"
+      ]
+    },
+    {
+      "id": "T168",
+      "title": "Add bash version check to platform-compat.sh",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-13T19:06:36Z",
+      "phase": "core",
+      "description": "Add check_bash_version() to platform-compat.sh that verifies BASH_VERSION >= 4.0. Required for associative arrays used in caching. Currently fails silently with cryptic errors on bash 3.x (macOS default).",
+      "labels": [
+        "dependencies",
+        "v0.9.7"
+      ],
+      "completedAt": "2025-12-13T19:38:33Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T19:38:33Z] Added bash version check to platform-compat.sh - requires bash 4.0+"
+      ]
+    },
+    {
+      "id": "T169",
+      "title": "Create dependency auto-installer option",
+      "status": "done",
+      "priority": "low",
+      "createdAt": "2025-12-13T19:06:36Z",
+      "phase": "polish",
+      "description": "Add --install-deps flag to install.sh that automatically installs missing dependencies using detected package manager (apt, brew, yum, dnf). Depends on all core dependency checks being in place first. Include --dry-run to show what would be installed. This is the final piece after all individual checks are implemented.",
+      "labels": [
+        "dependencies",
+        "installation",
+        "v0.9.7"
+      ],
+      "depends": [
+        "T166",
+        "T170",
+        "T171",
+        "T172",
+        "T173",
+        "T174"
+      ],
+      "completedAt": "2025-12-13T19:38:34Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T19:38:34Z] Implemented --install-deps auto-installer with platform detection and package manager support"
+      ]
+    },
+    {
+      "id": "T170",
+      "title": "Add sha256sum/shasum check to install.sh",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-13T19:09:36Z",
+      "phase": "core",
+      "description": "Add sha256sum availability check to install.sh. Required for checksum validation. Check for sha256sum first, fallback to shasum (macOS). Fail install if neither available with platform-specific install instructions.",
+      "labels": [
+        "dependencies",
+        "v0.9.7"
+      ],
+      "completedAt": "2025-12-13T19:38:35Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T19:38:35Z] Added sha256sum/shasum cross-platform check with fallback support"
+      ]
+    },
+    {
+      "id": "T171",
+      "title": "Add tar check to install.sh",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-13T19:09:36Z",
+      "phase": "core",
+      "description": "Add tar availability check to install.sh. Required for compressed backups. Provide install instructions if missing: apt install tar / brew install gnu-tar.",
+      "labels": [
+        "dependencies",
+        "v0.9.7"
+      ],
+      "completedAt": "2025-12-13T19:38:44Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T19:38:44Z] Added tar check to dependency-check.sh module"
+      ]
+    },
+    {
+      "id": "T172",
+      "title": "Add flock check to install.sh",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-13T19:09:36Z",
+      "phase": "core",
+      "description": "Add flock availability check to install.sh. Required for file locking to prevent concurrent write corruption. On macOS may need: brew install flock. Critical for data integrity.",
+      "labels": [
+        "dependencies",
+        "v0.9.7"
+      ],
+      "completedAt": "2025-12-13T19:38:46Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T19:38:46Z] Added flock check to dependency-check.sh module with macOS brew hint"
+      ]
+    },
+    {
+      "id": "T173",
+      "title": "Add numfmt check to install.sh",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-13T19:09:36Z",
+      "phase": "core",
+      "description": "Add numfmt (from coreutils) check to install.sh. Required for human-readable file sizes in backup/stats output. macOS: brew install coreutils. Linux: usually pre-installed.",
+      "labels": [
+        "dependencies",
+        "v0.9.7"
+      ],
+      "completedAt": "2025-12-13T19:38:47Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T19:38:47Z] Added numfmt/gnumfmt cross-platform check to dependency-check.sh"
+      ]
+    },
+    {
+      "id": "T174",
+      "title": "Add date/find POSIX tools check to install.sh",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-13T19:09:36Z",
+      "phase": "core",
+      "description": "Add explicit check for POSIX tools (date, find, cat, cp, mv, rm, mkdir) in install.sh. Should always exist but verify and provide helpful error if somehow missing.",
+      "labels": [
+        "dependencies",
+        "v0.9.7"
+      ],
+      "completedAt": "2025-12-13T19:38:49Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T19:38:49Z] Added date/find POSIX tools check to dependency-check.sh module"
+      ]
+    },
+    {
+      "id": "T175",
+      "title": "Show character count in title length validation error",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-13T19:26:54Z",
+      "phase": "core",
+      "description": "When title exceeds 120 char limit, error message should display actual character count to help user understand how much to trim. Example: 'Title too long (145/120 characters)'",
+      "labels": [
+        "error-message",
+        "ux",
+        "v0.9.8",
+        "validation"
+      ],
+      "completedAt": "2025-12-13T19:53:06Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T19:53:06Z] Implemented character count display in title validation error. Shows format: Title too long (145/120 characters). Validated and tested."
+      ]
+    },
+    {
+      "id": "T176",
+      "title": "Document --notes/--skip-notes requirement for complete command",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-13T19:26:57Z",
+      "phase": "core",
+      "description": "The complete command now requires either --notes 'description' or --skip-notes flag. This UX change needs documentation in help text, QUICK-REFERENCE.md, and TODO_Task_Management.md",
+      "labels": [
+        "complete-command",
+        "documentation",
+        "ux",
+        "v0.9.8"
+      ],
+      "completedAt": "2025-12-13T19:53:08Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T19:53:08Z] Documented --notes and --skip-notes requirements in complete-task.sh help, QUICK-REFERENCE.md, and TODO_Task_Management.md. Added Complete Options table."
+      ]
+    },
+    {
+      "id": "T177",
+      "title": "Improve phase validation errors with valid options and add-phase flag",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-13T19:26:58Z",
+      "phase": "core",
+      "description": "When invalid phase used: 1) List valid phases from phase index in error message, 2) Add --add-phase flag to create new phase on-the-fly when intentionally adding new phases. Example error: 'Phase not found. Valid: setup, core, polish. Use --add-phase to create new.'",
+      "labels": [
+        "error-message",
+        "phases",
+        "ux",
+        "v0.9.8",
+        "validation"
+      ],
+      "completedAt": "2025-12-13T19:53:09Z",
+      "notes": [
+        "[COMPLETED 2025-12-13T19:53:09Z] Added --add-phase flag to add-task.sh and update-task.sh. Phase validation now lists valid phases on error. add_new_phase() creates phases on-the-fly with auto-generated names."
+      ]
+    },
+    {
+      "id": "T178",
+      "title": "Add list --archived flag to view archived tasks",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-14T00:26:55Z",
+      "phase": "polish",
+      "description": "The archive file contains completed tasks (.archivedTasks[]) but there's no way to view them via CLI. Add --archived flag to list command that reads from todo-archive.json instead of todo.json. Should support same filters (--priority, --label, --phase) and output formats (--format json/text/table). Archive has 35+ tasks with full metadata (completedAt, archivedAt, originalPhase, etc.)",
+      "labels": [
+        "feature",
+        "list-command",
+        "ux",
+        "v0.10.2"
+      ],
+      "completedAt": "2025-12-14T01:02:57Z",
+      "notes": [
+        "[COMPLETED 2025-12-14T01:02:57Z] Implemented --archived flag for list command. Shows archived tasks from todo-archive.json with [ARCHIVED] indicator. Supports all existing filters (status, priority, label, format). Tested with text, JSON, and compact output formats."
+      ]
+    },
+    {
+      "id": "T179",
+      "title": "Add log show/list subcommands for viewing log entries",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-14T00:27:04Z",
+      "phase": "polish",
+      "description": "The log command currently only writes entries (log --action). Need read capability: 'log show' or 'log list' to view entries. Features needed: --last N (show last N entries), --action TYPE (filter by action type), --task-id ID (filter by task), --since DATE, --format json/text. Log has 153 entries with actions: status_changed (49), task_updated (46), session_start/end (9), task_archived (4), system_initialized (1).",
+      "labels": [
+        "feature",
+        "log-command",
+        "ux",
+        "v0.10.2"
+      ],
+      "completedAt": "2025-12-14T01:05:16Z",
+      "notes": [
+        "[COMPLETED 2025-12-14T01:05:16Z] Implemented log list and log show subcommands with filtering (action, task-id, actor, since), pagination (limit), and JSON/text output formats. Commands work correctly on properly migrated log entries."
+      ]
+    },
+    {
+      "id": "T180",
+      "title": "Fix log entry schema inconsistency (action vs operation field)",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-14T00:27:13Z",
+      "phase": "polish",
+      "description": "Log entries have inconsistent field names: 44 entries use 'operation' field (from add-task.sh, update-task.sh), while 109 entries use 'action' field (from log.sh). This breaks stats counting and log queries. Need to: 1) Standardize on 'action' field (matches log.sh and schema), 2) Add migration to fix existing entries, 3) Update add-task.sh/update-task.sh/complete-task.sh to use 'action' instead of 'operation'. Affected files: scripts/add-task.sh, scripts/update-task.sh, scripts/complete-task.sh, scripts/log.sh",
+      "labels": [
+        "bug",
+        "log-command",
+        "schema",
+        "v0.10.2"
+      ],
+      "completedAt": "2025-12-14T01:25:44Z",
+      "notes": [
+        "[COMPLETED 2025-12-14T01:25:44Z] Implemented log schema migration: operation→action, user→actor, task_id→taskId. Fixed ID format migration. 9/9 unit tests pass."
+      ]
+    },
+    {
+      "id": "T181",
+      "title": "Add history/report command for project completion timeline",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-14T00:27:24Z",
+      "phase": "polish",
+      "description": "Need a command to show what was accomplished over time. 'claude-todo history' or 'report' should show: 1) Timeline of completed tasks grouped by day/week, 2) Summary of work done in period (--period week/month/quarter), 3) Completion velocity trends, 4) Top contributors/labels in period. Data sources: todo-log.json (153 entries), todo-archive.json (35 tasks with completedAt), todo.json (done tasks). Output formats: text (human readable), json (scripting), markdown (export). Similar to 'git log --oneline' but for tasks.",
+      "labels": [
+        "feature",
+        "reporting",
+        "ux",
+        "v0.10.2"
+      ],
+      "completedAt": "2025-12-14T01:20:02Z",
+      "notes": [
+        "[COMPLETED 2025-12-14T01:20:02Z] Implemented history command with completion timeline, phase/label analytics, velocity metrics, and flexible date ranges. Supports text/JSON output formats."
+      ]
+    },
+    {
+      "id": "T182",
+      "title": "Enhance dashboard to show archived tasks and completion history",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-14T00:34:51Z",
+      "phase": "polish",
+      "description": "Dashboard currently shows done count (81) but no details about archived tasks (35 in archive) or recent completions. Add: 1) ARCHIVED section showing total archived count and recent archives, 2) RECENT COMPLETIONS section listing last 3-5 completed tasks with dates, 3) --include-archived flag to show archived stats, 4) Consider adding 'What was accomplished' summary. Should integrate with archive (todo-archive.json) and log (todo-log.json) data. Related to T178 (list --archived) and T181 (history command).",
+      "labels": [
+        "dash-command",
+        "feature",
+        "ux",
+        "v0.10.2"
+      ],
+      "completedAt": "2025-12-14T01:25:49Z",
+      "notes": [
+        "[COMPLETED 2025-12-14T01:25:49Z] Enhanced dashboard with Archive section and Recent Completions. Shows today/week/month completion counts. JSON output includes archive+completions."
+      ]
+    },
+    {
+      "id": "T183",
+      "title": "Design Nexus Loom web UI with Kanban board",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-14T04:38:14Z",
+      "description": "Create comprehensive UI/UX specification for Nexus Loom web interface including information architecture, Kanban board design, dashboard, dependency graph visualization, and CLI-web sync",
+      "labels": [
+        "design",
+        "nexus-loom",
+        "web-ui"
+      ],
+      "completedAt": "2025-12-14T04:42:54Z",
+      "notes": [
+        "[COMPLETED 2025-12-14T04:42:54Z] Completed comprehensive web UI specification including:\n- Information architecture (7 primary routes)\n- Kanban board design with 5 columns (weaving metaphor)\n- Thread card component specification\n- Dashboard layout with 6 widgets\n- Pattern view (dependency graph) design\n- Fabric view (archive timeline) design\n- Spool view (backlog prioritization)\n- Sessions view (history and analytics)\n- Visual design system (colors, typography, icons, spacing)\n- Responsive design strategy (mobile/tablet/desktop)\n- CLI-web sync architecture with conflict resolution\n- WCAG 2.1 AA accessibility requirements\n- Performance targets and optimization strategies\n- Technology stack recommendations\n- 6-phase implementation roadmap\n- ASCII wireframes for all major views\n- Complete component hierarchy\n- API endpoint specifications\n\nDeliverable: docs/nexus-loom/WEB-UI-SPEC.md (50,119 tokens)"
+      ]
+    },
+    {
+      "id": "T184",
+      "title": "Phase 1: Evidence Collection - Establish ground truth before analysis",
+      "status": "done",
+      "priority": "critical",
+      "createdAt": "2025-12-15T04:28:12Z",
+      "phase": "setup",
+      "description": "Foundation phase: Read all docs, analyze codebase, reproduce bugs, extract metrics. Must complete before specialist analysis begins. Exit criteria: All 4 doc files indexed, lib/*.sh analyzed, bug reproduction tests run, baseline metrics captured.",
+      "labels": [
+        "consensus-framework",
+        "investigation",
+        "phase-1"
+      ],
+      "notes": [
+        "2025-12-15 04:33:45 UTC: DOCS: claudedocs/CONSENSUS-FRAMEWORK-SPEC.md contains full framework design, evidence standards, artifact templates. Read this first when resuming.",
+        "2025-12-15 05:33:02 UTC: Phase 1 complete. Evidence baseline: claudedocs/consensus/phase1-evidence.md"
+      ],
+      "completedAt": "2025-12-15T05:33:02Z"
+    },
+    {
+      "id": "T185",
+      "title": "P1.1: Document corpus indexing - Read TODO_Task_Management.md, usage.md, CLAUDE.md",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T04:28:29Z",
+      "phase": "setup",
+      "description": "Read and index key documentation files that govern LLM behavior with claude-todo. Files: docs/TODO_Task_Management.md (primary LLM instructions), docs/usage.md (user-facing docs), CLAUDE.md (project-level injected instructions). Identify contradictions, gaps, and claims to validate.",
+      "labels": [
+        "consensus-framework",
+        "docs",
+        "phase-1"
+      ],
+      "depends": [
+        "T184"
+      ],
+      "notes": [
+        "2025-12-15 04:34:05 UTC: TARGET DOCS TO READ: docs/TODO_Task_Management.md (primary LLM instructions), docs/usage.md (user-facing), CLAUDE.md (project injected). Cross-reference for contradictions.",
+        "2025-12-15 05:32:48 UTC: Indexed 44 docs, ~545KB, 23,970 lines"
+      ],
+      "completedAt": "2025-12-15T05:32:48Z"
+    },
+    {
+      "id": "T186",
+      "title": "P1.2: Implementation reality map - Analyze lib/*.sh and scripts/*.sh via Serena",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T04:28:31Z",
+      "phase": "setup",
+      "description": "Use Serena MCP to analyze all library and script files. Map functions, their purposes, actual behaviors vs documented behaviors. Key files: lib/file-ops.sh (atomic writes, locking), lib/logging.sh, lib/validation.sh, lib/backup.sh, lib/output-format.sh. Identify feature existence vs claims.",
+      "labels": [
+        "code-analysis",
+        "consensus-framework",
+        "phase-1"
+      ],
+      "depends": [
+        "T184"
+      ],
+      "notes": [
+        "2025-12-15 04:34:07 UTC: TARGET CODE: lib/file-ops.sh (atomic writes, locking), lib/logging.sh, lib/validation.sh, lib/backup.sh, lib/output-format.sh, scripts/*.sh. Use Serena MCP for symbol analysis.",
+        "2025-12-15 05:32:51 UTC: 12 lib files (221KB), 25 scripts (397KB), 20,695 LOC"
+      ],
+      "completedAt": "2025-12-15T05:32:51Z"
+    },
+    {
+      "id": "T187",
+      "title": "P1.3: Bug reproduction tests - Attempt to trigger jq argument limit, scaling issues",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T04:28:33Z",
+      "phase": "setup",
+      "description": "Reproduce claimed bugs: 1) Create 100+ task JSON, test jq piping vs argument expansion, 2) Measure actual token growth at 10/50/100/500 tasks, 3) Calculate metadata overhead %. Document test methodology and results. If bug cannot be reproduced, mark claim for REFUTED consideration.",
+      "labels": [
+        "consensus-framework",
+        "phase-1",
+        "testing"
+      ],
+      "depends": [
+        "T184"
+      ],
+      "notes": [
+        "2025-12-15 05:32:52 UTC: TEST: jq limit PASS, exists MISSING, log rotate NOT INTEGRATED"
+      ],
+      "completedAt": "2025-12-15T05:32:53Z"
+    },
+    {
+      "id": "T188",
+      "title": "P1.4: Baseline metrics extraction - Measure file sizes, token counts, overhead percentages",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T04:28:34Z",
+      "phase": "setup",
+      "description": "Extract quantitative baseline: Current .claude/*.json file sizes, task count, metadata vs content ratio, log entry growth rate, archive utilization. These metrics are reference points for all scaling/overhead claims. Store in evidence dossier format.",
+      "labels": [
+        "consensus-framework",
+        "metrics",
+        "phase-1"
+      ],
+      "depends": [
+        "T184"
+      ],
+      "notes": [
+        "2025-12-15 05:32:54 UTC: METRIC: 125 tasks @ 845 bytes/task, 58.8% overhead"
+      ],
+      "completedAt": "2025-12-15T05:32:54Z"
+    },
+    {
+      "id": "T189",
+      "title": "Phase 2: Specialist Analysis - 5 parallel domain investigations",
+      "status": "done",
+      "priority": "critical",
+      "createdAt": "2025-12-15T04:28:41Z",
+      "phase": "core",
+      "description": "Deploy 5 specialist agents for deep domain analysis. Each agent owns specific claims and produces evidence dossiers. Agents: Technical Validation, Design Philosophy, Documentation, Implementation, Challenge (Red Team). All run in parallel after Phase 1 gate passes.",
+      "labels": [
+        "consensus-framework",
+        "investigation",
+        "phase-2"
+      ],
+      "depends": [
+        "T185",
+        "T186",
+        "T187",
+        "T188"
+      ],
+      "notes": [
+        "2025-12-15 04:33:46 UTC: DOCS: claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Agent Roles section). Each agent has defined expertise, owned claims, and evidence standards.",
+        "2025-12-15 05:34:22 UTC: Phase 2 starting: spawning 5 worker agents in parallel",
+        "2025-12-15 05:42:34 UTC: Phase 2 COMPLETE. 5 agents finished: T190 Technical, T191 Design, T192 Docs, T193 Impl, T194 Challenge. Artifacts: claudedocs/consensus/agent-*-findings.md"
+      ],
+      "completedAt": "2025-12-15T05:42:35Z"
+    },
+    {
+      "id": "T190",
+      "title": "P2.1: Technical Validation Agent - jq limits, scaling, overhead analysis",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T04:29:02Z",
+      "phase": "core",
+      "description": "OWNS CLAIMS: jq 'Argument list too long' at >100 tasks, 545KB→8M token projection, 59% metadata overhead. PROTOCOL: 1) Reproduce jq arg limit with 100+ tasks, 2) Measure token growth model (linear/log/exp), 3) Calculate metadata overhead breakdown (timestamps, IDs, status). DELIVERABLE: Technical evidence dossier with test results, growth model, overhead % breakdown.",
+      "labels": [
+        "agent-technical",
+        "consensus-framework",
+        "phase-2"
+      ],
+      "depends": [
+        "T189"
+      ],
+      "notes": [
+        "2025-12-15 04:34:09 UTC: CLAIMS OWNED: T205 (jq bug), T206 (8M projection), T207 (59% overhead). Evidence in claudedocs/CONSENSUS-FRAMEWORK-SPEC.md Evidence Standards section.",
+        "2025-12-15 05:41:37 UTC: COMPLETE: agent-technical-findings.md generated. Claims: T205=REFUTED (jq uses --argjson), T206=REFUTED (realistic 940K tokens), T207=CONTESTED (40.4% vs 59%)"
+      ],
+      "completedAt": "2025-12-15T05:41:49Z"
+    },
+    {
+      "id": "T191",
+      "title": "P2.2: Design Philosophy Agent - command set, UX, alternatives analysis",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T04:29:03Z",
+      "phase": "core",
+      "description": "OWNS CLAIMS: 23 commands too many, TodoWrite+TASKS.md simpler, auto-archive missing, exists command needed. PROTOCOL: 1) Command frequency analysis (core vs edge-case), 2) Cognitive load assessment, 3) TodoWrite comparison matrix, 4) User flow friction analysis. DELIVERABLE: Minimal command set proposal, capability matrix, workflow diagrams.",
+      "labels": [
+        "agent-design",
+        "consensus-framework",
+        "phase-2"
+      ],
+      "depends": [
+        "T189"
+      ],
+      "notes": [
+        "2025-12-15 04:34:10 UTC: CLAIMS OWNED: T208 (23 commands), T209 (TodoWrite simpler), T212 (auto-archive), T213 (exists cmd). Compare with ~/.claude/TODO_Task_Management.md command reference.",
+        "2025-12-15 05:41:38 UTC: COMPLETE: agent-design-findings.md generated. Claims: T208=REFUTED (23 < git/docker/kubectl), T209=CONTESTED (complementary not competitive)"
+      ],
+      "completedAt": "2025-12-15T05:41:50Z"
+    },
+    {
+      "id": "T192",
+      "title": "P2.3: Documentation Agent - cross-reference audit, LLM instruction effectiveness",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T04:29:04Z",
+      "phase": "core",
+      "description": "OWNS CLAIMS: CLI-only rule doesn't prevent ID hallucinations, JSON reads should be allowed. PROTOCOL: 1) Cross-reference TODO_Task_Management.md vs CLAUDE.md vs usage.md, 2) Build contradiction matrix, 3) Evaluate anti-hallucination effectiveness, 4) Analyze read-only safety. DELIVERABLE: Consistency audit, CLI-only evaluation, proposed doc revisions.",
+      "labels": [
+        "agent-docs",
+        "consensus-framework",
+        "phase-2"
+      ],
+      "depends": [
+        "T189"
+      ],
+      "notes": [
+        "2025-12-15 04:34:08 UTC: REVIEW: docs/TODO_Task_Management.md lines 5-13 (Anti-Hallucination Rules), CLAUDE.md Task Management section. Evaluate CLI-only rule effectiveness and JSON read safety.",
+        "2025-12-15 05:41:40 UTC: COMPLETE: agent-docs-findings.md generated. Claims: T210=CONTESTED (prevents corruption not semantic), T211=REFUTED (multi-writer staleness risk)"
+      ],
+      "completedAt": "2025-12-15T05:41:50Z"
+    },
+    {
+      "id": "T193",
+      "title": "P2.4: Implementation Agent - code archaeology, feature gap detection",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T04:29:05Z",
+      "phase": "core",
+      "description": "OWNS CLAIMS: Feature existence vs docs, log rotation missing, auto-archive implementation gaps. PROTOCOL: 1) Symbol analysis of all lib/*.sh and scripts/*.sh, 2) Feature gap detection (claimed vs implemented), 3) Reverse-engineer actual behaviors, 4) Dependency mapping. DELIVERABLE: Function catalog, feature existence matrix, implementation gap list.",
+      "labels": [
+        "agent-impl",
+        "consensus-framework",
+        "phase-2"
+      ],
+      "depends": [
+        "T189"
+      ],
+      "notes": [
+        "2025-12-15 04:34:11 UTC: CLAIMS OWNED: T212 (auto-archive impl), T214 (log rotation). Search scripts/archive.sh, lib/logging.sh for existing implementation. Use Serena find_symbol.",
+        "2025-12-15 05:41:41 UTC: COMPLETE: agent-impl-findings.md generated. Claims: T212=CONTESTED (config schema bug), T213=PROVEN (command missing), T214=PROVEN (orphaned code)",
+        "[COMPLETED 2025-12-16T01:54:12Z] Completed via TodoWrite session sync"
+      ],
+      "completedAt": "2025-12-16T01:54:12Z"
+    },
+    {
+      "id": "T194",
+      "title": "P2.5: Challenge Agent (Red Team) - adversarial validation of all findings",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T04:29:06Z",
+      "phase": "core",
+      "description": "OWNS CLAIMS: None (adversarial role). PROTOCOL: 1) Review all other agents' findings, 2) Identify assumptions without evidence, 3) Find logical contradictions, 4) Propose counter-examples, 5) Stress-test conclusions. DELIVERABLE: Challenge dossier with holes poked, alternative interpretations, edge cases, strength ratings per claim.",
+      "labels": [
+        "agent-challenge",
+        "consensus-framework",
+        "phase-2",
+        "red-team"
+      ],
+      "depends": [
+        "T189"
+      ],
+      "notes": [
+        "2025-12-15 05:41:42 UTC: COMPLETE: agent-challenge-findings.md (628 lines). Top 5 challenges: T205 shell limits, T212 config gap, T206 tokens/bytes, methodology bias, T207 cherry-picking"
+      ],
+      "completedAt": "2025-12-15T05:41:50Z"
+    },
+    {
+      "id": "T195",
+      "title": "Phase 3: Challenge & Consensus - Round-robin adversarial validation",
+      "status": "done",
+      "priority": "critical",
+      "createdAt": "2025-12-15T04:29:16Z",
+      "phase": "core",
+      "description": "Adversarial validation phase. ROUND 1: Each agent presents findings (max 200 tokens/claim with evidence citations). ROUND 2: Cross-examination (each agent challenges 2 others, format: 'Claim X assumes Y, but evidence Z contradicts'). ROUND 3: Consensus voting (PROVEN: 4/5 + reproducible evidence, REFUTED: counter-evidence invalidates, CONTESTED: 3/5 split). Gate: All 10 claims have verdict.",
+      "labels": [
+        "consensus",
+        "consensus-framework",
+        "phase-3"
+      ],
+      "depends": [
+        "T190",
+        "T191",
+        "T192",
+        "T193",
+        "T194"
+      ],
+      "notes": [
+        "2025-12-15 04:33:47 UTC: DOCS: claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Consensus Rules section). Voting thresholds: PROVEN=4/5, REFUTED=counter-evidence, CONTESTED=3/5 split.",
+        "2025-12-15 05:45:53 UTC: PREP: All Phase 1+2 complete. 6 artifacts ready. 4 contested claims need resolution. Synthesis Agent: project-supervisor-orchestrator",
+        "2025-12-15 16:03:17 UTC: Starting Phase 3: Spawning Synthesis Agent to consolidate 5 worker outputs",
+        "2025-12-15 16:09:38 UTC: Phase 3 complete. Outputs: synthesis-conflicts.md, synthesis-voting-matrix.md. HITL gate required for 3 contested issues."
+      ],
+      "completedAt": "2025-12-15T16:09:40Z"
+    },
+    {
+      "id": "T196",
+      "title": "P3.1: Initial Presentation Round - All agents present findings with evidence",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T04:29:29Z",
+      "phase": "core",
+      "description": "Each specialist agent (1-4) presents findings. FORMAT: Max 200 tokens per claim, evidence citations required (file:line, test results, measurements). Challenge Agent observes and takes notes. Gate: All 4 agents have presented, Challenge Agent has critique prepared.",
+      "labels": [
+        "consensus-framework",
+        "phase-3",
+        "round-1"
+      ],
+      "depends": [
+        "T195"
+      ],
+      "notes": [
+        "2025-12-15 16:09:26 UTC: DOC: claudedocs/consensus/synthesis-voting-matrix.md - All agents presented findings"
+      ],
+      "completedAt": "2025-12-15T16:09:26Z"
+    },
+    {
+      "id": "T197",
+      "title": "P3.2: Cross-Examination Round - Agents challenge each other's claims",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T04:29:31Z",
+      "phase": "core",
+      "description": "Each agent challenges 2 other agents' claims. FORMAT: 'Claim X assumes Y, but evidence Z contradicts.' Challenged agent responds with counter-evidence or concession. Challenge Agent presents overall critique. Gate: All challenges responded to, no unaddressed contradictions.",
+      "labels": [
+        "consensus-framework",
+        "phase-3",
+        "round-2"
+      ],
+      "depends": [
+        "T195"
+      ],
+      "notes": [
+        "2025-12-15 16:09:28 UTC: DOC: claudedocs/consensus/synthesis-conflicts.md - Cross-examination complete"
+      ],
+      "completedAt": "2025-12-15T16:09:28Z"
+    },
+    {
+      "id": "T198",
+      "title": "P3.3: Consensus Voting - Classify all 10 claims as PROVEN/REFUTED/CONTESTED",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T04:29:32Z",
+      "phase": "core",
+      "description": "VOTING RULES: PROVEN (4/5 agents + reproducible evidence), REFUTED (counter-evidence invalidates OR 2/5 agree), CONTESTED (3/5 split after 2 rounds). DEADLOCK: Implementation Agent runs tie-breaker test. If still deadlock, mark DEFERRED. Gate: All 10 claims classified, deadlocks resolved or documented.",
+      "labels": [
+        "consensus-framework",
+        "phase-3",
+        "voting"
+      ],
+      "depends": [
+        "T195"
+      ],
+      "notes": [
+        "2025-12-15 16:09:37 UTC: VOTING COMPLETE - PROVEN: T213,T214 | REFUTED: T205,T208,T211 | CONTESTED: T207,T209,T210,T212 | UNCLEAR: T206"
+      ],
+      "completedAt": "2025-12-15T16:09:37Z"
+    },
+    {
+      "id": "T199",
+      "title": "Phase 4: Synthesis - Generate final artifacts and recommendations",
+      "status": "done",
+      "priority": "critical",
+      "createdAt": "2025-12-15T04:29:39Z",
+      "phase": "polish",
+      "description": "Final output generation. ARTIFACTS: 1) Consensus Report (methodology, proven/refuted/contested claims, recommendations), 2) Feature Specs (for validated gaps like auto-archive, exists cmd), 3) Documentation Corrections (diffs for inaccurate claims), 4) Evidence Dossiers (per-claim transparency archive). Gate: All artifacts published, evidence archived.",
+      "labels": [
+        "consensus-framework",
+        "phase-4",
+        "synthesis"
+      ],
+      "depends": [
+        "T196",
+        "T197",
+        "T198"
+      ],
+      "notes": [
+        "2025-12-15 04:33:48 UTC: DOCS: claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Output Artifacts section). Templates for: consensus report, feature specs, doc corrections, evidence dossiers.",
+        "2025-12-15 16:40:16 UTC: Starting Phase 4: Generating final artifacts with HITL decisions incorporated",
+        "2025-12-15 16:50:12 UTC: Phase 4 complete. All artifacts generated: CONSENSUS-REPORT.md, 2 feature specs, doc-corrections.md, evidence-dossiers.md"
+      ],
+      "completedAt": "2025-12-15T16:50:12Z"
+    },
+    {
+      "id": "T200",
+      "title": "P4.1: Generate Consensus Report - Final verdicts with evidence citations",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T04:29:55Z",
+      "phase": "polish",
+      "description": "Create claude-todo-consensus-report.md with: Methodology section, Proven Claims (evidence, consensus count, recommendation), Refuted Claims (counter-evidence, correction), Contested Claims (both positions, next steps), Summary Statistics (claims investigated, proven/refuted/contested counts).",
+      "labels": [
+        "artifact-report",
+        "consensus-framework",
+        "phase-4"
+      ],
+      "depends": [
+        "T199"
+      ],
+      "notes": [
+        "2025-12-15 16:49:57 UTC: DOC: claudedocs/consensus/CONSENSUS-REPORT.md"
+      ],
+      "completedAt": "2025-12-15T16:49:57Z"
+    },
+    {
+      "id": "T201",
+      "title": "P4.2: Write Feature Specifications - For validated gaps (auto-archive, exists, log rotation)",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T04:29:56Z",
+      "phase": "polish",
+      "description": "For each PROVEN gap, create feature spec: Justification (evidence from consensus), Command syntax, Expected behavior, Implementation location (which files to modify), Test cases. Priority: auto-archive (config-based), exists command (ID validation), log rotation (monthly files).",
+      "labels": [
+        "artifact-specs",
+        "consensus-framework",
+        "phase-4"
+      ],
+      "depends": [
+        "T199"
+      ],
+      "notes": [
+        "2025-12-15 16:49:59 UTC: DOC: feature-spec-exists-command.md, feature-spec-log-rotation.md"
+      ],
+      "completedAt": "2025-12-15T16:49:59Z"
+    },
+    {
+      "id": "T202",
+      "title": "P4.3: Generate Documentation Corrections - Diffs for proven inaccuracies",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T04:29:58Z",
+      "phase": "polish",
+      "description": "For each REFUTED or PROVEN doc claim, generate diff: Original text, Corrected text, Rationale. Primary targets: TODO_Task_Management.md (CLI-only rule clarification, JSON read allowance), usage.md (command categorization), CLAUDE.md (injected instructions accuracy).",
+      "labels": [
+        "artifact-docs",
+        "consensus-framework",
+        "phase-4"
+      ],
+      "depends": [
+        "T199"
+      ],
+      "notes": [
+        "2025-12-15 16:50:08 UTC: DOC: claudedocs/consensus/doc-corrections.md"
+      ],
+      "completedAt": "2025-12-15T16:50:08Z"
+    },
+    {
+      "id": "T203",
+      "title": "P4.4: Archive Evidence Dossiers - Per-claim transparency records",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-15T04:29:59Z",
+      "phase": "polish",
+      "description": "For each of 10 claims, create evidence dossier: Claim statement, Investigation method, Test results (with commands run), Verdict, Recommendation. Store in claudedocs/ or .claude/evidence/ for future reference and reproducibility.",
+      "labels": [
+        "artifact-evidence",
+        "consensus-framework",
+        "phase-4"
+      ],
+      "depends": [
+        "T199"
+      ],
+      "notes": [
+        "2025-12-15 16:50:10 UTC: DOC: claudedocs/consensus/evidence-dossiers.md"
+      ],
+      "completedAt": "2025-12-15T16:50:10Z"
+    },
+    {
+      "id": "T204",
+      "title": "FEATURE: Multi-Phase Consensus Research Framework Plugin",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-15T04:30:21Z",
+      "phase": "setup",
+      "description": "Build a reusable plugin/command for claude-todo that implements the Multi-Phase Consensus Research Framework. This would be a programmatically callable tool with prompt-style instructions for any project to use when investigating claims, validating features, or planning complex work.\n\n## CONCEPT\nA repeatable, structured process for rigorous multi-agent investigation with:\n- Configurable phases (Discovery → Adversarial → Consolidation → Validation → Final)\n- Agent role definitions (Advocate/Challenger/Arbiter pattern)\n- Gate-based progression (scope approval, conflict resolution, archive approval, completeness sign-off)\n- Evidence standards and consensus thresholds\n- Artifact generation (reports, specs, corrections)\n\n## PROPOSED STRUCTURE\n| Round | Purpose | Agents | Gate |\n|-------|---------|--------|------|\n| Round 1 | Discovery & Inventory | 6 inventory agents | Gate 1: Scope approval |\n| Round 2 | Adversarial Challenge | 15 (5 domains × Advocate/Challenger/Arbiter) | Gate 2: Conflict resolution |\n| Round 3 | Consolidation | 7 merge agents | Gate 3: Archive approval |\n| Round 4 | Validation | 3 fresh validation agents | Gate 4: Completeness sign-off |\n| Round 5 | Final Spec | 2 finalization agents | Gate 5: Implementation GO |\n\n## INVOCATION\n```bash\nclaude-todo research --framework consensus \\\n  --claims 'claim1.md,claim2.md' \\\n  --evidence-dir ./evidence \\\n  --output-dir ./consensus-output \\\n  --agents 5 \\\n  --threshold 0.8\n```\n\n## KEY FEATURES\n1. Prompt-driven agent deployment (subagent_type patterns)\n2. Round-robin challenge protocol with configurable rounds\n3. Evidence standards (reproducible tests, measurements, citations)\n4. Consensus thresholds (4/5 default, configurable)\n5. Artifact templates (report, feature spec, doc correction, evidence dossier)\n6. Gate progression with approval checkpoints\n7. Deadlock resolution mechanisms\n8. Context handoff for long investigations\n\n## IMPLEMENTATION NOTES\n- Could be a Claude Code plugin or claude-todo subcommand\n- Needs integration with Task tool for agent deployment\n- Should support both interactive and batch modes\n- Evidence dossiers should be machine-readable (JSON) and human-readable (MD)\n- Consider Serena MCP integration for code analysis phases\n\n## SUCCESS CRITERIA\n- Repeatable: Same inputs produce consistent process\n- Valuable output: Single consolidated report, not scattered docs\n- Configurable: Adjust agents, rounds, thresholds per project\n- Transparent: Full evidence trail for all decisions",
+      "labels": [
+        "consensus-framework",
+        "feature-request",
+        "future",
+        "plugin"
+      ],
+      "notes": [
+        "2025-12-15 04:33:49 UTC: DOCS: claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Future Plugin Design section). Contains proposed invocation syntax, key features, success criteria for reusable plugin.",
+        "2025-12-15 05:01:35 UTC: ASSESSMENT: Current spec (v1.3.0) provides excellent reference implementation but is hardcoded to this investigation. For reusable plugin, need abstraction layer.",
+        "2025-12-15 05:01:42 UTC: SUFFICIENT: Process structure, Agent roles, Subagent mappings, Evidence standards, HITL gate triggers, Anti-consensus rules, Note conventions - all documented in CONSENSUS-FRAMEWORK-SPEC.md v1.3.0",
+        "2025-12-15 05:01:44 UTC: MISSING: Configuration schema, Parameterized prompt templates, State management, Output JSON schemas, Integration specs, Error recovery, Invocation modes - need abstraction for reusability",
+        "2025-12-15 05:03:32 UTC: SUBTASKS CREATED: T215 (Config Schema), T216 (Prompt Templates), T217 (State Management), T218 (Output Schemas), T219 (Integration Points), T220 (Error Recovery), T221 (Invocation Modes)",
+        "2025-12-15 16:53:33 UTC: DEFERRED: Plugin implementation after core fixes. Depends on T213, T214 implementation first. SPEC: CONSENSUS-FRAMEWORK-SPEC.md (Future Plugin Design section)",
+        "2025-12-16 01:54:13 UTC: Progressed during TodoWrite session"
+      ],
+      "files": [
+        "claudedocs/CONSENSUS-FRAMEWORK-SPEC.md"
+      ]
+    },
+    {
+      "id": "T205",
+      "title": "CLAIM-01: jq 'Argument list too long' at >100 tasks",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-15T04:30:42Z",
+      "description": "CLAIM: jq fails with 'Argument list too long' error when processing >100 tasks. INITIAL ASSESSMENT: LIKELY FALSE - technically impossible via pipe. OWNED BY: Technical Validation Agent (T190). EVIDENCE NEEDED: Reproducible test case with 100+ tasks. TEST: Create large todo.json, run 'claude-todo list --format json | jq .tasks[]'. STANDARD: Same result in 3/3 runs OR code analysis confirms.",
+      "labels": [
+        "claim",
+        "consensus-framework",
+        "technical"
+      ],
+      "notes": [
+        "2025-12-15 05:42:03 UTC: P2 VERDICT: REFUTED (HIGH confidence). Uses --argjson stdin pattern. 127 tasks running. Technical: shell variable limit ~2000 tasks. Challenge: needs stress test.",
+        "2025-12-15 16:53:18 UTC: VERDICT: REFUTED (5/5) - jq uses stdin, no arg limit. DOC: evidence-dossiers.md#t205",
+        "2025-12-15 18:48:46 UTC: VERDICT: REFUTED - See CONSENSUS-REPORT.md for evidence"
+      ],
+      "completedAt": "2025-12-15T18:48:46Z"
+    },
+    {
+      "id": "T206",
+      "title": "CLAIM-02: 545KB → 8M tokens in 6 months projection",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-15T04:30:43Z",
+      "description": "CLAIM: Current 545KB storage projects to 8M tokens in 6 months. INITIAL ASSESSMENT: FALSE - unrealistic linear extrapolation. OWNED BY: Technical Validation Agent (T190). EVIDENCE NEEDED: Growth model with actual data. TEST: Measure token growth at 10/50/100/500 tasks, fit model. STANDARD: R² > 0.9 OR bounded complexity analysis.",
+      "labels": [
+        "claim",
+        "consensus-framework",
+        "technical"
+      ],
+      "notes": [
+        "2025-12-15 05:42:04 UTC: P2 VERDICT: REFUTED (HIGH). Dev rate 65.8 tasks/day, realistic 5-10. Corrected projection: 940K tokens. Challenge: tokens vs bytes ambiguity.",
+        "2025-12-15 16:40:03 UTC: HITL DECISION: REFUTED - Storage interpretation applies. Growth is ~12KB/year, not 8M tokens.",
+        "2025-12-15 18:48:46 UTC: VERDICT: REFUTED - See CONSENSUS-REPORT.md for evidence"
+      ],
+      "completedAt": "2025-12-15T18:48:46Z"
+    },
+    {
+      "id": "T207",
+      "title": "CLAIM-03: 59% metadata overhead is excessive",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-15T04:30:44Z",
+      "description": "CLAIM: For every 1 token of useful content, 1.4 tokens of metadata. INITIAL ASSESSMENT: PARTIAL - metadata necessary but could optimize. OWNED BY: Technical Validation Agent (T190). EVIDENCE NEEDED: Actual overhead calculation with breakdown. TEST: Analyze .claude/todo.json, separate metadata vs content bytes. STANDARD: Reproducible measurement with methodology.",
+      "labels": [
+        "claim",
+        "consensus-framework",
+        "technical"
+      ],
+      "notes": [
+        "2025-12-15 05:42:05 UTC: P2 VERDICT: CONTESTED (MEDIUM). 59% by title+desc, 40.4% by user-facing data. Technical vs Challenge debate on methodology. Industry comparison needed.",
+        "2025-12-15 16:40:07 UTC: HITL DECISION: REFUTED - 59% overhead acceptable for feature set provided.",
+        "2025-12-15 18:48:46 UTC: VERDICT: REFUTED - See CONSENSUS-REPORT.md for evidence"
+      ],
+      "completedAt": "2025-12-15T18:48:46Z"
+    },
+    {
+      "id": "T208",
+      "title": "CLAIM-04: 23 commands is too many for LLM usage",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-15T04:30:45Z",
+      "description": "CLAIM: LLMs realistically need 6-11 commands, rest is noise causing confusion. INITIAL ASSESSMENT: PARTIAL - doc issue, not feature issue. OWNED BY: Design Philosophy Agent (T191). EVIDENCE NEEDED: Command frequency analysis, minimal set proposal. TEST: Analyze which commands are core vs edge-case. STANDARD: Comparative analysis with measurable advantage.",
+      "labels": [
+        "claim",
+        "consensus-framework",
+        "design"
+      ],
+      "notes": [
+        "2025-12-15 05:42:06 UTC: P2 VERDICT: REFUTED (HIGH). 23 < git(170), docker(44), kubectl(43). Well-organized taxonomy. Challenge: opinion not technical fact.",
+        "2025-12-15 16:53:18 UTC: VERDICT: REFUTED - 23 commands appropriate for feature set. DOC: evidence-dossiers.md#t208",
+        "2025-12-15 18:48:47 UTC: VERDICT: REFUTED - See CONSENSUS-REPORT.md for evidence"
+      ],
+      "completedAt": "2025-12-15T18:48:47Z"
+    },
+    {
+      "id": "T209",
+      "title": "CLAIM-05: TodoWrite + TASKS.md is simpler than claude-todo",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-15T04:30:47Z",
+      "description": "CLAIM: Hybrid TodoWrite + TASKS.md approach is simpler and more LLM-native. INITIAL ASSESSMENT: FALSE - actually more complex for same features. OWNED BY: Design Philosophy Agent (T191). EVIDENCE NEEDED: Feature capability matrix, complexity comparison. TEST: Map features of both approaches, count steps for common workflows. STANDARD: Alternative must have measurable advantage.",
+      "labels": [
+        "claim",
+        "consensus-framework",
+        "design"
+      ],
+      "notes": [
+        "2025-12-15 05:42:07 UTC: P2 VERDICT: CONTESTED (HIGH). TRUE for initial simplicity, FALSE as replacement. Systems are complementary. export --format todowrite bridges them.",
+        "2025-12-15 16:53:18 UTC: VERDICT: CONTESTED - Context-dependent comparison. DOC: evidence-dossiers.md#t209",
+        "2025-12-15 18:38:48 UTC: VERDICT: CONTESTED - Systems are complementary (TodoWrite for ephemeral session tasks, claude-todo for project management). No action needed."
+      ],
+      "completedAt": "2025-12-15T18:38:48Z"
+    },
+    {
+      "id": "T210",
+      "title": "CLAIM-06: CLI-only rule doesn't prevent ID hallucinations",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-15T04:31:05Z",
+      "description": "CLAIM: CLI-only enforcement doesn't prevent LLMs from hallucinating task IDs before verification. INITIAL ASSESSMENT: PARTIAL - CLI solves integrity, not hallucination (different problems). OWNED BY: Documentation Agent (T192). EVIDENCE NEEDED: Evaluate what CLI-only actually prevents. TEST: Analyze anti-hallucination rules in TODO_Task_Management.md. STANDARD: Code behavior analysis.",
+      "labels": [
+        "claim",
+        "consensus-framework",
+        "docs"
+      ],
+      "notes": [
+        "2025-12-15 05:42:20 UTC: P2 VERDICT: CONTESTED. Prevents ID duplication (write), doesn't prevent semantic hallucinations. Part of multi-layer strategy. Challenge: attacks strawman.",
+        "2025-12-15 16:40:05 UTC: HITL DECISION: CONTESTED - Data integrity placement OK. ACTION: Verify anti-hallucination section has correct placement.",
+        "[COMPLETED 2025-12-15T18:38:28Z] Renamed 'Anti-Hallucination Rules' to 'Data Integrity Rules' in docs/TODO_Task_Management.md and ~/.claude/TODO_Task_Management.md. Updated rationale to explain staleness prevention in multi-writer environment. Updated CLAUDE-INJECTION.md template."
+      ],
+      "completedAt": "2025-12-15T18:38:28Z"
+    },
+    {
+      "id": "T211",
+      "title": "CLAIM-07: JSON reads should be allowed (only writes via CLI)",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-15T04:31:07Z",
+      "description": "CLAIM: Allowing JSON reads doesn't compromise data integrity, only writes need CLI enforcement. INITIAL ASSESSMENT: VALID - read-only doesn't compromise integrity. OWNED BY: Documentation Agent (T192). EVIDENCE NEEDED: Safety analysis of read operations. TEST: What harm can JSON reads cause? None if no writes. STANDARD: Logical analysis of data integrity requirements.",
+      "labels": [
+        "claim",
+        "consensus-framework",
+        "docs"
+      ],
+      "notes": [
+        "2025-12-15 05:42:21 UTC: P2 VERDICT: REFUTED. Multi-writer (TodoWrite+CLI) creates staleness risk. Rationale incomplete - should cite staleness not checksums. Prohibition correct.",
+        "2025-12-15 16:53:18 UTC: VERDICT: REFUTED - JSON reads already allowed per docs. DOC: evidence-dossiers.md#t211",
+        "2025-12-15 18:48:47 UTC: VERDICT: REFUTED - See CONSENSUS-REPORT.md for evidence"
+      ],
+      "completedAt": "2025-12-15T18:48:47Z"
+    },
+    {
+      "id": "T212",
+      "title": "CLAIM-08: Auto-archive feature is missing",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-15T04:31:08Z",
+      "description": "CLAIM: No automatic archival causes 79% done tasks to accumulate, contributing to bloat. INITIAL ASSESSMENT: TRUE - legitimate feature gap. OWNED BY: Design Philosophy Agent (T191) + Implementation Agent (T193). EVIDENCE NEEDED: Code search confirming no auto-archive. TEST: Search scripts for automatic archival logic. STANDARD: No implementation found + doc doesn't mention.",
+      "labels": [
+        "claim",
+        "consensus-framework",
+        "feature-gap"
+      ],
+      "notes": [
+        "2025-12-15 05:42:22 UTC: P2 VERDICT: CONTESTED. Code exists (complete-task.sh:318) but config schema mismatch - auto_archive_on_complete not in schema. Feature implemented but inaccessible.",
+        "2025-12-15 16:53:19 UTC: VERDICT: CONTESTED - Feature exists but config schema bug (wrong field name). DOC: evidence-dossiers.md#t212",
+        "[COMPLETED 2025-12-15T18:36:59Z] Fixed auto-archive schema mismatch: added autoArchiveOnComplete to schema/template/docs. Code now matches schema convention (camelCase)."
+      ],
+      "completedAt": "2025-12-15T18:36:59Z"
+    },
+    {
+      "id": "T213",
+      "title": "CLAIM-09: Missing 'exists' command for ID validation",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-15T04:31:09Z",
+      "description": "CLAIM: No cheap verification mechanism exists - LLM must reference T091 before verifying it exists. INITIAL ASSESSMENT: TRUE - legitimate feature request. OWNED BY: Design Philosophy Agent (T191). EVIDENCE NEEDED: Command list audit. TEST: Search for ID validation command in help/docs. STANDARD: No implementation found. RECOMMENDATION: Add 'claude-todo exists T091' returning 0/1.",
+      "labels": [
+        "claim",
+        "consensus-framework",
+        "feature-gap"
+      ],
+      "notes": [
+        "2025-12-15 05:42:24 UTC: P2 VERDICT: PROVEN TRUE. Command doesn't exist. Workaround: jq query. DRY violation: 4+ scripts duplicate existence check. Low priority but valid gap.",
+        "2025-12-15 16:53:20 UTC: VERDICT: PROVEN - Missing exists command. SPEC: feature-spec-exists-command.md",
+        "2025-12-15 17:19:28 UTC: IMPLEMENTED: scripts/exists.sh + install.sh updates. All tests pass: basic, verbose, quiet, json, archive search modes.",
+        "[COMPLETED 2025-12-15T17:19:39Z] Implemented exists command per feature spec. All tests pass."
+      ],
+      "completedAt": "2025-12-15T17:19:39Z"
+    },
+    {
+      "id": "T214",
+      "title": "CLAIM-10: Log rotation is missing",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-15T04:31:10Z",
+      "description": "CLAIM: Log file grows unbounded (144 entries/day, 409KB in 2.4 days) with no rotation. INITIAL ASSESSMENT: TRUE - legitimate feature gap. OWNED BY: Implementation Agent (T193). EVIDENCE NEEDED: Code search for log rotation. TEST: Analyze lib/logging.sh and log.sh for rotation logic. STANDARD: No implementation found. RECOMMENDATION: Monthly rotation, keep 30 days active.",
+      "labels": [
+        "claim",
+        "consensus-framework",
+        "feature-gap"
+      ],
+      "notes": [
+        "2025-12-15 05:42:24 UTC: P2 VERDICT: PROVEN TRUE. rotate_log() exists at logging.sh:339 but never called. Orphaned code. Current: 279KB log. Medium-term risk, not urgent.",
+        "2025-12-15 16:53:20 UTC: VERDICT: PROVEN - Log rotation orphaned. SPEC: feature-spec-log-rotation.md",
+        "2025-12-15 17:29:12 UTC: IMPLEMENTED: session.sh integration + log rotate subcommand. Auto-rotation on session end, manual via 'claude-todo log rotate'",
+        "[COMPLETED 2025-12-15T17:29:13Z] Log rotation integrated per feature spec. Session.sh calls check_and_rotate_log, manual command via log rotate."
+      ],
+      "completedAt": "2025-12-15T17:29:13Z"
+    },
+    {
+      "id": "T215",
+      "title": "T204.1: Configuration Schema Design",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-15T05:01:58Z",
+      "phase": "setup",
+      "description": "Design YAML/JSON configuration schema for reusable consensus framework plugin.\n\n## DELIVERABLE\n`schemas/consensus-research-config.schema.json`\n\n## SCHEMA MUST DEFINE\n- claims: Array of claim definitions (id, title, description, category)\n- evidence_sources: Paths to evidence directories/files\n- agents: Agent configuration (count, types, subagent_type mappings)\n- thresholds: Consensus thresholds (proven, refuted, contested)\n- output: Output directory and file naming conventions\n- gates: HITL gate configuration (which gates, timeout, blocking)\n- phases: Phase definitions (which phases to run, order)\n\n## EXAMPLE CONFIG\n```yaml\nframework: consensus-research\nversion: 1.0\ninvestigation:\n  name: \"claude-todo-claims\"\n  claims_file: ./claims.yaml\n  evidence_dir: ./evidence\n  output_dir: ./consensus-output\nagents:\n  worker_count: 5\n  synthesis_type: project-supervisor-orchestrator\nthresholds:\n  proven: 0.8  # 4/5\n  refuted: 0.4  # 2/5\ngates:\n  - after_phase: 1\n    blocking: true\n    timeout: 24h\n```\n\n## REFERENCES\n- claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Execution Protocol section)\n- T204 parent task for context",
+      "labels": [
+        "consensus-framework",
+        "design",
+        "plugin"
+      ],
+      "depends": [
+        "T204"
+      ],
+      "notes": [
+        "2025-12-15 05:06:07 UTC: DOC: claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Execution Protocol, Subagent Mappings)"
+      ],
+      "files": [
+        "claudedocs/CONSENSUS-FRAMEWORK-SPEC.md"
+      ]
+    },
+    {
+      "id": "T216",
+      "title": "T204.2: Parameterized Prompt Templates",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-15T05:02:11Z",
+      "phase": "setup",
+      "description": "Create parameterized prompt templates for all 6 agent types.\n\n## DELIVERABLE\n`templates/consensus-research/` directory with:\n- agent-technical.prompt.md\n- agent-design.prompt.md\n- agent-docs.prompt.md\n- agent-impl.prompt.md\n- agent-challenge.prompt.md\n- agent-synthesis.prompt.md\n\n## TEMPLATE VARIABLES\nEach template must use placeholders:\n- `{INVESTIGATION_NAME}` - Name of the investigation\n- `{CLAIM_SET}` - List of claims assigned to this agent\n- `{EVIDENCE_PATH}` - Path to phase 1 evidence file\n- `{OUTPUT_PATH}` - Path where agent writes findings\n- `{EVIDENCE_STANDARDS}` - Standards for this claim type\n- `{CONSENSUS_THRESHOLD}` - Voting threshold\n- `{OTHER_AGENT_OUTPUTS}` - Paths to other agent files (for synthesis)\n\n## EXAMPLE TEMPLATE\n```markdown\n# {AGENT_ROLE} Agent\n\nYou are the {AGENT_ROLE} for the {INVESTIGATION_NAME} investigation.\n\n## Your Assigned Claims\n{CLAIM_SET}\n\n## Evidence Baseline\nRead evidence from: {EVIDENCE_PATH}\n\n## Your Task\nInvestigate your assigned claims using {EVIDENCE_STANDARDS}.\n\n## Output\nWrite findings to: {OUTPUT_PATH}\n\n## Output Format\n[structured template...]\n```\n\n## REFERENCES\n- claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Agent Roles, Evidence Passing Protocol)",
+      "labels": [
+        "consensus-framework",
+        "design",
+        "plugin"
+      ],
+      "depends": [
+        "T204"
+      ],
+      "notes": [
+        "2025-12-15 05:06:08 UTC: DOC: claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Agent Roles, Evidence Passing Protocol)"
+      ],
+      "files": [
+        "claudedocs/CONSENSUS-FRAMEWORK-SPEC.md"
+      ]
+    },
+    {
+      "id": "T217",
+      "title": "T204.3: State Management Design",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-15T05:02:26Z",
+      "phase": "setup",
+      "description": "Design state management system for tracking investigation progress.\n\n## DELIVERABLE\n`schemas/consensus-research-state.schema.json` + implementation spec\n\n## STATE FILE MUST TRACK\n- current_phase: Which phase is active (1-4)\n- phase_status: Per-phase completion status\n- claims: Per-claim status and verdicts\n- agents: Which agents have completed, their output paths\n- gates: Gate status (pending, approved, rejected)\n- questions: Collected questions with severity and status\n- suspicious_consensus: Flagged unanimous agreements\n- session: Current session ID, start time, last activity\n\n## STATE TRANSITIONS\n```\nPhase 1: pending → active → evidence_collected → gate_1_pending → gate_1_approved\nPhase 2: pending → agents_spawned → agents_complete → gate_2_pending → gate_2_approved\nPhase 3: pending → synthesis_active → voting_complete → gate_3_pending → gate_3_approved\nPhase 4: pending → artifacts_generating → complete → gate_4_approved\n```\n\n## PERSISTENCE\n- State file: `.consensus-research/state.json`\n- Atomic writes (temp file → validate → rename)\n- Checksum for integrity\n- Recovery from interrupted state\n\n## INTEGRATION WITH CLAUDE-TODO\n- Optionally create claude-todo tasks from state\n- Sync state ↔ task status\n- Export state to TodoWrite format\n\n## REFERENCES\n- claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Completion Criteria, Position Identification)",
+      "labels": [
+        "consensus-framework",
+        "design",
+        "plugin"
+      ],
+      "depends": [
+        "T204"
+      ],
+      "notes": [
+        "2025-12-15 05:06:09 UTC: DOC: claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Completion Criteria, Position Identification, Session Protocols)"
+      ],
+      "files": [
+        "claudedocs/CONSENSUS-FRAMEWORK-SPEC.md"
+      ]
+    },
+    {
+      "id": "T218",
+      "title": "T204.4: Output JSON Schemas",
+      "status": "pending",
+      "priority": "medium",
+      "createdAt": "2025-12-15T05:02:39Z",
+      "phase": "setup",
+      "description": "Define formal JSON schemas for all framework outputs.\n\n## DELIVERABLES\n`schemas/consensus-research/` directory:\n- voting-matrix.schema.json\n- evidence-dossier.schema.json\n- agent-findings.schema.json\n- questions.schema.json\n- consensus-report.schema.json\n\n## VOTING MATRIX SCHEMA\n```json\n{\n  \"claims\": [\n    {\n      \"id\": \"T205\",\n      \"title\": \"jq arg limit\",\n      \"votes\": {\n        \"technical\": \"REFUTED\",\n        \"design\": \"REFUTED\",\n        \"docs\": \"REFUTED\",\n        \"impl\": \"REFUTED\",\n        \"challenge\": \"REFUTED\"\n      },\n      \"consensus\": 5,\n      \"verdict\": \"REFUTED\",\n      \"evidence\": [\"phase1-evidence.md:L45\"]\n    }\n  ]\n}\n```\n\n## EVIDENCE DOSSIER SCHEMA\nPer-claim with: claim statement, investigation method, test results, citations, verdict, recommendation\n\n## AGENT FINDINGS SCHEMA\nStructured output format for worker agents: claims addressed, evidence found, verdict per claim, confidence level, citations\n\n## DUAL FORMAT\nAll outputs should generate both:\n- .json (machine-readable, for state tracking)\n- .md (human-readable, for review)\n\n## REFERENCES\n- claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Output Artifacts section)",
+      "labels": [
+        "consensus-framework",
+        "design",
+        "plugin"
+      ],
+      "depends": [
+        "T204"
+      ],
+      "notes": [
+        "2025-12-15 05:06:10 UTC: DOC: claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Output Artifacts section)"
+      ],
+      "files": [
+        "claudedocs/CONSENSUS-FRAMEWORK-SPEC.md"
+      ]
+    },
+    {
+      "id": "T219",
+      "title": "T204.5: Integration Points Specification",
+      "status": "pending",
+      "priority": "medium",
+      "createdAt": "2025-12-15T05:02:52Z",
+      "phase": "setup",
+      "description": "Define integration points with external systems.\n\n## DELIVERABLE\nDocumentation section in spec or separate integration-spec.md\n\n## TASK TOOL INTEGRATION\n- How to spawn worker agents via Task tool\n- Subagent_type selection based on config\n- Prompt construction from templates\n- Output collection from agent responses\n- Parallel vs sequential agent spawning\n\n## CLAUDE-TODO INTEGRATION\n- Auto-generate tasks for investigation phases\n- Sync state with task status\n- Use labels for filtering (consensus-framework-{investigation-name})\n- Link tasks to output artifacts via notes\n- Session start/end integration\n\n## SERENA MCP INTEGRATION\n- Code analysis during Phase 1\n- Symbol search for evidence collection\n- Memory persistence for cross-session context\n- Project activation requirements\n\n## FILE SYSTEM INTEGRATION\n- Directory structure creation\n- Atomic file writes\n- Output path resolution\n- Evidence file discovery (glob patterns)\n\n## HITL INTEGRATION\n- Gate request format\n- User notification mechanism\n- Response collection\n- Timeout handling\n\n## REFERENCES\n- claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Execution Protocol, Task Tracking Protocol)",
+      "labels": [
+        "consensus-framework",
+        "design",
+        "plugin"
+      ],
+      "depends": [
+        "T204"
+      ],
+      "notes": [
+        "2025-12-15 05:06:11 UTC: DOC: claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Execution Protocol, Task Tracking Protocol, Agent Execution Model)"
+      ],
+      "files": [
+        "claudedocs/CONSENSUS-FRAMEWORK-SPEC.md"
+      ]
+    },
+    {
+      "id": "T220",
+      "title": "T204.6: Error Recovery Protocols",
+      "status": "pending",
+      "priority": "medium",
+      "createdAt": "2025-12-15T05:03:07Z",
+      "phase": "setup",
+      "description": "Define error handling and recovery protocols for framework robustness.\n\n## DELIVERABLE\nError recovery section in spec + state recovery implementation\n\n## ERROR SCENARIOS\n\n### Agent Failure\n- Worker agent returns error or incomplete output\n- Mitigation: Retry with exponential backoff (max 3 attempts)\n- Fallback: Mark claim as INSUFFICIENT_EVIDENCE, flag for HITL\n\n### HITL Gate Timeout\n- User doesn't respond within timeout period\n- Mitigation: Reminder notification, extend timeout\n- Fallback: Auto-proceed with Synthesis Agent recommendation (if configured)\n- Alternative: Pause investigation, persist state for resume\n\n### Session Interruption\n- Context window exhausted mid-investigation\n- Mitigation: State file persists all progress\n- Recovery: New session reads state, resumes from last checkpoint\n- Phase checkpoints: After each phase completion\n\n### Conflicting Agent Outputs\n- Two agents give contradictory evidence for same claim\n- Mitigation: Challenge Agent reviews conflict\n- Escalation: SUSPICIOUS_CONSENSUS or HITL gate\n\n### Missing Evidence\n- Phase 1 cannot find sufficient evidence for claims\n- Mitigation: Flag claims as EVIDENCE_NEEDED\n- Options: Proceed with available evidence, request more sources, abort claim\n\n### State Corruption\n- State file corrupted or invalid\n- Mitigation: Checksum validation on read\n- Recovery: Reconstruct from output files + claude-todo tasks\n- Backup: Periodic state snapshots\n\n## RECOVERY COMMANDS\n```bash\nclaude-todo research --resume          # Resume from state file\nclaude-todo research --status          # Show current state\nclaude-todo research --recover         # Attempt state reconstruction\nclaude-todo research --abort           # Clean abort with state preservation\n```\n\n## REFERENCES\n- claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Risk Mitigation, Session Recovery)",
+      "labels": [
+        "consensus-framework",
+        "design",
+        "plugin"
+      ],
+      "depends": [
+        "T204"
+      ],
+      "notes": [
+        "2025-12-15 05:06:13 UTC: DOC: claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Risk Mitigation, Session Recovery, HITL Gate Protocol)"
+      ],
+      "files": [
+        "claudedocs/CONSENSUS-FRAMEWORK-SPEC.md"
+      ]
+    },
+    {
+      "id": "T221",
+      "title": "T204.7: Invocation Modes Specification",
+      "status": "pending",
+      "priority": "medium",
+      "createdAt": "2025-12-15T05:03:23Z",
+      "phase": "setup",
+      "description": "Define different invocation modes for the framework.\n\n## DELIVERABLE\nCLI specification section with all modes documented\n\n## INVOCATION MODES\n\n### Interactive Mode (Default)\n```bash\nclaude-todo research --framework consensus --config ./research.yaml\n```\n- Pauses at each HITL gate for user input\n- Shows progress in real-time\n- Allows mid-investigation adjustments\n\n### Batch Mode\n```bash\nclaude-todo research --framework consensus --config ./research.yaml --batch\n```\n- Runs without HITL pauses (uses Synthesis Agent recommendations)\n- Collects all questions for end-of-run review\n- Suitable for overnight/unattended runs\n\n### Dry Run Mode\n```bash\nclaude-todo research --framework consensus --config ./research.yaml --dry-run\n```\n- Validates config, shows execution plan\n- Lists claims, agents, phases, gates\n- No actual agent spawning\n\n### Resume Mode\n```bash\nclaude-todo research --resume [state-file]\n```\n- Resumes from persisted state\n- Validates state integrity before resuming\n- Shows what was completed, what remains\n\n### Status Mode\n```bash\nclaude-todo research --status [state-file]\n```\n- Shows current investigation status\n- Phase progress, claim verdicts, pending gates\n- No modification\n\n### Single Phase Mode\n```bash\nclaude-todo research --phase 2 --config ./research.yaml\n```\n- Run only specific phase\n- Requires prior phase outputs to exist\n- Useful for re-running failed phases\n\n## CLI OPTIONS\n| Option | Description |\n|--------|-------------|\n| --config | Path to config YAML |\n| --framework | Framework type (consensus, adversarial, etc.) |\n| --batch | Run without HITL pauses |\n| --dry-run | Validate and show plan only |\n| --resume | Resume from state file |\n| --status | Show investigation status |\n| --phase N | Run specific phase only |\n| --verbose | Detailed output |\n| --output-dir | Override output directory |\n\n## REFERENCES\n- T204 parent task\n- claude-todo existing CLI patterns",
+      "labels": [
+        "consensus-framework",
+        "design",
+        "plugin"
+      ],
+      "depends": [
+        "T204"
+      ],
+      "notes": [
+        "2025-12-15 05:06:15 UTC: DOC: claudedocs/CONSENSUS-FRAMEWORK-SPEC.md (Future Plugin Design section)"
+      ],
+      "files": [
+        "claudedocs/CONSENSUS-FRAMEWORK-SPEC.md"
+      ]
+    },
+    {
+      "id": "T222",
+      "title": "Test auto-archive feature",
+      "status": "done",
+      "priority": "low",
+      "createdAt": "2025-12-15T05:36:00Z",
+      "description": "Create test task to verify auto-archive on complete",
+      "completedAt": "2025-12-15T05:36:04Z"
+    },
+    {
+      "id": "T223",
+      "title": "Second test task",
+      "status": "done",
+      "priority": "low",
+      "createdAt": "2025-12-15T05:36:12Z",
+      "description": "Test if auto-archive works with new config field",
+      "completedAt": "2025-12-15T05:36:14Z"
+    },
+    {
+      "id": "T224",
+      "title": "Integrate history command into CLI",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T18:48:10Z",
+      "description": "history.sh (v0.10.2) exists but not registered. Steps: 1) Add to CMD_MAP in claude-todo script, 2) Add CMD_DESC, 3) Create docs/commands/history.md, 4) Add tests. Features: completion timeline, sparklines, velocity metrics.",
+      "labels": [
+        "cli",
+        "integration",
+        "v0.13.0"
+      ],
+      "completedAt": "2025-12-15T19:35:18Z",
+      "notes": [
+        "[COMPLETED 2025-12-15T19:35:18Z] Integrated history command: added to CMD_MAP, CMD_DESC, help list. Created docs/commands/history.md. Updated docs/INDEX.md. Command tested working with text and JSON output."
+      ]
+    },
+    {
+      "id": "T225",
+      "title": "Implement 'show' command for single-task detail view",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-15T19:41:28Z",
+      "phase": "setup",
+      "description": "## Problem\nLLM agents are trying to use `claude-todo show T036` which doesn't exist. This command was proposed in performance research (Dec 12) as part of lazy loading strategy but never implemented.\n\n## Error Observed\n```\nUnknown command: show\nDid you mean one of these?\n```\n\n## Source of Confusion\nPerformance research document recommended:\n- `list` → minimal task info (fast, 20ms for 1000 tasks)\n- `show <id>` → full task details (5ms for single task)\n\nThis pattern is documented in:\n1. Claude session logs from Dec 12 research\n2. Possibly in LLM instruction files referencing 'show' command\n\n## Current Workaround\n```bash\nclaude-todo list --format json | jq '.tasks[] | select(.id == \"T036\")'\n```\n\n## Proposed Implementation\n1. Create scripts/show.sh\n2. Add to CMD_MAP: [show]=\"show.sh\"\n3. Add to CMD_DESC: [show]=\"Show detailed view of a single task\"\n4. Add to help loop\n5. Features:\n   - Display all task fields in formatted view\n   - Show dependency chain (what blocks this, what this blocks)\n   - Show related tasks by label\n   - Show task history from log\n   - Optional: --json for raw output\n\n## Acceptance Criteria\n- `claude-todo show T001` displays full task details\n- Includes notes, files, acceptance criteria if present\n- Shows dependency relationships\n- Performance: <50ms for single task lookup",
+      "labels": [
+        "cli",
+        "ux",
+        "v0.13.0"
+      ],
+      "completedAt": "2025-12-15T19:51:39Z",
+      "notes": [
+        "[COMPLETED 2025-12-15T19:51:39Z] Implemented show command: scripts/show.sh (420 lines), docs/commands/show.md, updated TODO_Task_Management.md with Task Inspection section, updated CLAUDE-INJECTION.md template. Features: full task details, dependency info, --history, --related, --include-archive, JSON output."
+      ]
+    },
+    {
+      "id": "T226",
+      "title": "Documentation Completeness Audit: Full CLI Command Coverage",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T19:58:46Z",
+      "phase": "polish",
+      "description": "## Overview\nComprehensive audit and completion of CLI command documentation. Ensure all 25 commands are properly documented with consistent structure across all documentation touchpoints.\n\n## Documentation Architecture\n```\ndocs/commands/*.md     → Detailed command reference (source of truth for each command)\ndocs/INDEX.md          → Master index pointing to all documentation\ndocs/TODO_Task_Management.md → LLM-facing instructions (concise, references docs/commands/)\ntemplates/CLAUDE-INJECTION.md → Quick reference (essential commands only, points to TODO_Task_Management.md)\n```\n\n## Current State (v0.12.8)\n\n### CLI Commands vs Documentation Coverage\n\n| # | Command | docs/commands/ | INDEX.md | TODO_Task_Mgmt | CLAUDE-INJECTION |\n|---|---------|----------------|----------|----------------|------------------|\n| 1 | init | ❌ | ❌ | ✅ | ❌ |\n| 2 | add | ❌ | ❌ | ✅ | ✅ |\n| 3 | update | ❌ | ❌ | ✅ | ❌ |\n| 4 | complete | ❌ | ❌ | ✅ | ✅ (done) |\n| 5 | list | ❌ | ❌ | ✅ | ✅ |\n| 6 | focus | ❌ | ❌ | ✅ | ✅ |\n| 7 | session | ❌ | ❌ | ✅ | ✅ |\n| 8 | archive | ❌ | ❌ | ✅ | ❌ |\n| 9 | validate | ❌ | ❌ | ✅ | ❌ |\n| 10 | stats | ❌ | ❌ | ✅ | ❌ |\n| 11 | backup | ✅ | ✅ | ✅ | ❌ |\n| 12 | restore | ✅ | ✅ | ✅ | ❌ |\n| 13 | export | ✅ | ✅ | ✅ | ❌ |\n| 14 | migrate | ❌ | ❌ | ✅ | ❌ |\n| 15 | migrate-backups | ❌ | ❌ | ❌ | ❌ |\n| 16 | log | ✅ | ❌ | ❌ | ❌ |\n| 17 | dash | ✅ | ✅ | ✅ | ✅ |\n| 18 | next | ✅ | ✅ | ✅ | ❌ |\n| 19 | labels | ✅ | ✅ | ✅ | ❌ |\n| 20 | deps | ✅ | ✅ | ✅ | ❌ |\n| 21 | blockers | ✅ | ✅ | ✅ | ❌ |\n| 22 | phases | ✅ | ✅ | ✅ | ❌ |\n| 23 | exists | ✅ | ✅ | ✅ | ✅ |\n| 24 | history | ✅ | ✅ | ❌ | ❌ |\n| 25 | show | ✅ | ✅ | ✅ | ✅ |\n\n### Summary\n- **Total CLI Commands**: 25 (+version, help built-in)\n- **docs/commands/ files**: 13 exist\n- **Missing command docs**: 12 (init, add, update, complete, list, focus, session, archive, validate, stats, migrate, migrate-backups)\n- **INDEX.md references**: 12 (missing: log.md)\n- **CLAUDE-INJECTION**: 9 essential commands\n\n## Work Required\n\n### Phase 1: Create Missing docs/commands/*.md (12 files)\nEach file should follow existing pattern (see dash.md, show.md as templates):\n- Usage section with bash examples\n- Description of purpose\n- Options table (Option | Short | Description | Default)\n- Examples section with common use cases\n- Exit codes (if applicable)\n- Related commands section\n\nFiles to create:\n1. docs/commands/init.md\n2. docs/commands/add.md\n3. docs/commands/update.md\n4. docs/commands/complete.md\n5. docs/commands/list.md\n6. docs/commands/focus.md\n7. docs/commands/session.md\n8. docs/commands/archive.md\n9. docs/commands/validate.md\n10. docs/commands/stats.md\n11. docs/commands/migrate.md\n12. docs/commands/migrate-backups.md\n\n### Phase 2: Update docs/INDEX.md\n- Add references to all 25 command docs\n- Currently missing: init, add, update, complete, list, focus, session, archive, validate, stats, migrate, migrate-backups, log\n- Organize by category (Core CRUD, Session/Focus, Analysis, Maintenance)\n\n### Phase 3: Update docs/TODO_Task_Management.md\n- Add history command to appropriate section\n- Add migrate-backups command\n- Ensure all commands reference docs/commands/ for details\n- Keep concise - this is LLM-facing, not full reference\n\n### Phase 4: Review templates/CLAUDE-INJECTION.md\n- Keep minimal (essential commands only)\n- Ensure it points to TODO_Task_Management.md for full docs\n- Current essential commands are appropriate (list, show, add, done, focus, session, exists, dash)\n\n### Phase 5: Validation\n- Run `claude-todo help` and verify all commands match docs\n- Test each command's --help output matches its docs/commands/*.md\n- Verify INDEX.md links all work\n- Verify no duplicate detailed information (single source of truth)\n\n## Principles\n1. **No duplication**: Detailed info lives in docs/commands/*.md only\n2. **Layered docs**: CLAUDE-INJECTION → TODO_Task_Management → docs/commands/\n3. **LLM-optimized**: TODO_Task_Management.md should be concise, scannable\n4. **Human-optimized**: docs/commands/*.md should be comprehensive\n5. **INDEX.md**: Master reference, links to everything\n\n## Acceptance Criteria\n- [ ] All 25 commands have docs/commands/*.md files\n- [ ] docs/INDEX.md references all 25 command docs\n- [ ] docs/TODO_Task_Management.md covers all commands (concisely)\n- [ ] templates/CLAUDE-INJECTION.md points to TODO_Task_Management.md\n- [ ] No detailed command info duplicated across files\n- [ ] All --help outputs consistent with documentation",
+      "labels": [
+        "cli",
+        "documentation",
+        "v0.13.0"
+      ],
+      "completedAt": "2025-12-15T20:09:24Z",
+      "notes": [
+        "[COMPLETED 2025-12-15T20:09:24Z] Documentation completeness audit completed. Created 12 new docs/commands/*.md files (add, archive, complete, focus, init, list, migrate, migrate-backups, session, stats, update, validate). Updated INDEX.md with 25 total command refs (added 13). Added history and migrate-backups to TODO_Task_Management.md. Verified CLAUDE-INJECTION.md points to TODO_Task_Management.md. All 25 command docs validated."
+      ]
+    },
+    {
+      "id": "T227",
+      "title": "Research TodoWrite ↔ claude-todo Bidirectional Sync Integration",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T21:07:56Z",
+      "phase": "core",
+      "description": "Investigate seamless integration between durable claude-todo persistence and ephemeral TodoWrite session tracking. Goal: automatic injection at session start, live sync during session, extraction at session end.",
+      "labels": [
+        "integration",
+        "research",
+        "session-management",
+        "todowrite",
+        "v0.14.0"
+      ],
+      "notes": [
+        "2025-12-15 21:07:56 UTC: Key investigation areas: (1) Session start hook to export claude-todo → TodoWrite format, (2) Session end hook to diff/merge TodoWrite → claude-todo, (3) Conflict resolution for tasks modified in both systems, (4) Metadata mapping (phases/labels/deps → simplified TodoWrite format), (5) Progress note preservation across session boundaries",
+        "2025-12-15 21:44:14 UTC: All 6 subtasks complete (T228-T233). Research findings saved to Serena memory. Key design: intentionally lossy transformation with ID prefix for round-trip, hybrid hook architecture (command+prompt hooks), claude-todo authoritative for metadata, TodoWrite authoritative for session progress.",
+        "[COMPLETED 2025-12-15T21:44:14Z] Research complete: TodoWrite sync integration designed with tiered injection, ID-prefix tracking, hybrid hooks, and conflict resolution protocol"
+      ],
+      "completedAt": "2025-12-15T21:44:14Z"
+    },
+    {
+      "id": "T228",
+      "title": "T227.1: Analyze TodoWrite Tool Schema and Capabilities",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T21:08:14Z",
+      "phase": "core",
+      "description": "Deep dive into Claude Code's TodoWrite tool: accepted parameters, status values, content/activeForm grammar rules, limitations, and undocumented behaviors.",
+      "labels": [
+        "research",
+        "schema-analysis",
+        "todowrite"
+      ],
+      "depends": [
+        "T227"
+      ],
+      "notes": [
+        "2025-12-15 21:41:15 UTC: Schema analysis complete. Key findings: (1) No stable IDs in TodoWrite - uses array position only, (2) Status mapping: completed→done, in_progress→active, pending→pending, blocked has no equivalent, (3) All rich metadata lost (priority, labels, phase, deps, notes), (4) TodoWrite allows multiple in_progress vs claude-todo single active",
+        "[COMPLETED 2025-12-15T21:41:22Z] Documented TodoWrite schema limitations and identified 4 critical integration challenges"
+      ],
+      "completedAt": "2025-12-15T21:41:22Z"
+    },
+    {
+      "id": "T229",
+      "title": "T227.2: Design Session Start Injection Mechanism",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T21:08:16Z",
+      "phase": "core",
+      "description": "Research how to automatically populate TodoWrite with relevant claude-todo tasks at session start. Consider: which tasks to inject (active, pending high-priority, focused), format transformation, hook integration points.",
+      "labels": [
+        "design",
+        "injection",
+        "research",
+        "session-start"
+      ],
+      "depends": [
+        "T227"
+      ],
+      "notes": [
+        "2025-12-15 21:41:39 UTC: Design complete: (1) Tiered injection - focused task + deps + same-phase high-priority up to 8 tasks, (2) Hybrid trigger via SessionStart hook calling export command, (3) Format: embed task ID in content prefix for round-trip tracking, status mapping with blocked→pending+prefix",
+        "[COMPLETED 2025-12-15T21:41:40Z] Injection mechanism designed with tiered selection, hook trigger, and ID-embedded content format"
+      ],
+      "completedAt": "2025-12-15T21:41:40Z"
+    },
+    {
+      "id": "T230",
+      "title": "T227.3: Design Session End Extraction and Merge Strategy",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T21:08:17Z",
+      "phase": "core",
+      "description": "Research how to capture TodoWrite state at session end and merge back to claude-todo. Key challenges: detecting new tasks, mapping completed items, preserving progress notes, handling conflicts.",
+      "labels": [
+        "extraction",
+        "merge",
+        "research",
+        "session-end"
+      ],
+      "depends": [
+        "T227"
+      ],
+      "notes": [
+        "2025-12-15 21:42:02 UTC: Design complete: (1) ID recovery via [T###] prefix parsing, (2) Diff detection categorizes: completed, progressed, new_tasks, removed, unchanged, (3) Merge actions: complete→ct complete, new→ct add with session-created label, (4) Session state file tracks injected tasks for diff calculation",
+        "[COMPLETED 2025-12-15T21:42:02Z] Extraction/merge strategy designed with ID parsing, diff detection, and session state tracking"
+      ],
+      "completedAt": "2025-12-15T21:42:02Z"
+    },
+    {
+      "id": "T231",
+      "title": "T227.4: Metadata Mapping and Lossy Transformation Analysis",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-15T21:08:19Z",
+      "phase": "core",
+      "description": "Analyze information loss when mapping rich claude-todo metadata (phases, labels, dependencies, notes, acceptance criteria) to simplified TodoWrite format. Design round-trip preservation strategies.",
+      "labels": [
+        "metadata",
+        "research",
+        "transformation"
+      ],
+      "depends": [
+        "T227"
+      ],
+      "notes": [
+        "2025-12-15 21:42:27 UTC: Analysis complete: 10+ fields map to 3 TodoWrite fields. Only ID (via prefix) and status are round-trippable. Design accepts lossy transformation - full metadata stays in claude-todo. Priority/blocked optionally encoded in content prefix.",
+        "[COMPLETED 2025-12-15T21:42:27Z] Documented complete field mapping with intentionally lossy design philosophy"
+      ],
+      "completedAt": "2025-12-15T21:42:27Z"
+    },
+    {
+      "id": "T232",
+      "title": "T227.5: Conflict Resolution Protocol Design",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-15T21:08:20Z",
+      "phase": "core",
+      "description": "Design conflict resolution for scenarios: task completed in TodoWrite but modified in claude-todo externally, new tasks created in both systems, status drift during long sessions.",
+      "labels": [
+        "conflict-resolution",
+        "research",
+        "sync"
+      ],
+      "depends": [
+        "T227"
+      ],
+      "notes": [
+        "2025-12-15 21:42:52 UTC: Protocol designed with 5 conflict scenarios (status divergence, external delete, concurrent mod, ID collision, session overlap). Resolution: claude-todo authoritative for existence/metadata, TodoWrite authoritative for session progress. Warn-don't-fail strategy with conflict logging.",
+        "[COMPLETED 2025-12-15T21:42:52Z] Conflict resolution protocol complete with decision tree and logging format"
+      ],
+      "completedAt": "2025-12-15T21:42:52Z"
+    },
+    {
+      "id": "T233",
+      "title": "T227.6: Hook Integration Architecture",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-15T21:08:22Z",
+      "phase": "core",
+      "description": "Research Claude Code hook system for automatic sync triggers. Investigate: SessionStart hook for injection, SessionEnd/Stop hooks for extraction, PreToolUse/PostToolUse for live sync options.",
+      "labels": [
+        "architecture",
+        "hooks",
+        "research"
+      ],
+      "depends": [
+        "T227"
+      ],
+      "notes": [
+        "2025-12-15 21:43:20 UTC: Architecture: Hybrid hooks (command + prompt-based). Key insight: hooks cannot call TodoWrite directly - must instruct Claude via prompt hooks. SessionStart prepares inject file, prompt-hook tells Claude to call TodoWrite. SessionEnd prompts Claude to output state, command hook merges.",
+        "[COMPLETED 2025-12-15T21:43:20Z] Hook integration architecture designed with hybrid command/prompt-based approach"
+      ],
+      "completedAt": "2025-12-15T21:43:20Z"
+    },
+    {
+      "id": "T234",
+      "title": "Implement inject-todowrite.sh script",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T22:00:34Z",
+      "phase": "core",
+      "description": "Create script that transforms claude-todo focused tasks into TodoWrite JSON format with ID prefix embedding",
+      "labels": [
+        "integration",
+        "todowrite",
+        "v0.14.0"
+      ],
+      "depends": [
+        "T227"
+      ],
+      "completedAt": "2025-12-15T22:13:28Z",
+      "notes": [
+        "[COMPLETED 2025-12-15T22:13:28Z] Script implemented with tiered selection, ID prefix embedding, and session state tracking"
+      ]
+    },
+    {
+      "id": "T235",
+      "title": "Implement extract-todowrite.sh script",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T22:00:41Z",
+      "phase": "core",
+      "description": "Create script that parses TodoWrite state JSON, recovers task IDs, and merges changes back to claude-todo",
+      "labels": [
+        "integration",
+        "todowrite",
+        "v0.14.0"
+      ],
+      "depends": [
+        "T234"
+      ],
+      "completedAt": "2025-12-15T22:13:28Z",
+      "notes": [
+        "[COMPLETED 2025-12-15T22:13:28Z] Script implemented with ID parsing, diff detection, and merge logic"
+      ]
+    },
+    {
+      "id": "T236",
+      "title": "Implement sync-todowrite.sh orchestrator",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T22:00:42Z",
+      "phase": "core",
+      "description": "Create main sync command that orchestrates inject and extract with session state management",
+      "labels": [
+        "integration",
+        "todowrite",
+        "v0.14.0"
+      ],
+      "depends": [
+        "T234",
+        "T235"
+      ],
+      "completedAt": "2025-12-15T22:13:28Z",
+      "notes": [
+        "[COMPLETED 2025-12-15T22:13:28Z] Orchestrator implemented with inject/extract/status/clear subcommands"
+      ]
+    },
+    {
+      "id": "T237",
+      "title": "Fix TodoWrite extraction tests - remove all skips",
+      "status": "done",
+      "priority": "critical",
+      "createdAt": "2025-12-15T22:23:53Z",
+      "phase": "core",
+      "description": "Extraction tests are skipped due to incomplete complete-task.sh integration. Must enable all 13 skipped tests and ensure they pass. No skipped tests acceptable.",
+      "labels": [
+        "bug",
+        "testing",
+        "todowrite",
+        "v0.14.0"
+      ],
+      "completedAt": "2025-12-15T22:29:08Z",
+      "notes": [
+        "[COMPLETED 2025-12-15T22:29:08Z] All 21 TodoWrite sync tests now pass. Fixed: (1) log functions return code with --quiet, (2) test assertions for WARN vs warning, (3) added --quiet flag to tests needing clean JSON output"
+      ]
+    },
+    {
+      "id": "T238",
+      "title": "Investigate and fix pre-existing migrate/log test failures",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-15T22:23:54Z",
+      "phase": "core",
+      "description": "17 pre-existing test failures in migrate.bats (12) and log-viewing.bats (5). These predate TodoWrite work but need resolution for complete working system.",
+      "labels": [
+        "bug",
+        "testing"
+      ],
+      "completedAt": "2025-12-15T22:35:53Z",
+      "notes": [
+        "[COMPLETED 2025-12-15T22:35:53Z] Fixed all 17 pre-existing failures: (1) migrate.sh readonly variable error - added source guard, (2) add-task.sh log field names - changed operation→action, user→actor, task_id→taskId, (3) add-task.sh action value - changed 'create' to 'task_created'. All 850 tests now pass."
+      ]
+    },
+    {
+      "id": "T239",
+      "title": "Review TodoWrite sync implementation",
+      "status": "pending",
+      "priority": "medium",
+      "createdAt": "2025-12-16T01:54:13Z",
+      "description": "Created during TodoWrite session",
+      "labels": [
+        "session-created"
+      ]
+    },
+    {
+      "id": "T240",
+      "title": "Design project.phases schema structure for v2.2.0",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T04:40:21Z",
+      "phase": "core",
+      "description": "Design the unified project object with currentPhase and phases[slug] structure. Define fields: status (enum), startedAt, completedAt (ISO 8601 timestamps). Document in schema design doc.",
+      "labels": [
+        "design",
+        "feature-phase",
+        "schema"
+      ]
+    },
+    {
+      "id": "T241",
+      "title": "Update todo.schema.json to v2.2.0 with project object",
+      "status": "active",
+      "priority": "critical",
+      "createdAt": "2025-12-16T04:40:23Z",
+      "phase": "core",
+      "description": "Add project.currentPhase (string), project.phases[slug].status (enum: pending|active|done), project.phases[slug].startedAt, project.phases[slug].completedAt. Version bump to 2.2.0. Ensure backward compatibility.",
+      "labels": [
+        "feature-phase",
+        "schema"
+      ]
+    },
+    {
+      "id": "T242",
+      "title": "Update log.schema.json for phase action types",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T04:40:25Z",
+      "phase": "core",
+      "description": "Add new action types: phase_changed, phase_inherited, phase_completed, phase_auto_advanced. Update schema to v2.2.0 for consistency. Document action payload structures.",
+      "labels": [
+        "feature-phase",
+        "schema"
+      ]
+    },
+    {
+      "id": "T243",
+      "title": "Update archive.schema.json to v2.2.0",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T04:40:26Z",
+      "phase": "core",
+      "description": "Update archive schema to match todo.schema.json v2.2.0 structure. Ensure archived tasks preserve phase information. Update version to 2.2.0.",
+      "labels": [
+        "feature-phase",
+        "schema"
+      ]
+    },
+    {
+      "id": "T244",
+      "title": "Update config.schema.json with phase defaults",
+      "status": "pending",
+      "priority": "medium",
+      "createdAt": "2025-12-16T04:40:28Z",
+      "phase": "core",
+      "description": "Add config options for phase behavior: auto_advance (boolean), default_phase_sequence (array), phase_inheritance_strategy (enum: focus|active|explicit). Document in schema.",
+      "labels": [
+        "config",
+        "feature-phase",
+        "schema"
+      ]
+    },
+    {
+      "id": "T245",
+      "title": "Update todo.template.json with project object",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T04:40:30Z",
+      "phase": "core",
+      "description": "Add project.currentPhase (null), project.phases (empty object) to template. Include commented examples for 5-phase model: setup→development→testing→deployment→maintenance. Update version to 2.2.0.",
+      "labels": [
+        "feature-phase",
+        "schema",
+        "template"
+      ]
+    },
+    {
+      "id": "T246",
+      "title": "Create lib/phase-tracking.sh library",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T04:40:48Z",
+      "phase": "core",
+      "description": "Create new library with functions: get_current_phase(), set_current_phase(slug), get_phase_status(slug), set_phase_status(slug, status), advance_phase(), calculate_phase_completion(). Include validation and error handling.",
+      "labels": [
+        "feature-phase",
+        "library"
+      ],
+      "depends": [
+        "T241"
+      ]
+    },
+    {
+      "id": "T247",
+      "title": "Update lib/validation.sh for phase validation",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T04:40:50Z",
+      "phase": "core",
+      "description": "Add validate_phase_slug(), validate_phase_status(), validate_phase_structure() functions. Integrate with existing validation pipeline. Check phase status transitions are valid (pending→active→done only).",
+      "labels": [
+        "feature-phase",
+        "library",
+        "validation"
+      ],
+      "depends": [
+        "T241"
+      ]
+    },
+    {
+      "id": "T248",
+      "title": "Update lib/cache.sh with phase indexing",
+      "status": "pending",
+      "priority": "medium",
+      "createdAt": "2025-12-16T04:40:53Z",
+      "phase": "core",
+      "description": "Add phase-based cache indexes: tasks_by_phase, current_phase_tasks. Update rebuild_cache() to index project.phases. Optimize phase filtering queries.",
+      "labels": [
+        "feature-phase",
+        "library",
+        "performance"
+      ],
+      "depends": [
+        "T241"
+      ]
+    },
+    {
+      "id": "T249",
+      "title": "Update lib/logging.sh with phase action types",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T04:40:55Z",
+      "phase": "core",
+      "description": "Add logging functions: log_phase_change(), log_phase_inheritance(), log_phase_completion(), log_phase_auto_advance(). Include phase slug, old/new status, timestamp, reason in payload.",
+      "labels": [
+        "feature-phase",
+        "library",
+        "logging"
+      ],
+      "depends": [
+        "T242"
+      ]
+    },
+    {
+      "id": "T250",
+      "title": "Create scripts/phase.sh command",
+      "status": "done",
+      "priority": "critical",
+      "createdAt": "2025-12-16T04:40:56Z",
+      "phase": "core",
+      "description": "Implement phase command with subcommands: show (current phase details), set <phase> (change current phase), advance (move to next phase), list (all phases with status). Support --format json|text, --force, --dry-run options. Include validation and logging.",
+      "labels": [
+        "command",
+        "feature-phase"
+      ],
+      "depends": [
+        "T246",
+        "T247",
+        "T249"
+      ],
+      "completedAt": "2025-12-16T05:07:10Z",
+      "notes": [
+        "[COMPLETED 2025-12-16T05:07:10Z] Created scripts/phase.sh with show/set/start/complete/advance/list subcommands"
+      ]
+    },
+    {
+      "id": "T251",
+      "title": "Add phase command to CLI wrapper",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-16T04:40:58Z",
+      "phase": "core",
+      "description": "Update claude-todo main script to route 'phase' subcommand to scripts/phase.sh. Add to command list. Update help text. Add command aliases: 'ph' for phase.",
+      "labels": [
+        "cli",
+        "feature-phase"
+      ],
+      "depends": [
+        "T250"
+      ],
+      "completedAt": "2025-12-16T05:09:08Z",
+      "notes": [
+        "[COMPLETED 2025-12-16T05:09:08Z] Added phase command to install.sh CLI wrapper - CMD_MAP, CMD_DESC, and help display"
+      ]
+    },
+    {
+      "id": "T252",
+      "title": "Update scripts/phases.sh with current phase indicator",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-16T04:41:17Z",
+      "phase": "core",
+      "description": "Add current phase marker (★) in phases list output. Update draw_progress_bar() to highlight current phase. Add project.currentPhase to show/stats subcommands. Maintain backward compatibility.",
+      "labels": [
+        "command",
+        "enhancement",
+        "feature-phase"
+      ],
+      "depends": [
+        "T246"
+      ],
+      "completedAt": "2025-12-16T05:07:10Z",
+      "notes": [
+        "[COMPLETED 2025-12-16T05:07:10Z] Added currentPhase indicator using project.currentPhase"
+      ]
+    },
+    {
+      "id": "T253",
+      "title": "Update scripts/next.sh to use currentPhase",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-16T04:41:19Z",
+      "phase": "core",
+      "description": "Prioritize tasks in project.currentPhase when suggesting next task. Update scoring algorithm to boost current phase tasks. Add --current-phase-only flag. Document phase-aware suggestion logic.",
+      "labels": [
+        "command",
+        "enhancement",
+        "feature-phase"
+      ],
+      "depends": [
+        "T246"
+      ],
+      "completedAt": "2025-12-16T05:07:10Z",
+      "notes": [
+        "[COMPLETED 2025-12-16T05:07:10Z] Integrated currentPhase for task scoring (+10 phase bonus)"
+      ]
+    },
+    {
+      "id": "T254",
+      "title": "Update scripts/dash.sh to display current phase",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-16T04:41:20Z",
+      "phase": "core",
+      "description": "Add Current Phase section to dashboard. Show phase progress bar, task counts, completion percentage. Include phase status (active/pending/done). Update --compact mode to show phase in summary line.",
+      "labels": [
+        "command",
+        "enhancement",
+        "feature-phase"
+      ],
+      "depends": [
+        "T246"
+      ],
+      "completedAt": "2025-12-16T05:07:10Z",
+      "notes": [
+        "[COMPLETED 2025-12-16T05:07:10Z] Added current phase display in header and phase summary sections"
+      ]
+    },
+    {
+      "id": "T255",
+      "title": "Update scripts/add-task.sh for phase inheritance",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-16T04:41:22Z",
+      "phase": "core",
+      "description": "Inherit phase from focused task if no explicit --phase provided. Fall back to project.currentPhase if no focus. Log phase inheritance with reason. Add --no-inherit flag to disable.",
+      "labels": [
+        "command",
+        "enhancement",
+        "feature-phase"
+      ],
+      "depends": [
+        "T246",
+        "T249"
+      ],
+      "completedAt": "2025-12-16T05:07:11Z",
+      "notes": [
+        "[COMPLETED 2025-12-16T05:07:11Z] Added phase inheritance from project.currentPhase"
+      ]
+    },
+    {
+      "id": "T256",
+      "title": "Update scripts/focus.sh to track currentPhase",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-16T04:41:23Z",
+      "phase": "core",
+      "description": "When setting focus, update project.currentPhase to match focused task's phase. Add --no-phase-change flag to prevent auto-update. Log phase changes triggered by focus. Update focus show to display phase context.",
+      "labels": [
+        "command",
+        "enhancement",
+        "feature-phase"
+      ],
+      "depends": [
+        "T246",
+        "T249"
+      ],
+      "completedAt": "2025-12-16T05:09:09Z",
+      "notes": [
+        "[COMPLETED 2025-12-16T05:09:09Z] focus.sh now updates project.currentPhase on focus set, displays phase in focus show"
+      ]
+    },
+    {
+      "id": "T257",
+      "title": "Update scripts/inject-todowrite.sh with phase filtering",
+      "status": "pending",
+      "priority": "critical",
+      "createdAt": "2025-12-16T04:41:25Z",
+      "phase": "core",
+      "description": "Add flags: --phase <slug>, --phase-of-focus, --current-phase. Implement filter precedence: focused-only > explicit phase > phase-of-focus > current-phase > all. Store phase filter in state file. Update documentation.",
+      "labels": [
+        "feature-phase",
+        "sync",
+        "todowrite"
+      ],
+      "depends": [
+        "T246"
+      ]
+    },
+    {
+      "id": "T258",
+      "title": "Update scripts/extract-todowrite.sh with phase inheritance",
+      "status": "pending",
+      "priority": "critical",
+      "createdAt": "2025-12-16T04:41:45Z",
+      "phase": "core",
+      "description": "Implement phase inheritance for new tasks: inherit from focus task, fall back to most active phase. Add phase completion detection logic. Implement --auto-advance flag for automatic phase advancement. Log phase_inherited, phase_completed, phase_auto_advanced events.",
+      "labels": [
+        "feature-phase",
+        "sync",
+        "todowrite"
+      ],
+      "depends": [
+        "T246",
+        "T249"
+      ]
+    },
+    {
+      "id": "T259",
+      "title": "Update sync state file format for phase metadata",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T04:41:47Z",
+      "phase": "core",
+      "description": "Add phase_filter (slug|null), phase_filter_type (enum: focused-only|explicit|phase-of-focus|current-phase|all), focus_phase (slug|null) to sync state. Update sync status command to display phase context. Maintain backward compatibility.",
+      "labels": [
+        "feature-phase",
+        "sync",
+        "todowrite"
+      ],
+      "depends": [
+        "T257",
+        "T258"
+      ]
+    },
+    {
+      "id": "T260",
+      "title": "Implement migrate_todo_to_2_2_0() function",
+      "status": "pending",
+      "priority": "critical",
+      "createdAt": "2025-12-16T04:41:49Z",
+      "phase": "core",
+      "description": "Create migration function in lib/migration.sh. Add project object with currentPhase=null, phases={}. Calculate phase status from task completion. Auto-detect phase slugs from existing tasks. Preserve all existing data. Create pre-migration backup.",
+      "labels": [
+        "feature-phase",
+        "migration"
+      ],
+      "depends": [
+        "T241"
+      ]
+    },
+    {
+      "id": "T261",
+      "title": "Add version detection and auto-migration trigger",
+      "status": "pending",
+      "priority": "critical",
+      "createdAt": "2025-12-16T04:41:51Z",
+      "phase": "core",
+      "description": "Update lib/file-ops.sh with version check on todo.json load. Trigger migrate_todo_to_2_2_0() if version < 2.2.0. Add --skip-migration flag for advanced users. Log migration execution with before/after versions.",
+      "labels": [
+        "feature-phase",
+        "migration"
+      ],
+      "depends": [
+        "T260"
+      ]
+    },
+    {
+      "id": "T262",
+      "title": "Create migration rollback capability",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T04:41:53Z",
+      "phase": "core",
+      "description": "Implement rollback_migration() in lib/migration.sh. Restore from pre-migration backup. Add 'claude-todo migrate rollback' command. Include validation of backup integrity before rollback. Document rollback process.",
+      "labels": [
+        "feature-phase",
+        "migration",
+        "safety"
+      ],
+      "depends": [
+        "T260"
+      ]
+    },
+    {
+      "id": "T263",
+      "title": "Create tests/unit/test-phase-commands.bats",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T04:41:54Z",
+      "phase": "core",
+      "description": "Unit tests for phase.sh: show/set/advance/list subcommands (15 tests). Test validation, error handling, status transitions, logging. Test --force, --dry-run flags. Include edge cases: invalid slug, missing phase, concurrent access.",
+      "labels": [
+        "feature-phase",
+        "testing",
+        "unit"
+      ],
+      "depends": [
+        "T250"
+      ]
+    },
+    {
+      "id": "T264",
+      "title": "Create tests/unit/test-phase-tracking.bats",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T04:42:13Z",
+      "phase": "core",
+      "description": "Unit tests for lib/phase-tracking.sh: get/set current phase, get/set phase status, advance phase, calculate completion (15 tests). Test validation, error states, edge cases. Test phase status transitions and invalid states.",
+      "labels": [
+        "feature-phase",
+        "testing",
+        "unit"
+      ],
+      "depends": [
+        "T246"
+      ]
+    },
+    {
+      "id": "T265",
+      "title": "Create tests/integration/phase-sync.bats",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T04:42:15Z",
+      "phase": "core",
+      "description": "Integration tests for TodoWrite sync with phase filtering (9 tests). Test --phase, --phase-of-focus, --current-phase flags. Test phase inheritance on extract. Test phase completion detection. Test auto-advance behavior.",
+      "labels": [
+        "feature-phase",
+        "integration",
+        "sync",
+        "testing"
+      ],
+      "depends": [
+        "T257",
+        "T258"
+      ]
+    },
+    {
+      "id": "T266",
+      "title": "Create tests/migration/test-2.2.0-migration.bats",
+      "status": "pending",
+      "priority": "critical",
+      "createdAt": "2025-12-16T04:42:18Z",
+      "phase": "core",
+      "description": "Migration tests (12 tests): v2.1.x to v2.2.0 upgrade, backward compatibility, rollback, data preservation. Test with empty projects, projects with existing phases, large projects. Verify backup creation, checksum validation.",
+      "labels": [
+        "feature-phase",
+        "migration",
+        "testing"
+      ],
+      "depends": [
+        "T260",
+        "T261",
+        "T262"
+      ]
+    },
+    {
+      "id": "T267",
+      "title": "Create tests/edge-cases/phase-edge-cases.bats",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T04:42:20Z",
+      "phase": "core",
+      "description": "Edge case tests (12 tests): multiple active phases, delete phase with tasks, rename phase, concurrent phase access, phase with no tasks, invalid phase transitions. Test file locking, validation detection, recovery scenarios.",
+      "labels": [
+        "edge-cases",
+        "feature-phase",
+        "testing"
+      ],
+      "depends": [
+        "T250",
+        "T246"
+      ]
+    },
+    {
+      "id": "T268",
+      "title": "Update tests/integration/workflow.bats with phase operations",
+      "status": "pending",
+      "priority": "medium",
+      "createdAt": "2025-12-16T04:42:21Z",
+      "phase": "core",
+      "description": "Extend workflow tests to include phase lifecycle: set phase, add tasks to phase, advance phase, complete phase. Test integration with focus, next, dash commands. Verify phase-aware task suggestions (12 new tests).",
+      "labels": [
+        "feature-phase",
+        "integration",
+        "testing"
+      ],
+      "depends": [
+        "T250",
+        "T253",
+        "T254"
+      ]
+    },
+    {
+      "id": "T269",
+      "title": "Update tests/golden/schema-validation.bats for v2.2.0",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T04:42:23Z",
+      "phase": "core",
+      "description": "Update golden file tests for schema v2.2.0. Add test fixtures with project object. Test schema validation for all new fields. Verify required vs optional fields. Test invalid phase structures (7 new tests).",
+      "labels": [
+        "feature-phase",
+        "golden",
+        "testing"
+      ],
+      "depends": [
+        "T241",
+        "T242",
+        "T243"
+      ]
+    },
+    {
+      "id": "T270",
+      "title": "Create docs/commands/phase.md documentation",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T04:42:43Z",
+      "phase": "core",
+      "description": "Comprehensive phase command documentation (2500 words): command overview, subcommands (show/set/advance/list), options, examples, phase lifecycle, status transitions, integration with sync. Include troubleshooting, edge cases, best practices.",
+      "labels": [
+        "docs",
+        "feature-phase"
+      ],
+      "depends": [
+        "T250"
+      ]
+    },
+    {
+      "id": "T271",
+      "title": "Update docs/commands/phases.md for project-level tracking",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T04:42:45Z",
+      "phase": "core",
+      "description": "Update existing phases.md to explain difference between task phases (existing) and project phases (new). Document currentPhase concept, phase status tracking, integration with phase command. Add migration guide for existing users.",
+      "labels": [
+        "docs",
+        "feature-phase"
+      ],
+      "depends": [
+        "T250"
+      ]
+    },
+    {
+      "id": "T272",
+      "title": "Update docs/commands/sync.md with phase filtering",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T04:42:47Z",
+      "phase": "core",
+      "description": "Document new sync flags: --phase, --phase-of-focus, --current-phase. Explain filter precedence logic. Add examples for phase-based workflows. Document phase inheritance on extract. Update troubleshooting section with phase-related issues.",
+      "labels": [
+        "docs",
+        "feature-phase",
+        "sync"
+      ],
+      "depends": [
+        "T257",
+        "T258"
+      ]
+    },
+    {
+      "id": "T273",
+      "title": "Update docs/usage.md with phase workflow examples",
+      "status": "pending",
+      "priority": "medium",
+      "createdAt": "2025-12-16T04:42:49Z",
+      "phase": "core",
+      "description": "Add Phase Management section with complete workflow examples: setting up phases, working through phase lifecycle, using phase with focus/next/dash. Add best practices for phase-based project organization. Include 5-phase model recommendation.",
+      "labels": [
+        "docs",
+        "feature-phase"
+      ],
+      "depends": [
+        "T250",
+        "T252",
+        "T253",
+        "T254"
+      ]
+    },
+    {
+      "id": "T274",
+      "title": "Update docs/architecture/ARCHITECTURE.md with phase system",
+      "status": "pending",
+      "priority": "medium",
+      "createdAt": "2025-12-16T04:42:51Z",
+      "phase": "core",
+      "description": "Add Phase Tracking System section: project object design, phase status lifecycle, integration points with existing commands. Update data flow diagrams. Document phase-related validation rules and business logic.",
+      "labels": [
+        "architecture",
+        "docs",
+        "feature-phase"
+      ],
+      "depends": [
+        "T240",
+        "T241"
+      ]
+    },
+    {
+      "id": "T275",
+      "title": "Update docs/architecture/DATA-FLOWS.md with phase data flows",
+      "status": "pending",
+      "priority": "medium",
+      "createdAt": "2025-12-16T04:42:52Z",
+      "phase": "core",
+      "description": "Add data flow diagrams for: phase change workflow, phase inheritance on add-task, phase-filtered sync, auto-advance logic. Document state transitions, validation checkpoints, logging touchpoints.",
+      "labels": [
+        "architecture",
+        "docs",
+        "feature-phase"
+      ],
+      "depends": [
+        "T250",
+        "T255",
+        "T257",
+        "T258"
+      ]
+    },
+    {
+      "id": "T276",
+      "title": "Update docs/reference/schema.md for v2.2.0",
+      "status": "pending",
+      "priority": "medium",
+      "createdAt": "2025-12-16T04:43:14Z",
+      "phase": "core",
+      "description": "Document new schema fields: project object structure, phase status enum, timestamp formats. Update schema version table. Add migration notes from v2.1.x. Include validation rules for phase fields.",
+      "labels": [
+        "docs",
+        "feature-phase",
+        "reference"
+      ],
+      "depends": [
+        "T241",
+        "T242",
+        "T243"
+      ]
+    },
+    {
+      "id": "T277",
+      "title": "Update docs/QUICK-REFERENCE.md with phase commands",
+      "status": "pending",
+      "priority": "medium",
+      "createdAt": "2025-12-16T04:43:16Z",
+      "phase": "core",
+      "description": "Add phase command quick reference: phase show/set/advance/list. Add phase-related flags for sync, add-task, focus. Update command summary table. Add phase workflow quick start example.",
+      "labels": [
+        "docs",
+        "feature-phase",
+        "reference"
+      ],
+      "depends": [
+        "T250",
+        "T257"
+      ]
+    },
+    {
+      "id": "T278",
+      "title": "Update CLAUDE.md injection template for v2.2.0",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T04:43:17Z",
+      "phase": "core",
+      "description": "Update templates/CLAUDE-INJECTION.md with phase commands in Essential Commands section. Add phase workflow example. Document phase-aware task suggestions. Bump template version to match claude-todo v2.2.0.",
+      "labels": [
+        "docs",
+        "feature-phase",
+        "template"
+      ],
+      "depends": [
+        "T250"
+      ]
+    },
+    {
+      "id": "T279",
+      "title": "Update project CLAUDE.md with phase enhancement context",
+      "status": "pending",
+      "priority": "medium",
+      "createdAt": "2025-12-16T04:43:19Z",
+      "phase": "core",
+      "description": "Update this project's CLAUDE.md to document phase enhancement feature. Add to Key Files section: lib/phase-tracking.sh, scripts/phase.sh. Update Rules with phase-related validation. Document in architecture overview.",
+      "labels": [
+        "docs",
+        "feature-phase"
+      ],
+      "depends": [
+        "T246",
+        "T250"
+      ]
+    },
+    {
+      "id": "T280",
+      "title": "Create docs/migration/v2.2.0-migration-guide.md",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T04:43:21Z",
+      "phase": "core",
+      "description": "Comprehensive migration guide: what's new in v2.2.0, automatic migration process, manual migration steps (if needed), rollback procedure, troubleshooting. Include before/after examples. Document breaking changes (if any).",
+      "labels": [
+        "docs",
+        "feature-phase",
+        "migration"
+      ],
+      "depends": [
+        "T260",
+        "T261",
+        "T262"
+      ]
+    },
+    {
+      "id": "T281",
+      "title": "Run full test suite and fix failures",
+      "status": "pending",
+      "priority": "critical",
+      "createdAt": "2025-12-16T04:43:23Z",
+      "phase": "core",
+      "description": "Execute all test suites: unit, integration, edge cases, migration, golden files. Fix any failing tests. Verify 100% pass rate for new phase functionality. Generate test coverage report. Document any known issues.",
+      "labels": [
+        "feature-phase",
+        "quality",
+        "testing"
+      ],
+      "depends": [
+        "T263",
+        "T264",
+        "T265",
+        "T266",
+        "T267",
+        "T268",
+        "T269"
+      ]
+    },
+    {
+      "id": "T282",
+      "title": "Create end-to-end phase workflow integration test",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T04:43:42Z",
+      "phase": "core",
+      "description": "Comprehensive E2E test: init project → set phases → add tasks to phases → set current phase → focus tasks → advance phase → complete phase → verify logs. Test full lifecycle with all commands integrated. Verify audit trail completeness.",
+      "labels": [
+        "e2e",
+        "feature-phase",
+        "testing"
+      ],
+      "depends": [
+        "T281"
+      ]
+    },
+    {
+      "id": "T283",
+      "title": "Update install.sh for v2.2.0",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T04:43:44Z",
+      "phase": "core",
+      "description": "Update installer version to 2.2.0. Add lib/phase-tracking.sh to file list. Update README with phase feature highlight. Test installation on clean system. Verify all new scripts are copied correctly.",
+      "labels": [
+        "feature-phase",
+        "installation"
+      ],
+      "depends": [
+        "T246",
+        "T250"
+      ]
+    },
+    {
+      "id": "T284",
+      "title": "Create CHANGELOG entry for v2.2.0",
+      "status": "pending",
+      "priority": "medium",
+      "createdAt": "2025-12-16T04:43:46Z",
+      "phase": "core",
+      "description": "Document all changes in CHANGELOG.md: new phase command, project.phases schema, sync filtering, migration system. Categorize: Added, Changed, Fixed. Include upgrade instructions. Highlight breaking changes if any.",
+      "labels": [
+        "docs",
+        "feature-phase",
+        "release"
+      ],
+      "depends": [
+        "T240"
+      ]
+    },
+    {
+      "id": "T285",
+      "title": "Update README.md with phase feature showcase",
+      "status": "pending",
+      "priority": "medium",
+      "createdAt": "2025-12-16T04:43:48Z",
+      "phase": "core",
+      "description": "Add Phase Management section to README. Include key commands, usage example, benefits. Update feature list. Add to table of contents. Update version badge to 2.2.0.",
+      "labels": [
+        "docs",
+        "feature-phase"
+      ],
+      "depends": [
+        "T250"
+      ]
+    },
+    {
+      "id": "T286",
+      "title": "Performance testing for phase operations",
+      "status": "pending",
+      "priority": "medium",
+      "createdAt": "2025-12-16T04:43:51Z",
+      "phase": "core",
+      "description": "Test phase command performance with large projects (1000+ tasks, 10+ phases). Benchmark phase filtering in sync. Test cache effectiveness for phase queries. Document performance characteristics. Identify optimization opportunities.",
+      "labels": [
+        "feature-phase",
+        "performance",
+        "testing"
+      ],
+      "depends": [
+        "T248",
+        "T250",
+        "T257"
+      ]
+    },
+    {
+      "id": "T287",
+      "title": "Review and validate all documentation",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T04:43:53Z",
+      "phase": "core",
+      "description": "Comprehensive documentation review: check for consistency, accuracy, completeness. Verify all examples work. Check cross-references between docs. Proofread for clarity. Ensure phase terminology is consistent throughout.",
+      "labels": [
+        "docs",
+        "feature-phase",
+        "quality"
+      ],
+      "depends": [
+        "T270",
+        "T271",
+        "T272",
+        "T273",
+        "T274",
+        "T275",
+        "T276",
+        "T277",
+        "T278",
+        "T279",
+        "T280"
+      ]
+    },
+    {
+      "id": "T288",
+      "title": "Final release preparation for v2.2.0",
+      "status": "pending",
+      "priority": "critical",
+      "createdAt": "2025-12-16T04:44:01Z",
+      "phase": "core",
+      "description": "Pre-release checklist: all tests passing, documentation complete, CHANGELOG finalized, version numbers updated across all files, install.sh tested, migration tested on real projects. Create release tag. Prepare release notes.",
+      "labels": [
+        "feature-phase",
+        "release"
+      ],
+      "depends": [
+        "T282",
+        "T283",
+        "T284",
+        "T285",
+        "T287"
+      ]
+    },
+    {
+      "id": "T289",
+      "title": "Investigate _meta.version field usage - verify if needed in template",
+      "status": "pending",
+      "priority": "high",
+      "createdAt": "2025-12-16T04:55:14Z",
+      "description": "During T245, removed _meta.version from todo.template.json. Need to verify: 1) Is it used in validation.sh or other scripts? 2) Is it referenced in schemas? 3) Should it be restored? Check grep for _meta.version usage across codebase.",
+      "labels": [
+        "feature-phase",
+        "investigation"
+      ]
+    }
+  ],
+  "phases": {
+    "setup": {
+      "order": 1,
+      "name": "Setup & Foundation"
+    },
+    "core": {
+      "order": 2,
+      "name": "Core Development"
+    },
+    "polish": {
+      "order": 3,
+      "name": "Polish & Launch"
+    }
+  },
+  "labels": {}
+}

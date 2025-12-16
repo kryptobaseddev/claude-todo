@@ -250,6 +250,15 @@ list_phases() {
   local phase_stats
   phase_stats=$(get_phase_stats)
 
+  # Get current phase from focus.currentPhase (fallback to project.currentPhase for v2.2+)
+  local current_phase
+  current_phase=$(jq -r '
+    if (.focus.currentPhase != null) then .focus.currentPhase
+    elif (.project | type == "object" and .project.currentPhase != null) then .project.currentPhase
+    else empty
+    end
+  ' "$TODO_FILE")
+
   local count
   count=$(echo "$phase_stats" | jq 'length')
 
@@ -295,7 +304,7 @@ list_phases() {
 
   # List each phase
   echo "$phase_stats" | jq -c '.[]' | while IFS= read -r phase; do
-    local slug name total done percent status bar color
+    local slug name total done percent status bar color indicator
 
     slug=$(echo "$phase" | jq -r '.slug')
     name=$(echo "$phase" | jq -r '.name')
@@ -312,7 +321,14 @@ list_phases() {
     bar=$(draw_progress_bar "$percent" 20)
     color=$(get_phase_color "$percent")
 
-    printf "%-12s %-20s %6d %6d %5d%%  ${color}%-20s${NC}  %s\n" \
+    # Add current phase indicator
+    if [[ -n "$current_phase" && "$slug" == "$current_phase" ]]; then
+      indicator="${YELLOW}★${NC} "
+    else
+      indicator="  "
+    fi
+
+    printf "${indicator}%-12s %-20s %6d %6d %5d%%  ${color}%-20s${NC}  %s\n" \
       "$slug" "$name" "$done" "$total" "$percent" "$bar" "$status"
   done
 
@@ -330,6 +346,12 @@ list_phases() {
   fi
 
   echo -e "${BOLD}Overall Progress:${NC} $total_done/$total_tasks tasks ($overall_percent%)"
+
+  # Add legend if current phase is set
+  if [[ -n "$current_phase" ]]; then
+    echo ""
+    echo -e "${YELLOW}★${NC} = Current project phase"
+  fi
 }
 
 # Show tasks in specific phase

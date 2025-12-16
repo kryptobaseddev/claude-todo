@@ -40,13 +40,68 @@ teardown() {
 # =============================================================================
 
 create_sync_test_fixture() {
+    # Create config with phase definitions
+    cat > "$CONFIG_FILE" << 'CONFIGEOF'
+{
+  "version": "2.0.0",
+  "validation": {
+    "strictMode": false,
+    "requireDescription": false
+  },
+  "defaults": {
+    "priority": "medium",
+    "phase": "core"
+  },
+  "phases": {
+    "setup": {
+      "order": 1,
+      "name": "Setup",
+      "description": "Initial setup phase"
+    },
+    "core": {
+      "order": 2,
+      "name": "Core",
+      "description": "Core development phase"
+    },
+    "polish": {
+      "order": 3,
+      "name": "Polish",
+      "description": "Final polish phase"
+    }
+  }
+}
+CONFIGEOF
+
     cat > "$TODO_FILE" << 'EOF'
 {
-  "version": "2.1.0",
-  "project": "todowrite-sync-test",
+  "version": "2.2.0",
+  "project": {
+    "name": "todowrite-sync-test",
+    "currentPhase": "core",
+    "phases": {
+      "setup": {
+        "order": 1,
+        "name": "Setup",
+        "status": "completed",
+        "startedAt": "2025-12-14T09:00:00Z",
+        "completedAt": "2025-12-14T12:00:00Z"
+      },
+      "core": {
+        "order": 2,
+        "name": "Core",
+        "status": "active",
+        "startedAt": "2025-12-14T12:00:00Z"
+      },
+      "polish": {
+        "order": 3,
+        "name": "Polish",
+        "status": "pending"
+      }
+    }
+  },
   "_meta": {
-    "version": "2.1.0",
     "checksum": "test123",
+    "configVersion": "2.0.0",
     "activeSession": "session_test_001"
   },
   "lastUpdated": "2025-12-15T14:00:00Z",
@@ -66,6 +121,7 @@ create_sync_test_fixture() {
       "description": "This task is blocked by something",
       "status": "blocked",
       "priority": "medium",
+      "phase": "core",
       "blockedBy": "Waiting for API access",
       "createdAt": "2025-12-15T10:00:00Z"
     },
@@ -75,6 +131,7 @@ create_sync_test_fixture() {
       "description": "Low priority pending task",
       "status": "pending",
       "priority": "low",
+      "phase": "core",
       "createdAt": "2025-12-15T10:00:00Z"
     },
     {
@@ -83,13 +140,17 @@ create_sync_test_fixture() {
       "description": "This was already done",
       "status": "done",
       "priority": "medium",
+      "phase": "setup",
       "createdAt": "2025-12-14T10:00:00Z",
       "completedAt": "2025-12-14T15:00:00Z"
     }
   ],
   "focus": {
-    "taskId": "T001",
-    "setAt": "2025-12-15T14:00:00Z"
+    "currentTask": "T001",
+    "currentPhase": "core",
+    "blockedUntil": null,
+    "sessionNote": null,
+    "nextAction": null
   }
 }
 EOF
@@ -213,6 +274,28 @@ EOF
     assert_success
 }
 
+@test "inject: includes phase metadata in state file" {
+    create_sync_test_fixture
+
+    run bash "$INJECT_SCRIPT" --quiet
+    assert_success
+
+    # Should have task_metadata field
+    jq -e '.task_metadata' "$SYNC_STATE_FILE"
+    assert_success
+
+    # Should include phase for T001
+    local phase
+    phase=$(jq -r '.task_metadata.T001.phase' "$SYNC_STATE_FILE")
+    [[ "$phase" == "core" ]]
+
+    # Should include priority and status
+    jq -e '.task_metadata.T001.priority' "$SYNC_STATE_FILE"
+    assert_success
+    jq -e '.task_metadata.T001.status' "$SYNC_STATE_FILE"
+    assert_success
+}
+
 # =============================================================================
 # EXTRACTION TESTS (TodoWrite state → claude-todo)
 # =============================================================================
@@ -248,7 +331,7 @@ EOF
 }
 
 @test "extract: creates new tasks for items without ID prefix" {
-    
+
     create_sync_test_fixture
     create_todowrite_state_fixture
 
@@ -263,6 +346,27 @@ EOF
     # New task should have session-created label
     jq -e '.tasks[] | select(.title | contains("New task created")) | .labels | contains(["session-created"])' "$TODO_FILE"
     assert_success
+}
+
+@test "extract: new tasks inherit phase from focused task metadata" {
+    create_sync_test_fixture
+    create_todowrite_state_fixture
+
+    # Inject to create state with metadata
+    bash "$INJECT_SCRIPT" > /dev/null
+
+    # Verify state file has phase metadata for focused task (T001)
+    local focused_phase
+    focused_phase=$(jq -r '.task_metadata.T001.phase' "$SYNC_STATE_FILE")
+    [[ "$focused_phase" == "core" ]]
+
+    # Extract with new task
+    bash "$EXTRACT_SCRIPT" "${TEST_TEMP_DIR}/todowrite-state.json" > /dev/null
+
+    # New task should inherit phase from focused task (T001 is in "core" phase)
+    local new_task_phase
+    new_task_phase=$(jq -r '.tasks[] | select(.title | contains("New task created")) | .phase' "$TODO_FILE")
+    [[ "$new_task_phase" == "core" ]]
 }
 
 @test "extract: updates progress for in_progress items" {

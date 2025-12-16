@@ -324,3 +324,109 @@ cache_get_metadata() {
     echo '{"error": "No cache metadata found"}'
   fi
 }
+
+#####################################################################
+# Phase Indexing & Statistics
+#####################################################################
+
+# Build phase task index (tasks grouped by phase)
+# Args: $1 = todo file path
+# Returns: JSON object {phase_slug: [task_ids]}
+build_phase_index() {
+    local todo_file="${1:-${TODO_FILE:-.claude/todo.json}}"
+
+    jq '
+        .tasks |
+        group_by(.phase // "no-phase") |
+        map({
+            key: (.[0].phase // "no-phase"),
+            value: [.[] | .id]
+        }) |
+        from_entries
+    ' "$todo_file"
+}
+
+# Get tasks for specific phase from cache or build
+# Args: $1 = phase slug, $2 = todo file path
+# Returns: JSON array of task IDs
+get_phase_tasks() {
+    local phase="$1"
+    local todo_file="${2:-${TODO_FILE:-.claude/todo.json}}"
+
+    jq --arg phase "$phase" '
+        [.tasks[] | select(.phase == $phase) | .id]
+    ' "$todo_file"
+}
+
+# Get task count by phase
+# Args: $1 = todo file path
+# Returns: JSON object {phase_slug: count}
+count_tasks_by_phase() {
+    local todo_file="${1:-${TODO_FILE:-.claude/todo.json}}"
+
+    jq '
+        .tasks |
+        group_by(.phase // "no-phase") |
+        map({
+            key: (.[0].phase // "no-phase"),
+            value: length
+        }) |
+        from_entries
+    ' "$todo_file"
+}
+
+# Get phase statistics (tasks by status within phase)
+# Args: $1 = phase slug, $2 = todo file path
+# Returns: JSON object {pending: n, active: n, blocked: n, done: n}
+get_phase_stats() {
+    local phase="$1"
+    local todo_file="${2:-${TODO_FILE:-.claude/todo.json}}"
+
+    jq --arg phase "$phase" '
+        .tasks |
+        map(select(.phase == $phase)) |
+        {
+            pending: [.[] | select(.status == "pending")] | length,
+            active: [.[] | select(.status == "active")] | length,
+            blocked: [.[] | select(.status == "blocked")] | length,
+            done: [.[] | select(.status == "done")] | length,
+            total: length
+        }
+    ' "$todo_file"
+}
+
+# Get current phase progress percentage
+# Args: $1 = phase slug, $2 = todo file path
+# Returns: percentage (0-100)
+get_phase_progress() {
+    local phase="$1"
+    local todo_file="${2:-${TODO_FILE:-.claude/todo.json}}"
+
+    jq -r --arg phase "$phase" '
+        .tasks |
+        map(select(.phase == $phase)) |
+        if length == 0 then 0
+        else
+            ([.[] | select(.status == "done")] | length) * 100 / length | floor
+        end
+    ' "$todo_file"
+}
+
+# Invalidate phase cache (called when tasks change)
+# Args: $1 = cache file path
+invalidate_phase_cache() {
+    local cache_file="${1:-$CACHE_PHASES_INDEX}"
+
+    if [[ -f "$cache_file" ]]; then
+        # Force cache rebuild by invalidating all caches
+        cache_invalidate
+    fi
+}
+
+# Export all public functions
+export -f build_phase_index
+export -f get_phase_tasks
+export -f count_tasks_by_phase
+export -f get_phase_stats
+export -f get_phase_progress
+export -f invalidate_phase_cache

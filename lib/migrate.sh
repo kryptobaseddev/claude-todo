@@ -20,7 +20,7 @@ source "$SCRIPT_DIR/logging.sh"
 # ============================================================================
 
 # Current schema versions (single source of truth)
-SCHEMA_VERSION_TODO="2.1.0"
+SCHEMA_VERSION_TODO="2.2.0"
 SCHEMA_VERSION_CONFIG="2.1.0"
 SCHEMA_VERSION_ARCHIVE="2.1.0"
 SCHEMA_VERSION_LOG="2.1.0"
@@ -131,6 +131,19 @@ detect_file_version() {
             version="${BASH_REMATCH[1]}.0"
         else
             version="1.0.0"  # Assume oldest version if no version info
+        fi
+    fi
+
+    # Special case: Check if file has string project field (pre-v2.2.0 format)
+    # This overrides the version field if detected
+    if [[ "$version" == "2.1.0" ]] || [[ "$version" == "2.0.0" ]]; then
+        local project_type
+        project_type=$(jq -r 'if has("project") then (.project | type) else "null" end' "$file" 2>/dev/null)
+
+        if [[ "$project_type" == "string" ]]; then
+            # Old format with string project -> needs v2.2.0 migration
+            echo "2.1.0"
+            return 0
         fi
     fi
 
@@ -407,6 +420,110 @@ migrate_config_to_2_1_0() {
 #     update_version_field "$file" "2.1.0"
 # }
 
+# Migration from 2.1.0 to 2.2.0 for todo.json
+# Converts project field from string to object with phases
+migrate_todo_to_2_2_0() {
+    local file="$1"
+    local temp_file="${file}.tmp"
+
+    # Check if project is already an object (idempotent)
+    local project_type
+    project_type=$(jq -r '.project | type' "$file" 2>/dev/null)
+
+    if [[ "$project_type" == "object" ]]; then
+        # Already migrated, just ensure phases have required fields and update version
+        jq '
+            # Ensure all phases have startedAt and completedAt fields
+            .project.phases |= (
+                to_entries | map(
+                    .value |= (
+                        if .startedAt == null then .startedAt = null else . end |
+                        if .completedAt == null then .completedAt = null else . end
+                    )
+                ) | from_entries
+            )
+        ' "$file" > "$temp_file" || {
+            echo "ERROR: Failed to update existing phase fields" >&2
+            rm -f "$temp_file"
+            return 1
+        }
+    else
+        # Migrate from string to object
+        jq '
+            # Convert project string to object with phases
+            if (.project | type) == "string" then
+                .project = {
+                    "name": .project,
+                    "currentPhase": null,
+                    "phases": {
+                        "setup": {
+                            "order": 1,
+                            "name": "Setup",
+                            "description": "Initial setup and configuration",
+                            "status": "pending",
+                            "startedAt": null,
+                            "completedAt": null
+                        },
+                        "core": {
+                            "order": 2,
+                            "name": "Core",
+                            "description": "Core feature implementation",
+                            "status": "pending",
+                            "startedAt": null,
+                            "completedAt": null
+                        },
+                        "polish": {
+                            "order": 3,
+                            "name": "Polish",
+                            "description": "Refinement and testing",
+                            "status": "pending",
+                            "startedAt": null,
+                            "completedAt": null
+                        },
+                        "release": {
+                            "order": 4,
+                            "name": "Release",
+                            "description": "Release preparation",
+                            "status": "pending",
+                            "startedAt": null,
+                            "completedAt": null
+                        }
+                    }
+                }
+            else . end
+        ' "$file" > "$temp_file" || {
+            echo "ERROR: Failed to migrate project field" >&2
+            rm -f "$temp_file"
+            return 1
+        }
+    fi
+
+    # Move temp file to original
+    mv "$temp_file" "$file" || {
+        echo "ERROR: Failed to update file" >&2
+        return 1
+    }
+
+    # Update version fields
+    update_version_field "$file" "2.2.0" || return 1
+
+    # Update _meta.version to match
+    jq '._meta.version = "2.2.0"' "$file" > "$temp_file" || {
+        echo "ERROR: Failed to update _meta.version" >&2
+        rm -f "$temp_file"
+        return 1
+    }
+
+    mv "$temp_file" "$file"
+
+    # Log migration if log_migration is available
+    if declare -f log_migration >/dev/null 2>&1; then
+        log_migration "$file" "todo" "2.1.0" "2.2.0"
+    fi
+
+    return 0
+}
+
 # ============================================================================
 # BACKWARD COMPATIBILITY CHECKS
 # ============================================================================
@@ -588,12 +705,22 @@ show_migration_status() {
         local status
         check_compatibility "$file" "$file_type" && status=$? || status=$?
 
+        # Special check for v2.2.0 migration (string project → object)
+        local needs_v2_2_migration=""
+        if [[ "$file_type" == "todo" ]]; then
+            local project_type
+            project_type=$(jq -r 'if has("project") then (.project | type) else "null" end' "$file" 2>/dev/null)
+            if [[ "$project_type" == "string" ]]; then
+                needs_v2_2_migration=" (project field: string → object)"
+            fi
+        fi
+
         case $status in
             0)
                 echo "✓ $file_type: v$current_version (compatible)"
                 ;;
             1)
-                echo "⚠ $file_type: v$current_version (migration needed → v$expected_version)"
+                echo "⚠ $file_type: v$current_version (migration needed → v$expected_version)$needs_v2_2_migration"
                 ;;
             2)
                 echo "✗ $file_type: v$current_version (incompatible with v$expected_version)"

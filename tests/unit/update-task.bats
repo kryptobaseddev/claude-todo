@@ -74,7 +74,7 @@ teardown() {
 
 @test "update task phase" {
     create_independent_tasks
-    jq '.phases = {"testing": {"name": "Testing"}}' "$TODO_FILE" > "${TODO_FILE}.tmp" && mv "${TODO_FILE}.tmp" "$TODO_FILE"
+    jq '.project.phases = {"testing": {"name": "Testing", "description": "Testing phase", "order": 1}}' "$TODO_FILE" > "${TODO_FILE}.tmp" && mv "${TODO_FILE}.tmp" "$TODO_FILE"
 
     run bash "$UPDATE_SCRIPT" T001 --phase testing
     assert_success

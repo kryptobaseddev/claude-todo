@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "claude-todo-archive-schema-v2.1",
+  "$id": "claude-todo-archive-schema-v2.2",
   "title": "CLAUDE-TODO Archive Schema",
   "description": "Storage for completed tasks. Archived tasks are IMMUTABLE - never modify after archival.",
   "type": "object",
@@ -48,6 +48,34 @@
       "type": "array",
       "description": "Completed tasks moved from todo.json. IMMUTABLE after archival.",
       "items": { "$ref": "#/definitions/archivedTask" }
+    },
+    "phaseSummary": {
+      "type": "object",
+      "description": "Aggregated phase completion statistics from archived tasks.",
+      "patternProperties": {
+        "^[a-z][a-z0-9-]*$": {
+          "type": "object",
+          "properties": {
+            "totalTasks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Total tasks archived from this phase."
+            },
+            "firstCompleted": {
+              "type": ["string", "null"],
+              "format": "date-time",
+              "description": "Earliest completion timestamp in this phase."
+            },
+            "lastCompleted": {
+              "type": ["string", "null"],
+              "format": "date-time",
+              "description": "Latest completion timestamp in this phase."
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     },
     "statistics": {
       "type": "object",

@@ -407,6 +407,7 @@ declare -A CMD_MAP=(
   [deps]="deps-command.sh"
   [blockers]="blockers-command.sh"
   [phases]="phases.sh"
+  [phase]="phase.sh"
   [exists]="exists.sh"
   [history]="history.sh"
   [show]="show.sh"
@@ -437,6 +438,7 @@ declare -A CMD_DESC=(
   [deps]="Visualize task dependency graphs and relationships"
   [blockers]="Analyze blocked tasks and dependency chains"
   [phases]="Manage project phases (list/show/stats)"
+  [phase]="Manage project phase lifecycle (show/set/start/complete/advance)"
   [exists]="Check if a task ID exists"
   [history]="Show completion history and timeline analytics"
   [show]="Show detailed view of a single task"
@@ -593,7 +595,7 @@ show_main_help() {
   echo "       claude-todo help <command>    Show detailed command help"
   echo ""
   echo "Commands:"
-  for cmd in init add update complete list focus session archive validate stats backup restore export migrate migrate-backups log dash next labels deps blockers phases exists history show; do
+  for cmd in init add update complete list focus session archive validate stats backup restore export migrate migrate-backups log dash next labels deps blockers phases phase exists history show; do
     printf "  %-14s %s\n" "$cmd" "${CMD_DESC[$cmd]}"
   done
   echo "  version        Show version"

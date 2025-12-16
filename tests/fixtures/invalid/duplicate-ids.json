@@ -1,16 +1,20 @@
 {
   "$schema": "../../schemas/todo.schema.json",
-  "version": "0.1.0",
-  "project": "test-project",
+  "version": "2.2.0",
+  "project": {
+    "name": "test-project",
+    "phases": {}
+  },
   "lastUpdated": "2025-12-05T12:00:00Z",
   "_meta": {
     "checksum": "abc123def4567890",
-    "configVersion": "0.1.0",
+    "configVersion": "0.12.0",
     "lastSessionId": null,
     "activeSession": null
   },
   "focus": {
     "currentTask": null,
+    "currentPhase": null,
     "blockedUntil": null,
     "sessionNote": null,
     "nextAction": null

@@ -135,6 +135,14 @@ handle_status() {
     echo "Injected at:   $injected_at"
     echo "Task count:    $task_count"
     echo "Task IDs:      $task_ids"
+
+    # Show phase distribution if metadata exists
+    if jq -e '.task_metadata' "$STATE_FILE" >/dev/null 2>&1; then
+        local phases
+        phases=$(jq -r '[.task_metadata[] | .phase // "unknown"] | group_by(.) | map("\(.[0]): \(length)") | join(", ")' "$STATE_FILE")
+        echo "Phases:        $phases"
+    fi
+
     echo ""
     echo "State file:    $STATE_FILE"
 }

@@ -62,6 +62,10 @@ if [[ -z "${VALID_ACTIONS:-}" ]]; then
         "validation_run"
         "checksum_updated"
         "error_occurred"
+        "phase_changed"
+        "phase_started"
+        "phase_completed"
+        "phase_rollback"
     )
 fi
 
@@ -590,6 +594,99 @@ log_error() {
 }
 
 # ============================================================================
+# PHASE LOGGING FUNCTIONS
+# ============================================================================
+
+# Log phase change (setting current phase)
+# Args: $1 = old phase, $2 = new phase, $3 = session_id (optional)
+log_phase_changed() {
+    local old_phase="$1"
+    local new_phase="$2"
+    local session_id="${3:-null}"
+    local before
+    local after
+    local details
+
+    before=$(jq -n --arg phase "$old_phase" '{currentPhase: $phase}')
+    after=$(jq -n --arg phase "$new_phase" '{currentPhase: $phase}')
+    details=$(jq -n --arg from "$old_phase" --arg to "$new_phase" '{transitionType: "set", fromPhase: $from, toPhase: $to}')
+
+    log_operation "phase_changed" "human" "null" "$before" "$after" "$details" "$session_id"
+}
+
+# Log phase started (pending → active)
+# Args: $1 = phase slug, $2 = session_id (optional)
+log_phase_started() {
+    local phase="$1"
+    local session_id="${2:-null}"
+    local before
+    local after
+    local details
+    local timestamp
+
+    timestamp=$(get_timestamp)
+    before=$(jq -n --arg slug "$phase" '{phase: {slug: $slug, status: "pending"}}')
+    after=$(jq -n --arg slug "$phase" --arg ts "$timestamp" '{phase: {slug: $slug, status: "active", startedAt: $ts}}')
+    details=$(jq -n --arg slug "$phase" '{phase: $slug, action: "start"}')
+
+    log_operation "phase_started" "human" "null" "$before" "$after" "$details" "$session_id"
+}
+
+# Log phase completed (active → completed)
+# Args: $1 = phase slug, $2 = started_at timestamp, $3 = session_id (optional)
+log_phase_completed() {
+    local phase="$1"
+    local started_at="${2:-null}"
+    local session_id="${3:-null}"
+    local before
+    local after
+    local details
+    local timestamp
+    local duration_days
+
+    timestamp=$(get_timestamp)
+    before=$(jq -n --arg slug "$phase" --arg started "$started_at" '{phase: {slug: $slug, status: "active", startedAt: $started}}')
+    after=$(jq -n --arg slug "$phase" --arg started "$started_at" --arg completed "$timestamp" '{phase: {slug: $slug, status: "completed", startedAt: $started, completedAt: $completed}}')
+
+    # Calculate duration if possible
+    if [[ "$started_at" != "null" && -n "$started_at" ]]; then
+        # Simple day calculation
+        local start_epoch end_epoch
+        start_epoch=$(date -d "$started_at" +%s 2>/dev/null || echo 0)
+        end_epoch=$(date +%s)
+        duration_days=$(( (end_epoch - start_epoch) / 86400 ))
+        details=$(jq -n --arg slug "$phase" --argjson days "$duration_days" '{phase: $slug, action: "complete", durationDays: $days}')
+    else
+        details=$(jq -n --arg slug "$phase" '{phase: $slug, action: "complete"}')
+    fi
+
+    log_operation "phase_completed" "human" "null" "$before" "$after" "$details" "$session_id"
+}
+
+# Log phase rollback
+# Args: $1 = from phase, $2 = to phase, $3 = reason (optional), $4 = session_id (optional)
+log_phase_rollback() {
+    local from_phase="$1"
+    local to_phase="$2"
+    local reason="${3:-}"
+    local session_id="${4:-null}"
+    local before
+    local after
+    local details
+
+    before=$(jq -n --arg phase "$from_phase" '{currentPhase: $phase}')
+    after=$(jq -n --arg phase "$to_phase" '{currentPhase: $phase}')
+
+    if [[ -n "$reason" ]]; then
+        details=$(jq -n --arg from "$from_phase" --arg to "$to_phase" --arg reason "$reason" '{transitionType: "rollback", fromPhase: $from, toPhase: $to, reason: $reason}')
+    else
+        details=$(jq -n --arg from "$from_phase" --arg to "$to_phase" '{transitionType: "rollback", fromPhase: $from, toPhase: $to}')
+    fi
+
+    log_operation "phase_rollback" "human" "null" "$before" "$after" "$details" "$session_id"
+}
+
+# ============================================================================
 # LOG MIGRATION
 # ============================================================================
 
@@ -757,5 +854,9 @@ export -f log_session_start
 export -f log_session_end
 export -f log_validation
 export -f log_error
+export -f log_phase_changed
+export -f log_phase_started
+export -f log_phase_completed
+export -f log_phase_rollback
 export -f handle_log_error
 export -f migrate_log_entries

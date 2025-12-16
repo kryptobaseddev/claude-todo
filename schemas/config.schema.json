@@ -130,6 +130,35 @@
           "type": "boolean",
           "default": true,
           "description": "Detect and block circular dependencies."
+        },
+        "phaseValidation": {
+          "type": "object",
+          "description": "Phase validation and enforcement settings.",
+          "additionalProperties": false,
+          "properties": {
+            "enforcePhaseOrder": {
+              "type": "boolean",
+              "default": false,
+              "description": "Warn when activating tasks outside current project phase."
+            },
+            "phaseAdvanceThreshold": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100,
+              "default": 90,
+              "description": "Percentage of tasks that must be completed to advance phase."
+            },
+            "blockOnCriticalTasks": {
+              "type": "boolean",
+              "default": true,
+              "description": "Prevent phase advancement if critical tasks remain incomplete."
+            },
+            "warnPhaseContext": {
+              "type": "boolean",
+              "default": true,
+              "description": "Show warning when task phase differs from project phase."
+            }
+          }
         }
       }
     },

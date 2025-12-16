@@ -68,6 +68,7 @@ Options:
   -d, --description DESC    Detailed description
   -l, --labels LABELS       Comma-separated labels (e.g., bug,security)
   -P, --phase PHASE         Phase slug (must exist in phases)
+                            Default: project.currentPhase or config default
       --add-phase           Create new phase if it doesn't exist
       --files FILES         Comma-separated file paths
       --acceptance CRITERIA Comma-separated acceptance criteria
@@ -205,7 +206,7 @@ validate_phase() {
   # Check if phase exists in todo.json
   if [[ -f "$TODO_FILE" ]]; then
     local phase_exists
-    phase_exists=$(jq --arg phase "$phase" '.phases | has($phase)' "$TODO_FILE")
+    phase_exists=$(jq --arg phase "$phase" '(.project.phases // {}) | has($phase)' "$TODO_FILE")
     if [[ "$phase_exists" != "true" ]]; then
       # If --add-phase flag is set, we'll create it later
       if [[ "$ADD_PHASE" == "true" ]]; then
@@ -214,7 +215,7 @@ validate_phase() {
 
       # Get list of valid phases for error message
       local valid_phases
-      valid_phases=$(jq -r '.phases | keys | join(", ")' "$TODO_FILE")
+      valid_phases=$(jq -r '(.project.phases // {}) | keys | join(", ")' "$TODO_FILE")
 
       if [[ -n "$valid_phases" && "$valid_phases" != "null" ]]; then
         log_error "Phase '$phase' not found. Valid phases: $valid_phases. Use --add-phase to create new."
@@ -245,7 +246,7 @@ add_new_phase() {
 
   # Get next order number
   local next_order
-  next_order=$(jq '[.phases[].order // 0] | max + 1' "$TODO_FILE")
+  next_order=$(jq '[.project.phases[].order // 0] | max + 1' "$TODO_FILE")
   if [[ "$next_order" == "null" || -z "$next_order" ]]; then
     next_order=1
   fi
@@ -259,7 +260,7 @@ add_new_phase() {
   updated_content=$(jq --arg phase "$phase" \
                        --arg name "$phase_name" \
                        --argjson order "$next_order" \
-                       '.phases[$phase] = {name: $name, order: $order}' \
+                       '.project.phases[$phase] = {name: $name, order: $order}' \
                        "$TODO_FILE")
 
   # Save using atomic write
@@ -460,6 +461,29 @@ fi
 # Normalize labels to remove duplicates
 if [[ -n "$LABELS" ]]; then
   LABELS=$(normalize_labels "$LABELS")
+fi
+
+# Phase inheritance: If no --phase specified, inherit from project.currentPhase
+PHASE_SOURCE=""
+if [[ -z "$PHASE" ]]; then
+  # Try project.currentPhase first (v2.2.0+ feature)
+  if [[ -f "$TODO_FILE" ]]; then
+    PHASE=$(jq -r '.project.currentPhase // empty' "$TODO_FILE" 2>/dev/null)
+    if [[ -n "$PHASE" && "$PHASE" != "null" ]]; then
+      PHASE_SOURCE="project"
+      log_info "Using project phase: $PHASE"
+    fi
+  fi
+
+  # Fallback to config default if project phase not set
+  if [[ -z "$PHASE" || "$PHASE" == "null" ]]; then
+    PHASE=$(jq -r '.defaults.phase // empty' "$CONFIG_FILE" 2>/dev/null)
+    if [[ -n "$PHASE" && "$PHASE" != "null" ]]; then
+      PHASE_SOURCE="config"
+    else
+      PHASE=""  # Clear if only got "null" string
+    fi
+  fi
 fi
 
 # Validate inputs

@@ -80,6 +80,7 @@ _setup_scripts() {
     export MIGRATE_SCRIPT="${SCRIPTS_DIR}/migrate.sh"
     export BACKUP_SCRIPT="${SCRIPTS_DIR}/backup.sh"
     export RESTORE_SCRIPT="${SCRIPTS_DIR}/restore.sh"
+    export PHASE_SCRIPT="${SCRIPTS_DIR}/phase.sh"
 }
 
 # Standard setup every test file uses

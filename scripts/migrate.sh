@@ -49,6 +49,7 @@ Commands:
   check                  Check if migration is needed
   run                    Execute migration for all files
   file <path> <type>     Migrate specific file
+  rollback               Rollback from most recent migration backup
 
 Options:
   --dir <path>          Project directory (default: current directory)
@@ -57,6 +58,10 @@ Options:
   --no-backup           Skip backup creation
   --force               Force migration even if versions match
   -h, --help            Show this help message
+
+Rollback Options:
+  --backup-id <id>      Specific backup to restore from (optional)
+  --force               Skip confirmation prompt
 
 Examples:
   # Check migration status
@@ -70,6 +75,12 @@ Examples:
 
   # Auto-migrate without confirmation
   claude-todo migrate run --auto
+
+  # Rollback from most recent migration backup
+  claude-todo migrate rollback
+
+  # Rollback from specific backup
+  claude-todo migrate rollback --backup-id migration_v2.1.0_20251215_120000
 
 Schema Versions:
   todo:    $SCHEMA_VERSION_TODO
@@ -355,6 +366,226 @@ cmd_file() {
     esac
 }
 
+# Rollback from migration backup
+cmd_rollback() {
+    local project_dir="${1:-.}"
+    local backup_id="${2:-}"
+    local force="${3:-false}"
+
+    local claude_dir="$project_dir/.claude"
+    local backups_dir="$claude_dir/backups/migration"
+
+    if [[ ! -d "$claude_dir" ]]; then
+        echo "ERROR: No .claude directory found in $project_dir" >&2
+        echo "Run 'claude-todo init' to initialize the project" >&2
+        exit 1
+    fi
+
+    if [[ ! -d "$backups_dir" ]]; then
+        echo "ERROR: No migration backups found" >&2
+        echo "Migration backups directory does not exist: $backups_dir" >&2
+        exit 1
+    fi
+
+    # Find migration backup to use
+    local backup_path=""
+
+    if [[ -n "$backup_id" ]]; then
+        # Use specific backup ID
+        backup_path="$backups_dir/$backup_id"
+
+        if [[ ! -d "$backup_path" ]]; then
+            echo "ERROR: Backup not found: $backup_id" >&2
+            echo "Available migration backups:" >&2
+            find "$backups_dir" -maxdepth 1 -type d -name "migration_*" -exec basename {} \; 2>/dev/null | sort -r | head -5
+            exit 1
+        fi
+    else
+        # Find most recent migration backup
+        backup_path=$(find "$backups_dir" -maxdepth 1 -type d -name "migration_*" -print0 2>/dev/null | \
+            xargs -0 ls -dt 2>/dev/null | head -1)
+
+        if [[ -z "$backup_path" ]]; then
+            echo "ERROR: No migration backups found in $backups_dir" >&2
+            exit 1
+        fi
+    fi
+
+    local backup_name
+    backup_name=$(basename "$backup_path")
+
+    echo "Migration Rollback"
+    echo "=================="
+    echo ""
+    echo "Backup: $backup_name"
+    echo "Path:   $backup_path"
+    echo ""
+
+    # Verify backup integrity
+    if [[ ! -f "$backup_path/metadata.json" ]]; then
+        echo "ERROR: Backup metadata not found" >&2
+        echo "Backup may be corrupted: $backup_path" >&2
+        exit 1
+    fi
+
+    # Show backup metadata
+    local timestamp
+    timestamp=$(jq -r '.timestamp // "unknown"' "$backup_path/metadata.json" 2>/dev/null)
+    local files
+    files=$(jq -r '.files[].source' "$backup_path/metadata.json" 2>/dev/null)
+
+    echo "Backup Information:"
+    echo "  Created: $timestamp"
+    echo "  Files:"
+    while IFS= read -r file; do
+        [[ -z "$file" ]] && continue
+        echo "    - $file"
+    done <<< "$files"
+    echo ""
+
+    # Confirm rollback
+    if [[ "$force" != "true" ]]; then
+        echo "⚠ WARNING: This will restore all files from the backup."
+        echo "  Current files will be backed up before restoration."
+        echo ""
+        read -p "Continue with rollback? (y/N) " -r
+        echo ""
+
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo "Rollback cancelled"
+            exit 0
+        fi
+    fi
+
+    # Create pre-rollback safety backup
+    echo "Creating safety backup before rollback..."
+    local safety_backup="$claude_dir/backups/safety/safety_$(date +"%Y%m%d_%H%M%S")_pre_rollback"
+    mkdir -p "$safety_backup"
+
+    local files=(
+        "$claude_dir/todo.json"
+        "$claude_dir/todo-config.json"
+        "$claude_dir/todo-archive.json"
+        "$claude_dir/todo-log.json"
+    )
+
+    for file in "${files[@]}"; do
+        if [[ -f "$file" ]]; then
+            cp "$file" "$safety_backup/" || {
+                echo "ERROR: Failed to create safety backup" >&2
+                exit 1
+            }
+        fi
+    done
+    echo "✓ Safety backup created: $safety_backup"
+    echo ""
+
+    # Restore files from migration backup
+    echo "Restoring files from backup..."
+    local restore_errors=0
+    local restored_files=()
+
+    for file_spec in "${files[@]}"; do
+        local filename
+        filename=$(basename "$file_spec")
+        local source_file="$backup_path/$filename"
+        local target_file="$file_spec"
+
+        if [[ ! -f "$source_file" ]]; then
+            echo "⚠ Skipping $filename (not in backup)"
+            continue
+        fi
+
+        # Validate JSON in backup
+        if ! jq empty "$source_file" 2>/dev/null; then
+            echo "ERROR: Invalid JSON in backup: $filename" >&2
+            ((restore_errors++))
+            continue
+        fi
+
+        # Restore file
+        if cp "$source_file" "$target_file"; then
+            echo "✓ Restored $filename"
+            restored_files+=("$filename")
+        else
+            echo "✗ Failed to restore $filename" >&2
+            ((restore_errors++))
+        fi
+    done
+
+    echo ""
+
+    # Check for errors
+    if [[ $restore_errors -gt 0 ]]; then
+        echo "ERROR: Rollback completed with $restore_errors errors" >&2
+        echo "Safety backup available at: $safety_backup" >&2
+        exit 1
+    fi
+
+    # Validate all restored files
+    echo "Validating restored files..."
+    local validation_errors=0
+
+    for filename in "${restored_files[@]}"; do
+        local target_file="$claude_dir/$filename"
+
+        if [[ -f "$target_file" ]]; then
+            if ! jq empty "$target_file" 2>/dev/null; then
+                echo "✗ Validation failed: $filename" >&2
+                ((validation_errors++))
+            fi
+        fi
+    done
+
+    if [[ $validation_errors -gt 0 ]]; then
+        echo ""
+        echo "ERROR: Validation failed after rollback" >&2
+        echo "Safety backup available at: $safety_backup" >&2
+        exit 1
+    fi
+
+    echo "✓ All files validated successfully"
+    echo ""
+
+    # Show current versions after rollback
+    echo "Current Schema Versions:"
+    for file_spec in "${files[@]}"; do
+        local filename
+        filename=$(basename "$file_spec")
+        local file_type
+
+        case "$filename" in
+            todo.json)
+                file_type="todo"
+                ;;
+            todo-config.json)
+                file_type="config"
+                ;;
+            todo-archive.json)
+                file_type="archive"
+                ;;
+            todo-log.json)
+                file_type="log"
+                ;;
+            *)
+                continue
+                ;;
+        esac
+
+        if [[ -f "$file_spec" ]]; then
+            local version
+            version=$(detect_file_version "$file_spec")
+            echo "  $file_type: v$version"
+        fi
+    done
+
+    echo ""
+    echo "✓ Rollback completed successfully"
+    echo ""
+    echo "Note: Safety backup of pre-rollback state available at:"
+    echo "  $safety_backup"
+}
+
 # ============================================================================
 # MAIN
 # ============================================================================
@@ -369,11 +600,12 @@ main() {
     local command="${1:-}"
     shift || true
 
-    # Parse options
+    # Parse options based on command
     local project_dir="."
     local auto_migrate=false
     local create_backup=true
     local force_migration=false
+    local backup_id=""
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
@@ -396,6 +628,10 @@ main() {
             --force)
                 force_migration=true
                 shift
+                ;;
+            --backup-id)
+                backup_id="$2"
+                shift 2
                 ;;
             -h|--help)
                 show_usage
@@ -424,6 +660,9 @@ main() {
                 exit 1
             fi
             cmd_file "$1" "$2"
+            ;;
+        "rollback")
+            cmd_rollback "$project_dir" "$backup_id" "$force_migration"
             ;;
         "")
             show_usage

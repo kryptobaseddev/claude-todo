@@ -6,7 +6,7 @@
 # Intelligently suggests the next task to work on based on:
 # - Task priority (critical > high > medium > low)
 # - Dependency status (only tasks with satisfied dependencies)
-# - Current phase alignment (bonus for same phase as focus)
+# - Current phase alignment (bonus for same phase as project.currentPhase)
 # - Task age (older tasks prioritized for ties)
 # - Blocked status (exclude blocked tasks)
 #
@@ -89,7 +89,7 @@ Algorithm:
     1. Filter tasks that are pending and not blocked
     2. Check dependencies - only suggest if all dependencies are done
     3. Score by priority: critical=100, high=75, medium=50, low=25
-    4. Add phase bonus if matches current focus phase
+    4. Add phase bonus if matches project.currentPhase (or focused task phase)
     5. Break ties by creation date (oldest first)
 
 Examples:
@@ -130,8 +130,18 @@ get_current_focus() {
   jq -r '.focus.currentTask // ""' "$TODO_FILE" 2>/dev/null
 }
 
-# Get current focus phase
+# Get current phase - prioritizes project.currentPhase (v2.2.0+), falls back to focused task phase
 get_current_phase() {
+  # First try project.currentPhase (v2.2.0+)
+  local project_phase
+  project_phase=$(jq -r '.project.currentPhase // empty' "$TODO_FILE" 2>/dev/null)
+
+  if [[ -n "$project_phase" && "$project_phase" != "null" ]]; then
+    echo "$project_phase"
+    return
+  fi
+
+  # Fallback: derive from focused task (v2.1.x behavior)
   local focus_id
   focus_id=$(get_current_focus)
   if [[ -n "$focus_id" && "$focus_id" != "null" ]]; then
@@ -394,8 +404,17 @@ output_explain_format() {
   local current_phase
   current_phase=$(get_current_phase)
   if [[ -n "$current_phase" ]]; then
-    echo "Current focus phase: $current_phase"
-    echo "  (Tasks in this phase get +10 bonus score)"
+    # Determine phase source (project.currentPhase or focused task)
+    local project_phase
+    project_phase=$(jq -r '.project.currentPhase // empty' "$TODO_FILE" 2>/dev/null)
+
+    if [[ -n "$project_phase" && "$project_phase" != "null" ]]; then
+      echo "Current project phase: $current_phase"
+      echo "  (From project.currentPhase - tasks in this phase get +10 bonus score)"
+    else
+      echo "Current focus phase: $current_phase"
+      echo "  (From focused task - tasks in this phase get +10 bonus score)"
+    fi
     echo ""
   fi
 

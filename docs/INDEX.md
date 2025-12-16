@@ -34,6 +34,7 @@
 | **[troubleshooting.md](reference/troubleshooting.md)** | Troubleshooting guide | Resolving issues |
 | **[integration/CLAUDE-CODE.md](integration/CLAUDE-CODE.md)** | Claude Code integration & session workflows | Understanding process flows |
 | **[migration-guide.md](reference/migration-guide.md)** | Migration and upgrade guide | Upgrading between versions |
+| **[migration/v2.2.0-migration-guide.md](migration/v2.2.0-migration-guide.md)** | v2.2.0 migration guide | Upgrading to project phases (v2.2.0) |
 
 ### 🎯 Command Reference
 
@@ -57,10 +58,12 @@
 | **[commands/migrate.md](commands/migrate.md)** | Schema migration command documentation | Upgrading schema versions |
 | **[commands/migrate-backups.md](commands/migrate-backups.md)** | Backup migration documentation | Migrating legacy backup structure |
 | **[commands/next.md](commands/next.md)** | Next command documentation | Using intelligent task suggestions |
+| **[commands/phase.md](commands/phase.md)** | Phase lifecycle command documentation | Managing project-level phase transitions (pending → active → completed) |
 | **[commands/phases.md](commands/phases.md)** | Phase management command documentation | Managing project phases and phase-based workflows |
 | **[commands/restore.md](commands/restore.md)** | Restore command documentation | Restoring from backups |
 | **[commands/session.md](commands/session.md)** | Session command documentation | Managing work sessions |
 | **[commands/show.md](commands/show.md)** | Single task detail view documentation | Viewing full task details, dependencies, and history |
+| **[commands/sync.md](commands/sync.md)** | TodoWrite synchronization command | Bidirectional sync with Claude Code's TodoWrite |
 | **[commands/stats.md](commands/stats.md)** | Statistics command documentation | Generating project statistics |
 | **[commands/update.md](commands/update.md)** | Update task command documentation | Modifying existing tasks |
 | **[commands/validate.md](commands/validate.md)** | Validate command documentation | Checking project integrity |
@@ -73,6 +76,7 @@
 | **[integration/CLAUDE-CODE.md](integration/CLAUDE-CODE.md)** | TodoWrite integration & session workflows | Understanding Claude Code integration |
 | **[ci-cd-integration.md](ci-cd-integration.md)** | CI/CD pipeline integration guide | Integrating with GitHub Actions, GitLab CI, Jenkins, Azure DevOps |
 | **[migration-guide.md](reference/migration-guide.md)** | Schema migration and upgrade guide | Understanding version migrations |
+| **[migration/v2.2.0-migration-guide.md](migration/v2.2.0-migration-guide.md)** | v2.2.0 specific migration guide | Detailed guide for upgrading to project phases |
 | **[testing.md](testing.md)** | BATS test suite guide | Writing and running tests |
 
 ---
