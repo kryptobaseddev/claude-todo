@@ -107,6 +107,8 @@ ct focus show              # Show current focus
 ct session start|end       # Session lifecycle
 ct exists <id>             # Verify task exists
 ct dash                    # Project overview
+ct analyze                 # Task triage with leverage scoring
+ct analyze --auto-focus    # Auto-set focus to top task
 ```
 
 ### Phase Tracking (v0.13.3+)
