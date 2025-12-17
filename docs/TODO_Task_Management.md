@@ -48,6 +48,9 @@ claude-todo sync --status                  # Show sync session state
 
 ### Analysis & Planning
 ```bash
+claude-todo analyze                        # Task triage with leverage scoring
+claude-todo analyze --json                 # Machine-readable triage output
+claude-todo analyze --auto-focus           # Analyze and auto-set focus to top task
 claude-todo dash                           # Project dashboard overview
 claude-todo dash --compact                 # Single-line status summary
 claude-todo next                           # Suggest next task (priority + deps)
