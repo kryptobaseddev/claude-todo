@@ -21,6 +21,12 @@ if [[ -f "$LIB_DIR/exit-codes.sh" ]]; then
   source "$LIB_DIR/exit-codes.sh"
 fi
 
+# Source error JSON library
+if [[ -f "$LIB_DIR/error-json.sh" ]]; then
+  # shellcheck source=../lib/error-json.sh
+  source "$LIB_DIR/error-json.sh"
+fi
+
 # Colors (respects NO_COLOR and FORCE_COLOR environment variables)
 if declare -f should_use_color >/dev/null 2>&1 && should_use_color; then
   RED='\033[0;31m'
@@ -52,6 +58,7 @@ INCLUDE_ARCHIVE=false
 SHOW_HISTORY=false
 SHOW_RELATED=false
 QUIET=false
+COMMAND_NAME="show"
 
 usage() {
   cat << EOF
@@ -364,27 +371,56 @@ display_json() {
   local source="$2"
   local id=$(echo "$task" | jq -r '.id')
 
+  # Get version
+  local version=""
+  local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  local claude_todo_home="${CLAUDE_TODO_HOME:-$HOME/.claude-todo}"
+  if [[ -f "$claude_todo_home/VERSION" ]]; then
+    version=$(cat "$claude_todo_home/VERSION" | tr -d '[:space:]')
+  elif [[ -f "$script_dir/../VERSION" ]]; then
+    version=$(cat "$script_dir/../VERSION" | tr -d '[:space:]')
+  else
+    version="0.1.0"
+  fi
+
+  local timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
   # Build enhanced JSON with additional context
-  local output=$(echo "$task" | jq --arg source "$source" '. + {_source: $source}')
+  local task_data=$(echo "$task" | jq --arg source "$source" '. + {_source: $source}')
 
   # Add dependents
   local dependents=$(get_dependents "$id" "$TODO_FILE" | jq -R -s 'split("\n") | map(select(length > 0))')
-  output=$(echo "$output" | jq --argjson deps "$dependents" '. + {_dependents: $deps}')
+  task_data=$(echo "$task_data" | jq --argjson deps "$dependents" '. + {_dependents: $deps}')
 
   # Add history if requested
   if [[ "$SHOW_HISTORY" == true ]]; then
     local history=$(get_task_history "$id" | jq -R -s 'split("\n") | map(select(length > 0))')
-    output=$(echo "$output" | jq --argjson hist "$history" '. + {_history: $hist}')
+    task_data=$(echo "$task_data" | jq --argjson hist "$history" '. + {_history: $hist}')
   fi
 
   # Add related if requested
   if [[ "$SHOW_RELATED" == true ]]; then
     local labels_json=$(echo "$task" | jq '.labels // []')
     local related=$(get_related_tasks "$labels_json" "$id" "$TODO_FILE" | jq -R -s 'split("\n") | map(select(length > 0))')
-    output=$(echo "$output" | jq --argjson rel "$related" '. + {_related: $rel}')
+    task_data=$(echo "$task_data" | jq --argjson rel "$related" '. + {_related: $rel}')
   fi
 
-  echo "$output" | jq .
+  # Output with standard schema and meta wrapper
+  jq -n \
+    --arg version "$version" \
+    --arg timestamp "$timestamp" \
+    --argjson task "$task_data" \
+    '{
+      "$schema": "https://claude-todo.dev/schemas/output.schema.json",
+      "_meta": {
+        "format": "json",
+        "command": "show",
+        "timestamp": $timestamp,
+        "version": $version
+      },
+      "success": true,
+      "task": $task
+    }'
 }
 
 # Parse arguments
@@ -416,40 +452,62 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     -*)
-      echo "Unknown option: $1" >&2
-      usage
-      exit 1
+      if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+        output_error "E_INPUT_INVALID" "Unknown option: $1" "$EXIT_INVALID_INPUT" true "Run 'claude-todo show --help' for usage"
+      else
+        echo "Error: Unknown option: $1" >&2
+      fi
+      exit "${EXIT_INVALID_INPUT:-1}"
       ;;
     *)
       if [[ -z "$TASK_ID" ]]; then
         TASK_ID="$1"
       else
-        echo "Error: Multiple task IDs provided" >&2
-        exit 1
+        if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+          output_error "E_INPUT_INVALID" "Multiple task IDs provided" "$EXIT_INVALID_INPUT" true "Provide only one task ID"
+        else
+          echo "Error: Multiple task IDs provided" >&2
+        fi
+        exit "${EXIT_INVALID_INPUT:-1}"
       fi
       shift
       ;;
   esac
 done
 
+# Resolve format (TTY-aware auto-detection)
+FORMAT=$(resolve_format "${FORMAT:-}")
+
 # Validate task ID provided
 if [[ -z "$TASK_ID" ]]; then
-  echo "Error: Task ID required" >&2
-  echo "Usage: claude-todo show <task-id>" >&2
+  if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+    output_error "E_INPUT_MISSING" "Task ID required" "$EXIT_INVALID_ID" true "Usage: claude-todo show <task-id>"
+  else
+    echo "Error: Task ID required" >&2
+    echo "Usage: claude-todo show <task-id>" >&2
+  fi
   exit $EXIT_INVALID_ID
 fi
 
 # Validate task ID format
 if ! validate_task_id "$TASK_ID"; then
-  echo "Error: Invalid task ID format: $TASK_ID" >&2
-  echo "Task IDs must be in format: T001, T002, etc." >&2
+  if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+    output_error "E_INPUT_INVALID" "Invalid task ID format: $TASK_ID" "$EXIT_INVALID_ID" true "Task IDs must be in format: T001, T002, etc."
+  else
+    echo "Error: Invalid task ID format: $TASK_ID" >&2
+    echo "Task IDs must be in format: T001, T002, etc." >&2
+  fi
   exit $EXIT_INVALID_ID
 fi
 
 # Check todo file exists
 if [[ ! -f "$TODO_FILE" ]]; then
-  echo "Error: Todo file not found: $TODO_FILE" >&2
-  echo "Run 'claude-todo init' to initialize." >&2
+  if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+    output_error "E_NOT_INITIALIZED" "Todo file not found: $TODO_FILE" "$EXIT_FILE_ERROR" true "Run 'claude-todo init' to initialize"
+  else
+    echo "Error: Todo file not found: $TODO_FILE" >&2
+    echo "Run 'claude-todo init' to initialize." >&2
+  fi
   exit $EXIT_FILE_ERROR
 fi
 
@@ -471,11 +529,19 @@ fi
 
 # Task not found
 if [[ -z "$TASK" ]]; then
-  if [[ "$INCLUDE_ARCHIVE" == true ]]; then
-    echo "Error: Task $TASK_ID not found in active tasks or archive" >&2
+  if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+    if [[ "$INCLUDE_ARCHIVE" == true ]]; then
+      output_error "E_TASK_NOT_FOUND" "Task $TASK_ID not found in active tasks or archive" "$EXIT_NOT_FOUND" true "Verify task ID exists"
+    else
+      output_error "E_TASK_NOT_FOUND" "Task $TASK_ID not found" "$EXIT_NOT_FOUND" true "Use --include-archive to search archived tasks"
+    fi
   else
-    echo "Error: Task $TASK_ID not found" >&2
-    echo "Tip: Use --include-archive to search archived tasks" >&2
+    if [[ "$INCLUDE_ARCHIVE" == true ]]; then
+      echo "Error: Task $TASK_ID not found in active tasks or archive" >&2
+    else
+      echo "Error: Task $TASK_ID not found" >&2
+      echo "Tip: Use --include-archive to search archived tasks" >&2
+    fi
   fi
   exit $EXIT_NOT_FOUND
 fi

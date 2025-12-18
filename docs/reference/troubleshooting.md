@@ -1053,6 +1053,82 @@ Include the diagnostic output above when reporting issues to help troubleshoot f
 
 ---
 
+## Migration & Repair Command Guide
+
+When something goes wrong, it's often unclear which command to run. Use this decision tree:
+
+### Decision Tree
+
+```
+Is the project initialized (.claude/ directory exists)?
+├─ No → Run: claude-todo init
+│
+└─ Yes → Is the schema version outdated?
+    │   Check with: claude-todo migrate status
+    │
+    ├─ Yes (version mismatch) → Run: claude-todo migrate run --auto
+    │   This upgrades schema versions (e.g., v2.1.0 → v2.2.0)
+    │
+    └─ No (version current) → Are there structural issues?
+        │   Check with: claude-todo validate
+        │
+        ├─ Phase structure issues → Run: claude-todo migrate repair --auto
+        │   Fixes: missing phases, wrong ordering, meta fields
+        │
+        ├─ Data integrity issues → Run: claude-todo validate --fix
+        │   Fixes: checksums, duplicate IDs, missing required fields
+        │
+        └─ No issues → System healthy! Run: claude-todo list
+```
+
+### Command Comparison
+
+| Scenario | Command | What It Does |
+|----------|---------|--------------|
+| New project | `init` | Creates `.claude/` with all files |
+| Upgrade from older version | `migrate run --auto` | Updates schema version numbers |
+| Phases missing/wrong | `migrate repair --auto` | Fixes structure within current version |
+| Checksum mismatch | `validate --fix` | Recalculates checksums |
+| Corrupted file | `restore` | Restores from backup |
+| Update CLAUDE.md | `init --update-claude-md` | Updates embedded instructions |
+
+### Quick One-Liner (Fix Everything)
+
+For most issues, this sequence handles everything:
+
+```bash
+claude-todo migrate run --auto && claude-todo migrate repair --auto && claude-todo validate --fix
+```
+
+### When to Use Each
+
+**`claude-todo init`**
+- First time setting up a project
+- Reinitializing after `.claude/` was deleted
+- Creating task system in new directory
+
+**`claude-todo migrate run`**
+- After upgrading claude-todo CLI
+- When `migrate status` shows version mismatch
+- Error: "Incompatible schema version"
+
+**`claude-todo migrate repair`**
+- Phase validation errors
+- Missing metadata fields
+- After manual JSON editing
+
+**`claude-todo validate --fix`**
+- Checksum mismatch errors
+- Duplicate ID warnings
+- Missing required field errors
+
+**`claude-todo init --update-claude-md`**
+- After upgrading claude-todo to new version
+- CLAUDE.md has outdated instructions
+- Template changes available
+
+---
+
 ## Quick Reference
 
 | Issue | Quick Fix |
@@ -1068,4 +1144,4 @@ Include the diagnostic output above when reporting issues to help troubleshoot f
 
 ---
 
-**Last Updated:** 2025-12-05
+**Last Updated:** 2025-12-18

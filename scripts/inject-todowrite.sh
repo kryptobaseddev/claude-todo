@@ -33,6 +33,22 @@ LIB_DIR="$(dirname "$SCRIPT_DIR")/lib"
 # Source required libraries
 source "$LIB_DIR/todowrite-integration.sh"
 
+# Source output formatting library
+if [[ -f "$LIB_DIR/output-format.sh" ]]; then
+  # shellcheck source=../lib/output-format.sh
+  source "$LIB_DIR/output-format.sh"
+fi
+
+# Source error JSON library (includes exit-codes.sh)
+if [[ -f "$LIB_DIR/error-json.sh" ]]; then
+  # shellcheck source=../lib/error-json.sh
+  source "$LIB_DIR/error-json.sh"
+elif [[ -f "$LIB_DIR/exit-codes.sh" ]]; then
+  # Fallback: source exit codes directly if error-json.sh not available
+  # shellcheck source=../lib/exit-codes.sh
+  source "$LIB_DIR/exit-codes.sh"
+fi
+
 # =============================================================================
 # Colors and Logging
 # =============================================================================
@@ -58,9 +74,12 @@ STATE_FILE="${SYNC_DIR}/todowrite-session.json"
 MAX_TASKS=8
 FOCUSED_ONLY=false
 PHASE_FILTER=""
+COMMAND_NAME="inject"
 OUTPUT_FILE=""
 SAVE_STATE=true
 QUIET=false
+FORMAT=""
+DRY_RUN=false
 
 # =============================================================================
 # Help
@@ -89,6 +108,7 @@ OPTIONS
     --phase SLUG      Filter to specific phase (default: project.currentPhase if set)
     --output FILE     Write JSON to file instead of stdout
     --no-save-state   Don't save session state file
+    --dry-run         Show what would be injected without saving state
     --quiet, -q       Suppress info messages
     --help, -h        Show this help
 
@@ -152,16 +172,36 @@ parse_args() {
                 SAVE_STATE=false
                 shift
                 ;;
+            --dry-run)
+                DRY_RUN=true
+                shift
+                ;;
             --quiet|-q)
                 QUIET=true
+                shift
+                ;;
+            -f|--format)
+                FORMAT="$2"
+                shift 2
+                ;;
+            --json)
+                FORMAT="json"
+                shift
+                ;;
+            --human)
+                FORMAT="text"
                 shift
                 ;;
             --help|-h)
                 show_help
                 ;;
             *)
-                log_error "Unknown option: $1"
-                exit 1
+                if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+                    output_error "$E_INPUT_INVALID" "Unknown option: $1" 1 true "Use --help to see valid options"
+                else
+                    output_error "$E_INPUT_INVALID" "Unknown option: $1"
+                fi
+                exit "${EXIT_INVALID_INPUT:-1}"
                 ;;
         esac
     done
@@ -342,10 +382,17 @@ save_session_state() {
 main() {
     parse_args "$@"
 
+    # Resolve format (TTY-aware auto-detection)
+    FORMAT=$(resolve_format "${FORMAT:-}")
+
     # Validate todo.json exists
     if [[ ! -f "$TODO_FILE" ]]; then
-        log_error "todo.json not found at $TODO_FILE"
-        exit 1
+        if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+            output_error "$E_NOT_INITIALIZED" "todo.json not found at $TODO_FILE" 1 true "Run 'claude-todo init' first"
+        else
+            output_error "$E_NOT_INITIALIZED" "todo.json not found at $TODO_FILE"
+        fi
+        exit "${EXIT_NOT_INITIALIZED:-1}"
     fi
 
     # Determine effective phase filter
@@ -367,7 +414,39 @@ main() {
 
     if [[ "$task_count" -eq 0 ]]; then
         log_warn "No tasks to inject"
-        echo '{"todos": []}'
+        # Get VERSION for JSON output
+        local version
+        CLAUDE_TODO_HOME="${CLAUDE_TODO_HOME:-$HOME/.claude-todo}"
+        if [[ -f "$CLAUDE_TODO_HOME/VERSION" ]]; then
+            version=$(cat "$CLAUDE_TODO_HOME/VERSION" | tr -d '[:space:]')
+        elif [[ -f "$SCRIPT_DIR/../VERSION" ]]; then
+            version=$(cat "$SCRIPT_DIR/../VERSION" | tr -d '[:space:]')
+        else
+            version="0.16.0"
+        fi
+
+        if [[ "$FORMAT" == "json" ]]; then
+            jq -n \
+                --arg version "$version" \
+                --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+                '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
+                    "_meta": {
+                        "format": "json",
+                        "version": $version,
+                        "command": "inject",
+                        "timestamp": $timestamp
+                    },
+                    "success": true,
+                    "injected": {
+                        "taskCount": 0,
+                        "taskIds": [],
+                        "todos": []
+                    }
+                }'
+        else
+            echo '{"todos": []}'
+        fi
         exit 0
     fi
 
@@ -381,17 +460,104 @@ main() {
     local injected_ids
     injected_ids=$(echo "$tasks_json" | jq '[.[].id]')
 
+    # DRY-RUN: Show what would be injected without saving state
+    if [[ "$DRY_RUN" == true ]]; then
+        # Get VERSION for JSON output
+        local version
+        CLAUDE_TODO_HOME="${CLAUDE_TODO_HOME:-$HOME/.claude-todo}"
+        if [[ -f "$CLAUDE_TODO_HOME/VERSION" ]]; then
+            version=$(cat "$CLAUDE_TODO_HOME/VERSION" | tr -d '[:space:]')
+        elif [[ -f "$SCRIPT_DIR/../VERSION" ]]; then
+            version=$(cat "$SCRIPT_DIR/../VERSION" | tr -d '[:space:]')
+        else
+            version="0.16.0"
+        fi
+
+        if [[ "$FORMAT" == "json" ]]; then
+            jq -n \
+                --arg version "$version" \
+                --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+                --argjson taskCount "$task_count" \
+                --argjson injectedIds "$injected_ids" \
+                --argjson todos "$output_json" \
+                '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
+                    "_meta": {
+                        "format": "json",
+                        "version": $version,
+                        "command": "inject",
+                        "timestamp": $timestamp
+                    },
+                    "success": true,
+                    "dryRun": true,
+                    "wouldInject": {
+                        "taskCount": $taskCount,
+                        "taskIds": $injectedIds,
+                        "todos": $todos.todos
+                    }
+                }'
+        else
+            echo -e "${YELLOW}[DRY-RUN]${NC} Would inject $task_count tasks:"
+            echo ""
+            echo "Task IDs: $(echo "$injected_ids" | jq -r 'join(", ")')"
+            echo ""
+            echo "TodoWrite format:"
+            echo "$output_json" | jq '.'
+            echo ""
+            echo -e "${YELLOW}No state file created (dry-run mode)${NC}"
+        fi
+        exit 0
+    fi
+
     # Save session state if requested
     if [[ "$SAVE_STATE" == "true" ]]; then
         save_session_state "$injected_ids" "$output_json"
     fi
 
-    # Output result
+    # Get VERSION for JSON output
+    local version
+    CLAUDE_TODO_HOME="${CLAUDE_TODO_HOME:-$HOME/.claude-todo}"
+    if [[ -f "$CLAUDE_TODO_HOME/VERSION" ]]; then
+        version=$(cat "$CLAUDE_TODO_HOME/VERSION" | tr -d '[:space:]')
+    elif [[ -f "$SCRIPT_DIR/../VERSION" ]]; then
+        version=$(cat "$SCRIPT_DIR/../VERSION" | tr -d '[:space:]')
+    else
+        version="0.16.0"
+    fi
+
+    # Output result with proper JSON envelope
+    local final_output
+    if [[ "$FORMAT" == "json" ]]; then
+        final_output=$(jq -n \
+            --arg version "$version" \
+            --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --argjson taskCount "$task_count" \
+            --argjson injectedIds "$injected_ids" \
+            --argjson todos "$output_json" \
+            '{
+                "$schema": "https://claude-todo.dev/schemas/output.schema.json",
+                "_meta": {
+                    "format": "json",
+                    "version": $version,
+                    "command": "inject",
+                    "timestamp": $timestamp
+                },
+                "success": true,
+                "injected": {
+                    "taskCount": $taskCount,
+                    "taskIds": $injectedIds,
+                    "todos": $todos.todos
+                }
+            }')
+    else
+        final_output="$output_json"
+    fi
+
     if [[ -n "$OUTPUT_FILE" ]]; then
-        echo "$output_json" > "$OUTPUT_FILE"
+        echo "$final_output" > "$OUTPUT_FILE"
         log_info "Output written to: $OUTPUT_FILE"
     else
-        echo "$output_json"
+        echo "$final_output"
     fi
 }
 

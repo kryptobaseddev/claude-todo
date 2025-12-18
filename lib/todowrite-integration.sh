@@ -224,7 +224,8 @@ convert_to_active_form() {
     fi
 
     # 1. Check lookup table first (most reliable)
-    if [[ -n "${VERB_TO_ACTIVE[$first_word_lower]}" ]]; then
+    # Use ${array[$key]+_} pattern to safely check if key exists (avoids unbound variable with set -u)
+    if [[ -v "VERB_TO_ACTIVE[$first_word_lower]" ]]; then
         local active_verb="${VERB_TO_ACTIVE[$first_word_lower]}"
         if [[ -n "$rest" ]]; then
             echo "${active_verb} ${rest}"

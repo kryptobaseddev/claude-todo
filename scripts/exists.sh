@@ -8,10 +8,27 @@ TODO_FILE="${TODO_FILE:-.claude/todo.json}"
 ARCHIVE_FILE="${ARCHIVE_FILE:-.claude/todo-archive.json}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Source logging library for should_use_color function
+# Source libraries
 LIB_DIR="${SCRIPT_DIR}/../lib"
 if [[ -f "$LIB_DIR/logging.sh" ]]; then
+  # shellcheck source=../lib/logging.sh
   source "$LIB_DIR/logging.sh"
+fi
+
+# Source output formatting library
+if [[ -f "$LIB_DIR/output-format.sh" ]]; then
+  # shellcheck source=../lib/output-format.sh
+  source "$LIB_DIR/output-format.sh"
+fi
+
+# Source error JSON library (includes exit-codes.sh)
+if [[ -f "$LIB_DIR/error-json.sh" ]]; then
+  # shellcheck source=../lib/error-json.sh
+  source "$LIB_DIR/error-json.sh"
+elif [[ -f "$LIB_DIR/exit-codes.sh" ]]; then
+  # Fallback: source exit codes directly if error-json.sh not available
+  # shellcheck source=../lib/exit-codes.sh
+  source "$LIB_DIR/exit-codes.sh"
 fi
 
 # Colors (respects NO_COLOR and FORCE_COLOR environment variables)
@@ -24,17 +41,18 @@ else
   RED='' GREEN='' YELLOW='' NC=''
 fi
 
-# Exit codes
-EXIT_EXISTS=0
-EXIT_NOT_FOUND=1
-EXIT_INVALID_ID=2
-EXIT_FILE_ERROR=3
+# Map local exit codes to standard library codes for backward compatibility
+# Note: EXIT_FILE_ERROR is already defined as readonly by exit-codes.sh
+EXIT_EXISTS="${EXIT_SUCCESS:-0}"
+EXIT_INVALID_ID="${EXIT_INVALID_INPUT:-2}"
+# EXIT_FILE_ERROR is already defined by exit-codes.sh, use it directly
 
 # Options
 QUIET=false
 VERBOSE=false
 INCLUDE_ARCHIVE=false
-FORMAT="text"
+FORMAT=""
+COMMAND_NAME="exists"
 
 usage() {
   cat << EOF
@@ -115,8 +133,12 @@ main() {
         ;;
       --format)
         if [[ $# -lt 2 ]]; then
-          echo -e "${RED}[ERROR]${NC} --format requires a value" >&2
-          exit $EXIT_INVALID_ID
+          if [[ "${FORMAT:-}" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+            output_error "E_INPUT_MISSING" "--format requires a value" "${EXIT_INVALID_INPUT:-2}" true "Example: --format json"
+          else
+            log_error "--format requires a value"
+          fi
+          exit "${EXIT_INVALID_INPUT:-2}"
         fi
         FORMAT="$2"
         shift
@@ -126,45 +148,68 @@ main() {
         exit 0
         ;;
       -*)
-        echo -e "${RED}[ERROR]${NC} Unknown option: $1" >&2
-        usage >&2
-        exit $EXIT_INVALID_ID
+        if [[ "${FORMAT:-}" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+          output_error "E_INPUT_INVALID" "Unknown option: $1" "${EXIT_INVALID_INPUT:-2}" true "Run 'claude-todo exists --help' for usage"
+        else
+          log_error "Unknown option: $1"
+          usage >&2
+        fi
+        exit "${EXIT_INVALID_INPUT:-2}"
         ;;
       *)
         if [[ -z "$task_id" ]]; then
           task_id="$1"
         else
-          echo -e "${RED}[ERROR]${NC} Multiple task IDs provided" >&2
-          exit $EXIT_INVALID_ID
+          if [[ "${FORMAT:-}" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+            output_error "E_INPUT_INVALID" "Multiple task IDs provided" "${EXIT_INVALID_INPUT:-2}" true "Provide only one task ID"
+          else
+            log_error "Multiple task IDs provided"
+          fi
+          exit "${EXIT_INVALID_INPUT:-2}"
         fi
         ;;
     esac
     shift
   done
 
+  # Resolve format (TTY-aware auto-detection)
+  FORMAT=$(resolve_format "${FORMAT:-}")
+
   # Require task ID
   if [[ -z "$task_id" ]]; then
     if [[ "$QUIET" == false ]]; then
-      echo -e "${RED}[ERROR]${NC} Task ID required" >&2
-      usage >&2
+      if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+        output_error "E_INPUT_MISSING" "Task ID required" "${EXIT_INVALID_INPUT:-2}" true "Usage: claude-todo exists <task-id>"
+      else
+        log_error "Task ID required"
+        usage >&2
+      fi
     fi
-    exit $EXIT_INVALID_ID
+    exit "${EXIT_INVALID_INPUT:-2}"
   fi
 
   # Validate task ID format
   if ! validate_task_id "$task_id"; then
     if [[ "$QUIET" == false ]]; then
-      echo -e "${RED}[ERROR]${NC} Invalid task ID format: $task_id (expected: T001, T002, etc.)" >&2
+      if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+        output_error "E_TASK_INVALID_ID" "Invalid task ID format: $task_id (expected: T001, T002, etc.)" "${EXIT_INVALID_INPUT:-2}" true "Task IDs start with T followed by 3+ digits"
+      else
+        log_error "Invalid task ID format: $task_id (expected: T001, T002, etc.)"
+      fi
     fi
-    exit $EXIT_INVALID_ID
+    exit "${EXIT_INVALID_INPUT:-2}"
   fi
 
   # Check todo.json exists
   if [[ ! -f "$TODO_FILE" ]]; then
     if [[ "$QUIET" == false ]]; then
-      echo -e "${RED}[ERROR]${NC} Todo file not found: $TODO_FILE" >&2
+      if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+        output_error "E_NOT_INITIALIZED" "Todo file not found: $TODO_FILE" "${EXIT_FILE_ERROR:-3}" true "Run 'claude-todo init' to initialize project"
+      else
+        log_error "Todo file not found: $TODO_FILE"
+      fi
     fi
-    exit $EXIT_FILE_ERROR
+    exit "${EXIT_FILE_ERROR:-3}"
   fi
 
   local found=false
@@ -186,12 +231,35 @@ main() {
     fi
   fi
 
+  # Get VERSION for JSON output
+  local version
+  CLAUDE_TODO_HOME="${CLAUDE_TODO_HOME:-$HOME/.claude-todo}"
+  if [[ -f "$CLAUDE_TODO_HOME/VERSION" ]]; then
+    version=$(cat "$CLAUDE_TODO_HOME/VERSION" | tr -d '[:space:]')
+  elif [[ -f "$SCRIPT_DIR/../VERSION" ]]; then
+    version=$(cat "$SCRIPT_DIR/../VERSION" | tr -d '[:space:]')
+  else
+    version="0.16.0"
+  fi
+
   # Output handling
   if [[ "$found" == true ]]; then
     if [[ "$QUIET" == false ]]; then
       if [[ "$FORMAT" == "json" ]]; then
-        jq -n --arg id "$task_id" --arg loc "$location" \
-          '{exists: true, taskId: $id, location: $loc}'
+        jq -n --arg id "$task_id" --arg loc "$location" --arg ver "$version" --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+          '{
+            "$schema": "https://claude-todo.dev/schemas/output.schema.json",
+            "_meta": {
+              "format": "json",
+              "version": $ver,
+              "command": "exists",
+              "timestamp": $ts
+            },
+            "success": true,
+            exists: true,
+            taskId: $id,
+            location: $loc
+          }'
       elif [[ "$VERBOSE" == true ]]; then
         echo -e "${GREEN}[EXISTS]${NC} Task $task_id found in $location"
       else
@@ -202,8 +270,20 @@ main() {
   else
     if [[ "$QUIET" == false ]]; then
       if [[ "$FORMAT" == "json" ]]; then
-        jq -n --arg id "$task_id" --argjson archive "$INCLUDE_ARCHIVE" \
-          '{exists: false, taskId: $id, searchedArchive: $archive}'
+        jq -n --arg id "$task_id" --argjson archive "$INCLUDE_ARCHIVE" --arg ver "$version" --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+          '{
+            "$schema": "https://claude-todo.dev/schemas/output.schema.json",
+            "_meta": {
+              "format": "json",
+              "version": $ver,
+              "command": "exists",
+              "timestamp": $ts
+            },
+            "success": true,
+            exists: false,
+            taskId: $id,
+            searchedArchive: $archive
+          }'
       else
         local msg="Task $task_id not found"
         [[ "$INCLUDE_ARCHIVE" == true ]] && msg="$msg (searched archive too)"

@@ -130,7 +130,14 @@ while [[ $# -gt 0 ]]; do
     --json) FORMAT="json"; shift ;;
     -q|--quiet) QUIET=true; shift ;;
     -h|--help) usage ;;
-    -*) log_error "Unknown option: $1"; exit 1 ;;
+    -*)
+      if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+        output_error "$E_INPUT_INVALID" "Unknown option: $1" "${EXIT_INVALID_INPUT:-1}" true "Run 'claude-todo init --help' for usage"
+      else
+        output_error "$E_INPUT_INVALID" "Unknown option: $1"
+      fi
+      exit "${EXIT_INVALID_INPUT:-1}"
+      ;;
     *) PROJECT_NAME="$1"; shift ;;
   esac
 done
@@ -198,12 +205,15 @@ if [[ "$UPDATE_CLAUDE_MD" == true ]]; then
     jq -n \
       --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
       --arg action "$action_taken" \
+      --arg version "$VERSION" \
       '{
+        "$schema": "https://claude-todo.dev/schemas/output.schema.json",
         "_meta": {
           "command": "init",
           "subcommand": "update-claude-md",
           "timestamp": $timestamp,
-          "format": "json"
+          "format": "json",
+          "version": $version
         },
         "success": true,
         "claudeMd": {
@@ -242,9 +252,13 @@ if [[ -d "$CLAUDE_TODO_HOME/templates" ]]; then
 elif [[ -d "$SCRIPT_DIR/../templates" ]]; then
   TEMPLATES_DIR="$SCRIPT_DIR/../templates"
 else
-  log_error "Templates directory not found at $CLAUDE_TODO_HOME/templates/ or $SCRIPT_DIR/../templates/"
-  log_error "Run install.sh to set up CLAUDE-TODO globally, or run from source directory."
-  exit 1
+  if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+    output_error "$E_FILE_NOT_FOUND" "Templates directory not found at $CLAUDE_TODO_HOME/templates/ or $SCRIPT_DIR/../templates/" "${EXIT_FILE_ERROR:-4}" true "Run install.sh to set up CLAUDE-TODO globally, or run from source directory."
+  else
+    output_error "$E_FILE_NOT_FOUND" "Templates directory not found at $CLAUDE_TODO_HOME/templates/ or $SCRIPT_DIR/../templates/"
+    log_error "Run install.sh to set up CLAUDE-TODO globally, or run from source directory."
+  fi
+  exit "${EXIT_FILE_ERROR:-1}"
 fi
 
 if [[ -d "$CLAUDE_TODO_HOME/schemas" ]]; then
@@ -493,10 +507,12 @@ if [[ "$FORMAT" == "json" ]]; then
     --arg version "$VERSION" \
     --argjson files "$(printf '%s\n' "${CREATED_FILES[@]}" | jq -R . | jq -s .)" \
     '{
+      "$schema": "https://claude-todo.dev/schemas/output.schema.json",
       "_meta": {
         "command": "init",
         "timestamp": $timestamp,
-        "format": "json"
+        "format": "json",
+        "version": $version
       },
       "success": true,
       "initialized": {

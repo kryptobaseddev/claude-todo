@@ -75,6 +75,8 @@ SKIP_ARCHIVE=false
 NOTES=""
 SKIP_NOTES=false
 FORMAT=""
+DRY_RUN=false
+QUIET=false
 
 usage() {
   cat << EOF
@@ -92,6 +94,8 @@ Options:
   -f, --format FORMAT     Output format: text (default) or json
   --human                 Force human-readable text output (same as --format text)
   --json                  Force JSON output (same as --format json)
+  --dry-run               Show what would be completed without making changes
+  -q, --quiet             Suppress informational messages
   -h, --help              Show this help
 
 Notes Requirement:
@@ -129,8 +133,8 @@ EOF
   exit 0
 }
 
-log_info()  { echo -e "${GREEN}[INFO]${NC} $1"; }
-log_warn()  { echo -e "${YELLOW}[WARN]${NC} $1"; }
+log_info()  { [[ "$QUIET" != true ]] && echo -e "${GREEN}[INFO]${NC} $1" || true; }
+log_warn()  { [[ "$QUIET" != true ]] && echo -e "${YELLOW}[WARN]${NC} $1" || true; }
 log_error() { echo -e "${RED}[ERROR]${NC} $1" >&2; }
 
 # Check dependencies
@@ -150,6 +154,7 @@ fi
 while [[ $# -gt 0 ]]; do
   case $1 in
     -h|--help) usage ;;
+    -q|--quiet) QUIET=true; shift ;;
     -n|--notes)
       NOTES="${2:-}"
       if [[ -z "$NOTES" ]]; then
@@ -168,6 +173,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     --human) FORMAT="text"; shift ;;
     --json) FORMAT="json"; shift ;;
+    --dry-run) DRY_RUN=true; shift ;;
     --skip-notes) SKIP_NOTES=true; shift ;;
     --skip-archive) SKIP_ARCHIVE=true; shift ;;
     -*) log_error "Unknown option: $1"; exit 1 ;;
@@ -314,6 +320,69 @@ if [[ ! "$CURRENT_STATUS" =~ ^(pending|active|blocked)$ ]]; then
     log_error "Invalid status transition: $CURRENT_STATUS → done"
     exit 1
   fi
+fi
+
+# DRY-RUN: Show what would be completed without making changes
+if [[ "$DRY_RUN" == true ]]; then
+  TASK_TITLE=$(echo "$TASK" | jq -r '.title')
+  DRY_TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+  # Calculate cycle time for dry-run preview
+  DRY_CYCLE_TIME=""
+  if [[ -n "$CREATED_AT" ]]; then
+    CREATED_EPOCH=$(date -d "$CREATED_AT" +%s 2>/dev/null || echo "")
+    DRY_EPOCH=$(date -d "$DRY_TIMESTAMP" +%s 2>/dev/null || echo "")
+    if [[ -n "$CREATED_EPOCH" && -n "$DRY_EPOCH" ]]; then
+      DIFF_SECONDS=$((DRY_EPOCH - CREATED_EPOCH))
+      DRY_CYCLE_TIME=$(awk "BEGIN {printf \"%.1f\", $DIFF_SECONDS / 86400}")
+    fi
+  fi
+
+  if [[ "$FORMAT" == "json" ]]; then
+    jq -n \
+      --arg version "$VERSION" \
+      --arg timestamp "$DRY_TIMESTAMP" \
+      --arg taskId "$TASK_ID" \
+      --arg completedAt "$DRY_TIMESTAMP" \
+      --arg cycleTime "${DRY_CYCLE_TIME:-null}" \
+      --arg currentStatus "$CURRENT_STATUS" \
+      --argjson task "$TASK" \
+      '{
+        "$schema": "https://claude-todo.dev/schemas/output.schema.json",
+        "_meta": {
+          "format": "json",
+          "command": "complete",
+          "timestamp": $timestamp,
+          "version": $version
+        },
+        "success": true,
+        "dryRun": true,
+        "wouldComplete": {
+          "taskId": $taskId,
+          "title": $task.title,
+          "currentStatus": $currentStatus,
+          "completedAt": $completedAt,
+          "cycleTimeDays": (if $cycleTime == "null" then null else ($cycleTime | tonumber) end)
+        },
+        "task": $task
+      }'
+  else
+    echo -e "${YELLOW}[DRY-RUN]${NC} Would complete task:"
+    echo ""
+    echo -e "${BLUE}Task:${NC} $TASK_TITLE"
+    echo -e "${BLUE}ID:${NC} $TASK_ID"
+    echo -e "${BLUE}Status:${NC} $CURRENT_STATUS → done"
+    echo -e "${BLUE}Would Complete:${NC} $DRY_TIMESTAMP"
+    if [[ -n "$NOTES" ]]; then
+      echo -e "${BLUE}Notes:${NC} $NOTES"
+    fi
+    if [[ -n "$DRY_CYCLE_TIME" ]]; then
+      echo -e "${BLUE}Cycle Time:${NC} ${DRY_CYCLE_TIME} days"
+    fi
+    echo ""
+    echo -e "${YELLOW}No changes made (dry-run mode)${NC}"
+  fi
+  exit 0
 fi
 
 # Create safety backup before modification using unified backup library

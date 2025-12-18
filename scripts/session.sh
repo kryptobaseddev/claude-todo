@@ -63,8 +63,31 @@ fi
 
 log_info()    { echo -e "${GREEN}[INFO]${NC} $1"; }
 log_warn()    { echo -e "${YELLOW}[WARN]${NC} $1"; }
-log_error()   { echo -e "${RED}[ERROR]${NC} $1" >&2; }
+# Format-aware log_error: uses output_error for JSON, text fallback otherwise
+log_error() {
+  local message="$1"
+  local error_code="${2:-E_UNKNOWN}"
+  local exit_code="${3:-1}"
+  local suggestion="${4:-}"
+
+  # Check if output_format is json (from cmd_status/cmd_info local vars or global)
+  local current_format="${output_format:-${FORMAT:-text}}"
+
+  if [[ "$current_format" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+    FORMAT="$current_format"  # Sync FORMAT for output_error
+    output_error "$error_code" "$message" "$exit_code" true "$suggestion"
+  else
+    echo -e "${RED}[ERROR]${NC} $message" >&2
+    [[ -n "$suggestion" ]] && echo "Suggestion: $suggestion" >&2
+  fi
+}
 log_step()    { echo -e "${BLUE}[SESSION]${NC} $1"; }
+
+# Global format variable for output_error
+FORMAT="text"
+QUIET=false
+
+COMMAND_NAME="session"
 
 usage() {
   cat << EOF
@@ -83,6 +106,7 @@ Options:
   -f, --format FMT  Output format: text|json (default: auto)
   --human           Force text output (human-readable)
   --json            Force JSON output (machine-readable)
+  -q, --quiet       Suppress informational messages
   -h, --help        Show this help
 
 Format Auto-Detection:
@@ -102,15 +126,14 @@ EOF
 
 # Check dependencies
 if ! command -v jq &> /dev/null; then
-  log_error "jq is required but not installed"
+  log_error "jq is required but not installed" "E_DEPENDENCY_MISSING" 1 "Install jq: brew install jq (macOS) or apt install jq (Linux)"
   exit 1
 fi
 
 # Check todo.json exists
 check_todo_exists() {
   if [[ ! -f "$TODO_FILE" ]]; then
-    log_error "Todo file not found: $TODO_FILE"
-    log_error "Run 'claude-todo init' first"
+    log_error "Todo file not found: $TODO_FILE. Run 'claude-todo init' first" "E_NOT_INITIALIZED" 1 "Run 'claude-todo init' to initialize"
     exit 1
   fi
 }
@@ -137,8 +160,7 @@ cmd_start() {
   current_session=$(get_current_session)
 
   if [[ -n "$current_session" ]]; then
-    log_warn "Session already active: $current_session"
-    log_warn "Use 'claude-todo session end' first, or continue with current session"
+    log_error "Session already active: $current_session" "E_SESSION_ACTIVE" 1 "Use 'claude-todo session end' first, or continue with current session"
     exit 1
   fi
 
@@ -154,7 +176,7 @@ cmd_start() {
     ._meta.lastModified = $ts
   ' "$TODO_FILE")
   save_json "$TODO_FILE" "$updated_todo" || {
-    log_error "Failed to start session"
+    log_error "Failed to start session" "E_FILE_WRITE_ERROR" 1 "Check file permissions on $TODO_FILE"
     exit 1
   }
 
@@ -265,7 +287,7 @@ cmd_end() {
     ' "$TODO_FILE")
   fi
   save_json "$TODO_FILE" "$updated_todo" || {
-    log_error "Failed to end session"
+    log_error "Failed to end session" "E_FILE_WRITE_ERROR" 1 "Check file permissions on $TODO_FILE"
     exit 1
   }
 
@@ -318,6 +340,7 @@ cmd_status() {
       -f|--format) format_arg="$2"; shift 2 ;;
       --human) format_arg="text"; shift ;;
       --json) format_arg="json"; shift ;;
+      -q|--quiet) QUIET=true; shift ;;
       *) shift ;;
     esac
   done
@@ -350,7 +373,9 @@ cmd_status() {
       --arg note "$session_note" \
       --arg next "$next_action" \
       '{
+        "$schema": "https://claude-todo.dev/schemas/output.schema.json",
         "_meta": {
+          "format": "json",
           "command": "session status",
           "timestamp": $timestamp,
           "version": $version
@@ -391,6 +416,7 @@ cmd_info() {
       -f|--format) format_arg="$2"; shift 2 ;;
       --human) format_arg="text"; shift ;;
       --json) format_arg="json"; shift ;;
+      -q|--quiet) QUIET=true; shift ;;
       *) shift ;;
     esac
   done
@@ -406,7 +432,9 @@ cmd_info() {
     current_timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
     jq --arg timestamp "$current_timestamp" --arg version "$VERSION" '{
+      "$schema": "https://claude-todo.dev/schemas/output.schema.json",
       "_meta": {
+        "format": "json",
         "command": "session info",
         "timestamp": $timestamp,
         "version": $version
@@ -463,8 +491,7 @@ case "$COMMAND" in
   info)   cmd_info "$@" ;;
   -h|--help|help) usage ;;
   *)
-    log_error "Unknown command: $COMMAND"
-    echo "Run 'claude-todo session --help' for usage"
+    log_error "Unknown command: $COMMAND" "E_INPUT_INVALID" 1 "Run 'claude-todo session --help' for usage"
     exit 1
     ;;
 esac

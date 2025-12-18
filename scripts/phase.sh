@@ -30,6 +30,17 @@ TODO_FILE="${CLAUDE_TODO_DIR:-.claude}/todo.json"
 FORMAT=""
 COMMAND_NAME="phase"
 
+# Source version
+CLAUDE_TODO_HOME="${CLAUDE_TODO_HOME:-$HOME/.claude-todo}"
+if [[ -f "$CLAUDE_TODO_HOME/VERSION" ]]; then
+    VERSION="$(cat "$CLAUDE_TODO_HOME/VERSION" | tr -d '[:space:]')"
+elif [[ -f "$SCRIPT_DIR/../VERSION" ]]; then
+    VERSION="$(cat "$SCRIPT_DIR/../VERSION" | tr -d '[:space:]')"
+else
+    VERSION="0.1.0"
+fi
+QUIET=false
+
 # SUBCOMMANDS
 
 # Show current phase
@@ -43,10 +54,14 @@ cmd_show() {
             timestamp=$(get_iso_timestamp)
             jq -n \
                 --arg ts "$timestamp" \
+                --arg version "$VERSION" \
                 '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                     "_meta": {
                         "command": "phase show",
-                        "timestamp": $ts
+                        "timestamp": $ts,
+                        "version": $version,
+                        "format": "json"
                     },
                     "success": false,
                     "error": {
@@ -69,10 +84,14 @@ cmd_show() {
         echo "$phase_info" | jq \
             --arg ts "$timestamp" \
             --arg slug "$current_phase" \
+            --arg version "$VERSION" \
             '{
+                "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                 "_meta": {
                     "command": "phase show",
-                    "timestamp": $ts
+                    "timestamp": $ts,
+                    "version": $version,
+                    "format": "json"
                 },
                 "success": true,
                 "currentPhase": {
@@ -111,7 +130,7 @@ cmd_set() {
                     slug="$1"
                     shift
                 else
-                    echo "ERROR: Unexpected argument: $1" >&2
+                    output_error "$E_INPUT_INVALID" "Unexpected argument: $1"
                     return "${EXIT_INVALID_INPUT:-2}"
                 fi
                 ;;
@@ -119,7 +138,7 @@ cmd_set() {
     done
 
     if [[ -z "$slug" ]]; then
-        echo "ERROR: Phase slug required" >&2
+        output_error "$E_INPUT_MISSING" "Phase slug required"
         return "${EXIT_INVALID_INPUT:-2}"
     fi
 
@@ -135,6 +154,7 @@ cmd_set() {
                 --arg ts "$timestamp" \
                 --arg slug "$slug" \
                 '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                     "_meta": {
                         "command": "phase set",
                         "timestamp": $ts
@@ -146,7 +166,7 @@ cmd_set() {
                     }
                 }'
         else
-            echo "ERROR: Phase '$slug' does not exist" >&2
+            output_error "$E_PHASE_NOT_FOUND" "Phase '$slug' does not exist"
         fi
         return "${EXIT_NOT_FOUND:-4}"
     fi
@@ -173,6 +193,7 @@ cmd_set() {
                         --argjson from_order "$old_order" \
                         --argjson to_order "$new_order" \
                         '{
+                            "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                             "_meta": {
                                 "command": "phase set",
                                 "timestamp": $ts
@@ -188,7 +209,7 @@ cmd_set() {
                             }
                         }'
                 else
-                    echo "ERROR: Rolling back from '$old_name' (order $old_order) to '$new_name' (order $new_order) requires --rollback flag" >&2
+                    output_error "$E_PHASE_INVALID" "Rolling back from '$old_name' (order $old_order) to '$new_name' (order $new_order) requires --rollback flag"
                 fi
                 return "${EXIT_VALIDATION_ERROR:-6}"
             fi
@@ -202,6 +223,7 @@ cmd_set() {
                     jq -n \
                         --arg ts "$timestamp" \
                         '{
+                            "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                             "_meta": {
                                 "command": "phase set",
                                 "timestamp": $ts
@@ -247,6 +269,7 @@ cmd_set() {
                 --arg curr "$slug" \
                 --argjson rollback "$is_rollback" \
                 '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                     "_meta": {
                         "command": "phase set",
                         "timestamp": $ts
@@ -280,6 +303,7 @@ cmd_set() {
                 --arg ts "$timestamp" \
                 --arg slug "$slug" \
                 '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                     "_meta": {
                         "command": "phase set",
                         "timestamp": $ts
@@ -308,6 +332,7 @@ cmd_start() {
                 --arg ts "$timestamp" \
                 --arg slug "$slug" \
                 '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                     "_meta": {
                         "command": "phase start",
                         "timestamp": $ts
@@ -319,7 +344,7 @@ cmd_start() {
                     }
                 }'
         else
-            echo "ERROR: Phase '$slug' does not exist" >&2
+            output_error "$E_PHASE_NOT_FOUND" "Phase '$slug' does not exist"
         fi
         return "${EXIT_NOT_FOUND:-4}"
     fi
@@ -336,6 +361,7 @@ cmd_start() {
                 --arg slug "$slug" \
                 --arg status "$current_status" \
                 '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                     "_meta": {
                         "command": "phase start",
                         "timestamp": $ts
@@ -347,7 +373,7 @@ cmd_start() {
                     }
                 }'
         else
-            echo "ERROR: Can only start pending phases (current: $current_status)" >&2
+            output_error "$E_PHASE_INVALID" "Can only start pending phases (current: $current_status)"
         fi
         return "${EXIT_INVALID_INPUT:-2}"
     fi
@@ -360,6 +386,7 @@ cmd_start() {
                 --arg ts "$started_at" \
                 --arg slug "$slug" \
                 '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                     "_meta": {
                         "command": "phase start",
                         "timestamp": $ts
@@ -382,6 +409,7 @@ cmd_start() {
                 --arg ts "$timestamp" \
                 --arg slug "$slug" \
                 '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                     "_meta": {
                         "command": "phase start",
                         "timestamp": $ts
@@ -411,6 +439,7 @@ cmd_complete() {
                 --arg ts "$timestamp" \
                 --arg slug "$slug" \
                 '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                     "_meta": {
                         "command": "phase complete",
                         "timestamp": $ts
@@ -422,7 +451,7 @@ cmd_complete() {
                     }
                 }'
         else
-            echo "ERROR: Phase '$slug' does not exist" >&2
+            output_error "$E_PHASE_NOT_FOUND" "Phase '$slug' does not exist"
         fi
         return "${EXIT_NOT_FOUND:-4}"
     fi
@@ -439,6 +468,7 @@ cmd_complete() {
                 --arg slug "$slug" \
                 --arg status "$current_status" \
                 '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                     "_meta": {
                         "command": "phase complete",
                         "timestamp": $ts
@@ -450,7 +480,7 @@ cmd_complete() {
                     }
                 }'
         else
-            echo "ERROR: Can only complete active phases (current: $current_status)" >&2
+            output_error "$E_PHASE_INVALID" "Can only complete active phases (current: $current_status)"
         fi
         return "${EXIT_INVALID_INPUT:-2}"
     fi
@@ -470,6 +500,7 @@ cmd_complete() {
                 --arg slug "$slug" \
                 --argjson count "$incomplete_count" \
                 '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                     "_meta": {
                         "command": "phase complete",
                         "timestamp": $ts
@@ -482,7 +513,7 @@ cmd_complete() {
                     }
                 }'
         else
-            echo "ERROR: Cannot complete phase '$slug' - $incomplete_count incomplete task(s) pending" >&2
+            output_error "$E_VALIDATION_REQUIRED" "Cannot complete phase '$slug' - $incomplete_count incomplete task(s) pending"
         fi
         return "${EXIT_VALIDATION_ERROR:-6}"
     fi
@@ -498,6 +529,7 @@ cmd_complete() {
                 --arg slug "$slug" \
                 --arg started "$started_at" \
                 '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                     "_meta": {
                         "command": "phase complete",
                         "timestamp": $ts
@@ -521,6 +553,7 @@ cmd_complete() {
                 --arg ts "$timestamp" \
                 --arg slug "$slug" \
                 '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                     "_meta": {
                         "command": "phase complete",
                         "timestamp": $ts
@@ -557,6 +590,7 @@ cmd_advance() {
                         --arg ts "$timestamp" \
                         --arg arg "$1" \
                         '{
+                            "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                             "_meta": {
                                 "command": "phase advance",
                                 "timestamp": $ts
@@ -568,7 +602,7 @@ cmd_advance() {
                             }
                         }'
                 else
-                    echo "ERROR: Unknown argument: $1" >&2
+                    output_error "$E_INPUT_INVALID" "Unknown argument: $1"
                 fi
                 return "${EXIT_INVALID_INPUT:-2}"
                 ;;
@@ -585,6 +619,7 @@ cmd_advance() {
             jq -n \
                 --arg ts "$timestamp" \
                 '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                     "_meta": {
                         "command": "phase advance",
                         "timestamp": $ts
@@ -596,7 +631,7 @@ cmd_advance() {
                     }
                 }'
         else
-            echo "ERROR: No current phase set" >&2
+            output_error "$E_PHASE_NOT_FOUND" "No current phase set"
         fi
         return "${EXIT_NOT_FOUND:-4}"
     fi
@@ -622,6 +657,7 @@ cmd_advance() {
                 --arg ts "$timestamp" \
                 --arg current "$current" \
                 '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                     "_meta": {
                         "command": "phase advance",
                         "timestamp": $ts
@@ -671,6 +707,7 @@ cmd_advance() {
                     --arg slug "$current" \
                     --argjson count "$critical_count" \
                     '{
+                        "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                         "_meta": {
                             "command": "phase advance",
                             "timestamp": $ts
@@ -684,8 +721,7 @@ cmd_advance() {
                         }
                     }'
             else
-                echo "ERROR: Cannot advance - $critical_count critical task(s) remain in phase '$current'" >&2
-                echo "HINT: Complete critical tasks or set validation.phaseValidation.blockOnCriticalTasks to false" >&2
+                output_error "$E_VALIDATION_REQUIRED" "Cannot advance - $critical_count critical task(s) remain in phase '$current'" "" "" "Complete critical tasks or set validation.phaseValidation.blockOnCriticalTasks to false"
             fi
             return "${EXIT_VALIDATION_ERROR:-6}"
         fi
@@ -713,6 +749,7 @@ cmd_advance() {
                     --argjson percent "$completion_percent" \
                     --argjson threshold "$phase_threshold" \
                     '{
+                        "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                         "_meta": {
                             "command": "phase advance",
                             "timestamp": $ts
@@ -729,9 +766,7 @@ cmd_advance() {
                         }
                     }'
             else
-                echo "ERROR: Cannot advance - $incomplete_count incomplete task(s) in phase '$current'" >&2
-                echo "       Completion: $completion_percent% (threshold: $phase_threshold%)" >&2
-                echo "HINT: Use 'phase advance --force' to override" >&2
+                output_error "$E_VALIDATION_REQUIRED" "Cannot advance - $incomplete_count incomplete task(s) in phase '$current' (Completion: $completion_percent%, threshold: $phase_threshold%)" "" "" "Use 'phase advance --force' to override"
             fi
             return "${EXIT_VALIDATION_ERROR:-6}"
         fi
@@ -791,6 +826,7 @@ cmd_advance() {
                 --arg curr "$new_phase" \
                 --argjson forced "$([[ "$force_advance" == "true" ]] && echo true || echo false)" \
                 '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                     "_meta": {
                         "command": "phase advance",
                         "timestamp": $ts
@@ -816,6 +852,7 @@ cmd_advance() {
                 --arg ts "$timestamp" \
                 --arg msg "$result" \
                 '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                     "_meta": {
                         "command": "phase advance",
                         "timestamp": $ts
@@ -843,6 +880,7 @@ cmd_list() {
             --arg ts "$timestamp" \
             --arg current "$current_phase" \
             '{
+                "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                 "_meta": {
                     "command": "phase list",
                     "timestamp": $ts
@@ -898,6 +936,7 @@ cmd_rename() {
                 --arg ts "$timestamp" \
                 --arg slug "$old_name" \
                 '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                     "_meta": {
                         "command": "phase rename",
                         "timestamp": $ts
@@ -909,7 +948,7 @@ cmd_rename() {
                     }
                 }'
         else
-            echo "ERROR: Phase '$old_name' does not exist" >&2
+            output_error "$E_PHASE_NOT_FOUND" "Phase '$old_name' does not exist"
         fi
         return "${EXIT_NOT_FOUND:-4}"
     fi
@@ -923,6 +962,7 @@ cmd_rename() {
                 --arg ts "$timestamp" \
                 --arg slug "$new_name" \
                 '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                     "_meta": {
                         "command": "phase rename",
                         "timestamp": $ts
@@ -934,7 +974,7 @@ cmd_rename() {
                     }
                 }'
         else
-            echo "ERROR: Phase '$new_name' already exists" >&2
+            output_error "$E_PHASE_INVALID" "Phase '$new_name' already exists"
         fi
         return "${EXIT_INVALID_INPUT:-2}"
     fi
@@ -948,6 +988,7 @@ cmd_rename() {
                 --arg ts "$timestamp" \
                 --arg slug "$new_name" \
                 '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                     "_meta": {
                         "command": "phase rename",
                         "timestamp": $ts
@@ -959,8 +1000,7 @@ cmd_rename() {
                     }
                 }'
         else
-            echo "ERROR: Invalid phase name '$new_name'" >&2
-            echo "Phase names must be lowercase alphanumeric with hyphens, not starting/ending with hyphen" >&2
+            output_error "$E_INPUT_INVALID" "Invalid phase name '$new_name'" "" "" "Phase names must be lowercase alphanumeric with hyphens, not starting/ending with hyphen"
         fi
         return "${EXIT_INVALID_INPUT:-2}"
     fi
@@ -984,6 +1024,7 @@ cmd_rename() {
             jq -n \
                 --arg ts "$timestamp" \
                 '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                     "_meta": {
                         "command": "phase rename",
                         "timestamp": $ts
@@ -995,7 +1036,7 @@ cmd_rename() {
                     }
                 }'
         else
-            echo "ERROR: Failed to create backup" >&2
+            output_error "$E_FILE_WRITE_ERROR" "Failed to create backup"
         fi
         return "${EXIT_GENERAL_ERROR:-1}"
     fi
@@ -1045,6 +1086,7 @@ cmd_rename() {
             jq -n \
                 --arg ts "$timestamp" \
                 '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                     "_meta": {
                         "command": "phase rename",
                         "timestamp": $ts
@@ -1056,7 +1098,7 @@ cmd_rename() {
                     }
                 }'
         else
-            echo "ERROR: Failed to rename phase" >&2
+            output_error "$E_FILE_WRITE_ERROR" "Failed to rename phase"
         fi
         rm -f "$temp_file"
         restore_backup "$TODO_FILE"
@@ -1071,6 +1113,7 @@ cmd_rename() {
             jq -n \
                 --arg ts "$timestamp" \
                 '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                     "_meta": {
                         "command": "phase rename",
                         "timestamp": $ts
@@ -1082,7 +1125,7 @@ cmd_rename() {
                     }
                 }'
         else
-            echo "ERROR: Rename produced invalid JSON" >&2
+            output_error "$E_VALIDATION_SCHEMA" "Rename produced invalid JSON"
         fi
         rm -f "$temp_file"
         restore_backup "$TODO_FILE"
@@ -1103,6 +1146,7 @@ cmd_rename() {
             jq -n \
                 --arg ts "$timestamp" \
                 '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                     "_meta": {
                         "command": "phase rename",
                         "timestamp": $ts
@@ -1114,7 +1158,7 @@ cmd_rename() {
                     }
                 }'
         else
-            echo "ERROR: Failed to write updated file" >&2
+            output_error "$E_FILE_WRITE_ERROR" "Failed to write updated file"
         fi
         rm -f "$temp_file"
         restore_backup "$TODO_FILE"
@@ -1142,6 +1186,7 @@ cmd_rename() {
             --argjson count "$updated_count" \
             --arg current "$current_phase" \
             '{
+                "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                 "_meta": {
                     "command": "phase rename",
                     "timestamp": $ts
@@ -1182,6 +1227,7 @@ cmd_delete() {
                 --arg ts "$timestamp" \
                 --arg slug "$slug" \
                 '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                     "_meta": {
                         "command": "phase delete",
                         "timestamp": $ts
@@ -1193,7 +1239,7 @@ cmd_delete() {
                     }
                 }'
         else
-            echo "ERROR: Phase '$slug' does not exist" >&2
+            output_error "$E_PHASE_NOT_FOUND" "Phase '$slug' does not exist"
         fi
         return "${EXIT_NOT_FOUND:-4}"
     fi
@@ -1209,6 +1255,7 @@ cmd_delete() {
                 --arg ts "$timestamp" \
                 --arg slug "$slug" \
                 '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                     "_meta": {
                         "command": "phase delete",
                         "timestamp": $ts
@@ -1220,8 +1267,7 @@ cmd_delete() {
                     }
                 }'
         else
-            echo "ERROR: Cannot delete current project phase '$slug'" >&2
-            echo "Use 'claude-todo phase set <other-phase>' to change the current phase first" >&2
+            output_error "$E_PHASE_INVALID" "Cannot delete current project phase '$slug'" "" "" "Use 'claude-todo phase set <other-phase>' to change the current phase first"
         fi
         return "${EXIT_VALIDATION_ERROR:-6}"
     fi
@@ -1253,6 +1299,7 @@ cmd_delete() {
                 --argjson blocked "$blocked_count" \
                 --argjson done "$done_count" \
                 '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                     "_meta": {
                         "command": "phase delete",
                         "timestamp": $ts
@@ -1271,15 +1318,7 @@ cmd_delete() {
                     }
                 }'
         else
-            echo "ERROR: Cannot delete '$slug': $task_count tasks would be orphaned" >&2
-            echo "" >&2
-            echo "Phase '$slug' has $task_count tasks:" >&2
-            [[ "$pending_count" -gt 0 ]] && echo "  - $pending_count pending" >&2
-            [[ "$active_count" -gt 0 ]] && echo "  - $active_count active" >&2
-            [[ "$blocked_count" -gt 0 ]] && echo "  - $blocked_count blocked" >&2
-            [[ "$done_count" -gt 0 ]] && echo "  - $done_count done" >&2
-            echo "" >&2
-            echo "Use: claude-todo phase delete $slug --reassign-to <phase>" >&2
+            output_error "$E_VALIDATION_REQUIRED" "Cannot delete '$slug': $task_count tasks would be orphaned (pending: $pending_count, active: $active_count, blocked: $blocked_count, done: $done_count)" "" "" "Use: claude-todo phase delete $slug --reassign-to <phase>"
         fi
         return "${EXIT_VALIDATION_ERROR:-6}"
     fi
@@ -1294,6 +1333,7 @@ cmd_delete() {
                     --arg ts "$timestamp" \
                     --arg slug "$reassign_to" \
                     '{
+                        "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                         "_meta": {
                             "command": "phase delete",
                             "timestamp": $ts
@@ -1305,7 +1345,7 @@ cmd_delete() {
                         }
                     }'
             else
-                echo "ERROR: Reassignment target phase '$reassign_to' does not exist" >&2
+                output_error "$E_PHASE_NOT_FOUND" "Reassignment target phase '$reassign_to' does not exist"
             fi
             return "${EXIT_NOT_FOUND:-4}"
         fi
@@ -1320,6 +1360,7 @@ cmd_delete() {
                 --arg ts "$timestamp" \
                 --arg slug "$slug" \
                 '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                     "_meta": {
                         "command": "phase delete",
                         "timestamp": $ts
@@ -1331,11 +1372,10 @@ cmd_delete() {
                     }
                 }'
         else
-            echo "ERROR: Phase deletion requires --force flag for safety" >&2
             if [[ "$task_count" -gt 0 ]]; then
-                echo "Use: claude-todo phase delete $slug --reassign-to $reassign_to --force" >&2
+                output_error "$E_INPUT_MISSING" "Phase deletion requires --force flag for safety" "" "" "Use: claude-todo phase delete $slug --reassign-to $reassign_to --force"
             else
-                echo "Use: claude-todo phase delete $slug --force" >&2
+                output_error "$E_INPUT_MISSING" "Phase deletion requires --force flag for safety" "" "" "Use: claude-todo phase delete $slug --force"
             fi
         fi
         return "${EXIT_INVALID_INPUT:-2}"
@@ -1350,6 +1390,7 @@ cmd_delete() {
             jq -n \
                 --arg ts "$timestamp" \
                 '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                     "_meta": {
                         "command": "phase delete",
                         "timestamp": $ts
@@ -1361,7 +1402,7 @@ cmd_delete() {
                     }
                 }'
         else
-            echo "ERROR: Failed to create backup" >&2
+            output_error "$E_FILE_WRITE_ERROR" "Failed to create backup before phase deletion"
         fi
         return "${EXIT_FILE_ERROR:-3}"
     fi
@@ -1409,6 +1450,7 @@ cmd_delete() {
             jq -n \
                 --arg ts "$timestamp_err" \
                 '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                     "_meta": {
                         "command": "phase delete",
                         "timestamp": $ts
@@ -1420,7 +1462,7 @@ cmd_delete() {
                     }
                 }'
         else
-            echo "ERROR: Failed to write changes" >&2
+            output_error "$E_FILE_WRITE_ERROR" "Failed to write changes"
         fi
         return "${EXIT_FILE_ERROR:-3}"
     fi
@@ -1441,6 +1483,7 @@ cmd_delete() {
             --arg reassign "${reassign_to:-null}" \
             --argjson count "$task_count" \
             '{
+                "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                 "_meta": {
                     "command": "phase delete",
                     "timestamp": $ts
@@ -1472,6 +1515,7 @@ Options:
   -f, --format FORMAT   Output format: text (default) or json
   --json                Shorthand for --format json
   --human               Shorthand for --format text
+  -q, --quiet           Suppress informational messages
   -h, --help            Show this help message
 
 Subcommands:
@@ -1522,6 +1566,10 @@ main() {
                 FORMAT="text"
                 shift
                 ;;
+            -q|--quiet)
+                QUIET=true
+                shift
+                ;;
             -h|--help|help)
                 usage
                 exit 0
@@ -1566,6 +1614,7 @@ main() {
                     jq -n \
                         --arg ts "$timestamp" \
                         '{
+                            "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                             "_meta": {
                                 "command": "phase set",
                                 "timestamp": $ts
@@ -1577,7 +1626,7 @@ main() {
                             }
                         }'
                 else
-                    echo "ERROR: phase slug required" >&2
+                    output_error "$E_INPUT_MISSING" "Phase slug required"
                 fi
                 exit "${EXIT_INVALID_INPUT:-2}"
             fi
@@ -1591,6 +1640,7 @@ main() {
                     jq -n \
                         --arg ts "$timestamp" \
                         '{
+                            "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                             "_meta": {
                                 "command": "phase start",
                                 "timestamp": $ts
@@ -1602,7 +1652,7 @@ main() {
                             }
                         }'
                 else
-                    echo "ERROR: phase slug required" >&2
+                    output_error "$E_INPUT_MISSING" "Phase slug required"
                 fi
                 exit "${EXIT_INVALID_INPUT:-2}"
             fi
@@ -1616,6 +1666,7 @@ main() {
                     jq -n \
                         --arg ts "$timestamp" \
                         '{
+                            "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                             "_meta": {
                                 "command": "phase complete",
                                 "timestamp": $ts
@@ -1627,7 +1678,7 @@ main() {
                             }
                         }'
                 else
-                    echo "ERROR: phase slug required" >&2
+                    output_error "$E_INPUT_MISSING" "Phase slug required"
                 fi
                 exit "${EXIT_INVALID_INPUT:-2}"
             fi
@@ -1647,6 +1698,7 @@ main() {
                     jq -n \
                         --arg ts "$timestamp" \
                         '{
+                            "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                             "_meta": {
                                 "command": "phase delete",
                                 "timestamp": $ts
@@ -1658,7 +1710,7 @@ main() {
                             }
                         }'
                 else
-                    echo "ERROR: phase slug required" >&2
+                    output_error "$E_INPUT_MISSING" "Phase slug required"
                     echo "Usage: phase delete <slug> --reassign-to <phase> --force" >&2
                 fi
                 exit "${EXIT_INVALID_INPUT:-2}"
@@ -1688,6 +1740,7 @@ main() {
                                 --arg ts "$timestamp" \
                                 --arg flag "$1" \
                                 '{
+                                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                                     "_meta": {
                                         "command": "phase delete",
                                         "timestamp": $ts
@@ -1699,7 +1752,7 @@ main() {
                                     }
                                 }'
                         else
-                            echo "ERROR: Unknown flag: $1" >&2
+                            output_error "$E_INPUT_INVALID" "Unknown flag: $1"
                         fi
                         exit "${EXIT_INVALID_INPUT:-2}"
                         ;;
@@ -1716,6 +1769,7 @@ main() {
                     jq -n \
                         --arg ts "$timestamp" \
                         '{
+                            "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                             "_meta": {
                                 "command": "phase rename",
                                 "timestamp": $ts
@@ -1727,7 +1781,7 @@ main() {
                             }
                         }'
                 else
-                    echo "ERROR: Usage: phase rename <old-name> <new-name>" >&2
+                    output_error "$E_INPUT_MISSING" "Both old and new phase names required"
                 fi
                 exit "${EXIT_INVALID_INPUT:-2}"
             fi
@@ -1741,6 +1795,7 @@ main() {
                     --arg ts "$timestamp" \
                     --arg cmd "$subcommand" \
                     '{
+                        "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                         "_meta": {
                             "command": "phase",
                             "timestamp": $ts
@@ -1752,7 +1807,7 @@ main() {
                         }
                     }'
             else
-                echo "ERROR: Unknown subcommand: $subcommand" >&2
+                output_error "$E_INPUT_INVALID" "Unknown subcommand: $subcommand"
                 usage
             fi
             exit "${EXIT_INVALID_INPUT:-2}"

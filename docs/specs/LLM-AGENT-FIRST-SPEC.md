@@ -62,7 +62,7 @@ Design CLI tools with **LLM-agent-first** principles: JSON output by default for
 
 ## Part 1: Command Inventory
 
-### All Commands (30 total)
+### All Commands (31 total)
 
 | # | Command | Script | Category | Requirements |
 |---|---------|--------|----------|--------------|
@@ -77,32 +77,33 @@ Design CLI tools with **LLM-agent-first** principles: JSON output by default for
 | 9 | `exists` | `exists.sh` | Read | JSON output, `--format`, `--quiet` |
 | 10 | `export` | `export.sh` | Read | Multi-format, `--quiet` |
 | 11 | `extract` | `extract-todowrite.sh` | Sync | JSON output, `--format`, `--quiet`, `--dry-run` |
-| 12 | `focus` | `focus.sh` | Write | JSON output, `--format`, `--quiet` |
-| 13 | `history` | `history.sh` | Read | JSON output, `--format`, `--quiet` |
-| 14 | `init` | `init.sh` | Setup | JSON output, `--format`, `--quiet` |
-| 15 | `inject` | `inject-todowrite.sh` | Sync | JSON output, `--format`, `--quiet`, `--dry-run` |
-| 16 | `labels` | `labels.sh` | Read | JSON output, `--format`, `--quiet` |
-| 17 | `list` | `list-tasks.sh` | Read | JSON output, `--format`, `--quiet` |
-| 18 | `log` | `log.sh` | Read | JSON output, `--format`, `--quiet` |
-| 19 | `migrate` | `migrate.sh` | Maintenance | JSON output, `--format`, `--quiet`, `--dry-run` |
-| 20 | `migrate-backups` | `migrate-backups.sh` | Maintenance | JSON output, `--format`, `--quiet`, `--dry-run` |
-| 21 | `next` | `next.sh` | Read | JSON output, `--format`, `--quiet` |
-| 22 | `phase` | `phase.sh` | Write | JSON output, `--format`, `--quiet` |
-| 23 | `phases` | `phases.sh` | Read | JSON output, `--format`, `--quiet` |
-| 24 | `restore` | `restore.sh` | Maintenance | JSON output, `--format`, `--quiet`, `--dry-run` |
-| 25 | `session` | `session.sh` | Write | JSON output, `--format`, `--quiet` |
-| 26 | `show` | `show.sh` | Read | JSON output, `--format`, `--quiet` |
-| 27 | `stats` | `stats.sh` | Read | JSON output, `--format`, `--quiet` |
-| 28 | `sync` | `sync-todowrite.sh` | Sync | JSON output, `--format`, `--quiet`, `--dry-run` |
-| 29 | `update` | `update-task.sh` | Write | JSON output, `--format`, `--quiet`, `--dry-run` |
-| 30 | `validate` | `validate.sh` | Maintenance | JSON output, `--format`, `--quiet` |
+| **12** | **`find`** | **`find.sh`** | **Read** | **JSON output, `--format`, `--quiet`, fuzzy search** |
+| 13 | `focus` | `focus.sh` | Write | JSON output, `--format`, `--quiet` |
+| 14 | `history` | `history.sh` | Read | JSON output, `--format`, `--quiet` |
+| 15 | `init` | `init.sh` | Setup | JSON output, `--format`, `--quiet` |
+| 16 | `inject` | `inject-todowrite.sh` | Sync | JSON output, `--format`, `--quiet`, `--dry-run` |
+| 17 | `labels` | `labels.sh` | Read | JSON output, `--format`, `--quiet` |
+| 18 | `list` | `list-tasks.sh` | Read | JSON output, `--format`, `--quiet` |
+| 19 | `log` | `log.sh` | Read | JSON output, `--format`, `--quiet` |
+| 20 | `migrate` | `migrate.sh` | Maintenance | JSON output, `--format`, `--quiet`, `--dry-run` |
+| 21 | `migrate-backups` | `migrate-backups.sh` | Maintenance | JSON output, `--format`, `--quiet`, `--dry-run` |
+| 22 | `next` | `next.sh` | Read | JSON output, `--format`, `--quiet` |
+| 23 | `phase` | `phase.sh` | Write | JSON output, `--format`, `--quiet` |
+| 24 | `phases` | `phases.sh` | Read | JSON output, `--format`, `--quiet` |
+| 25 | `restore` | `restore.sh` | Maintenance | JSON output, `--format`, `--quiet`, `--dry-run` |
+| 26 | `session` | `session.sh` | Write | JSON output, `--format`, `--quiet` |
+| 27 | `show` | `show.sh` | Read | JSON output, `--format`, `--quiet` |
+| 28 | `stats` | `stats.sh` | Read | JSON output, `--format`, `--quiet` |
+| 29 | `sync` | `sync-todowrite.sh` | Sync | JSON output, `--format`, `--quiet`, `--dry-run` |
+| 30 | `update` | `update-task.sh` | Write | JSON output, `--format`, `--quiet`, `--dry-run` |
+| 31 | `validate` | `validate.sh` | Maintenance | JSON output, `--format`, `--quiet` |
 
 ### Command Categories
 
 | Category | Commands | Special Requirements |
 |----------|----------|---------------------|
 | **Write** | add, archive, complete, focus, phase, session, update | MUST return created/updated object, MUST support `--dry-run` |
-| **Read** | analyze, blockers, dash, deps, exists, export, history, labels, list, log, next, phases, show, stats | MUST support filtering, MUST return structured data |
+| **Read** | analyze, blockers, dash, deps, exists, export, **find**, history, labels, list, log, next, phases, show, stats | MUST support filtering, MUST return structured data |
 | **Sync** | extract, inject, sync | MUST support `--dry-run`, MUST report conflicts |
 | **Maintenance** | backup, init, migrate, migrate-backups, restore, validate | MUST report status, SHOULD support `--dry-run` |
 | **Setup** | init | MUST be idempotent |

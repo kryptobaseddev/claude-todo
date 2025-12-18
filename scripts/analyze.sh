@@ -57,6 +57,16 @@ elif [[ -f "$CLAUDE_TODO_HOME/lib/logging.sh" ]]; then
   source "$CLAUDE_TODO_HOME/lib/logging.sh"
 fi
 
+# Source error JSON library (includes exit-codes.sh)
+if [[ -f "$LIB_DIR/error-json.sh" ]]; then
+  # shellcheck source=../lib/error-json.sh
+  source "$LIB_DIR/error-json.sh"
+elif [[ -f "$LIB_DIR/exit-codes.sh" ]]; then
+  # Fallback: source exit codes directly if error-json.sh not available
+  # shellcheck source=../lib/exit-codes.sh
+  source "$LIB_DIR/exit-codes.sh"
+fi
+
 if [[ -f "${LIB_DIR}/output-format.sh" ]]; then
   source "${LIB_DIR}/output-format.sh"
 elif [[ -f "$CLAUDE_TODO_HOME/lib/output-format.sh" ]]; then
@@ -72,6 +82,7 @@ fi
 # Default configuration - JSON output for LLM agents
 OUTPUT_MODE="json"
 AUTO_FOCUS=false
+COMMAND_NAME="analyze"
 
 # File paths
 CLAUDE_DIR=".claude"
@@ -375,11 +386,15 @@ run_complete_analysis() {
     # ================================================================
 
     {
+      "$schema": "https://claude-todo.dev/schemas/output.schema.json",
       "_meta": {
+        "format": "json",
         "version": $version,
-        "generated": (now | strftime("%Y-%m-%dT%H:%M:%SZ")),
+        "command": "analyze",
+        "timestamp": (now | strftime("%Y-%m-%dT%H:%M:%SZ")),
         "algorithm": "leverage_scoring_v2"
       },
+      "success": true,
 
       "summary": $summary,
 
@@ -431,7 +446,9 @@ output_json() {
 
   if [[ "$pending_count" -eq 0 ]]; then
     jq -n --arg version "$VERSION" '{
-      "_meta": {"version": $version, "generated": (now | strftime("%Y-%m-%dT%H:%M:%SZ"))},
+      "$schema": "https://claude-todo.dev/schemas/output.schema.json",
+      "_meta": {"format": "json", "command": "analyze", "version": $version, "timestamp": (now | strftime("%Y-%m-%dT%H:%M:%SZ"))},
+      "success": true,
       "summary": {"total_pending": 0, "actionable": 0, "blocked": 0},
       "recommendation": null,
       "action_order": [],
@@ -679,9 +696,13 @@ parse_arguments() {
         usage
         ;;
       *)
-        echo "[ERROR] Unknown option: $1" >&2
-        echo "Run 'claude-todo analyze --help' for usage"
-        exit 1
+        if [[ "${OUTPUT_MODE:-}" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+          output_error "E_INPUT_INVALID" "Unknown option: $1" "${EXIT_INVALID_INPUT:-2}" true "Run 'claude-todo analyze --help' for usage"
+        else
+          log_error "Unknown option: $1"
+          echo "Run 'claude-todo analyze --help' for usage" >&2
+        fi
+        exit "${EXIT_INVALID_INPUT:-2}"
         ;;
     esac
   done
@@ -694,17 +715,29 @@ parse_arguments() {
 main() {
   parse_arguments "$@"
 
+  # Resolve format (TTY-aware auto-detection)
+  # Note: analyze.sh uses OUTPUT_MODE instead of FORMAT
+  OUTPUT_MODE=$(resolve_format "${OUTPUT_MODE:-}")
+
   # Check if in a todo-enabled project
   if [[ ! -f "$TODO_FILE" ]]; then
-    echo "[ERROR] Todo file not found: $TODO_FILE" >&2
-    echo "Run 'claude-todo init' first" >&2
-    exit 1
+    if [[ "$OUTPUT_MODE" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+      output_error "E_NOT_INITIALIZED" "Todo file not found: $TODO_FILE" "${EXIT_FILE_ERROR:-3}" true "Run 'claude-todo init' to initialize project"
+    else
+      log_error "Todo file not found: $TODO_FILE"
+      echo "Run 'claude-todo init' first" >&2
+    fi
+    exit "${EXIT_FILE_ERROR:-3}"
   fi
 
   # Check required commands
   if ! command -v jq &>/dev/null; then
-    echo "[ERROR] jq is required but not installed" >&2
-    exit 1
+    if [[ "$OUTPUT_MODE" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+      output_error "E_DEPENDENCY_MISSING" "jq is required but not installed" "${EXIT_DEPENDENCY_ERROR:-5}" true "Install jq: https://stedolan.github.io/jq/download/"
+    else
+      log_error "jq is required but not installed"
+    fi
+    exit "${EXIT_DEPENDENCY_ERROR:-5}"
   fi
 
   # Output in requested format
@@ -736,7 +769,10 @@ main() {
 
       if [[ "$OUTPUT_MODE" == "json" ]]; then
         echo ""
-        jq -n --arg task "$rec_task" '{"auto_focus": {"set": $task, "status": "success"}}'
+        jq -n --arg task "$rec_task" '{
+          "$schema": "https://claude-todo.dev/schemas/output.schema.json",
+          "auto_focus": {"set": $task, "status": "success"}
+        }'
       fi
     fi
   fi

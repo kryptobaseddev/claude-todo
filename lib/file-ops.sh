@@ -44,16 +44,16 @@ MAX_BACKUPS=10
 TEMP_SUFFIX=".tmp"
 LOCK_SUFFIX=".lock"
 
-# Error codes
-E_SUCCESS=0
-E_INVALID_ARGS=1
-E_FILE_NOT_FOUND=2
-E_WRITE_FAILED=3
-E_BACKUP_FAILED=4
-E_VALIDATION_FAILED=5
-E_RESTORE_FAILED=6
-E_JSON_PARSE_FAILED=7
-E_LOCK_FAILED=8
+# Error codes (use FO_ prefix to avoid conflicts with error-json.sh constants)
+FO_SUCCESS=0
+FO_INVALID_ARGS=1
+FO_FILE_NOT_FOUND=2
+FO_WRITE_FAILED=3
+FO_BACKUP_FAILED=4
+FO_VALIDATION_FAILED=5
+FO_RESTORE_FAILED=6
+FO_JSON_PARSE_FAILED=7
+FO_LOCK_FAILED=8
 
 #######################################
 # Ensure directory exists with proper permissions
@@ -67,20 +67,20 @@ ensure_directory() {
 
     if [[ -z "$dir" ]]; then
         echo "Error: Directory path required" >&2
-        return $E_INVALID_ARGS
+        return $FO_INVALID_ARGS
     fi
 
     if [[ ! -d "$dir" ]]; then
         if ! mkdir -p "$dir" 2>/dev/null; then
             echo "Error: Failed to create directory: $dir" >&2
-            return $E_WRITE_FAILED
+            return $FO_WRITE_FAILED
         fi
 
         # Set proper permissions (owner: rwx, group: rx, other: rx)
         chmod 755 "$dir" 2>/dev/null || true
     fi
 
-    return $E_SUCCESS
+    return $FO_SUCCESS
 }
 
 #######################################
@@ -103,14 +103,14 @@ lock_file() {
 
     if [[ -z "$file" ]]; then
         echo "Error: File path required for locking" >&2
-        return $E_INVALID_ARGS
+        return $FO_INVALID_ARGS
     fi
 
     # Ensure parent directory exists
     local file_dir
     file_dir="$(dirname "$file")"
     if ! ensure_directory "$file_dir"; then
-        return $E_LOCK_FAILED
+        return $FO_LOCK_FAILED
     fi
 
     # Create lock file path
@@ -119,7 +119,7 @@ lock_file() {
     # Touch lock file to ensure it exists
     touch "$lock_file" 2>/dev/null || {
         echo "Error: Failed to create lock file: $lock_file" >&2
-        return $E_LOCK_FAILED
+        return $FO_LOCK_FAILED
     }
 
     # Find available file descriptor (200-210)
@@ -136,21 +136,21 @@ lock_file() {
             if flock -w "$timeout" "$fd" 2>/dev/null; then
                 # Success - store FD in caller's variable
                 eval "$fd_var=$fd"
-                return $E_SUCCESS
+                return $FO_SUCCESS
             else
                 # Failed to acquire lock (timeout or error)
                 # Close FD and exit immediately - don't try other FDs
                 eval "exec $fd>&-" 2>/dev/null || true
                 echo "Error: Failed to acquire lock on $file (timeout after ${timeout}s)" >&2
                 echo "Another process may be accessing this file." >&2
-                return $E_LOCK_FAILED
+                return $FO_LOCK_FAILED
             fi
         fi
     done
 
     # If we get here, no FD was available
     echo "Error: No available file descriptors for locking" >&2
-    return $E_LOCK_FAILED
+    return $FO_LOCK_FAILED
 }
 
 #######################################
@@ -167,14 +167,14 @@ unlock_file() {
     local fd="${1:-${LOCK_FD:-}}"
 
     if [[ -z "$fd" ]]; then
-        return $E_SUCCESS
+        return $FO_SUCCESS
     fi
 
     # Release lock and close file descriptor
     flock -u "$fd" 2>/dev/null || true
     eval "exec $fd>&-" 2>/dev/null || true
 
-    return $E_SUCCESS
+    return $FO_SUCCESS
 }
 
 #######################################
@@ -191,12 +191,12 @@ backup_file() {
 
     if [[ -z "$file" ]]; then
         echo "Error: File path required for backup" >&2
-        return $E_INVALID_ARGS
+        return $FO_INVALID_ARGS
     fi
 
     if [[ ! -f "$file" ]]; then
         echo "Error: File not found: $file" >&2
-        return $E_FILE_NOT_FOUND
+        return $FO_FILE_NOT_FOUND
     fi
 
     # Determine backup directory
@@ -206,7 +206,7 @@ backup_file() {
 
     # Ensure backup directory exists
     if ! ensure_directory "$backup_dir"; then
-        return $E_BACKUP_FAILED
+        return $FO_BACKUP_FAILED
     fi
 
     # Get base filename
@@ -225,7 +225,7 @@ backup_file() {
     # Copy file to backup
     if ! cp -p "$file" "$backup_file" 2>/dev/null; then
         echo "Error: Failed to create backup: $backup_file" >&2
-        return $E_BACKUP_FAILED
+        return $FO_BACKUP_FAILED
     fi
 
     # Set backup file permissions (owner only)
@@ -236,7 +236,7 @@ backup_file() {
 
     # Output backup file path
     echo "$backup_file"
-    return $E_SUCCESS
+    return $FO_SUCCESS
 }
 
 #######################################
@@ -257,7 +257,7 @@ _rotate_numbered_backups() {
     local backup_dir="$file_dir/$BACKUP_DIR"
 
     if [[ ! -d "$backup_dir" ]]; then
-        return $E_SUCCESS
+        return $FO_SUCCESS
     fi
 
     # Find all backup files for this basename
@@ -266,7 +266,7 @@ _rotate_numbered_backups() {
     backup_count=$(find "$backup_dir" -maxdepth 1 -name "$backup_pattern" 2>/dev/null | wc -l)
 
     if [[ $backup_count -le $max_backups ]]; then
-        return $E_SUCCESS
+        return $FO_SUCCESS
     fi
 
     # Calculate how many to delete
@@ -277,7 +277,7 @@ _rotate_numbered_backups() {
         | head -n "$delete_count" \
         | xargs rm -f 2>/dev/null || true
 
-    return $E_SUCCESS
+    return $FO_SUCCESS
 }
 
 #######################################
@@ -295,14 +295,14 @@ atomic_write() {
 
     if [[ -z "$file" ]]; then
         echo "Error: File path required" >&2
-        return $E_INVALID_ARGS
+        return $FO_INVALID_ARGS
     fi
 
     # Acquire exclusive lock on the file
     # This prevents concurrent writes from causing race conditions
     if ! lock_file "$file" lock_fd 30; then
         echo "Error: Could not acquire lock for atomic write" >&2
-        return $E_LOCK_FAILED
+        return $FO_LOCK_FAILED
     fi
 
     # Set up trap to ensure lock is released on exit/error
@@ -315,7 +315,7 @@ atomic_write() {
     file_dir="$(dirname "$file")"
     if ! ensure_directory "$file_dir"; then
         unlock_file "$lock_fd"
-        return $E_WRITE_FAILED
+        return $FO_WRITE_FAILED
     fi
 
     # Create temporary file
@@ -327,14 +327,14 @@ atomic_write() {
             echo "Error: Failed to write to temp file: $temp_file" >&2
             rm -f "$temp_file" 2>/dev/null || true
             unlock_file "$lock_fd"
-            return $E_WRITE_FAILED
+            return $FO_WRITE_FAILED
         fi
     else
         if ! cat > "$temp_file" 2>/dev/null; then
             echo "Error: Failed to write to temp file: $temp_file" >&2
             rm -f "$temp_file" 2>/dev/null || true
             unlock_file "$lock_fd"
-            return $E_WRITE_FAILED
+            return $FO_WRITE_FAILED
         fi
     fi
 
@@ -342,14 +342,14 @@ atomic_write() {
     if [[ ! -f "$temp_file" ]]; then
         echo "Error: Temp file not created: $temp_file" >&2
         unlock_file "$lock_fd"
-        return $E_WRITE_FAILED
+        return $FO_WRITE_FAILED
     fi
 
     if [[ ! -s "$temp_file" ]]; then
         echo "Error: Temp file is empty: $temp_file" >&2
         rm -f "$temp_file" 2>/dev/null || true
         unlock_file "$lock_fd"
-        return $E_VALIDATION_FAILED
+        return $FO_VALIDATION_FAILED
     fi
 
     # Backup original file if it exists
@@ -357,11 +357,11 @@ atomic_write() {
     if [[ -f "$file" ]]; then
         backup_file=$(backup_file "$file")
         local backup_result=$?
-        if [[ $backup_result -ne $E_SUCCESS ]]; then
+        if [[ $backup_result -ne $FO_SUCCESS ]]; then
             echo "Error: Failed to backup original file" >&2
             rm -f "$temp_file" 2>/dev/null || true
             unlock_file "$lock_fd"
-            return $E_BACKUP_FAILED
+            return $FO_BACKUP_FAILED
         fi
     fi
 
@@ -377,7 +377,7 @@ atomic_write() {
 
         rm -f "$temp_file" 2>/dev/null || true
         unlock_file "$lock_fd"
-        return $E_WRITE_FAILED
+        return $FO_WRITE_FAILED
     fi
 
     # Set proper permissions
@@ -389,7 +389,7 @@ atomic_write() {
     # Clear trap since we're exiting successfully
     trap - EXIT ERR INT TERM
 
-    return $E_SUCCESS
+    return $FO_SUCCESS
 }
 
 #######################################
@@ -406,7 +406,7 @@ restore_backup() {
 
     if [[ -z "$file" ]]; then
         echo "Error: File path required" >&2
-        return $E_INVALID_ARGS
+        return $FO_INVALID_ARGS
     fi
 
     local file_dir
@@ -417,7 +417,7 @@ restore_backup() {
 
     if [[ ! -d "$backup_dir" ]]; then
         echo "Error: Backup directory not found: $backup_dir" >&2
-        return $E_FILE_NOT_FOUND
+        return $FO_FILE_NOT_FOUND
     fi
 
     local backup_file
@@ -427,7 +427,7 @@ restore_backup() {
         backup_file="$backup_dir/${basename}.${backup_num}"
         if [[ ! -f "$backup_file" ]]; then
             echo "Error: Backup not found: $backup_file" >&2
-            return $E_FILE_NOT_FOUND
+            return $FO_FILE_NOT_FOUND
         fi
     else
         # Find most recent backup - uses platform-compat safe_find_sorted_by_mtime
@@ -436,27 +436,27 @@ restore_backup() {
 
         if [[ -z "$backup_file" ]]; then
             echo "Error: No backups found for: $basename" >&2
-            return $E_FILE_NOT_FOUND
+            return $FO_FILE_NOT_FOUND
         fi
     fi
 
     # Validate backup file
     if [[ ! -f "$backup_file" || ! -s "$backup_file" ]]; then
         echo "Error: Invalid backup file: $backup_file" >&2
-        return $E_VALIDATION_FAILED
+        return $FO_VALIDATION_FAILED
     fi
 
     # Copy backup to original location
     if ! cp "$backup_file" "$file" 2>/dev/null; then
         echo "Error: Failed to restore from backup: $backup_file" >&2
-        return $E_RESTORE_FAILED
+        return $FO_RESTORE_FAILED
     fi
 
     # Set proper permissions
     chmod 644 "$file" 2>/dev/null || true
 
     echo "Restored from backup: $backup_file" >&2
-    return $E_SUCCESS
+    return $FO_SUCCESS
 }
 
 #######################################
@@ -473,23 +473,23 @@ load_json() {
 
     if [[ -z "$file" ]]; then
         echo "Error: File path required" >&2
-        return $E_INVALID_ARGS
+        return $FO_INVALID_ARGS
     fi
 
     if [[ ! -f "$file" ]]; then
         echo "Error: File not found: $file" >&2
-        return $E_FILE_NOT_FOUND
+        return $FO_FILE_NOT_FOUND
     fi
 
     # Validate JSON syntax using jq
     if ! jq empty "$file" 2>/dev/null; then
         echo "Error: Invalid JSON in file: $file" >&2
-        return $E_JSON_PARSE_FAILED
+        return $FO_JSON_PARSE_FAILED
     fi
 
     # Output JSON content
     cat "$file"
-    return $E_SUCCESS
+    return $FO_SUCCESS
 }
 
 #######################################
@@ -509,7 +509,7 @@ save_json() {
 
     if [[ -z "$file" ]]; then
         echo "Error: File path required" >&2
-        return $E_INVALID_ARGS
+        return $FO_INVALID_ARGS
     fi
 
     # Read from stdin if no JSON provided
@@ -520,16 +520,16 @@ save_json() {
     # Validate JSON syntax
     if ! echo "$json" | jq empty 2>/dev/null; then
         echo "Error: Invalid JSON content" >&2
-        return $E_JSON_PARSE_FAILED
+        return $FO_JSON_PARSE_FAILED
     fi
 
     # Pretty-print JSON and write atomically (with locking)
     if ! echo "$json" | jq '.' | atomic_write "$file"; then
         echo "Error: Failed to save JSON to: $file" >&2
-        return $E_WRITE_FAILED
+        return $FO_WRITE_FAILED
     fi
 
-    return $E_SUCCESS
+    return $FO_SUCCESS
 }
 
 #######################################
@@ -546,7 +546,7 @@ list_backups() {
 
     if [[ -z "$file" ]]; then
         echo "Error: File path required" >&2
-        return $E_INVALID_ARGS
+        return $FO_INVALID_ARGS
     fi
 
     local file_dir
@@ -557,7 +557,7 @@ list_backups() {
 
     if [[ ! -d "$backup_dir" ]]; then
         echo "No backups found" >&2
-        return $E_SUCCESS
+        return $FO_SUCCESS
     fi
 
     # Find and list backups with metadata - uses platform-compat functions
@@ -572,7 +572,7 @@ list_backups() {
             printf "%s\t%s\t%s bytes\n" "$(basename "$backup")" "$timestamp" "$size"
         done
 
-    return $E_SUCCESS
+    return $FO_SUCCESS
 }
 
 # Export functions

@@ -59,6 +59,16 @@ elif [[ -f "$CLAUDE_TODO_HOME/lib/logging.sh" ]]; then
   source "$CLAUDE_TODO_HOME/lib/logging.sh"
 fi
 
+# Source error JSON library (includes exit-codes.sh)
+if [[ -f "$LIB_DIR/error-json.sh" ]]; then
+  # shellcheck source=../lib/error-json.sh
+  source "$LIB_DIR/error-json.sh"
+elif [[ -f "$LIB_DIR/exit-codes.sh" ]]; then
+  # Fallback: source exit codes directly if error-json.sh not available
+  # shellcheck source=../lib/exit-codes.sh
+  source "$LIB_DIR/exit-codes.sh"
+fi
+
 if [[ -f "${LIB_DIR}/output-format.sh" ]]; then
   source "${LIB_DIR}/output-format.sh"
 elif [[ -f "$CLAUDE_TODO_HOME/lib/output-format.sh" ]]; then
@@ -69,8 +79,10 @@ fi
 DAYS=30
 SINCE_DATE=""
 UNTIL_DATE=""
-OUTPUT_FORMAT="text"
+OUTPUT_FORMAT=""
+COMMAND_NAME="history"
 SHOW_CHARTS=true
+QUIET=false
 
 # File paths
 CLAUDE_DIR=".claude"
@@ -94,6 +106,7 @@ Options:
     --until DATE      Show completions until date (YYYY-MM-DD)
     -f, --format FORMAT   Output format: text | json (default: text)
     --no-chart        Disable bar charts
+    -q, --quiet       Suppress informational messages
     -h, --help        Show this help message
 
 Examples:
@@ -599,8 +612,12 @@ parse_arguments() {
       --days)
         DAYS="$2"
         if ! [[ "$DAYS" =~ ^[0-9]+$ ]]; then
-          echo "[ERROR] --days must be a positive integer" >&2
-          exit 1
+          if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+            output_error "$E_INPUT_INVALID" "--days must be a positive integer" 1 true "Provide a number like --days 7"
+          else
+            output_error "$E_INPUT_INVALID" "--days must be a positive integer"
+          fi
+          exit $EXIT_INVALID_INPUT
         fi
         shift 2
         ;;
@@ -608,16 +625,24 @@ parse_arguments() {
         SINCE_DATE="$2"
         # Basic date validation (YYYY-MM-DD format)
         if ! [[ "$SINCE_DATE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
-          echo "[ERROR] --since must be in YYYY-MM-DD format" >&2
-          exit 1
+          if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+            output_error "$E_INPUT_INVALID" "--since must be in YYYY-MM-DD format" 1 true "Use format like --since 2025-12-01"
+          else
+            output_error "$E_INPUT_INVALID" "--since must be in YYYY-MM-DD format"
+          fi
+          exit $EXIT_INVALID_INPUT
         fi
         shift 2
         ;;
       --until)
         UNTIL_DATE="$2"
         if ! [[ "$UNTIL_DATE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
-          echo "[ERROR] --until must be in YYYY-MM-DD format" >&2
-          exit 1
+          if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+            output_error "$E_INPUT_INVALID" "--until must be in YYYY-MM-DD format" 1 true "Use format like --until 2025-12-15"
+          else
+            output_error "$E_INPUT_INVALID" "--until must be in YYYY-MM-DD format"
+          fi
+          exit $EXIT_INVALID_INPUT
         fi
         shift 2
         ;;
@@ -632,13 +657,29 @@ parse_arguments() {
         SHOW_CHARTS=false
         shift
         ;;
+      --json)
+        OUTPUT_FORMAT="json"
+        shift
+        ;;
+      --human)
+        OUTPUT_FORMAT="text"
+        shift
+        ;;
+      -q|--quiet)
+        QUIET=true
+        shift
+        ;;
       --help|-h)
         usage
         ;;
       *)
-        echo "[ERROR] Unknown option: $1" >&2
-        echo "Run 'claude-todo history --help' for usage"
-        exit 1
+        if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+          output_error "$E_INPUT_INVALID" "Unknown option: $1" 1 true "Run 'claude-todo history --help' for usage"
+        else
+          output_error "$E_INPUT_INVALID" "Unknown option: $1"
+          echo "Run 'claude-todo history --help' for usage"
+        fi
+        exit $EXIT_INVALID_INPUT
         ;;
     esac
   done
@@ -651,17 +692,28 @@ parse_arguments() {
 main() {
   parse_arguments "$@"
 
+  # Resolve format (TTY-aware auto-detection)
+  OUTPUT_FORMAT=$(resolve_format "${OUTPUT_FORMAT:-}")
+
   # Check if log file exists
   if [[ ! -f "$HIST_LOG_FILE" ]]; then
-    echo "[ERROR] Log file not found: $HIST_LOG_FILE" >&2
-    echo "No completion history available." >&2
-    exit 1
+    if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+      output_error "$E_FILE_NOT_FOUND" "Log file not found: $HIST_LOG_FILE" 1 true "Run some commands to generate history"
+    else
+      output_error "$E_FILE_NOT_FOUND" "Log file not found: $HIST_LOG_FILE"
+      echo "No completion history available." >&2
+    fi
+    exit $EXIT_FILE_ERROR
   fi
 
   # Check required commands
   if ! command -v jq &>/dev/null; then
-    echo "[ERROR] jq is required but not installed" >&2
-    exit 1
+    if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+      output_error "$E_DEPENDENCY_MISSING" "jq is required but not installed" 1 true "Install jq: brew install jq (macOS) or apt install jq (Linux)"
+    else
+      output_error "$E_DEPENDENCY_MISSING" "jq is required but not installed"
+    fi
+    exit $EXIT_DEPENDENCY_ERROR
   fi
 
   # Output in requested format

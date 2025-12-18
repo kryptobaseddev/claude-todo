@@ -75,11 +75,18 @@ elif [[ -f "$CLAUDE_TODO_HOME/lib/exit-codes.sh" ]]; then
   source "$CLAUDE_TODO_HOME/lib/exit-codes.sh"
 fi
 
+# Source error JSON library
+if [[ -f "$LIB_DIR/error-json.sh" ]]; then
+  # shellcheck source=../lib/error-json.sh
+  source "$LIB_DIR/error-json.sh"
+fi
+
 # Default configuration
 SHOW_EXPLAIN=false
 SUGGESTION_COUNT=1
 OUTPUT_FORMAT="text"
 QUIET=false
+COMMAND_NAME="next"
 
 # File paths
 CLAUDE_DIR=".claude"
@@ -535,6 +542,7 @@ output_json_format() {
         },
         labels: .labels
       })),
+      "success": true,
       "recommendation": (if ($suggestions | length) > 0 then {
         taskId: $suggestions[0].id,
         command: ("claude-todo focus set " + $suggestions[0].id)
@@ -556,8 +564,12 @@ parse_arguments() {
       --count|-c)
         SUGGESTION_COUNT="$2"
         if ! [[ "$SUGGESTION_COUNT" =~ ^[0-9]+$ ]] || [[ "$SUGGESTION_COUNT" -lt 1 ]]; then
-          echo "[ERROR] --count must be a positive integer" >&2
-          exit 1
+          if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+            output_error "$E_INPUT_INVALID" "--count must be a positive integer" "${EXIT_INVALID_INPUT:-1}" true "Example: --count 3"
+          else
+            output_error "$E_INPUT_INVALID" "--count must be a positive integer"
+          fi
+          exit "${EXIT_INVALID_INPUT:-1}"
         fi
         shift 2
         ;;
@@ -576,9 +588,13 @@ parse_arguments() {
         usage
         ;;
       *)
-        echo "[ERROR] Unknown option: $1" >&2
-        echo "Run 'claude-todo next --help' for usage"
-        exit 1
+        if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+          output_error "$E_INPUT_INVALID" "Unknown option: $1" "${EXIT_INVALID_INPUT:-1}" true "Run 'claude-todo next --help' for usage"
+        else
+          output_error "$E_INPUT_INVALID" "Unknown option: $1"
+          echo "Run 'claude-todo next --help' for usage" >&2
+        fi
+        exit "${EXIT_INVALID_INPUT:-1}"
         ;;
     esac
   done
@@ -591,17 +607,28 @@ parse_arguments() {
 main() {
   parse_arguments "$@"
 
+  # Resolve format (TTY-aware auto-detection)
+  OUTPUT_FORMAT=$(resolve_format "${OUTPUT_FORMAT:-}")
+
   # Check if in a todo-enabled project
   if [[ ! -f "$TODO_FILE" ]]; then
-    echo "[ERROR] Todo file not found: $TODO_FILE" >&2
-    echo "Run 'claude-todo init' first" >&2
-    exit 1
+    if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+      output_error "$E_NOT_INITIALIZED" "Todo file not found: $TODO_FILE" "${EXIT_NOT_INITIALIZED:-1}" true "Run 'claude-todo init' first"
+    else
+      output_error "$E_NOT_INITIALIZED" "Todo file not found: $TODO_FILE"
+      echo "Run 'claude-todo init' first" >&2
+    fi
+    exit "${EXIT_NOT_INITIALIZED:-1}"
   fi
 
   # Check required commands
   if ! command -v jq &>/dev/null; then
-    echo "[ERROR] jq is required but not installed" >&2
-    exit 1
+    if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+      output_error "$E_DEPENDENCY_MISSING" "jq is required but not installed" "${EXIT_DEPENDENCY_MISSING:-1}" true "Install jq: https://stedolan.github.io/jq/download/"
+    else
+      output_error "$E_DEPENDENCY_MISSING" "jq is required but not installed"
+    fi
+    exit "${EXIT_DEPENDENCY_MISSING:-1}"
   fi
 
   # Get suggestions

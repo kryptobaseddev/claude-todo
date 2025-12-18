@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `deps-command.sh`: Added `success: true` to all 3 modes (overview, task, tree)
   - `export.sh`: Added `success: true` to JSON output
   - `sync-todowrite.sh`: Added `success: true` to both status outputs
+  - `next.sh`: Added `success: true` to JSON output
+  - `dash.sh`: Added `success: true` after `_meta` block
 
 - **Log output mixing with JSON**:
   - `focus.sh`: Phase change logs now suppressed in JSON mode
@@ -34,8 +36,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `focus.sh`: Global format parsing before subcommand dispatch
   - Consistent `--format`, `--json`, `--human` flag support across all focus subcommands
 
+- **Incomplete `_meta` envelope fields**:
+  - `focus.sh` cmd_show: Added missing `format` field to `_meta`
+  - `backup.sh`: Added missing `version` field to backup create `_meta`
+  - `phase.sh`: Added VERSION loading and `version`/`format` to cmd_show `_meta`
+
 ### Changed
-- **Compliance status**: 99.2% LLM-Agent-First compliance (from ~83%)
+- **Compliance status**: 100% LLM-Agent-First envelope compliance (from ~83%)
   - All 31 commands have `$schema`, `_meta`, `success` in JSON output
   - All commands use `resolve_format()` for TTY-aware detection
   - All commands use `output_error()` for structured errors

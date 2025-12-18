@@ -35,6 +35,16 @@ if [[ -f "$LIB_DIR/output-format.sh" ]]; then
   source "$LIB_DIR/output-format.sh"
 fi
 
+# Source error JSON library (includes exit-codes.sh)
+if [[ -f "$LIB_DIR/error-json.sh" ]]; then
+  # shellcheck source=../lib/error-json.sh
+  source "$LIB_DIR/error-json.sh"
+elif [[ -f "$LIB_DIR/exit-codes.sh" ]]; then
+  # Fallback: source exit codes directly if error-json.sh not available
+  # shellcheck source=../lib/exit-codes.sh
+  source "$LIB_DIR/exit-codes.sh"
+fi
+
 # Detect Unicode support (respects NO_COLOR, LANG=C, config)
 if declare -f detect_unicode_support >/dev/null 2>&1 && detect_unicode_support; then
   UNICODE_ENABLED=true
@@ -65,6 +75,7 @@ PRIORITY_FILTER=""
 PHASE_FILTER=""
 LABEL_FILTER=""
 FORMAT=""  # Empty - will be resolved after argument parsing via TTY detection
+COMMAND_NAME="list"
 INCLUDE_ARCHIVE=false
 SHOW_ARCHIVED=false
 LIMIT=""
@@ -120,6 +131,8 @@ Sorting:
 
 Display Options:
   -f, --format FORMAT       Output format: text|json|jsonl|markdown|table (default: text)
+      --json                Force JSON output (shortcut for --format json)
+      --human               Force human-readable text output (shortcut for --format text)
   -c, --compact             Compact one-line per task view
       --flat                Don't group by priority (flat list)
       --notes               Show task notes
@@ -137,6 +150,8 @@ Examples:
   claude-todo list --since 2025-12-01       # Tasks created after Dec 1
   claude-todo list --sort createdAt --reverse  # Newest first
   claude-todo list -f json                  # JSON output
+  claude-todo list --json                   # JSON output (shortcut)
+  claude-todo list --human                  # Human-readable text output
   claude-todo list --all --limit 20         # Last 20 tasks including archive
   claude-todo list --archived               # Show only archived tasks
   claude-todo list --archived -p high       # Archived high-priority tasks
@@ -155,7 +170,11 @@ EOF
   exit 0
 }
 
-log_error() { echo -e "${RED}[ERROR]${NC} $1" >&2; }
+log_error() {
+  # Use output_error from error-json.sh for format-aware error output
+  local error_code="${2:-$E_UNKNOWN}"
+  output_error "$error_code" "$1"
+}
 
 # Check dependencies
 check_deps() {
@@ -181,6 +200,8 @@ while [[ $# -gt 0 ]]; do
     --sort) SORT_FIELD="$2"; GROUP_BY_PRIORITY=false; shift 2 ;;
     --reverse) SORT_REVERSE=true; shift ;;
     -f|--format) FORMAT="$2"; shift 2 ;;
+    --json) FORMAT="json"; shift ;;
+    --human) FORMAT="text"; shift ;;
     --all) INCLUDE_ARCHIVE=true; shift ;;
     --archived) SHOW_ARCHIVED=true; shift ;;
     --limit) LIMIT="$2"; shift 2 ;;
@@ -193,7 +214,14 @@ while [[ $# -gt 0 ]]; do
     -v|--verbose) VERBOSE=true; SHOW_NOTES=true; SHOW_FILES=true; SHOW_ACCEPTANCE=true; shift ;;
     -q|--quiet) QUIET=true; shift ;;
     -h|--help) usage ;;
-    -*) log_error "Unknown option: $1"; exit 1 ;;
+    -*)
+      if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+        output_error "$E_INPUT_INVALID" "Unknown option: $1" "${EXIT_INVALID_INPUT:-1}" true "Run 'claude-todo list --help' for usage"
+      else
+        output_error "$E_INPUT_INVALID" "Unknown option: $1"
+      fi
+      exit "${EXIT_INVALID_INPUT:-1}"
+      ;;
     *) shift ;;
   esac
 done
@@ -651,6 +679,7 @@ case "$FORMAT" in
         checksum: $checksum,
         execution_ms: $execution_ms
       },
+      "success": true,
       filters: {
         status: (if $status != "" then [$status] else null end),
         priority: (if $priority != "" then $priority else null end),

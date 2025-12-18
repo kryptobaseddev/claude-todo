@@ -31,6 +31,22 @@ LIB_DIR="$(dirname "$SCRIPT_DIR")/lib"
 # Source required libraries
 source "$LIB_DIR/todowrite-integration.sh"
 
+# Source output formatting library
+if [[ -f "$LIB_DIR/output-format.sh" ]]; then
+  # shellcheck source=../lib/output-format.sh
+  source "$LIB_DIR/output-format.sh"
+fi
+
+# Source error JSON library (includes exit-codes.sh)
+if [[ -f "$LIB_DIR/error-json.sh" ]]; then
+  # shellcheck source=../lib/error-json.sh
+  source "$LIB_DIR/error-json.sh"
+elif [[ -f "$LIB_DIR/exit-codes.sh" ]]; then
+  # Fallback: source exit codes directly if error-json.sh not available
+  # shellcheck source=../lib/exit-codes.sh
+  source "$LIB_DIR/exit-codes.sh"
+fi
+
 # =============================================================================
 # Colors and Logging
 # =============================================================================
@@ -58,6 +74,8 @@ TODOWRITE_INPUT=""
 DRY_RUN=false
 QUIET=false
 DEFAULT_PHASE=""
+COMMAND_NAME="extract"
+FORMAT=""
 
 # =============================================================================
 # Help
@@ -132,18 +150,38 @@ parse_args() {
                 QUIET=true
                 shift
                 ;;
+            -f|--format)
+                FORMAT="$2"
+                shift 2
+                ;;
+            --json)
+                FORMAT="json"
+                shift
+                ;;
+            --human)
+                FORMAT="text"
+                shift
+                ;;
             --help|-h)
                 show_help
                 ;;
             -*)
-                log_error "Unknown option: $1"
+                if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+                    output_error "E_INPUT_INVALID" "Unknown option: $1" 1 true "Use --help to see valid options"
+                else
+                    log_error "Unknown option: $1"
+                fi
                 exit 1
                 ;;
             *)
                 if [[ -z "$TODOWRITE_INPUT" ]]; then
                     TODOWRITE_INPUT="$1"
                 else
-                    log_error "Unexpected argument: $1"
+                    if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+                        output_error "E_INPUT_INVALID" "Unexpected argument: $1" 1 true "Only one input file expected"
+                    else
+                        log_error "Unexpected argument: $1"
+                    fi
                     exit 1
                 fi
                 shift
@@ -412,20 +450,35 @@ apply_changes() {
 main() {
     parse_args "$@"
 
+    # Resolve format (TTY-aware auto-detection)
+    FORMAT=$(resolve_format "${FORMAT:-}")
+
     # Validate inputs
     if [[ -z "$TODOWRITE_INPUT" ]]; then
-        log_error "TodoWrite state file required"
-        echo "Usage: extract-todowrite.sh <todowrite-state.json>"
+        if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+            output_error "E_INPUT_MISSING" "TodoWrite state file required" 1 true "Usage: extract-todowrite.sh <todowrite-state.json>"
+        else
+            log_error "TodoWrite state file required"
+            echo "Usage: extract-todowrite.sh <todowrite-state.json>"
+        fi
         exit 1
     fi
 
     if [[ ! -f "$TODOWRITE_INPUT" ]]; then
-        log_error "File not found: $TODOWRITE_INPUT"
+        if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+            output_error "E_FILE_NOT_FOUND" "File not found: $TODOWRITE_INPUT" 1 true "Check the file path exists"
+        else
+            log_error "File not found: $TODOWRITE_INPUT"
+        fi
         exit 1
     fi
 
     if [[ ! -f "$TODO_FILE" ]]; then
-        log_error "todo.json not found at $TODO_FILE"
+        if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+            output_error "E_NOT_INITIALIZED" "todo.json not found at $TODO_FILE" 1 true "Run 'claude-todo init' first"
+        else
+            log_error "todo.json not found at $TODO_FILE"
+        fi
         exit 1
     fi
 
@@ -435,7 +488,11 @@ main() {
 
     # Validate JSON
     if ! echo "$todowrite_json" | jq . >/dev/null 2>&1; then
-        log_error "Invalid JSON in $TODOWRITE_INPUT"
+        if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+            output_error "E_INPUT_INVALID" "Invalid JSON in $TODOWRITE_INPUT" 1 true "Ensure file contains valid JSON"
+        else
+            log_error "Invalid JSON in $TODOWRITE_INPUT"
+        fi
         exit 1
     fi
 
@@ -469,7 +526,37 @@ main() {
     log_info "Changes detected: $completed_count completed, $progressed_count progressed, $new_count new, $removed_count removed"
 
     if [[ "$completed_count" -eq 0 && "$progressed_count" -eq 0 && "$new_count" -eq 0 ]]; then
-        log_info "No changes to apply"
+        if [[ "$FORMAT" == "json" ]]; then
+            local version
+            if [[ -f "${SCRIPT_DIR}/../VERSION" ]]; then
+                version=$(cat "${SCRIPT_DIR}/../VERSION")
+            else
+                version="0.16.0"
+            fi
+            jq -n \
+                --arg version "$version" \
+                --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+                '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
+                    "_meta": {
+                        "format": "json",
+                        "version": $version,
+                        "command": "extract",
+                        "timestamp": $timestamp
+                    },
+                    "success": true,
+                    "message": "No changes to apply",
+                    "changes": {
+                        "completed": 0,
+                        "progressed": 0,
+                        "new": 0,
+                        "removed": 0,
+                        "applied": 0
+                    }
+                }'
+        else
+            log_info "No changes to apply"
+        fi
         exit 0
     fi
 
@@ -477,15 +564,88 @@ main() {
     local changes_made
     changes_made=$(apply_changes "$changes_json" "$TODO_FILE" "$DRY_RUN")
 
-    if [[ "$DRY_RUN" == "true" ]]; then
-        log_info "Dry run complete. Would apply $changes_made changes."
-    else
-        log_info "Applied $changes_made changes"
+    if [[ "$FORMAT" == "json" ]]; then
+        local version
+        if [[ -f "${SCRIPT_DIR}/../VERSION" ]]; then
+            version=$(cat "${SCRIPT_DIR}/../VERSION")
+        else
+            version="0.16.0"
+        fi
 
-        # Clean up session state file
-        if [[ -f "$STATE_FILE" ]]; then
-            rm -f "$STATE_FILE"
-            log_info "Session state cleared"
+        if [[ "$DRY_RUN" == "true" ]]; then
+            jq -n \
+                --arg version "$version" \
+                --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+                --argjson completed "$completed_count" \
+                --argjson progressed "$progressed_count" \
+                --argjson new "$new_count" \
+                --argjson removed "$removed_count" \
+                --argjson applied "$changes_made" \
+                '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
+                    "_meta": {
+                        "format": "json",
+                        "version": $version,
+                        "command": "extract",
+                        "timestamp": $timestamp
+                    },
+                    "success": true,
+                    "dryRun": true,
+                    "message": "Dry run complete",
+                    "changes": {
+                        "completed": $completed,
+                        "progressed": $progressed,
+                        "new": $new,
+                        "removed": $removed,
+                        "wouldApply": $applied
+                    }
+                }'
+        else
+            # Clean up session state file
+            if [[ -f "$STATE_FILE" ]]; then
+                rm -f "$STATE_FILE"
+            fi
+
+            jq -n \
+                --arg version "$version" \
+                --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+                --argjson completed "$completed_count" \
+                --argjson progressed "$progressed_count" \
+                --argjson new "$new_count" \
+                --argjson removed "$removed_count" \
+                --argjson applied "$changes_made" \
+                '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
+                    "_meta": {
+                        "format": "json",
+                        "version": $version,
+                        "command": "extract",
+                        "timestamp": $timestamp
+                    },
+                    "success": true,
+                    "dryRun": false,
+                    "message": "Changes applied successfully",
+                    "changes": {
+                        "completed": $completed,
+                        "progressed": $progressed,
+                        "new": $new,
+                        "removed": $removed,
+                        "applied": $applied
+                    },
+                    "sessionCleared": true
+                }'
+        fi
+    else
+        if [[ "$DRY_RUN" == "true" ]]; then
+            log_info "Dry run complete. Would apply $changes_made changes."
+        else
+            log_info "Applied $changes_made changes"
+
+            # Clean up session state file
+            if [[ -f "$STATE_FILE" ]]; then
+                rm -f "$STATE_FILE"
+                log_info "Session state cleared"
+            fi
         fi
     fi
 }

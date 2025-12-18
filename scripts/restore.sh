@@ -486,6 +486,7 @@ if [[ "$DRY_RUN" == true ]]; then
       --arg from "$BACKUP_SOURCE" \
       --argjson files "$(printf '%s\n' "${WOULD_RESTORE_FILES[@]}" | jq -R . | jq -s .)" \
       '{
+        "$schema": "https://claude-todo.dev/schemas/output.schema.json",
         "_meta": {
           "command": "restore",
           "timestamp": $timestamp,
@@ -672,6 +673,7 @@ if [[ "$FORMAT" == "json" ]]; then
     --argjson dryRun "$DRY_RUN" \
     --argjson files "$(printf '%s\n' "${RESTORED_FILES[@]}" | jq -R . | jq -s .)" \
     '{
+      "$schema": "https://claude-todo.dev/schemas/output.schema.json",
       "_meta": {
         "command": "restore",
         "timestamp": $timestamp,

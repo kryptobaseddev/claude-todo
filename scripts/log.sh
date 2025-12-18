@@ -102,6 +102,7 @@ List options:
   -f, --format FMT  Output format: text|json (default: auto)
   --human           Force text output (human-readable)
   --json            Force JSON output (machine-readable)
+  -q, --quiet       Suppress informational messages
 
 Format Auto-Detection:
   When no format is specified, output format is automatically detected:
@@ -146,8 +147,12 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1" >&2; }
 
 # Check dependencies
 if ! command -v jq &> /dev/null; then
-  log_error "jq is required but not installed"
-  exit 1
+  if [[ "${FORMAT:-}" == "json" ]] && declare -f output_error &>/dev/null; then
+    output_error "$E_DEPENDENCY_MISSING" "jq is required but not installed" "${EXIT_DEPENDENCY_ERROR:-5}" false "Install jq: apt install jq (Debian) or brew install jq (macOS)"
+  else
+    log_error "jq is required but not installed"
+  fi
+  exit "${EXIT_DEPENDENCY_ERROR:-5}"
 fi
 
 # Parse subcommand
@@ -167,8 +172,10 @@ case "$SUBCOMMAND" in
     FILTER_ACTOR=""
     FILTER_SINCE=""
     FORMAT=""
+    COMMAND_NAME="log"
 
     # Parse list options
+    QUIET=false
     while [[ $# -gt 0 ]]; do
       case $1 in
         --limit) LIMIT="$2"; shift 2 ;;
@@ -179,8 +186,16 @@ case "$SUBCOMMAND" in
         -f|--format) FORMAT="$2"; shift 2 ;;
         --human) FORMAT="text"; shift ;;
         --json) FORMAT="json"; shift ;;
+        -q|--quiet) QUIET=true; shift ;;
         -h|--help) usage ;;
-        -*) log_error "Unknown option: $1"; exit 1 ;;
+        -*)
+          if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+            output_error "$E_INPUT_INVALID" "Unknown option: $1" "${EXIT_USAGE_ERROR:-64}" false "Run 'claude-todo log --help' for usage"
+          else
+            output_error "$E_INPUT_INVALID" "Unknown option: $1"
+          fi
+          exit "${EXIT_USAGE_ERROR:-64}"
+          ;;
         *) shift ;;
       esac
     done
@@ -190,8 +205,12 @@ case "$SUBCOMMAND" in
 
     # Validate log file exists
     if [[ ! -f "$LOG_FILE" ]]; then
-      log_error "Log file not found: $LOG_FILE"
-      exit 1
+      if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+        output_error "$E_FILE_NOT_FOUND" "Log file not found: $LOG_FILE" "${EXIT_FILE_ERROR:-4}" true "Initialize project with 'claude-todo init' first"
+      else
+        log_error "Log file not found: $LOG_FILE"
+      fi
+      exit "${EXIT_FILE_ERROR:-4}"
     fi
 
     # Build jq filter
@@ -235,7 +254,9 @@ case "$SUBCOMMAND" in
         --argjson count "$entry_count" \
         --argjson limit "$LIMIT" \
         '{
+          "$schema": "https://claude-todo.dev/schemas/output.schema.json",
           "_meta": {
+            "format": "json",
             "command": "log list",
             "timestamp": $timestamp,
             "version": $version
@@ -262,8 +283,12 @@ case "$SUBCOMMAND" in
   show)
     # Show specific log entry
     if [[ $# -lt 1 ]]; then
-      log_error "Log ID required. Usage: claude-todo log show <log-id>"
-      exit 1
+      if [[ "${FORMAT:-}" == "json" ]] && declare -f output_error &>/dev/null; then
+        output_error "$E_INPUT_MISSING" "Log ID required" "${EXIT_USAGE_ERROR:-64}" false "Usage: claude-todo log show <log-id>"
+      else
+        log_error "Log ID required. Usage: claude-todo log show <log-id>"
+      fi
+      exit "${EXIT_USAGE_ERROR:-64}"
     fi
 
     LOG_ID="$1"
@@ -271,16 +296,24 @@ case "$SUBCOMMAND" in
 
     # Validate log file exists
     if [[ ! -f "$LOG_FILE" ]]; then
-      log_error "Log file not found: $LOG_FILE"
-      exit 1
+      if [[ "${FORMAT:-}" == "json" ]] && declare -f output_error &>/dev/null; then
+        output_error "$E_FILE_NOT_FOUND" "Log file not found: $LOG_FILE" "${EXIT_FILE_ERROR:-4}" true "Initialize project with 'claude-todo init' first"
+      else
+        log_error "Log file not found: $LOG_FILE"
+      fi
+      exit "${EXIT_FILE_ERROR:-4}"
     fi
 
     # Find and display entry
     ENTRY=$(jq --arg id "$LOG_ID" '.entries[] | select(.id == $id)' "$LOG_FILE")
 
     if [[ -z "$ENTRY" ]]; then
-      log_error "Log entry not found: $LOG_ID"
-      exit 1
+      if [[ "${FORMAT:-}" == "json" ]] && declare -f output_error &>/dev/null; then
+        output_error "$E_TASK_NOT_FOUND" "Log entry not found: $LOG_ID" "${EXIT_NOT_FOUND:-1}" true "Use 'claude-todo log list' to see available entries"
+      else
+        log_error "Log entry not found: $LOG_ID"
+      fi
+      exit "${EXIT_NOT_FOUND:-1}"
     fi
 
     # Display entry in readable format
@@ -303,8 +336,12 @@ case "$SUBCOMMAND" in
   migrate)
     # Migrate old schema to new schema
     if ! declare -f migrate_log_entries >/dev/null 2>&1; then
-      log_error "migrate_log_entries function not available from logging.sh"
-      exit 1
+      if [[ "${FORMAT:-}" == "json" ]] && declare -f output_error &>/dev/null; then
+        output_error "$E_DEPENDENCY_MISSING" "migrate_log_entries function not available from logging.sh" "${EXIT_DEPENDENCY_ERROR:-5}" false "Ensure logging.sh is properly sourced"
+      else
+        log_error "migrate_log_entries function not available from logging.sh"
+      fi
+      exit "${EXIT_DEPENDENCY_ERROR:-5}"
     fi
 
     log_info "Starting log migration..."
@@ -320,8 +357,12 @@ case "$SUBCOMMAND" in
   rotate)
     # Manual log rotation (T214)
     if ! declare -f rotate_log >/dev/null 2>&1; then
-      log_error "rotate_log function not available from logging.sh"
-      exit 1
+      if [[ "${FORMAT:-}" == "json" ]] && declare -f output_error &>/dev/null; then
+        output_error "$E_DEPENDENCY_MISSING" "rotate_log function not available from logging.sh" "${EXIT_DEPENDENCY_ERROR:-5}" false "Ensure logging.sh is properly sourced"
+      else
+        log_error "rotate_log function not available from logging.sh"
+      fi
+      exit "${EXIT_DEPENDENCY_ERROR:-5}"
     fi
 
     FORCE=false
@@ -343,8 +384,12 @@ case "$SUBCOMMAND" in
     done
 
     if [[ ! -f "$LOG_FILE" ]]; then
-      log_error "Log file not found: $LOG_FILE"
-      exit 1
+      if [[ "${FORMAT:-}" == "json" ]] && declare -f output_error &>/dev/null; then
+        output_error "$E_FILE_NOT_FOUND" "Log file not found: $LOG_FILE" "${EXIT_FILE_ERROR:-4}" true "Initialize project with 'claude-todo init' first"
+      else
+        log_error "Log file not found: $LOG_FILE"
+      fi
+      exit "${EXIT_FILE_ERROR:-4}"
     fi
 
     current_size=$(stat -c%s "$LOG_FILE" 2>/dev/null || stat -f%z "$LOG_FILE" 2>/dev/null || echo "0")
@@ -373,8 +418,12 @@ case "$SUBCOMMAND" in
     # Fall through to add entry logic
     ;;
   *)
-    log_error "Unknown subcommand: $SUBCOMMAND"
-    usage
+    if [[ "${FORMAT:-}" == "json" ]] && declare -f output_error &>/dev/null; then
+      output_error "$E_INPUT_INVALID" "Unknown subcommand: $SUBCOMMAND" "${EXIT_USAGE_ERROR:-64}" false "Run 'claude-todo log --help' for usage"
+    else
+      output_error "$E_INPUT_INVALID" "Unknown subcommand: $SUBCOMMAND"
+    fi
+    exit "${EXIT_USAGE_ERROR:-64}"
     ;;
 esac
 
@@ -389,35 +438,58 @@ while [[ $# -gt 0 ]]; do
     --details) DETAILS="$2"; shift 2 ;;
     --actor) ACTOR="$2"; shift 2 ;;
     -h|--help) usage ;;
-    -*) log_error "Unknown option: $1"; exit 1 ;;
+    -*)
+      if [[ "${FORMAT:-}" == "json" ]] && declare -f output_error &>/dev/null; then
+        output_error "$E_INPUT_INVALID" "Unknown option: $1" "${EXIT_USAGE_ERROR:-64}" false "Run 'claude-todo log --help' for usage"
+      else
+        output_error "$E_INPUT_INVALID" "Unknown option: $1"
+      fi
+      exit "${EXIT_USAGE_ERROR:-64}"
+      ;;
     *) shift ;;
   esac
 done
 
 # Validate action
 if [[ -z "$ACTION" ]]; then
-  log_error "Action required. Use --action"
-  exit 1
+  if [[ "${FORMAT:-}" == "json" ]] && declare -f output_error &>/dev/null; then
+    output_error "$E_INPUT_MISSING" "Action required" "${EXIT_USAGE_ERROR:-64}" false "Use --action to specify an action type"
+  else
+    log_error "Action required. Use --action"
+  fi
+  exit "${EXIT_USAGE_ERROR:-64}"
 fi
 
 if ! validate_action "$ACTION"; then
-  log_error "Invalid action: $ACTION"
-  echo "Valid actions: $(get_valid_actions_string)"
-  exit 1
+  if [[ "${FORMAT:-}" == "json" ]] && declare -f output_error &>/dev/null; then
+    output_error "$E_INPUT_INVALID" "Invalid action: $ACTION" "${EXIT_VALIDATION_ERROR:-2}" false "Valid actions: $(get_valid_actions_string)"
+  else
+    log_error "Invalid action: $ACTION"
+    echo "Valid actions: $(get_valid_actions_string)"
+  fi
+  exit "${EXIT_VALIDATION_ERROR:-2}"
 fi
 
 # Validate actor
 if ! echo "human claude system" | grep -qw "$ACTOR"; then
-  log_error "Invalid actor: $ACTOR (must be human, claude, or system)"
-  exit 1
+  if [[ "${FORMAT:-}" == "json" ]] && declare -f output_error &>/dev/null; then
+    output_error "$E_INPUT_INVALID" "Invalid actor: $ACTOR" "${EXIT_VALIDATION_ERROR:-2}" false "Actor must be one of: human, claude, system"
+  else
+    log_error "Invalid actor: $ACTOR (must be human, claude, or system)"
+  fi
+  exit "${EXIT_VALIDATION_ERROR:-2}"
 fi
 
 # Validate JSON inputs
 for var in BEFORE AFTER DETAILS; do
   val="${!var}"
   if [[ -n "$val" ]] && ! echo "$val" | jq empty 2>/dev/null; then
-    log_error "Invalid JSON for --$(echo $var | tr '[:upper:]' '[:lower:]'): $val"
-    exit 1
+    if [[ "${FORMAT:-}" == "json" ]] && declare -f output_error &>/dev/null; then
+      output_error "$E_INPUT_FORMAT" "Invalid JSON for --$(echo $var | tr '[:upper:]' '[:lower:]')" "${EXIT_VALIDATION_ERROR:-2}" false "Ensure valid JSON syntax for the value"
+    else
+      log_error "Invalid JSON for --$(echo $var | tr '[:upper:]' '[:lower:]'): $val"
+    fi
+    exit "${EXIT_VALIDATION_ERROR:-2}"
   fi
 done
 

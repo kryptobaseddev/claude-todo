@@ -66,9 +66,21 @@ elif [[ -f "$CLAUDE_TODO_HOME/lib/output-format.sh" ]]; then
   source "$CLAUDE_TODO_HOME/lib/output-format.sh"
 fi
 
+# Source error JSON library (includes exit-codes.sh)
+if [[ -f "$LIB_DIR/error-json.sh" ]]; then
+  # shellcheck source=../lib/error-json.sh
+  source "$LIB_DIR/error-json.sh"
+elif [[ -f "$LIB_DIR/exit-codes.sh" ]]; then
+  # Fallback: source exit codes directly if error-json.sh not available
+  # shellcheck source=../lib/exit-codes.sh
+  source "$LIB_DIR/exit-codes.sh"
+fi
+
 # Default configuration
 OUTPUT_FORMAT="text"
+FORMAT="text"  # Alias for output_error compatibility
 SUBCOMMAND="list"
+COMMAND_NAME="phases"
 PHASE_ARG=""
 QUIET_MODE=false
 
@@ -150,8 +162,20 @@ fi
 # Helper Functions
 #####################################################################
 
+# Format-aware log_error: uses output_error for JSON, text fallback otherwise
 log_error() {
-  echo -e "${RED}[ERROR]${NC} $1" >&2
+  local message="$1"
+  local error_code="${2:-E_UNKNOWN}"
+  local exit_code="${3:-1}"
+  local suggestion="${4:-}"
+
+  if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+    FORMAT="$OUTPUT_FORMAT"  # Sync FORMAT for output_error
+    output_error "$error_code" "$message" "$exit_code" true "$suggestion"
+  else
+    echo -e "${RED}[ERROR]${NC} $message" >&2
+    [[ -n "$suggestion" ]] && echo -e "${DIM}Suggestion: $suggestion${NC}" >&2
+  fi
 }
 
 log_info() {
@@ -163,7 +187,7 @@ log_info() {
 # Check dependencies
 check_deps() {
   if ! command -v jq &> /dev/null; then
-    log_error "jq is required but not installed"
+    log_error "jq is required but not installed" "E_DEPENDENCY_MISSING" 1 "Install jq: brew install jq (macOS) or apt install jq (Linux)"
     exit 1
   fi
 }
@@ -400,7 +424,7 @@ show_phase() {
   ' "$TODO_FILE")
 
   if [[ "$phase_exists" != "true" ]]; then
-    log_error "Phase '$phase_slug' not found"
+    log_error "Phase '$phase_slug' not found" "E_PHASE_NOT_FOUND" 1 "Run 'claude-todo phases' to see available phases"
     exit 1
   fi
 
@@ -620,17 +644,23 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# Resolve format (TTY-aware auto-detection)
+OUTPUT_FORMAT=$(resolve_format "${OUTPUT_FORMAT:-}")
+
 # Validate format
 if [[ "$OUTPUT_FORMAT" != "text" && "$OUTPUT_FORMAT" != "json" ]]; then
-  log_error "Invalid format: $OUTPUT_FORMAT (must be text or json)"
+  log_error "Invalid format: $OUTPUT_FORMAT (must be text or json)" "E_INPUT_INVALID" 1 "Valid formats: text, json"
   exit 1
 fi
+
+# Sync FORMAT for output_error compatibility
+FORMAT="$OUTPUT_FORMAT"
 
 check_deps
 
 # Check if todo.json exists
 if [[ ! -f "$TODO_FILE" ]]; then
-  log_error "todo.json not found. Run 'claude-todo init' first."
+  log_error "todo.json not found. Run 'claude-todo init' first." "E_NOT_INITIALIZED" 1 "Run 'claude-todo init' to initialize"
   exit 1
 fi
 
@@ -641,7 +671,7 @@ case "$SUBCOMMAND" in
     ;;
   show)
     if [[ -z "$PHASE_ARG" ]]; then
-      log_error "Phase slug required. Usage: claude-todo phases show <phase>"
+      log_error "Phase slug required. Usage: claude-todo phases show <phase>" "E_INPUT_MISSING" 1 "Provide a phase slug: claude-todo phases show core"
       exit 1
     fi
     show_phase "$PHASE_ARG"
@@ -650,7 +680,7 @@ case "$SUBCOMMAND" in
     show_stats
     ;;
   *)
-    log_error "Unknown subcommand: $SUBCOMMAND"
+    log_error "Unknown subcommand: $SUBCOMMAND" "E_INPUT_INVALID" 1 "Valid subcommands: list, show, stats"
     usage
     ;;
 esac

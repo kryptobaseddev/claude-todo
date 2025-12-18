@@ -39,6 +39,16 @@ if [[ -f "$LIB_DIR/analysis.sh" ]]; then
   source "$LIB_DIR/analysis.sh"
 fi
 
+# Source error JSON library (includes exit-codes.sh)
+if [[ -f "$LIB_DIR/error-json.sh" ]]; then
+  # shellcheck source=../lib/error-json.sh
+  source "$LIB_DIR/error-json.sh"
+elif [[ -f "$LIB_DIR/exit-codes.sh" ]]; then
+  # Fallback: source exit codes directly if error-json.sh not available
+  # shellcheck source=../lib/exit-codes.sh
+  source "$LIB_DIR/exit-codes.sh"
+fi
+
 # Detect Unicode support (respects NO_COLOR, LANG=C, config)
 if declare -f detect_unicode_support >/dev/null 2>&1 && detect_unicode_support; then
   UNICODE_ENABLED=true
@@ -65,7 +75,8 @@ fi
 
 # Defaults
 SUBCOMMAND=""
-FORMAT="text"
+FORMAT=""
+COMMAND_NAME="blockers"
 QUIET=false
 
 usage() {
@@ -97,8 +108,12 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1" >&2; }
 # Check dependencies
 check_deps() {
   if ! command -v jq &> /dev/null; then
-    log_error "jq is required but not installed"
-    exit 1
+    if [[ "${FORMAT:-}" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+      output_error "E_DEPENDENCY_MISSING" "jq is required but not installed" "${EXIT_DEPENDENCY_ERROR:-5}" true "Install jq: https://stedolan.github.io/jq/download/"
+    else
+      log_error "jq is required but not installed"
+    fi
+    exit "${EXIT_DEPENDENCY_ERROR:-5}"
   fi
 }
 
@@ -112,7 +127,14 @@ while [[ $# -gt 0 ]]; do
     -f|--format) FORMAT="$2"; shift 2 ;;
     -q|--quiet) QUIET=true; shift ;;
     -h|--help) usage ;;
-    -*) log_error "Unknown option: $1"; exit 1 ;;
+    -*)
+      if [[ "${FORMAT:-}" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+        output_error "E_INPUT_INVALID" "Unknown option: $1" "${EXIT_INVALID_INPUT:-2}" true "Run 'claude-todo blockers --help' for usage"
+      else
+        log_error "Unknown option: $1"
+      fi
+      exit "${EXIT_INVALID_INPUT:-2}"
+      ;;
     *)
       # First positional argument is subcommand if not already set
       if [[ -z "$SUBCOMMAND" ]]; then
@@ -126,12 +148,19 @@ done
 # Default subcommand
 [[ -z "$SUBCOMMAND" ]] && SUBCOMMAND="list"
 
+# Resolve format (TTY-aware auto-detection)
+FORMAT=$(resolve_format "${FORMAT:-}")
+
 check_deps
 
 # Check if todo.json exists
 if [[ ! -f "$TODO_FILE" ]]; then
-  log_error "$TODO_FILE not found. Run claude-todo init first."
-  exit 1
+  if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+    output_error "E_NOT_INITIALIZED" "$TODO_FILE not found" "${EXIT_FILE_ERROR:-3}" true "Run 'claude-todo init' to initialize project"
+  else
+    log_error "$TODO_FILE not found. Run claude-todo init first."
+  fi
+  exit "${EXIT_FILE_ERROR:-3}"
 fi
 
 # Load tasks from todo.json
@@ -290,6 +319,7 @@ list_blocked_tasks() {
           command: "blockers list",
           timestamp: $timestamp
         },
+        "success": true,
         summary: {
           blockedCount: $count
         },
@@ -476,6 +506,7 @@ analyze_blocking_chains() {
           command: "blockers analyze",
           timestamp: $timestamp
         },
+        "success": true,
         summary: {
           blockedCount: $count,
           maxChainDepth: ($tasks | map(.chainDepth) | max // 0),
@@ -661,8 +692,12 @@ case "$SUBCOMMAND" in
     analyze_blocking_chains
     ;;
   *)
-    log_error "Unknown subcommand: $SUBCOMMAND"
-    echo "Use 'list' or 'analyze'"
-    exit 1
+    if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+      output_error "E_INPUT_INVALID" "Unknown subcommand: $SUBCOMMAND" "${EXIT_INVALID_INPUT:-2}" true "Use 'list' or 'analyze'"
+    else
+      log_error "Unknown subcommand: $SUBCOMMAND"
+      echo "Use 'list' or 'analyze'" >&2
+    fi
+    exit "${EXIT_INVALID_INPUT:-2}"
     ;;
 esac

@@ -137,7 +137,11 @@ validate_file() {
   fi
 
   if ! jq empty "$file" 2>/dev/null; then
-    log_error "$name has invalid JSON syntax"
+    if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+      output_error "$E_VALIDATION_SCHEMA" "$name has invalid JSON syntax" "${EXIT_VALIDATION_ERROR:-2}" false "Fix the JSON syntax in $file"
+    else
+      log_error "$name has invalid JSON syntax"
+    fi
     return 1
   fi
 
@@ -170,6 +174,7 @@ list_backups() {
         --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
         --arg dir "$backup_dir" \
         '{
+          "$schema": "https://claude-todo.dev/schemas/output.schema.json",
           "_meta": {
             "command": "backup",
             "subcommand": "list",
@@ -398,6 +403,7 @@ list_backups() {
       --argjson backups "$json_backups" \
       --argjson count "$count" \
       '{
+        "$schema": "https://claude-todo.dev/schemas/output.schema.json",
         "_meta": {
           "command": "backup",
           "subcommand": "list",
@@ -462,8 +468,12 @@ while [[ $# -gt 0 ]]; do
       usage
       ;;
     -*)
-      log_error "Unknown option: $1"
-      exit 1
+      if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+        output_error "$E_INPUT_INVALID" "Unknown option: $1" "${EXIT_USAGE_ERROR:-64}" false "Run 'claude-todo backup --help' for usage"
+      else
+        log_error "Unknown option: $1"
+      fi
+      exit "${EXIT_USAGE_ERROR:-64}"
       ;;
     *)
       shift
@@ -550,9 +560,13 @@ backup_file "$LOG_FILE" "todo-log.json"
 
 # Check if any files were backed up
 if [[ ${#BACKED_UP_FILES[@]} -eq 0 ]]; then
-  log_error "No files were backed up"
+  if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+    output_error "$E_FILE_NOT_FOUND" "No files were backed up" "${EXIT_FILE_ERROR:-4}" true "Ensure todo files exist in .claude/ directory"
+  else
+    log_error "No files were backed up"
+  fi
   rmdir "$BACKUP_PATH" 2>/dev/null || true
-  exit 1
+  exit "${EXIT_FILE_ERROR:-4}"
 fi
 
 # Create metadata file
@@ -588,15 +602,23 @@ BACKUP_VALIDATION_ERRORS=0
 for file in "${BACKUP_PATH}"/*.json; do
   if [[ "$(basename "$file")" != "backup-metadata.json" ]]; then
     if ! jq empty "$file" 2>/dev/null; then
-      log_error "Backup validation failed for $(basename "$file")"
+      if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+        output_error "$E_VALIDATION_SCHEMA" "Backup validation failed for $(basename "$file")" "${EXIT_VALIDATION_ERROR:-2}" false "Fix JSON syntax before retry"
+      else
+        log_error "Backup validation failed for $(basename "$file")"
+      fi
       ((BACKUP_VALIDATION_ERRORS++))
     fi
   fi
 done
 
 if [[ $BACKUP_VALIDATION_ERRORS -gt 0 ]]; then
-  log_error "Backup validation failed with $BACKUP_VALIDATION_ERRORS errors"
-  exit 1
+  if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+    output_error "$E_VALIDATION_SCHEMA" "Backup validation failed with $BACKUP_VALIDATION_ERRORS errors" "${EXIT_VALIDATION_ERROR:-2}" false "Review and fix the corrupted backup files"
+  else
+    log_error "Backup validation failed with $BACKUP_VALIDATION_ERRORS errors"
+  fi
+  exit "${EXIT_VALIDATION_ERROR:-2}"
 fi
 
 log_info "Backup validation successful"
@@ -616,8 +638,12 @@ if [[ "$COMPRESS" == true ]]; then
     rm -rf "$BACKUP_PATH"
     BACKUP_PATH="$TARBALL"
   else
-    log_error "Failed to create compressed archive"
-    exit 1
+    if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+      output_error "$E_FILE_WRITE_ERROR" "Failed to create compressed archive" "${EXIT_FILE_ERROR:-4}" false "Check disk space and tar installation"
+    else
+      log_error "Failed to create compressed archive"
+    fi
+    exit "${EXIT_FILE_ERROR:-4}"
   fi
 fi
 
@@ -648,9 +674,11 @@ if [[ "$FORMAT" == "json" ]]; then
     --argjson validationWarnings "$VALIDATION_ERRORS" \
     --argjson files "$(printf '%s\n' "${BACKED_UP_FILES[@]}" | jq -R . | jq -s .)" \
     '{
+      "$schema": "https://claude-todo.dev/schemas/output.schema.json",
       "_meta": {
         "command": "backup",
         "timestamp": $timestamp,
+        "version": $version,
         "format": "json"
       },
       "success": true,

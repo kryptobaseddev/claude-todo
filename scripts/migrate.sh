@@ -45,7 +45,7 @@ check_jq_dependency() {
         if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
             output_error "$E_DEPENDENCY_MISSING" "jq is required for migration operations but not found" "${EXIT_DEPENDENCY_ERROR:-5}" false "Install jq: apt install jq (Debian) or brew install jq (macOS)"
         else
-            echo "ERROR: jq is required for migration operations but not found." >&2
+            output_error "$E_DEPENDENCY_MISSING" "jq is required for migration operations but not found"
             echo "" >&2
             echo "Install jq:" >&2
             case "$(uname -s)" in
@@ -153,14 +153,22 @@ cmd_repair() {
     local todo_file="$claude_dir/todo.json"
 
     if [[ ! -d "$claude_dir" ]]; then
-        echo "ERROR: No .claude directory found in $project_dir" >&2
-        echo "Run 'claude-todo init' to initialize the project" >&2
-        exit 1
+        if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+            output_error "$E_NOT_INITIALIZED" "No .claude directory found in $project_dir" "${EXIT_NOT_FOUND:-4}" true "Run 'claude-todo init' to initialize the project"
+        else
+            output_error "$E_NOT_INITIALIZED" "No .claude directory found in $project_dir"
+            echo "Run 'claude-todo init' to initialize the project" >&2
+        fi
+        exit "${EXIT_NOT_FOUND:-1}"
     fi
 
     if [[ ! -f "$todo_file" ]]; then
-        echo "ERROR: No todo.json found in $claude_dir" >&2
-        exit 1
+        if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+            output_error "$E_FILE_NOT_FOUND" "No todo.json found in $claude_dir" "${EXIT_FILE_ERROR:-4}" false ""
+        else
+            output_error "$E_FILE_NOT_FOUND" "No todo.json found in $claude_dir"
+        fi
+        exit "${EXIT_FILE_ERROR:-1}"
     fi
 
     echo "Schema Repair"
@@ -185,7 +193,7 @@ cmd_status() {
         if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
             output_error "$E_NOT_INITIALIZED" "No .claude directory found in $project_dir" "${EXIT_NOT_FOUND:-4}" true "Run 'claude-todo init' to initialize the project"
         else
-            echo "ERROR: No .claude directory found in $project_dir" >&2
+            output_error "$E_NOT_INITIALIZED" "No .claude directory found in $project_dir"
             echo "Run 'claude-todo init' to initialize the project" >&2
         fi
         exit "${EXIT_NOT_FOUND:-1}"
@@ -244,6 +252,7 @@ cmd_status() {
             --arg projectDir "$project_dir" \
             --argjson files "$files_json" \
             '{
+                "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                 "_meta": {
                     "command": "migrate",
                     "subcommand": "status",
@@ -275,7 +284,7 @@ cmd_check() {
         if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
             output_error "$E_NOT_INITIALIZED" "No .claude directory found" "${EXIT_NOT_FOUND:-4}" true "Run 'claude-todo init' to initialize the project"
         else
-            echo "ERROR: No .claude directory found" >&2
+            output_error "$E_NOT_INITIALIZED" "No .claude directory found"
         fi
         exit "${EXIT_NOT_FOUND:-1}"
     fi
@@ -307,6 +316,7 @@ cmd_check() {
                     --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
                     --arg file "$file" \
                     '{
+                        "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                         "_meta": {"command": "migrate", "subcommand": "check", "timestamp": $timestamp, "format": "json"},
                         "success": false,
                         "error": {
@@ -316,9 +326,9 @@ cmd_check() {
                         }
                     }'
             else
-                echo "ERROR: Incompatible version found in $file" >&2
+                output_error "$E_INPUT_INVALID" "Incompatible version found in $file"
             fi
-            exit 1
+            exit "${EXIT_INVALID_INPUT:-1}"
         fi
     done
 
@@ -327,6 +337,7 @@ cmd_check() {
             --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
             --argjson needed "$needs_migration" \
             '{
+                "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                 "_meta": {"command": "migrate", "subcommand": "check", "timestamp": $timestamp, "format": "json"},
                 "success": true,
                 "migrationNeeded": $needed
@@ -357,8 +368,12 @@ cmd_run() {
     local claude_dir="$project_dir/.claude"
 
     if [[ ! -d "$claude_dir" ]]; then
-        echo "ERROR: No .claude directory found" >&2
-        exit 1
+        if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+            output_error "$E_NOT_INITIALIZED" "No .claude directory found" "${EXIT_NOT_FOUND:-4}" true "Run 'claude-todo init' to initialize the project"
+        else
+            output_error "$E_NOT_INITIALIZED" "No .claude directory found"
+        fi
+        exit "${EXIT_NOT_FOUND:-1}"
     fi
 
     echo "Schema Migration"
@@ -401,9 +416,13 @@ cmd_run() {
     done
 
     if [[ "$incompatible_found" == "true" ]]; then
-        echo "ERROR: Incompatible versions detected" >&2
-        echo "Manual intervention required" >&2
-        exit 1
+        if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+            output_error "$E_INPUT_INVALID" "Incompatible versions detected" "${EXIT_INVALID_INPUT:-1}" true "Manual intervention required"
+        else
+            output_error "$E_INPUT_INVALID" "Incompatible versions detected"
+            echo "Manual intervention required" >&2
+        fi
+        exit "${EXIT_INVALID_INPUT:-1}"
     fi
 
     if [[ "$migration_needed" == "false" && "$force_migration" == "false" ]]; then
@@ -445,8 +464,8 @@ cmd_run() {
                     IFS=':' read -r file file_type <<< "$file_spec"
                     if [[ -f "$file" ]]; then
                         cp "$file" "$backup_dir/" || {
-                            echo "ERROR: Failed to create backup" >&2
-                            exit 1
+                            output_error "$E_FILE_WRITE_ERROR" "Failed to create backup"
+                            exit "${EXIT_FILE_ERROR:-1}"
                         }
                     fi
                 done
@@ -462,8 +481,8 @@ cmd_run() {
                 IFS=':' read -r file file_type <<< "$file_spec"
                 if [[ -f "$file" ]]; then
                     cp "$file" "$backup_dir/" || {
-                        echo "ERROR: Failed to create backup" >&2
-                        exit 1
+                        output_error "$E_FILE_WRITE_ERROR" "Failed to create backup"
+                        exit "${EXIT_FILE_ERROR:-1}"
                     }
                 fi
             done
@@ -508,9 +527,13 @@ cmd_run() {
     done
 
     if [[ "$migration_failed" == "true" ]]; then
-        echo "ERROR: Migration failed" >&2
-        echo "Backups available in: ${claude_dir}/backups/migration/" >&2
-        exit 1
+        if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+            output_error "$E_FILE_WRITE_ERROR" "Migration failed" "${EXIT_FILE_ERROR:-4}" true "Backups available in: ${claude_dir}/backups/migration/"
+        else
+            output_error "$E_FILE_WRITE_ERROR" "Migration failed"
+            echo "Backups available in: ${claude_dir}/backups/migration/" >&2
+        fi
+        exit "${EXIT_FILE_ERROR:-1}"
     fi
 
     echo "✓ Migration completed successfully"
@@ -522,8 +545,12 @@ cmd_file() {
     local file_type="$2"
 
     if [[ ! -f "$file" ]]; then
-        echo "ERROR: File not found: $file" >&2
-        exit 1
+        if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+            output_error "$E_FILE_NOT_FOUND" "File not found: $file" "${EXIT_FILE_ERROR:-4}" false ""
+        else
+            output_error "$E_FILE_NOT_FOUND" "File not found: $file"
+        fi
+        exit "${EXIT_FILE_ERROR:-1}"
     fi
 
     local status
@@ -553,8 +580,12 @@ cmd_file() {
             fi
             ;;
         2)
-            echo "ERROR: Incompatible version - manual intervention required" >&2
-            exit 1
+            if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+                output_error "$E_INPUT_INVALID" "Incompatible version - manual intervention required" "${EXIT_INVALID_INPUT:-1}" false ""
+            else
+                output_error "$E_INPUT_INVALID" "Incompatible version - manual intervention required"
+            fi
+            exit "${EXIT_INVALID_INPUT:-1}"
             ;;
     esac
 }
@@ -569,15 +600,23 @@ cmd_rollback() {
     local backups_dir="$claude_dir/backups/migration"
 
     if [[ ! -d "$claude_dir" ]]; then
-        echo "ERROR: No .claude directory found in $project_dir" >&2
-        echo "Run 'claude-todo init' to initialize the project" >&2
-        exit 1
+        if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+            output_error "$E_NOT_INITIALIZED" "No .claude directory found in $project_dir" "${EXIT_NOT_FOUND:-4}" true "Run 'claude-todo init' to initialize the project"
+        else
+            output_error "$E_NOT_INITIALIZED" "No .claude directory found in $project_dir"
+            echo "Run 'claude-todo init' to initialize the project" >&2
+        fi
+        exit "${EXIT_NOT_FOUND:-1}"
     fi
 
     if [[ ! -d "$backups_dir" ]]; then
-        echo "ERROR: No migration backups found" >&2
-        echo "Migration backups directory does not exist: $backups_dir" >&2
-        exit 1
+        if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+            output_error "$E_FILE_NOT_FOUND" "No migration backups found" "${EXIT_FILE_ERROR:-4}" true "Migration backups directory does not exist: $backups_dir"
+        else
+            output_error "$E_FILE_NOT_FOUND" "No migration backups found"
+            echo "Migration backups directory does not exist: $backups_dir" >&2
+        fi
+        exit "${EXIT_FILE_ERROR:-1}"
     fi
 
     # Find migration backup to use
@@ -588,10 +627,14 @@ cmd_rollback() {
         backup_path="$backups_dir/$backup_id"
 
         if [[ ! -d "$backup_path" ]]; then
-            echo "ERROR: Backup not found: $backup_id" >&2
-            echo "Available migration backups:" >&2
-            find "$backups_dir" -maxdepth 1 -type d -name "migration_*" -exec basename {} \; 2>/dev/null | sort -r | head -5
-            exit 1
+            if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+                output_error "$E_FILE_NOT_FOUND" "Backup not found: $backup_id" "${EXIT_FILE_ERROR:-4}" false ""
+            else
+                output_error "$E_FILE_NOT_FOUND" "Backup not found: $backup_id"
+                echo "Available migration backups:" >&2
+                find "$backups_dir" -maxdepth 1 -type d -name "migration_*" -exec basename {} \; 2>/dev/null | sort -r | head -5
+            fi
+            exit "${EXIT_FILE_ERROR:-1}"
         fi
     else
         # Find most recent migration backup
@@ -599,8 +642,12 @@ cmd_rollback() {
             xargs -0 ls -dt 2>/dev/null | head -1)
 
         if [[ -z "$backup_path" ]]; then
-            echo "ERROR: No migration backups found in $backups_dir" >&2
-            exit 1
+            if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+                output_error "$E_FILE_NOT_FOUND" "No migration backups found in $backups_dir" "${EXIT_FILE_ERROR:-4}" false ""
+            else
+                output_error "$E_FILE_NOT_FOUND" "No migration backups found in $backups_dir"
+            fi
+            exit "${EXIT_FILE_ERROR:-1}"
         fi
     fi
 
@@ -616,9 +663,13 @@ cmd_rollback() {
 
     # Verify backup integrity
     if [[ ! -f "$backup_path/metadata.json" ]]; then
-        echo "ERROR: Backup metadata not found" >&2
-        echo "Backup may be corrupted: $backup_path" >&2
-        exit 1
+        if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+            output_error "$E_FILE_NOT_FOUND" "Backup metadata not found" "${EXIT_FILE_ERROR:-4}" true "Backup may be corrupted: $backup_path"
+        else
+            output_error "$E_FILE_NOT_FOUND" "Backup metadata not found"
+            echo "Backup may be corrupted: $backup_path" >&2
+        fi
+        exit "${EXIT_FILE_ERROR:-1}"
     fi
 
     # Show backup metadata
@@ -665,8 +716,8 @@ cmd_rollback() {
     for file in "${files[@]}"; do
         if [[ -f "$file" ]]; then
             cp "$file" "$safety_backup/" || {
-                echo "ERROR: Failed to create safety backup" >&2
-                exit 1
+                output_error "$E_FILE_WRITE_ERROR" "Failed to create safety backup"
+                exit "${EXIT_FILE_ERROR:-1}"
             }
         fi
     done
@@ -691,7 +742,7 @@ cmd_rollback() {
 
         # Validate JSON in backup
         if ! jq empty "$source_file" 2>/dev/null; then
-            echo "ERROR: Invalid JSON in backup: $filename" >&2
+            output_error "$E_INPUT_INVALID" "Invalid JSON in backup: $filename"
             ((restore_errors++))
             continue
         fi
@@ -710,9 +761,13 @@ cmd_rollback() {
 
     # Check for errors
     if [[ $restore_errors -gt 0 ]]; then
-        echo "ERROR: Rollback completed with $restore_errors errors" >&2
-        echo "Safety backup available at: $safety_backup" >&2
-        exit 1
+        if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+            output_error "$E_FILE_WRITE_ERROR" "Rollback completed with $restore_errors errors" "${EXIT_FILE_ERROR:-4}" true "Safety backup available at: $safety_backup"
+        else
+            output_error "$E_FILE_WRITE_ERROR" "Rollback completed with $restore_errors errors"
+            echo "Safety backup available at: $safety_backup" >&2
+        fi
+        exit "${EXIT_FILE_ERROR:-1}"
     fi
 
     # Validate all restored files
@@ -732,9 +787,13 @@ cmd_rollback() {
 
     if [[ $validation_errors -gt 0 ]]; then
         echo ""
-        echo "ERROR: Validation failed after rollback" >&2
-        echo "Safety backup available at: $safety_backup" >&2
-        exit 1
+        if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+            output_error "$E_INPUT_INVALID" "Validation failed after rollback" "${EXIT_INVALID_INPUT:-1}" true "Safety backup available at: $safety_backup"
+        else
+            output_error "$E_INPUT_INVALID" "Validation failed after rollback"
+            echo "Safety backup available at: $safety_backup" >&2
+        fi
+        exit "${EXIT_INVALID_INPUT:-1}"
     fi
 
     echo "✓ All files validated successfully"
@@ -879,9 +938,13 @@ main() {
             ;;
         "file")
             if [[ $# -lt 2 ]]; then
-                echo "ERROR: Missing arguments for 'file' command" >&2
-                echo "Usage: claude-todo migrate file <path> <type>" >&2
-                exit 1
+                if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+                    output_error "$E_INPUT_MISSING" "Missing arguments for 'file' command" "${EXIT_INVALID_INPUT:-1}" true "Usage: claude-todo migrate file <path> <type>"
+                else
+                    output_error "$E_INPUT_MISSING" "Missing arguments for 'file' command"
+                    echo "Usage: claude-todo migrate file <path> <type>" >&2
+                fi
+                exit "${EXIT_INVALID_INPUT:-1}"
             fi
             cmd_file "$1" "$2"
             ;;
@@ -903,10 +966,14 @@ main() {
             exit 1
             ;;
         *)
-            echo "ERROR: Unknown command: $command" >&2
-            echo "" >&2
-            show_usage
-            exit 1
+            if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+                output_error "$E_INPUT_INVALID" "Unknown command: $command" "${EXIT_INVALID_INPUT:-1}" true "Run 'claude-todo migrate --help' for usage"
+            else
+                output_error "$E_INPUT_INVALID" "Unknown command: $command"
+                echo "" >&2
+                show_usage
+            fi
+            exit "${EXIT_INVALID_INPUT:-1}"
             ;;
     esac
 }

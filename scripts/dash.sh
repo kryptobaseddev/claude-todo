@@ -89,13 +89,20 @@ elif [[ -f "$CLAUDE_TODO_HOME/lib/exit-codes.sh" ]]; then
   source "$CLAUDE_TODO_HOME/lib/exit-codes.sh"
 fi
 
+# Source error JSON library
+if [[ -f "$LIB_DIR/error-json.sh" ]]; then
+  # shellcheck source=../lib/error-json.sh
+  source "$LIB_DIR/error-json.sh"
+fi
+
 # Default configuration
 PERIOD_DAYS=7
-OUTPUT_FORMAT="text"
+OUTPUT_FORMAT=""
 COMPACT_MODE=false
 SHOW_CHARTS=true
 SECTIONS="all"
 QUIET=false
+COMMAND_NAME="dash"
 
 # File paths
 CLAUDE_DIR=".claude"
@@ -1030,6 +1037,7 @@ output_json_format() {
     --arg session "$session_id" \
     --arg version "$VERSION" \
     '{
+      "$schema": "https://claude-todo.dev/schemas/output.schema.json",
       "_meta": {
         "format": "json",
         "version": $version,
@@ -1037,6 +1045,7 @@ output_json_format() {
         "timestamp": $timestamp,
         "periodDays": $periodDays
       },
+      "success": true,
       "project": $project,
       "currentPhase": $currentPhase,
       "session": (if $session == "" then null else $session end),
@@ -1087,8 +1096,12 @@ parse_arguments() {
       --period)
         PERIOD_DAYS="$2"
         if ! [[ "$PERIOD_DAYS" =~ ^[0-9]+$ ]]; then
-          echo "[ERROR] --period must be a positive integer" >&2
-          exit 1
+          if [[ "${OUTPUT_FORMAT:-}" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+            output_error "E_INPUT_INVALID" "--period must be a positive integer" "${EXIT_INVALID_INPUT:-2}" true "Example: --period 7"
+          else
+            log_error "--period must be a positive integer"
+          fi
+          exit "${EXIT_INVALID_INPUT:-2}"
         fi
         shift 2
         ;;
@@ -1115,9 +1128,13 @@ parse_arguments() {
         usage
         ;;
       *)
-        echo "[ERROR] Unknown option: $1" >&2
-        echo "Run 'claude-todo dash --help' for usage"
-        exit 1
+        if [[ "${OUTPUT_FORMAT:-}" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+          output_error "E_INPUT_INVALID" "Unknown option: $1" "${EXIT_INVALID_INPUT:-2}" true "Run 'claude-todo dash --help' for usage"
+        else
+          log_error "Unknown option: $1"
+          echo "Run 'claude-todo dash --help' for usage" >&2
+        fi
+        exit "${EXIT_INVALID_INPUT:-2}"
         ;;
     esac
   done
@@ -1130,17 +1147,28 @@ parse_arguments() {
 main() {
   parse_arguments "$@"
 
+  # Resolve format (TTY-aware auto-detection)
+  OUTPUT_FORMAT=$(resolve_format "${OUTPUT_FORMAT:-}")
+
   # Check if in a todo-enabled project
   if [[ ! -f "$TODO_FILE" ]]; then
-    echo "[ERROR] Todo file not found: $TODO_FILE" >&2
-    echo "Run 'claude-todo init' first" >&2
-    exit 1
+    if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+      output_error "E_NOT_INITIALIZED" "Todo file not found: $TODO_FILE" "${EXIT_FILE_ERROR:-3}" true "Run 'claude-todo init' to initialize project"
+    else
+      log_error "Todo file not found: $TODO_FILE"
+      echo "Run 'claude-todo init' first" >&2
+    fi
+    exit "${EXIT_FILE_ERROR:-3}"
   fi
 
   # Check required commands
   if ! command -v jq &>/dev/null; then
-    echo "[ERROR] jq is required but not installed" >&2
-    exit 1
+    if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+      output_error "E_DEPENDENCY_MISSING" "jq is required but not installed" "${EXIT_DEPENDENCY_ERROR:-5}" true "Install jq: https://stedolan.github.io/jq/download/"
+    else
+      log_error "jq is required but not installed"
+    fi
+    exit "${EXIT_DEPENDENCY_ERROR:-5}"
   fi
 
   # Output in requested format

@@ -73,6 +73,7 @@ NOTES=""
 QUIET=false
 ADD_PHASE=false
 FORMAT=""
+DRY_RUN=false
 # Hierarchy fields (v0.17.0)
 TASK_TYPE=""     # epic|task|subtask - inferred if not specified
 PARENT_ID=""     # Parent task ID for hierarchy
@@ -115,6 +116,7 @@ Output Options:
   -f, --format FORMAT       Output format: text|json (default: auto-detect)
       --human               Force human-readable text output
       --json                Force JSON output (for LLM agents)
+      --dry-run             Show what would be created without making changes
   -h, --help                Show this help
 
 Output Formats:
@@ -156,7 +158,10 @@ EOF
 }
 
 log_error() {
-  echo -e "${RED}[ERROR]${NC} $1" >&2
+  # Use output_error from error-json.sh for format-aware error output
+  # Default to E_UNKNOWN error code when called without specific code
+  local error_code="${2:-$E_UNKNOWN}"
+  output_error "$error_code" "$1"
 }
 
 log_warn() {
@@ -515,6 +520,10 @@ while [[ $# -gt 0 ]]; do
       FORMAT="json"
       shift
       ;;
+    --dry-run)
+      DRY_RUN=true
+      shift
+      ;;
     -h|--help)
       usage
       ;;
@@ -788,6 +797,51 @@ fi
 
 if [[ "$STATUS" == "done" ]]; then
   TASK_JSON=$(echo "$TASK_JSON" | jq --arg completed "$CREATED_AT" '.completedAt = $completed')
+fi
+
+# DRY-RUN: Show what would be created without making changes
+if [[ "$DRY_RUN" == true ]]; then
+  # Release lock early since we're not writing
+  unlock_file "$ADD_LOCK_FD"
+  trap - EXIT ERR INT TERM
+
+  if [[ "$FORMAT" == "json" ]]; then
+    jq -n \
+      --arg version "$VERSION" \
+      --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+      --argjson task "$TASK_JSON" \
+      '{
+        "$schema": "https://claude-todo.dev/schemas/output.schema.json",
+        "_meta": {
+          "format": "json",
+          "version": $version,
+          "command": "add",
+          "timestamp": $timestamp
+        },
+        "success": true,
+        "dryRun": true,
+        "wouldCreate": $task
+      }'
+  elif [[ "$QUIET" == true ]]; then
+    echo "$TASK_ID"
+  else
+    echo -e "${YELLOW}[DRY-RUN]${NC} Would create task:"
+    echo ""
+    echo "Task ID: $TASK_ID"
+    echo "Title: $TITLE"
+    echo "Status: $STATUS"
+    echo "Priority: $PRIORITY"
+    echo "Type: $TASK_TYPE"
+    [[ -n "$PHASE" ]] && echo "Phase: $PHASE"
+    [[ -n "$LABELS" ]] && echo "Labels: $LABELS"
+    [[ -n "$DEPENDS" ]] && echo "Depends: $DEPENDS"
+    [[ -n "$PARENT_ID" ]] && echo "Parent: $PARENT_ID"
+    [[ -n "$SIZE" ]] && echo "Size: $SIZE"
+    [[ -n "$DESCRIPTION" ]] && echo "Description: $DESCRIPTION"
+    echo ""
+    echo -e "${YELLOW}No changes made (dry-run mode)${NC}"
+  fi
+  exit $EXIT_SUCCESS
 fi
 
 # Add task to todo.json and calculate checksum

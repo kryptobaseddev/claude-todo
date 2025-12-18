@@ -426,7 +426,8 @@ cmd_show() {
         "_meta": {
           "command": "focus show",
           "timestamp": $timestamp,
-          "version": $version
+          "version": $version,
+          "format": "json"
         },
         "success": true,
         "focus": $focus,

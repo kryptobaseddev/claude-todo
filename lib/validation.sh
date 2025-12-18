@@ -46,11 +46,11 @@ readonly VALID_STATUSES=("pending" "active" "done" "blocked")
 readonly VALID_OPERATIONS=("create" "update" "complete" "archive" "restore" "delete" "validate" "backup")
 readonly VALID_PHASE_STATUSES=("pending" "active" "completed")
 
-# Exit codes
-readonly EXIT_SUCCESS=0
-readonly EXIT_SCHEMA_ERROR=1
-readonly EXIT_SEMANTIC_ERROR=2
-readonly EXIT_BOTH_ERRORS=3
+# Exit codes (use VAL_ prefix to avoid conflicts with exit-codes.sh)
+readonly VAL_SUCCESS=0
+readonly VAL_SCHEMA_ERROR=1
+readonly VAL_SEMANTIC_ERROR=2
+readonly VAL_BOTH_ERRORS=3
 
 # ============================================================================
 # UTILITY FUNCTIONS
@@ -984,7 +984,7 @@ validate_all() {
         echo "----------------------------------------"
         echo "RESULT: Schema validation failed"
         echo "Skipping semantic checks due to schema errors"
-        return $EXIT_SCHEMA_ERROR
+        return $VAL_SCHEMA_ERROR
     fi
 
     # 3. ID Uniqueness Check
@@ -1155,16 +1155,16 @@ validate_all() {
 
     if [[ $schema_errors -eq 0 && $semantic_errors -eq 0 ]]; then
         echo "✓ RESULT: All validations passed"
-        return $EXIT_SUCCESS
+        return $VAL_SUCCESS
     elif [[ $schema_errors -gt 0 && $semantic_errors -eq 0 ]]; then
         echo "✗ RESULT: Schema validation failed"
-        return $EXIT_SCHEMA_ERROR
+        return $VAL_SCHEMA_ERROR
     elif [[ $schema_errors -eq 0 && $semantic_errors -gt 0 ]]; then
         echo "✗ RESULT: Semantic validation failed"
-        return $EXIT_SEMANTIC_ERROR
+        return $VAL_SEMANTIC_ERROR
     else
         echo "✗ RESULT: Both schema and semantic validation failed"
-        return $EXIT_BOTH_ERRORS
+        return $VAL_BOTH_ERRORS
     fi
 }
 

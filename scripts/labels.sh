@@ -56,6 +56,16 @@ elif [[ -f "$CLAUDE_TODO_HOME/lib/file-ops.sh" ]]; then
   source "$CLAUDE_TODO_HOME/lib/file-ops.sh"
 fi
 
+# Source error JSON library (includes exit-codes.sh)
+if [[ -f "$LIB_DIR/error-json.sh" ]]; then
+  # shellcheck source=../lib/error-json.sh
+  source "$LIB_DIR/error-json.sh"
+elif [[ -f "$LIB_DIR/exit-codes.sh" ]]; then
+  # Fallback: source exit codes directly if error-json.sh not available
+  # shellcheck source=../lib/exit-codes.sh
+  source "$LIB_DIR/exit-codes.sh"
+fi
+
 if [[ -f "${LIB_DIR}/logging.sh" ]]; then
   source "${LIB_DIR}/logging.sh"
 elif [[ -f "$CLAUDE_TODO_HOME/lib/logging.sh" ]]; then
@@ -70,6 +80,7 @@ fi
 
 # Default configuration
 OUTPUT_FORMAT="text"
+COMMAND_NAME="labels"
 SUBCOMMAND="list"
 LABEL_ARG=""
 QUIET_MODE=false
@@ -510,15 +521,23 @@ parse_arguments() {
           LABEL_ARG="$1"
           # Validate non-empty label
           if [[ -z "$LABEL_ARG" ]]; then
-            echo "[ERROR] Label cannot be empty" >&2
-            echo "Usage: claude-todo labels show LABEL" >&2
-            exit 1
+            if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+              output_error "$E_INPUT_MISSING" "Label cannot be empty" "${EXIT_INVALID_INPUT:-1}" true "Usage: claude-todo labels show LABEL"
+            else
+              output_error "$E_INPUT_MISSING" "Label cannot be empty"
+              echo "Usage: claude-todo labels show LABEL" >&2
+            fi
+            exit "${EXIT_INVALID_INPUT:-1}"
           fi
           shift
         else
-          echo "[ERROR] 'show' requires a label argument" >&2
-          echo "Usage: claude-todo labels show LABEL" >&2
-          exit 1
+          if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+            output_error "$E_INPUT_MISSING" "'show' requires a label argument" "${EXIT_INVALID_INPUT:-1}" true "Usage: claude-todo labels show LABEL"
+          else
+            output_error "$E_INPUT_MISSING" "'show' requires a label argument"
+            echo "Usage: claude-todo labels show LABEL" >&2
+          fi
+          exit "${EXIT_INVALID_INPUT:-1}"
         fi
         ;;
       stats)
@@ -537,10 +556,14 @@ parse_arguments() {
         ;;
       *)
         # Invalid subcommand - show error
-        echo "[ERROR] Invalid subcommand: $1" >&2
-        echo "Valid subcommands: $VALID_SUBCOMMANDS" >&2
-        echo "Run 'claude-todo labels --help' for usage" >&2
-        exit 1
+        if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+          output_error "$E_INPUT_INVALID" "Invalid subcommand: $1" "${EXIT_INVALID_INPUT:-1}" true "Valid subcommands: $VALID_SUBCOMMANDS"
+        else
+          output_error "$E_INPUT_INVALID" "Invalid subcommand: $1"
+          echo "Valid subcommands: $VALID_SUBCOMMANDS" >&2
+          echo "Run 'claude-todo labels --help' for usage" >&2
+        fi
+        exit "${EXIT_INVALID_INPUT:-1}"
         ;;
     esac
   fi
@@ -553,14 +576,22 @@ parse_arguments() {
         # Validate format
         local VALID_FORMATS="text json"
         if [[ -z "$OUTPUT_FORMAT" ]]; then
-          echo "[ERROR] --format requires a value" >&2
-          echo "Valid formats: $VALID_FORMATS" >&2
-          exit 1
+          if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+            output_error "$E_INPUT_MISSING" "--format requires a value" "${EXIT_INVALID_INPUT:-1}" true "Valid formats: $VALID_FORMATS"
+          else
+            output_error "$E_INPUT_MISSING" "--format requires a value"
+            echo "Valid formats: $VALID_FORMATS" >&2
+          fi
+          exit "${EXIT_INVALID_INPUT:-1}"
         fi
         if [[ ! " $VALID_FORMATS " =~ " $OUTPUT_FORMAT " ]]; then
-          echo "[ERROR] Invalid format: $OUTPUT_FORMAT" >&2
-          echo "Valid formats: $VALID_FORMATS" >&2
-          exit 1
+          if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+            output_error "$E_INPUT_INVALID" "Invalid format: $OUTPUT_FORMAT" "${EXIT_INVALID_INPUT:-1}" true "Valid formats: $VALID_FORMATS"
+          else
+            output_error "$E_INPUT_INVALID" "Invalid format: $OUTPUT_FORMAT"
+            echo "Valid formats: $VALID_FORMATS" >&2
+          fi
+          exit "${EXIT_INVALID_INPUT:-1}"
         fi
         shift 2
         ;;
@@ -572,9 +603,13 @@ parse_arguments() {
         shift
         ;;
       *)
-        echo "[ERROR] Unknown option: $1" >&2
-        echo "Run 'claude-todo labels --help' for usage"
-        exit 1
+        if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+          output_error "$E_INPUT_INVALID" "Unknown option: $1" "${EXIT_INVALID_INPUT:-1}" true "Run 'claude-todo labels --help' for usage"
+        else
+          output_error "$E_INPUT_INVALID" "Unknown option: $1"
+          echo "Run 'claude-todo labels --help' for usage" >&2
+        fi
+        exit "${EXIT_INVALID_INPUT:-1}"
         ;;
     esac
   done
@@ -587,17 +622,28 @@ parse_arguments() {
 main() {
   parse_arguments "$@"
 
+  # Resolve format (TTY-aware auto-detection)
+  OUTPUT_FORMAT=$(resolve_format "${OUTPUT_FORMAT:-}")
+
   # Check if in a todo-enabled project
   if [[ ! -f "$TODO_FILE" ]]; then
-    echo "[ERROR] Todo file not found: $TODO_FILE" >&2
-    echo "Run 'claude-todo init' first" >&2
-    exit 1
+    if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+      output_error "$E_NOT_INITIALIZED" "Todo file not found: $TODO_FILE" "${EXIT_NOT_INITIALIZED:-1}" true "Run 'claude-todo init' first"
+    else
+      output_error "$E_NOT_INITIALIZED" "Todo file not found: $TODO_FILE"
+      echo "Run 'claude-todo init' first" >&2
+    fi
+    exit "${EXIT_NOT_INITIALIZED:-1}"
   fi
 
   # Check required commands
   if ! command -v jq &>/dev/null; then
-    echo "[ERROR] jq is required but not installed" >&2
-    exit 1
+    if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+      output_error "$E_DEPENDENCY_MISSING" "jq is required but not installed" "${EXIT_DEPENDENCY_MISSING:-1}" true "Install jq: https://stedolan.github.io/jq/download/"
+    else
+      output_error "$E_DEPENDENCY_MISSING" "jq is required but not installed"
+    fi
+    exit "${EXIT_DEPENDENCY_MISSING:-1}"
   fi
 
   case "$SUBCOMMAND" in

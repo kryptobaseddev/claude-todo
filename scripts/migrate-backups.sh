@@ -31,6 +31,22 @@ source "$LIB_DIR/backup.sh"
 # shellcheck source=lib/file-ops.sh
 source "$LIB_DIR/file-ops.sh"
 
+# Source output formatting library
+if [[ -f "$LIB_DIR/output-format.sh" ]]; then
+  # shellcheck source=../lib/output-format.sh
+  source "$LIB_DIR/output-format.sh"
+fi
+
+# Source error JSON library (includes exit-codes.sh)
+if [[ -f "$LIB_DIR/error-json.sh" ]]; then
+  # shellcheck source=../lib/error-json.sh
+  source "$LIB_DIR/error-json.sh"
+elif [[ -f "$LIB_DIR/exit-codes.sh" ]]; then
+  # Fallback: source exit codes directly if error-json.sh not available
+  # shellcheck source=../lib/exit-codes.sh
+  source "$LIB_DIR/exit-codes.sh"
+fi
+
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
@@ -38,6 +54,9 @@ source "$LIB_DIR/file-ops.sh"
 readonly LEGACY_BACKUP_DIR=".claude/.backups"
 readonly NEW_BACKUP_DIR=".claude/backups"
 readonly MIGRATION_LOG=".claude/backup-migration.log"
+COMMAND_NAME="migrate-backups"
+FORMAT=""
+QUIET=false
 
 # ============================================================================
 # LEGACY BACKUP CLASSIFICATION
@@ -237,7 +256,11 @@ migrate_single_backup() {
             backup_id="migration_legacy_${timestamp_suffix}"
             ;;
         *)
-            echo "ERROR: Invalid backup type: $backup_type" >&2
+            if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+                output_error "$E_INPUT_INVALID" "Invalid backup type: $backup_type" 1 false ""
+            else
+                output_error "$E_INPUT_INVALID" "Invalid backup type: $backup_type"
+            fi
             return 1
             ;;
     esac
@@ -252,7 +275,11 @@ migrate_single_backup() {
 
     # Ensure target directory exists
     ensure_directory "$target_dir" || {
-        echo "ERROR: Failed to create target directory: $target_dir" >&2
+        if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+            output_error "$E_FILE_WRITE_ERROR" "Failed to create target directory: $target_dir" 1 false ""
+        else
+            output_error "$E_FILE_WRITE_ERROR" "Failed to create target directory: $target_dir"
+        fi
         return 1
     }
 
@@ -260,7 +287,11 @@ migrate_single_backup() {
     if [[ "$is_dir" == "true" ]]; then
         # Directory backup: copy contents
         cp -r "$source_path"/* "$target_dir/" 2>/dev/null || {
-            echo "ERROR: Failed to copy directory contents: $source_path" >&2
+            if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+                output_error "$E_FILE_WRITE_ERROR" "Failed to copy directory contents: $source_path" 1 false ""
+            else
+                output_error "$E_FILE_WRITE_ERROR" "Failed to copy directory contents: $source_path"
+            fi
             return 1
         }
     else
@@ -271,7 +302,11 @@ migrate_single_backup() {
         filename=$(echo "$filename" | sed 's/\.[0-9]\{8\}_[0-9]\{6\}$//' | sed 's/\.[0-9]\+$//' | sed 's/\.backup\.[0-9]\+$//')
 
         cp "$source_path" "$target_dir/$filename" 2>/dev/null || {
-            echo "ERROR: Failed to copy file: $source_path" >&2
+            if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+                output_error "$E_FILE_WRITE_ERROR" "Failed to copy file: $source_path" 1 false ""
+            else
+                output_error "$E_FILE_WRITE_ERROR" "Failed to copy file: $source_path"
+            fi
             return 1
         }
     fi
@@ -345,7 +380,11 @@ migrate_single_backup() {
 
     # Check metadata exists
     if [[ ! -f "$target_dir/metadata.json" ]]; then
-        echo "ERROR: Migration failed - metadata not created" >&2
+        if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+            output_error "$E_FILE_NOT_FOUND" "Migration failed - metadata not created" 1 false ""
+        else
+            output_error "$E_FILE_NOT_FOUND" "Migration failed - metadata not created"
+        fi
         ((errors++))
     fi
 
@@ -362,20 +401,28 @@ migrate_single_backup() {
             target_size=$(get_file_size "$target_file")
 
             if [[ "$source_size" -ne "$target_size" ]]; then
-                echo "ERROR: Size mismatch after migration: $source_size != $target_size" >&2
+                if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+                    output_error "$E_INPUT_INVALID" "Size mismatch after migration: $source_size != $target_size" 1 false ""
+                else
+                    output_error "$E_INPUT_INVALID" "Size mismatch after migration: $source_size != $target_size"
+                fi
                 ((errors++))
             fi
         fi
     fi
 
     if [[ $errors -gt 0 ]]; then
-        echo "ERROR: Migration validation failed for $source_path" >&2
+        if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+            output_error "$E_INPUT_INVALID" "Migration validation failed for $source_path" 1 false ""
+        else
+            output_error "$E_INPUT_INVALID" "Migration validation failed for $source_path"
+        fi
         return 1
     fi
 
     # Log successful migration
     echo "$(get_iso_timestamp) MIGRATED: $source_path -> $target_dir" >> "$MIGRATION_LOG"
-    echo "MIGRATED: $source_path -> $target_dir"
+    [[ "$QUIET" != true ]] && echo "MIGRATED: $source_path -> $target_dir"
 
     return 0
 }
@@ -393,12 +440,48 @@ migrate_all_backups() {
     count=$(echo "$backups" | jq 'length')
 
     if [[ "$count" -eq 0 ]]; then
-        echo "No legacy backups found in $LEGACY_BACKUP_DIR"
+        if [[ "$FORMAT" == "json" ]]; then
+            local version
+            if [[ -f "$PROJECT_ROOT/VERSION" ]]; then
+                version=$(cat "$PROJECT_ROOT/VERSION")
+            else
+                version="0.16.0"
+            fi
+
+            jq -n \
+                --arg version "$version" \
+                --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+                --argjson dryRun "$dry_run" \
+                --arg legacyDir "$LEGACY_BACKUP_DIR" \
+                '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
+                    "_meta": {
+                        "format": "json",
+                        "version": $version,
+                        "command": "migrate-backups",
+                        "subcommand": (if $dryRun then "dry-run" else "run" end),
+                        "timestamp": $timestamp
+                    },
+                    "success": true,
+                    "message": "No legacy backups found",
+                    "legacyDir": $legacyDir,
+                    "summary": {
+                        "total": 0,
+                        "migrated": 0,
+                        "failed": 0,
+                        "skipped": 0
+                    }
+                }'
+        else
+            [[ "$QUIET" != true ]] && echo "No legacy backups found in $LEGACY_BACKUP_DIR"
+        fi
         return 0
     fi
 
-    echo "Found $count legacy backup(s) to migrate"
-    echo ""
+    if [[ "$FORMAT" != "json" && "$QUIET" != true ]]; then
+        echo "Found $count legacy backup(s) to migrate"
+        echo ""
+    fi
 
     local migrated=0
     local failed=0
@@ -418,13 +501,55 @@ migrate_all_backups() {
         fi
     done < <(echo "$backups" | jq -c '.[]')
 
-    echo ""
-    echo "Migration summary:"
-    echo "  Migrated: $migrated"
-    echo "  Failed: $failed"
-    echo "  Skipped (unknown): $skipped"
+    if [[ "$FORMAT" == "json" ]]; then
+        local version
+        if [[ -f "$PROJECT_ROOT/VERSION" ]]; then
+            version=$(cat "$PROJECT_ROOT/VERSION")
+        else
+            version="0.16.0"
+        fi
 
-    [[ "$dry_run" == "false" ]] && echo "  Log: $MIGRATION_LOG"
+        jq -n \
+            --arg version "$version" \
+            --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --argjson dryRun "$dry_run" \
+            --arg legacyDir "$LEGACY_BACKUP_DIR" \
+            --arg newDir "$NEW_BACKUP_DIR" \
+            --arg logFile "$MIGRATION_LOG" \
+            --argjson total "$count" \
+            --argjson migrated "$migrated" \
+            --argjson failed "$failed" \
+            --argjson skipped "$skipped" \
+            '{
+                "$schema": "https://claude-todo.dev/schemas/output.schema.json",
+                "_meta": {
+                    "format": "json",
+                    "version": $version,
+                    "command": "migrate-backups",
+                    "subcommand": (if $dryRun then "dry-run" else "run" end),
+                    "timestamp": $timestamp
+                },
+                "success": ($failed == 0),
+                "dryRun": $dryRun,
+                "legacyDir": $legacyDir,
+                "newDir": $newDir,
+                "logFile": (if $dryRun then null else $logFile end),
+                "summary": {
+                    "total": $total,
+                    "migrated": $migrated,
+                    "failed": $failed,
+                    "skipped": $skipped
+                }
+            }'
+    elif [[ "$QUIET" != true ]]; then
+        echo ""
+        echo "Migration summary:"
+        echo "  Migrated: $migrated"
+        echo "  Failed: $failed"
+        echo "  Skipped (unknown): $skipped"
+
+        [[ "$dry_run" == "false" ]] && echo "  Log: $MIGRATION_LOG"
+    fi
 
     return 0
 }
@@ -439,14 +564,46 @@ cleanup_legacy_backups() {
     local legacy_dir="$LEGACY_BACKUP_DIR"
 
     if [[ ! -d "$legacy_dir" ]]; then
-        echo "No legacy backup directory found: $legacy_dir"
+        if [[ "$FORMAT" == "json" ]]; then
+            local version
+            if [[ -f "$PROJECT_ROOT/VERSION" ]]; then
+                version=$(cat "$PROJECT_ROOT/VERSION")
+            else
+                version="0.16.0"
+            fi
+
+            jq -n \
+                --arg version "$version" \
+                --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+                --arg legacyDir "$legacy_dir" \
+                '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
+                    "_meta": {
+                        "format": "json",
+                        "version": $version,
+                        "command": "migrate-backups",
+                        "subcommand": "cleanup",
+                        "timestamp": $timestamp
+                    },
+                    "success": true,
+                    "message": "No legacy backup directory found",
+                    "legacyDir": $legacyDir,
+                    "removed": false
+                }'
+        else
+            echo "No legacy backup directory found: $legacy_dir"
+        fi
         return 0
     fi
 
     # Safety check: ensure new backup directory exists and has backups
     if [[ ! -d "$NEW_BACKUP_DIR" ]]; then
-        echo "ERROR: New backup directory not found: $NEW_BACKUP_DIR" >&2
-        echo "Run migration first before cleanup" >&2
+        if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+            output_error "$E_FILE_NOT_FOUND" "New backup directory not found: $NEW_BACKUP_DIR" 1 true "Run migration first before cleanup"
+        else
+            output_error "$E_FILE_NOT_FOUND" "New backup directory not found: $NEW_BACKUP_DIR"
+            echo "Run migration first before cleanup" >&2
+        fi
         return 1
     fi
 
@@ -454,8 +611,12 @@ cleanup_legacy_backups() {
     new_backup_count=$(find "$NEW_BACKUP_DIR" -mindepth 2 -maxdepth 2 -type d 2>/dev/null | wc -l)
 
     if [[ "$new_backup_count" -eq 0 ]]; then
-        echo "ERROR: No backups found in new location: $NEW_BACKUP_DIR" >&2
-        echo "Run migration first before cleanup" >&2
+        if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+            output_error "$E_FILE_NOT_FOUND" "No backups found in new location: $NEW_BACKUP_DIR" 1 true "Run migration first before cleanup"
+        else
+            output_error "$E_FILE_NOT_FOUND" "No backups found in new location: $NEW_BACKUP_DIR"
+            echo "Run migration first before cleanup" >&2
+        fi
         return 1
     fi
 
@@ -474,13 +635,48 @@ cleanup_legacy_backups() {
     fi
 
     # Remove legacy directory
-    echo "Removing legacy backup directory: $legacy_dir"
+    if [[ "$FORMAT" != "json" ]]; then
+        echo "Removing legacy backup directory: $legacy_dir"
+    fi
+
     rm -rf "$legacy_dir" || {
-        echo "ERROR: Failed to remove legacy directory" >&2
+        if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+            output_error "$E_FILE_WRITE_ERROR" "Failed to remove legacy directory" 1 false ""
+        else
+            output_error "$E_FILE_WRITE_ERROR" "Failed to remove legacy directory"
+        fi
         return 1
     }
 
-    echo "Cleanup complete"
+    if [[ "$FORMAT" == "json" ]]; then
+        local version
+        if [[ -f "$PROJECT_ROOT/VERSION" ]]; then
+            version=$(cat "$PROJECT_ROOT/VERSION")
+        else
+            version="0.16.0"
+        fi
+
+        jq -n \
+            --arg version "$version" \
+            --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg legacyDir "$legacy_dir" \
+            '{
+                "$schema": "https://claude-todo.dev/schemas/output.schema.json",
+                "_meta": {
+                    "format": "json",
+                    "version": $version,
+                    "command": "migrate-backups",
+                    "subcommand": "cleanup",
+                    "timestamp": $timestamp
+                },
+                "success": true,
+                "message": "Cleanup complete",
+                "legacyDir": $legacyDir,
+                "removed": true
+            }'
+    else
+        echo "Cleanup complete"
+    fi
     return 0
 }
 
@@ -495,6 +691,37 @@ display_detected_backups() {
 
     local count
     count=$(echo "$backups" | jq 'length')
+
+    if [[ "$FORMAT" == "json" ]]; then
+        local version
+        if [[ -f "$PROJECT_ROOT/VERSION" ]]; then
+            version=$(cat "$PROJECT_ROOT/VERSION")
+        else
+            version="0.16.0"
+        fi
+
+        jq -n \
+            --arg version "$version" \
+            --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --argjson count "$count" \
+            --argjson backups "$backups" \
+            --arg legacyDir "$LEGACY_BACKUP_DIR" \
+            '{
+                "$schema": "https://claude-todo.dev/schemas/output.schema.json",
+                "_meta": {
+                    "format": "json",
+                    "version": $version,
+                    "command": "migrate-backups",
+                    "subcommand": "detect",
+                    "timestamp": $timestamp
+                },
+                "success": true,
+                "legacyDir": $legacyDir,
+                "count": $count,
+                "backups": $backups
+            }'
+        return 0
+    fi
 
     if [[ "$count" -eq 0 ]]; then
         echo "No legacy backups found in $LEGACY_BACKUP_DIR"
@@ -541,6 +768,10 @@ OPTIONS:
     --dry-run       Preview migration without making changes
     --run           Perform actual migration
     --cleanup       Remove old .backups directory after migration
+    -f, --format FORMAT  Output format: text | json (default: auto-detect)
+    --json          Shorthand for --format json
+    --human         Shorthand for --format text
+    -q, --quiet     Suppress non-essential output
     -h, --help      Show this help message
 
 EXAMPLES:
@@ -572,35 +803,93 @@ EOF
 
 # Main entry point
 main() {
+    local ACTION=""
+
     if [[ $# -eq 0 ]]; then
         show_usage
         exit 1
     fi
 
-    case "$1" in
-        --detect)
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --detect)
+                ACTION="detect"
+                shift
+                ;;
+            --dry-run)
+                ACTION="dry-run"
+                shift
+                ;;
+            --run)
+                ACTION="run"
+                shift
+                ;;
+            --cleanup)
+                ACTION="cleanup"
+                shift
+                ;;
+            -f|--format)
+                FORMAT="$2"
+                shift 2
+                ;;
+            --json)
+                FORMAT="json"
+                shift
+                ;;
+            --human)
+                FORMAT="text"
+                shift
+                ;;
+            -q|--quiet)
+                QUIET=true
+                shift
+                ;;
+            -h|--help)
+                show_usage
+                exit 0
+                ;;
+            *)
+                if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+                    output_error "$E_INPUT_INVALID" "Unknown option: $1" 1 true "Use --help to see valid options"
+                else
+                    output_error "$E_INPUT_INVALID" "Unknown option: $1"
+                    echo "" >&2
+                    show_usage
+                fi
+                exit "${EXIT_INVALID_INPUT:-1}"
+                ;;
+        esac
+    done
+
+    # Resolve format (TTY-aware auto-detection)
+    FORMAT=$(resolve_format "${FORMAT:-}")
+
+    # Execute action
+    case "$ACTION" in
+        detect)
             display_detected_backups
             ;;
-        --dry-run)
+        dry-run)
             echo "DRY RUN MODE - No changes will be made"
             echo ""
             migrate_all_backups "true"
             ;;
-        --run)
+        run)
             migrate_all_backups "false"
             ;;
-        --cleanup)
+        cleanup)
             cleanup_legacy_backups
             ;;
-        -h|--help)
-            show_usage
-            exit 0
-            ;;
         *)
-            echo "ERROR: Unknown option: $1" >&2
-            echo "" >&2
-            show_usage
-            exit 1
+            if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+                output_error "$E_INPUT_MISSING" "No action specified" 1 true "Use --detect, --dry-run, --run, or --cleanup"
+            else
+                output_error "$E_INPUT_MISSING" "No action specified"
+                echo "" >&2
+                show_usage
+            fi
+            exit "${EXIT_INVALID_INPUT:-1}"
             ;;
     esac
 }
