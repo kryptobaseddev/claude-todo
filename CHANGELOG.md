@@ -5,6 +5,13 @@ All notable changes to the claude-todo system will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.18.1] - 2025-12-17
+
+### Fixed
+- **Schema validation**: Added `$schema` property to `config.schema.json`
+  - Config files with `$schema` reference now pass validation
+  - Fixes `ct config validate` failing with "Additional properties not allowed"
+
 ## [0.18.0] - 2025-12-17
 
 ### Added
