@@ -20,6 +20,22 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIB_DIR="$(dirname "$SCRIPT_DIR")/lib"
 
+# Source output formatting library
+if [[ -f "$LIB_DIR/output-format.sh" ]]; then
+  # shellcheck source=../lib/output-format.sh
+  source "$LIB_DIR/output-format.sh"
+fi
+
+# Source error JSON library (includes exit-codes.sh)
+if [[ -f "$LIB_DIR/error-json.sh" ]]; then
+  # shellcheck source=../lib/error-json.sh
+  source "$LIB_DIR/error-json.sh"
+elif [[ -f "$LIB_DIR/exit-codes.sh" ]]; then
+  # Fallback: source exit codes directly if error-json.sh not available
+  # shellcheck source=../lib/exit-codes.sh
+  source "$LIB_DIR/exit-codes.sh"
+fi
+
 # =============================================================================
 # Colors and Logging
 # =============================================================================
@@ -33,14 +49,19 @@ else
 fi
 
 log_error() { echo -e "${RED}[ERROR]${NC} $1" >&2; }
-log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
-log_info() { echo -e "${GREEN}[INFO]${NC} $1"; }
+log_warn() { [[ "${QUIET:-false}" != "true" ]] && echo -e "${YELLOW}[WARN]${NC} $1" || true; }
+log_info() { [[ "${QUIET:-false}" != "true" ]] && echo -e "${GREEN}[INFO]${NC} $1" || true; }
 
 # =============================================================================
 # Configuration
 # =============================================================================
 SYNC_DIR=".claude/sync"
 STATE_FILE="${SYNC_DIR}/todowrite-session.json"
+COMMAND_NAME="sync"
+
+# Output options
+FORMAT=""
+QUIET=false
 
 # Subcommand
 SUBCOMMAND=""
@@ -71,6 +92,12 @@ EXTRACT OPTIONS
     --default-phase SLUG  Override default phase for new tasks
     --dry-run             Preview changes without applying
     --quiet, -q           Suppress info messages
+
+GLOBAL OPTIONS
+    --format, -f      Output format: text (default) or json
+    --json            Shorthand for --format json
+    --human           Shorthand for --format text
+    --quiet, -q       Suppress info messages
 
 WORKFLOW
     1. Session Start:  claude-todo sync --inject
@@ -118,36 +145,102 @@ handle_extract() {
 
 handle_status() {
     if [[ ! -f "$STATE_FILE" ]]; then
-        log_info "No active sync session"
-        echo ""
-        echo "State file: $STATE_FILE (not found)"
+        if [[ "$FORMAT" == "json" ]]; then
+            local timestamp version
+            timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+            version=$(cat "${SCRIPT_DIR}/../VERSION" 2>/dev/null || echo "0.15.0")
+            jq -n \
+                --arg version "$version" \
+                --arg timestamp "$timestamp" \
+                --arg state_file "$STATE_FILE" \
+                '{
+                    "$schema": "https://claude-todo.dev/schemas/output.schema.json",
+                    "_meta": {
+                        "format": "json",
+                        "version": $version,
+                        "command": "sync",
+                        "subcommand": "status",
+                        "timestamp": $timestamp
+                    },
+                    "success": true,
+                    "active": false,
+                    "state_file": $state_file,
+                    "message": "No active sync session"
+                }'
+        else
+            log_info "No active sync session"
+            echo ""
+            echo "State file: $STATE_FILE (not found)"
+        fi
         exit 0
     fi
-
-    log_info "Active sync session found"
-    echo ""
 
     local session_id=$(jq -r '.session_id // "unknown"' "$STATE_FILE")
     local injected_at=$(jq -r '.injected_at // "unknown"' "$STATE_FILE")
     local injected_phase=$(jq -r '.injectedPhase // "none"' "$STATE_FILE")
     local task_count=$(jq '.injected_tasks | length' "$STATE_FILE")
+    local task_ids_json=$(jq '.injected_tasks' "$STATE_FILE")
     local task_ids=$(jq -r '.injected_tasks | join(", ")' "$STATE_FILE")
 
-    echo "Session ID:    $session_id"
-    echo "Injected at:   $injected_at"
-    echo "Injected phase: $injected_phase"
-    echo "Task count:    $task_count"
-    echo "Task IDs:      $task_ids"
-
-    # Show phase distribution if metadata exists
+    # Get phase distribution if metadata exists
+    local phases_json="null"
     if jq -e '.task_metadata' "$STATE_FILE" >/dev/null 2>&1; then
-        local phases
-        phases=$(jq -r '[.task_metadata[] | .phase // "unknown"] | group_by(.) | map("\(.[0]): \(length)") | join(", ")' "$STATE_FILE")
-        echo "Phases:        $phases"
+        phases_json=$(jq '[.task_metadata[] | .phase // "unknown"] | group_by(.) | map({phase: .[0], count: length})' "$STATE_FILE")
     fi
 
-    echo ""
-    echo "State file:    $STATE_FILE"
+    if [[ "$FORMAT" == "json" ]]; then
+        local timestamp version
+        timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+        version=$(cat "${SCRIPT_DIR}/../VERSION" 2>/dev/null || echo "0.15.0")
+        jq -n \
+            --arg version "$version" \
+            --arg timestamp "$timestamp" \
+            --arg state_file "$STATE_FILE" \
+            --arg session_id "$session_id" \
+            --arg injected_at "$injected_at" \
+            --arg injected_phase "$injected_phase" \
+            --argjson task_count "$task_count" \
+            --argjson task_ids "$task_ids_json" \
+            --argjson phases "$phases_json" \
+            '{
+                "$schema": "https://claude-todo.dev/schemas/output.schema.json",
+                "_meta": {
+                    "format": "json",
+                    "version": $version,
+                    "command": "sync",
+                    "subcommand": "status",
+                    "timestamp": $timestamp
+                },
+                "success": true,
+                "active": true,
+                "session_id": $session_id,
+                "injected_at": $injected_at,
+                "injected_phase": $injected_phase,
+                "task_count": $task_count,
+                "task_ids": $task_ids,
+                "phases": $phases,
+                "state_file": $state_file
+            }'
+    else
+        log_info "Active sync session found"
+        echo ""
+
+        echo "Session ID:    $session_id"
+        echo "Injected at:   $injected_at"
+        echo "Injected phase: $injected_phase"
+        echo "Task count:    $task_count"
+        echo "Task IDs:      $task_ids"
+
+        # Show phase distribution if metadata exists
+        if [[ "$phases_json" != "null" ]]; then
+            local phases
+            phases=$(jq -r '[.task_metadata[] | .phase // "unknown"] | group_by(.) | map("\(.[0]): \(length)") | join(", ")' "$STATE_FILE")
+            echo "Phases:        $phases"
+        fi
+
+        echo ""
+        echo "State file:    $STATE_FILE"
+    fi
 }
 
 handle_clear() {
@@ -172,6 +265,44 @@ main() {
         show_help
     fi
 
+    # Parse global options first, then subcommand
+    local args=()
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -f|--format)
+                FORMAT="$2"
+                shift 2
+                ;;
+            --json)
+                FORMAT="json"
+                shift
+                ;;
+            --human)
+                FORMAT="text"
+                shift
+                ;;
+            -q|--quiet)
+                QUIET=true
+                shift
+                ;;
+            *)
+                args+=("$1")
+                shift
+                ;;
+        esac
+    done
+
+    # Restore positional arguments
+    set -- "${args[@]}"
+
+    # Resolve format (TTY-aware auto-detection)
+    FORMAT=$(resolve_format "${FORMAT:-}")
+
+    # Need at least one argument after parsing global options
+    if [[ $# -eq 0 ]]; then
+        show_help
+    fi
+
     # Parse subcommand
     case "$1" in
         --inject|-i)
@@ -190,9 +321,13 @@ main() {
             show_help
             ;;
         *)
-            log_error "Unknown subcommand: $1"
-            echo ""
-            echo "Use 'claude-todo sync --help' for usage"
+            if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+                output_error "E_INPUT_INVALID" "Unknown subcommand: $1" 1 true "Use 'claude-todo sync --help' for usage"
+            else
+                log_error "Unknown subcommand: $1"
+                echo ""
+                echo "Use 'claude-todo sync --help' for usage"
+            fi
             exit 1
             ;;
     esac

@@ -60,10 +60,14 @@ else
   RED='' GREEN='' YELLOW='' BLUE='' NC=''
 fi
 
-log_info()    { echo -e "${GREEN}[INFO]${NC} $1"; }
-log_warn()    { echo -e "${YELLOW}[WARN]${NC} $1"; }
+QUIET=false
+
+log_info()    { [[ "$QUIET" != true ]] && echo -e "${GREEN}[INFO]${NC} $1" || true; }
+log_warn()    { [[ "$QUIET" != true ]] && echo -e "${YELLOW}[WARN]${NC} $1" || true; }
 log_error()   { echo -e "${RED}[ERROR]${NC} $1" >&2; }
-log_step()    { echo -e "${BLUE}[FOCUS]${NC} $1"; }
+log_step()    { [[ "$QUIET" != true ]] && echo -e "${BLUE}[FOCUS]${NC} $1" || true; }
+
+COMMAND_NAME="focus"
 
 usage() {
   cat << EOF
@@ -82,6 +86,7 @@ Options:
   -f, --format FMT  Output format: text|json (default: auto)
   --human           Force text output (human-readable)
   --json            Force JSON output (machine-readable)
+  -q, --quiet       Suppress informational messages
   -h, --help        Show this help
 
 Format Auto-Detection:
@@ -102,16 +107,24 @@ EOF
 
 # Check dependencies
 if ! command -v jq &> /dev/null; then
-  log_error "jq is required but not installed"
-  exit 1
+  if [[ "${FORMAT:-}" == "json" ]] && declare -f output_error &>/dev/null; then
+    output_error "$E_DEPENDENCY_MISSING" "jq is required but not installed" "${EXIT_DEPENDENCY_ERROR:-5}" false "Install jq: apt install jq (Debian) or brew install jq (macOS)"
+  else
+    log_error "jq is required but not installed"
+  fi
+  exit "${EXIT_DEPENDENCY_ERROR:-5}"
 fi
 
 # Check todo.json exists
 check_todo_exists() {
   if [[ ! -f "$TODO_FILE" ]]; then
-    log_error "Todo file not found: $TODO_FILE"
-    log_error "Run 'claude-todo init' first"
-    exit 1
+    if [[ "${FORMAT:-}" == "json" ]] && declare -f output_error &>/dev/null; then
+      output_error "$E_NOT_INITIALIZED" "Todo file not found: $TODO_FILE" "${EXIT_NOT_INITIALIZED:-3}" true "Run 'claude-todo init' first"
+    else
+      log_error "Todo file not found: $TODO_FILE"
+      log_error "Run 'claude-todo init' first"
+    fi
+    exit "${EXIT_NOT_INITIALIZED:-3}"
   fi
 }
 
@@ -174,9 +187,13 @@ cmd_set() {
   local task_id="${1:-}"
 
   if [[ -z "$task_id" ]]; then
-    log_error "Task ID required"
-    echo "Usage: claude-todo focus set <task-id>"
-    exit 1
+    if [[ "${FORMAT:-}" == "json" ]] && declare -f output_error &>/dev/null; then
+      output_error "$E_INPUT_MISSING" "Task ID required" "${EXIT_USAGE_ERROR:-64}" false "Usage: claude-todo focus set <task-id>"
+    else
+      log_error "Task ID required"
+      echo "Usage: claude-todo focus set <task-id>"
+    fi
+    exit "${EXIT_USAGE_ERROR:-64}"
   fi
 
   check_todo_exists
@@ -186,8 +203,12 @@ cmd_set() {
   task_exists=$(jq --arg id "$task_id" '[.tasks[] | select(.id == $id)] | length' "$TODO_FILE")
 
   if [[ "$task_exists" -eq 0 ]]; then
-    log_error "Task not found: $task_id"
-    exit 1
+    if [[ "${FORMAT:-}" == "json" ]] && declare -f output_error &>/dev/null; then
+      output_error "$E_TASK_NOT_FOUND" "Task not found: $task_id" "${EXIT_NOT_FOUND:-1}" true "Use 'claude-todo list' to see available tasks"
+    else
+      log_error "Task not found: $task_id"
+    fi
+    exit "${EXIT_NOT_FOUND:-1}"
   fi
 
   # Get current focus for logging
@@ -206,8 +227,12 @@ cmd_set() {
       .tasks = [.tasks[] | if .status == "active" and .id != $id then .status = "pending" else . end]
     ' "$TODO_FILE")
     save_json "$TODO_FILE" "$updated_todo" || {
-      log_error "Failed to update task statuses"
-      exit 1
+      if [[ "${FORMAT:-}" == "json" ]] && declare -f output_error &>/dev/null; then
+        output_error "$E_FILE_WRITE_ERROR" "Failed to update task statuses" "${EXIT_FILE_ERROR:-4}" false "Check file permissions for $TODO_FILE"
+      else
+        log_error "Failed to update task statuses"
+      fi
+      exit "${EXIT_FILE_ERROR:-4}"
     }
   fi
 
@@ -232,24 +257,55 @@ cmd_set() {
       .project.currentPhase = $phase |
       .focus.currentPhase = $phase
     ')
-    log_info "Phase changed to: $task_phase"
+    [[ "$FORMAT" != "json" ]] && log_info "Phase changed to: $task_phase"
   fi
 
   save_json "$TODO_FILE" "$updated_todo" || {
-    log_error "Failed to set focus"
-    exit 1
+    if [[ "${FORMAT:-}" == "json" ]] && declare -f output_error &>/dev/null; then
+      output_error "$E_FILE_WRITE_ERROR" "Failed to set focus" "${EXIT_FILE_ERROR:-4}" false "Check file permissions for $TODO_FILE"
+    else
+      log_error "Failed to set focus"
+    fi
+    exit "${EXIT_FILE_ERROR:-4}"
   }
 
   # Log the focus change
   log_focus_change "$old_focus" "$task_id"
 
-  # Get task title for display
+  # Get task details for output
   local task_title
   task_title=$(jq -r --arg id "$task_id" '.tasks[] | select(.id == $id) | .title // "Unknown"' "$TODO_FILE")
 
-  log_step "Focus set: $task_title"
-  log_info "Task ID: $task_id"
-  log_info "Status: active"
+  if [[ "$FORMAT" == "json" ]]; then
+    local current_timestamp
+    current_timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    local task_details
+    task_details=$(jq --arg id "$task_id" '.tasks[] | select(.id == $id) | {id: .id, title: .title, status: .status, priority: .priority, phase: .phase}' "$TODO_FILE")
+
+    jq -n \
+      --arg timestamp "$current_timestamp" \
+      --arg version "$VERSION" \
+      --arg task_id "$task_id" \
+      --arg old_focus "${old_focus:-null}" \
+      --argjson task "$task_details" \
+      '{
+        "$schema": "https://claude-todo.dev/schemas/output.schema.json",
+        "_meta": {
+          "command": "focus set",
+          "timestamp": $timestamp,
+          "version": $version,
+          "format": "json"
+        },
+        "success": true,
+        "taskId": $task_id,
+        "previousFocus": (if $old_focus == "null" or $old_focus == "" then null else $old_focus end),
+        "task": $task
+      }'
+  else
+    log_step "Focus set: $task_title"
+    log_info "Task ID: $task_id"
+    log_info "Status: active"
+  fi
 }
 
 # Clear focus
@@ -260,7 +316,27 @@ cmd_clear() {
   old_focus=$(jq -r '.focus.currentTask // ""' "$TODO_FILE")
 
   if [[ -z "$old_focus" ]]; then
-    log_info "No focus to clear"
+    if [[ "$FORMAT" == "json" ]]; then
+      local current_timestamp
+      current_timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+      jq -n \
+        --arg timestamp "$current_timestamp" \
+        --arg version "$VERSION" \
+        '{
+          "$schema": "https://claude-todo.dev/schemas/output.schema.json",
+          "_meta": {
+            "command": "focus clear",
+            "timestamp": $timestamp,
+            "version": $version,
+            "format": "json"
+          },
+          "success": true,
+          "message": "No focus to clear",
+          "previousFocus": null
+        }'
+    else
+      log_info "No focus to clear"
+    fi
     exit 0
   fi
 
@@ -281,37 +357,49 @@ cmd_clear() {
     ._meta.lastModified = $ts
   ' "$TODO_FILE")
   save_json "$TODO_FILE" "$updated_todo" || {
-    log_error "Failed to clear focus"
-    exit 1
+    if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+      output_error "$E_FILE_WRITE_ERROR" "Failed to clear focus" "${EXIT_FILE_ERROR:-4}" false "Check file permissions for $TODO_FILE"
+    else
+      log_error "Failed to clear focus"
+    fi
+    exit "${EXIT_FILE_ERROR:-4}"
   }
 
   # Log the focus change
   log_focus_change "$old_focus" ""
 
-  log_step "Focus cleared"
-  log_info "Previous focus: $old_focus (status reset to pending)"
+  if [[ "$FORMAT" == "json" ]]; then
+    local current_timestamp
+    current_timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    jq -n \
+      --arg timestamp "$current_timestamp" \
+      --arg version "$VERSION" \
+      --arg old_focus "$old_focus" \
+      '{
+        "$schema": "https://claude-todo.dev/schemas/output.schema.json",
+        "_meta": {
+          "command": "focus clear",
+          "timestamp": $timestamp,
+          "version": $version,
+          "format": "json"
+        },
+        "success": true,
+        "message": "Focus cleared",
+        "previousFocus": $old_focus,
+        "taskStatusReset": "pending"
+      }'
+  else
+    log_step "Focus cleared"
+    log_info "Previous focus: $old_focus (status reset to pending)"
+  fi
 }
 
 # Show current focus
 cmd_show() {
-  local format_arg=""
-
-  while [[ $# -gt 0 ]]; do
-    case $1 in
-      -f|--format) format_arg="$2"; shift 2 ;;
-      --human) format_arg="text"; shift ;;
-      --json) format_arg="json"; shift ;;
-      *) shift ;;
-    esac
-  done
-
-  # Resolve format with TTY-aware detection
-  local output_format
-  output_format=$(resolve_format "$format_arg")
-
+  # FORMAT and QUIET already parsed globally
   check_todo_exists
 
-  if [[ "$output_format" == "json" ]]; then
+  if [[ "$FORMAT" == "json" ]]; then
     local current_timestamp
     current_timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
@@ -334,6 +422,7 @@ cmd_show() {
       --argjson focus "$focus_obj" \
       --argjson task "$task_details" \
       '{
+        "$schema": "https://claude-todo.dev/schemas/output.schema.json",
         "_meta": {
           "command": "focus show",
           "timestamp": $timestamp,
@@ -394,9 +483,13 @@ cmd_note() {
   local note="${1:-}"
 
   if [[ -z "$note" ]]; then
-    log_error "Note text required"
-    echo "Usage: claude-todo focus note \"Your progress note\""
-    exit 1
+    if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+      output_error "$E_INPUT_MISSING" "Note text required" "${EXIT_USAGE_ERROR:-64}" false "Usage: claude-todo focus note \"Your progress note\""
+    else
+      log_error "Note text required"
+      echo "Usage: claude-todo focus note \"Your progress note\""
+    fi
+    exit "${EXIT_USAGE_ERROR:-64}"
   fi
 
   check_todo_exists
@@ -410,12 +503,37 @@ cmd_note() {
     ._meta.lastModified = $ts
   ' "$TODO_FILE")
   save_json "$TODO_FILE" "$updated_todo" || {
-    log_error "Failed to update session note"
-    exit 1
+    if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+      output_error "$E_FILE_WRITE_ERROR" "Failed to update session note" "${EXIT_FILE_ERROR:-4}" false "Check file permissions for $TODO_FILE"
+    else
+      log_error "Failed to update session note"
+    fi
+    exit "${EXIT_FILE_ERROR:-4}"
   }
 
-  log_step "Session note updated"
-  log_info "$note"
+  if [[ "$FORMAT" == "json" ]]; then
+    local current_timestamp
+    current_timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    jq -n \
+      --arg timestamp "$current_timestamp" \
+      --arg version "$VERSION" \
+      --arg note "$note" \
+      '{
+        "$schema": "https://claude-todo.dev/schemas/output.schema.json",
+        "_meta": {
+          "command": "focus note",
+          "timestamp": $timestamp,
+          "version": $version,
+          "format": "json"
+        },
+        "success": true,
+        "message": "Session note updated",
+        "sessionNote": $note
+      }'
+  else
+    log_step "Session note updated"
+    log_info "$note"
+  fi
 }
 
 # Set next action
@@ -423,9 +541,13 @@ cmd_next() {
   local action="${1:-}"
 
   if [[ -z "$action" ]]; then
-    log_error "Action text required"
-    echo "Usage: claude-todo focus next \"Suggested next action\""
-    exit 1
+    if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+      output_error "$E_INPUT_MISSING" "Action text required" "${EXIT_USAGE_ERROR:-64}" false "Usage: claude-todo focus next \"Suggested next action\""
+    else
+      log_error "Action text required"
+      echo "Usage: claude-todo focus next \"Suggested next action\""
+    fi
+    exit "${EXIT_USAGE_ERROR:-64}"
   fi
 
   check_todo_exists
@@ -439,28 +561,99 @@ cmd_next() {
     ._meta.lastModified = $ts
   ' "$TODO_FILE")
   save_json "$TODO_FILE" "$updated_todo" || {
-    log_error "Failed to update next action"
-    exit 1
+    if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+      output_error "$E_FILE_WRITE_ERROR" "Failed to update next action" "${EXIT_FILE_ERROR:-4}" false "Check file permissions for $TODO_FILE"
+    else
+      log_error "Failed to update next action"
+    fi
+    exit "${EXIT_FILE_ERROR:-4}"
   }
 
-  log_step "Next action set"
-  log_info "$action"
+  if [[ "$FORMAT" == "json" ]]; then
+    local current_timestamp
+    current_timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    jq -n \
+      --arg timestamp "$current_timestamp" \
+      --arg version "$VERSION" \
+      --arg action "$action" \
+      '{
+        "$schema": "https://claude-todo.dev/schemas/output.schema.json",
+        "_meta": {
+          "command": "focus next",
+          "timestamp": $timestamp,
+          "version": $version,
+          "format": "json"
+        },
+        "success": true,
+        "message": "Next action set",
+        "nextAction": $action
+      }'
+  else
+    log_step "Next action set"
+    log_info "$action"
+  fi
 }
 
-# Main command dispatch
-COMMAND="${1:-show}"
-shift || true
+# Parse global flags before command dispatch
+FORMAT=""
+SUBCOMMAND_ARGS=()
+COMMAND=""
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -f|--format) FORMAT="$2"; shift 2 ;;
+    --human) FORMAT="text"; shift ;;
+    --json) FORMAT="json"; shift ;;
+    -q|--quiet) QUIET=true; shift ;;
+    -h|--help|help)
+      if [[ -z "$COMMAND" ]]; then
+        usage
+      else
+        SUBCOMMAND_ARGS+=("$1")
+        shift
+      fi
+      ;;
+    set|clear|show|note|next)
+      if [[ -z "$COMMAND" ]]; then
+        COMMAND="$1"
+        shift
+      else
+        SUBCOMMAND_ARGS+=("$1")
+        shift
+      fi
+      ;;
+    *)
+      if [[ -z "$COMMAND" ]]; then
+        COMMAND="$1"
+        shift
+      else
+        SUBCOMMAND_ARGS+=("$1")
+        shift
+      fi
+      ;;
+  esac
+done
+
+# Default command is show
+COMMAND="${COMMAND:-show}"
+
+# Resolve format with TTY-aware detection
+FORMAT=$(resolve_format "$FORMAT")
 
 case "$COMMAND" in
-  set)    cmd_set "$@" ;;
-  clear)  cmd_clear "$@" ;;
-  show)   cmd_show "$@" ;;
-  note)   cmd_note "$@" ;;
-  next)   cmd_next "$@" ;;
+  set)    cmd_set "${SUBCOMMAND_ARGS[@]}" ;;
+  clear)  cmd_clear "${SUBCOMMAND_ARGS[@]}" ;;
+  show)   cmd_show "${SUBCOMMAND_ARGS[@]}" ;;
+  note)   cmd_note "${SUBCOMMAND_ARGS[@]}" ;;
+  next)   cmd_next "${SUBCOMMAND_ARGS[@]}" ;;
   -h|--help|help) usage ;;
   *)
-    log_error "Unknown command: $COMMAND"
-    echo "Run 'claude-todo focus --help' for usage"
-    exit 1
+    if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+      output_error "$E_INPUT_INVALID" "Unknown command: $COMMAND" "${EXIT_USAGE_ERROR:-64}" false "Run 'claude-todo focus --help' for usage"
+    else
+      log_error "Unknown command: $COMMAND"
+      echo "Run 'claude-todo focus --help' for usage"
+    fi
+    exit "${EXIT_USAGE_ERROR:-64}"
     ;;
 esac

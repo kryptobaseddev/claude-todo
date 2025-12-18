@@ -30,6 +30,22 @@ if [[ -f "$LIB_DIR/backup.sh" ]]; then
   source "$LIB_DIR/backup.sh"
 fi
 
+# Source output formatting library
+if [[ -f "$LIB_DIR/output-format.sh" ]]; then
+  # shellcheck source=../lib/output-format.sh
+  source "$LIB_DIR/output-format.sh"
+fi
+
+# Source error JSON library (includes exit-codes.sh)
+if [[ -f "$LIB_DIR/error-json.sh" ]]; then
+  # shellcheck source=../lib/error-json.sh
+  source "$LIB_DIR/error-json.sh"
+elif [[ -f "$LIB_DIR/exit-codes.sh" ]]; then
+  # Fallback: source exit codes directly if error-json.sh not available
+  # shellcheck source=../lib/exit-codes.sh
+  source "$LIB_DIR/exit-codes.sh"
+fi
+
 # Colors (respects NO_COLOR and FORCE_COLOR environment variables per https://no-color.org)
 if declare -f should_use_color >/dev/null 2>&1 && should_use_color; then
   RED='\033[0;31m'
@@ -47,6 +63,7 @@ JSON_OUTPUT=false
 QUIET=false
 FORMAT="text"
 NON_INTERACTIVE=false
+COMMAND_NAME="validate"
 
 ERRORS=0
 WARNINGS=0
@@ -89,6 +106,16 @@ log_error() {
   ERRORS=$((ERRORS + 1))
 }
 
+# output_fatal - For critical errors that exit immediately
+# Uses output_error from error-json.sh for format-aware error output
+output_fatal() {
+  local error_code="${1:-$E_UNKNOWN}"
+  local message="$2"
+  local exit_code="${3:-1}"
+  output_error "$error_code" "$message"
+  exit "$exit_code"
+}
+
 log_warn() {
   # In JSON mode, don't output intermediate messages - only final summary
   if [[ "$JSON_OUTPUT" != true ]]; then
@@ -107,8 +134,7 @@ log_info() {
 # Check dependencies
 check_deps() {
   if ! command -v jq &> /dev/null; then
-    echo "jq is required but not installed" >&2
-    exit 1
+    output_fatal "$E_DEPENDENCY_MISSING" "jq is required but not installed" 1
   fi
 }
 
@@ -119,6 +145,7 @@ while [[ $# -gt 0 ]]; do
     --fix) FIX=true; shift ;;
     --non-interactive) NON_INTERACTIVE=true; shift ;;
     --json) JSON_OUTPUT=true; FORMAT="json"; shift ;;
+    --human) JSON_OUTPUT=false; FORMAT="text"; shift ;;
     --format|-f)
       FORMAT="$2"
       if [[ "$FORMAT" == "json" ]]; then
@@ -128,23 +155,27 @@ while [[ $# -gt 0 ]]; do
       ;;
     --quiet|-q) QUIET=true; shift ;;
     -h|--help) usage ;;
-    -*) echo "Unknown option: $1" >&2; exit 1 ;;
+    -*) output_fatal "$E_INPUT_INVALID" "Unknown option: $1" 1 ;;
     *) shift ;;
   esac
 done
+
+# Resolve format (TTY-aware auto-detection)
+FORMAT=$(resolve_format "${FORMAT:-}")
+if [[ "$FORMAT" == "json" ]]; then
+  JSON_OUTPUT=true
+fi
 
 check_deps
 
 # Check file exists
 if [[ ! -f "$TODO_FILE" ]]; then
-  log_error "File not found: $TODO_FILE"
-  exit 1
+  output_fatal "$E_FILE_NOT_FOUND" "File not found: $TODO_FILE" 1
 fi
 
 # 1. JSON syntax
 if ! jq empty "$TODO_FILE" 2>/dev/null; then
-  log_error "Invalid JSON syntax"
-  exit 1
+  output_fatal "$E_VALIDATION_SCHEMA" "Invalid JSON syntax" 1
 fi
 log_info "JSON syntax valid"
 
@@ -673,12 +704,14 @@ if [[ "$FORMAT" == "json" ]]; then
     --arg version "$VERSION" \
     --arg timestamp "$TIMESTAMP" \
     '{
+      "$schema": "https://claude-todo.dev/schemas/output.schema.json",
       "_meta": {
         "format": "json",
         "version": $version,
         "command": "validate",
         "timestamp": $timestamp
       },
+      "success": true,
       "valid": $valid,
       "errors": $errors,
       "warnings": $warnings,

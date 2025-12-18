@@ -60,6 +60,8 @@ FORMAT=""
 OUTPUT_FORMAT=""
 TASK_ID=""
 SHOW_TREE=false
+COMMAND_NAME="deps"
+QUIET=false
 
 # File paths
 CLAUDE_DIR=".claude"
@@ -83,6 +85,7 @@ Options:
     -f, --format FORMAT   Output format: text | json | markdown (default: auto)
     --human               Force text output (human-readable)
     --json                Force JSON output (machine-readable)
+    -q, --quiet           Suppress informational messages
     -h, --help            Show this help message
 
 Format Auto-Detection:
@@ -329,8 +332,12 @@ output_task_deps_text() {
     task_info=$(get_task_info "$task_id")
 
     if [[ -z "$task_info" ]]; then
-        echo "[ERROR] Task not found: $task_id" >&2
-        exit 1
+        if declare -f output_error &>/dev/null; then
+            output_error "$E_TASK_NOT_FOUND" "Task not found: $task_id"
+        else
+            echo "[ERROR] Task not found: $task_id" >&2
+        fi
+        exit "${EXIT_NOT_FOUND:-1}"
     fi
 
     local title
@@ -595,12 +602,14 @@ output_json_format() {
                 --argjson reverse "$reverse_graph" \
                 --arg timestamp "$current_timestamp" \
                 --arg version "$VERSION" '{
+                "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                 "_meta": {
                     "format": "json",
                     "version": $version,
                     "command": "deps overview",
                     "timestamp": $timestamp
                 },
+                "success": true,
                 "mode": "overview",
                 "task_count": ($tasks | length),
                 "dependency_graph": $graph,
@@ -621,12 +630,14 @@ output_json_format() {
                 --argjson dependents "$dependents" \
                 --arg timestamp "$current_timestamp" \
                 --arg version "$VERSION" '{
+                "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                 "_meta": {
                     "format": "json",
                     "version": $version,
                     "command": "deps task",
                     "timestamp": $timestamp
                 },
+                "success": true,
                 "mode": "task",
                 "task_id": $id,
                 "upstream_dependencies": $deps,
@@ -641,12 +652,14 @@ output_json_format() {
                 --argjson reverse "$reverse_graph" \
                 --arg timestamp "$current_timestamp" \
                 --arg version "$VERSION" '{
+                "$schema": "https://claude-todo.dev/schemas/output.schema.json",
                 "_meta": {
                     "format": "json",
                     "version": $version,
                     "command": "deps tree",
                     "timestamp": $timestamp
                 },
+                "success": true,
                 "mode": "tree",
                 "dependency_graph": $graph,
                 "dependent_graph": $reverse
@@ -674,6 +687,10 @@ parse_arguments() {
                 FORMAT="json"
                 shift
                 ;;
+            -q|--quiet)
+                QUIET=true
+                shift
+                ;;
             -h|--help)
                 usage
                 exit 0
@@ -687,9 +704,13 @@ parse_arguments() {
                 shift
                 ;;
             *)
-                echo "[ERROR] Unknown argument: $1" >&2
-                echo "Run 'claude-todo deps --help' for usage"
-                exit 1
+                if declare -f output_error &>/dev/null; then
+                    output_error "$E_INPUT_INVALID" "Unknown argument: $1"
+                else
+                    echo "[ERROR] Unknown argument: $1" >&2
+                    echo "Run 'claude-todo deps --help' for usage"
+                fi
+                exit "${EXIT_USAGE_ERROR:-64}"
                 ;;
         esac
     done
@@ -707,14 +728,22 @@ main() {
 
     # Check if in a todo-enabled project
     if [[ ! -d "$CLAUDE_DIR" ]]; then
-        echo "[ERROR] Not in a todo-enabled project. Run 'claude-todo init' first." >&2
-        exit 1
+        if declare -f output_error &>/dev/null; then
+            output_error "$E_NOT_INITIALIZED" "Not in a todo-enabled project"
+        else
+            echo "[ERROR] Not in a todo-enabled project. Run 'claude-todo init' first." >&2
+        fi
+        exit "${EXIT_NOT_INITIALIZED:-3}"
     fi
 
     # Check if required commands are available
     if ! command -v jq &> /dev/null; then
-        echo "[ERROR] jq is required but not installed." >&2
-        exit 1
+        if declare -f output_error &>/dev/null; then
+            output_error "$E_DEPENDENCY_MISSING" "jq is required but not installed"
+        else
+            echo "[ERROR] jq is required but not installed." >&2
+        fi
+        exit "${EXIT_DEPENDENCY_ERROR:-5}"
     fi
 
     # Determine mode and output

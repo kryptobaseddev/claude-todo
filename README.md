@@ -3,7 +3,7 @@
 > **A production-grade task management system for Claude Code with automatic archiving, comprehensive validation, and anti-hallucination protection.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.18.1-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.19.0-blue.svg)](CHANGELOG.md)
 [![Bash](https://img.shields.io/badge/bash-4.0%2B-green.svg)](https://www.gnu.org/software/bash/)
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)](tests/)
 
@@ -62,6 +62,35 @@ claude-todo init
 ```
 
 > **Claude Code Compatible**: The installer creates symlinks in `~/.local/bin/`, which is already in PATH for Claude Code and most modern shells. No manual PATH configuration required.
+
+### Upgrade Existing Project
+
+If you have an existing claude-todo project from an older version:
+
+```bash
+# Navigate to your project
+cd /path/to/your/project
+
+# Run schema migration (upgrades version)
+claude-todo migrate run --auto
+
+# Repair schema structure (fixes compliance issues)
+claude-todo migrate repair --auto
+
+# Validate and auto-fix any remaining issues
+claude-todo validate --fix
+```
+
+**Decision Tree:**
+```
+Is project initialized (.claude/ exists)?
+├─ No → claude-todo init
+└─ Yes → Is schema version current?
+    ├─ No → claude-todo migrate run --auto
+    └─ Yes → Are there structural issues?
+        ├─ Yes → claude-todo migrate repair --auto
+        └─ No → claude-todo validate
+```
 
 ### Basic Usage
 

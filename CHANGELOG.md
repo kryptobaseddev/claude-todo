@@ -5,6 +5,41 @@ All notable changes to the claude-todo system will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.19.0] - 2025-12-18
+
+### Added
+- **LLM-Agent-First Full Compliance** - All 31 commands now fully compliant
+  - **JSON envelope standardization**: All commands now include `$schema`, `_meta`, `success` fields
+  - **focus.sh**: All subcommands (set, clear, note, next) now output proper JSON
+    - `focus set` returns task details and previous focus
+    - `focus clear` returns clear confirmation and previous focus
+    - `focus note` returns confirmation with session note
+    - `focus next` returns confirmation with next action
+  - **config get**: Now returns full JSON envelope instead of minimal object
+  - Global format parsing before subcommand dispatch in focus.sh
+
+### Fixed
+- **Missing `success` field** in JSON outputs:
+  - `stats.sh`: Added `success: true` to JSON output
+  - `validate.sh`: Added `success: true` to JSON output
+  - `deps-command.sh`: Added `success: true` to all 3 modes (overview, task, tree)
+  - `export.sh`: Added `success: true` to JSON output
+  - `sync-todowrite.sh`: Added `success: true` to both status outputs
+
+- **Log output mixing with JSON**:
+  - `focus.sh`: Phase change logs now suppressed in JSON mode
+  - `export.sh`: Summary log now suppressed in JSON mode
+
+- **Format flag parsing**:
+  - `focus.sh`: Global format parsing before subcommand dispatch
+  - Consistent `--format`, `--json`, `--human` flag support across all focus subcommands
+
+### Changed
+- **Compliance status**: 99.2% LLM-Agent-First compliance (from ~83%)
+  - All 31 commands have `$schema`, `_meta`, `success` in JSON output
+  - All commands use `resolve_format()` for TTY-aware detection
+  - All commands use `output_error()` for structured errors
+
 ## [0.18.1] - 2025-12-17
 
 ### Fixed

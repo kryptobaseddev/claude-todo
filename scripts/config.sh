@@ -253,7 +253,25 @@ cmd_get() {
     value=$(get_config_value "$path" "")
 
     if [[ "$FORMAT" == "json" ]]; then
-        jq -n --arg path "$path" --arg value "$value" '{path: $path, value: $value}'
+        local timestamp
+        timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+        jq -n \
+            --arg path "$path" \
+            --arg value "$value" \
+            --arg timestamp "$timestamp" \
+            --arg version "$VERSION" \
+            '{
+                "$schema": "https://claude-todo.dev/schemas/output.schema.json",
+                "_meta": {
+                    "format": "json",
+                    "version": $version,
+                    "command": "config get",
+                    "timestamp": $timestamp
+                },
+                "success": true,
+                "path": $path,
+                "value": $value
+            }'
     else
         echo "$value"
     fi

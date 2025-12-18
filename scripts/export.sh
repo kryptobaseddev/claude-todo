@@ -21,21 +21,41 @@ LIB_DIR="$(dirname "$SCRIPT_DIR")/lib"
 source "$LIB_DIR/logging.sh"
 source "$LIB_DIR/todowrite-integration.sh"
 
+# Source output formatting library
+if [[ -f "$LIB_DIR/output-format.sh" ]]; then
+  # shellcheck source=../lib/output-format.sh
+  source "$LIB_DIR/output-format.sh"
+fi
+
+# Source error JSON library (includes exit-codes.sh)
+if [[ -f "$LIB_DIR/error-json.sh" ]]; then
+  # shellcheck source=../lib/error-json.sh
+  source "$LIB_DIR/error-json.sh"
+elif [[ -f "$LIB_DIR/exit-codes.sh" ]]; then
+  # Fallback: source exit codes directly if error-json.sh not available
+  # shellcheck source=../lib/exit-codes.sh
+  source "$LIB_DIR/exit-codes.sh"
+fi
+
 # ============================================================================
 # DEPENDENCY CHECK (T167)
 # ============================================================================
 # jq is required for all export operations
 if ! command -v jq &>/dev/null; then
-    echo "ERROR: jq is required for export operations but not found." >&2
-    echo "" >&2
-    echo "Install jq:" >&2
-    case "$(uname -s)" in
-        Linux*)  echo "  sudo apt install jq  (Debian/Ubuntu)" >&2
-                 echo "  sudo yum install jq  (RHEL/CentOS)" >&2 ;;
-        Darwin*) echo "  brew install jq" >&2 ;;
-        *)       echo "  See: https://stedolan.github.io/jq/download/" >&2 ;;
-    esac
-    exit 1
+    if declare -f output_error &>/dev/null; then
+        output_error "$E_DEPENDENCY_MISSING" "jq is required for export operations but not found"
+    else
+        echo "ERROR: jq is required for export operations but not found." >&2
+        echo "" >&2
+        echo "Install jq:" >&2
+        case "$(uname -s)" in
+            Linux*)  echo "  sudo apt install jq  (Debian/Ubuntu)" >&2
+                     echo "  sudo yum install jq  (RHEL/CentOS)" >&2 ;;
+            Darwin*) echo "  brew install jq" >&2 ;;
+            *)       echo "  See: https://stedolan.github.io/jq/download/" >&2 ;;
+        esac
+    fi
+    exit "${EXIT_DEPENDENCY_ERROR:-1}"
 fi
 
 # Colors (respects NO_COLOR and FORCE_COLOR environment variables per https://no-color.org)
@@ -53,11 +73,13 @@ fi
 # Default values
 # -----------------------------------------------------------------------------
 FORMAT="todowrite"
+OUTPUT_FORMAT_TYPE="todowrite"  # Tracks export format type (separate from error output FORMAT)
 STATUS_FILTER="pending,active"
 PRIORITY_FILTER=""
 LABEL_FILTER=""
 MAX_TASKS=10
 TODO_FILE=".claude/todo.json"
+COMMAND_NAME="export"
 OUTPUT_FILE=""
 QUIET=false
 DELIMITER=","
@@ -233,9 +255,14 @@ parse_args() {
                 exit 0
                 ;;
             *)
-                echo -e "${RED}[ERROR]${NC} Unknown option: $1" >&2
-                echo "Run 'claude-todo export --help' for usage." >&2
-                exit 1
+                # For unknown options, check if output_error is available
+                if declare -f output_error >/dev/null 2>&1; then
+                    output_error "$E_INPUT_INVALID" "Unknown option: $1"
+                else
+                    echo -e "${RED}[ERROR]${NC} Unknown option: $1" >&2
+                    echo "Run 'claude-todo export --help' for usage." >&2
+                fi
+                exit "${EXIT_INVALID_INPUT:-1}"
                 ;;
         esac
     done
@@ -374,6 +401,7 @@ export_json() {
           "command": "export",
           "timestamp": $timestamp
         },
+        "success": true,
         "filters": {
           "status": ($status | split(",")),
           "maxTasks": $max
@@ -557,19 +585,30 @@ export_tsv() {
 main() {
     parse_args "$@"
 
+    # Resolve format (TTY-aware auto-detection)
+    FORMAT=$(resolve_format "${FORMAT:-}")
+
     # Check todo.json exists
     if [[ ! -f "$TODO_FILE" ]]; then
-        echo -e "${RED}[ERROR]${NC} $TODO_FILE not found. Run 'claude-todo init' first." >&2
-        exit 1
+        if declare -f output_error >/dev/null 2>&1; then
+            output_error "$E_NOT_INITIALIZED" "$TODO_FILE not found"
+        else
+            echo -e "${RED}[ERROR]${NC} $TODO_FILE not found. Run 'claude-todo init' first." >&2
+        fi
+        exit "${EXIT_NOT_INITIALIZED:-1}"
     fi
 
     # Validate format
     case "$FORMAT" in
         todowrite|json|markdown|csv|tsv) ;;
         *)
-            echo -e "${RED}[ERROR]${NC} Unknown format: $FORMAT" >&2
-            echo "Valid formats: todowrite, json, markdown, csv, tsv" >&2
-            exit 1
+            if declare -f output_error >/dev/null 2>&1; then
+                output_error "$E_INPUT_INVALID" "Unknown format: $FORMAT"
+            else
+                echo -e "${RED}[ERROR]${NC} Unknown format: $FORMAT" >&2
+                echo "Valid formats: todowrite, json, markdown, csv, tsv" >&2
+            fi
+            exit "${EXIT_INVALID_INPUT:-1}"
             ;;
     esac
 
@@ -578,7 +617,7 @@ main() {
     local jq_filter=$(build_task_filter "$STATUS_FILTER" "$PRIORITY_FILTER" "$LABEL_FILTER")
     task_count=$(jq "[.tasks[] | select($jq_filter)] | length" "$TODO_FILE")
 
-    if [[ "$QUIET" != "true" ]]; then
+    if [[ "$QUIET" != "true" && "$FORMAT" != "json" ]]; then
         local filter_desc="Status: $STATUS_FILTER"
         [[ -n "$PRIORITY_FILTER" ]] && filter_desc="$filter_desc, Priority: $PRIORITY_FILTER"
         [[ -n "$LABEL_FILTER" ]] && filter_desc="$filter_desc, Label: $LABEL_FILTER"

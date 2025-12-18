@@ -39,10 +39,21 @@ source "${LIB_DIR}/validation.sh"
 # shellcheck source=../lib/output-format.sh
 source "${LIB_DIR}/output-format.sh"
 
+# Source error JSON library (includes exit-codes.sh)
+if [[ -f "$LIB_DIR/error-json.sh" ]]; then
+  # shellcheck source=../lib/error-json.sh
+  source "$LIB_DIR/error-json.sh"
+elif [[ -f "$LIB_DIR/exit-codes.sh" ]]; then
+  # Fallback: source exit codes directly if error-json.sh not available
+  # shellcheck source=../lib/exit-codes.sh
+  source "$LIB_DIR/exit-codes.sh"
+fi
+
 # Default configuration
 PERIOD_DAYS=30
 OUTPUT_FORMAT="text"
 QUIET=false
+COMMAND_NAME="stats"
 
 # File paths
 CLAUDE_DIR=".claude"
@@ -82,8 +93,12 @@ resolve_period() {
             if [[ "$period" =~ ^[0-9]+$ ]]; then
                 echo "$period"
             else
-                echo "[ERROR] Invalid period: $period" >&2
-                echo "Valid values: today/t, week/w, month/m, quarter/q, year/y, or a number" >&2
+                if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+                    output_error "$E_INPUT_INVALID" "Invalid period: $period" "${EXIT_INVALID_INPUT:-1}" true "Valid values: today/t, week/w, month/m, quarter/q, year/y, or a number"
+                else
+                    output_error "$E_INPUT_INVALID" "Invalid period: $period"
+                    echo "Valid values: today/t, week/w, month/m, quarter/q, year/y, or a number" >&2
+                fi
                 return 1
             fi
             ;;
@@ -478,6 +493,7 @@ generate_statistics() {
     "timestamp": "$timestamp",
     "period_days": $period_days
   },
+  "success": true,
   "data": {
     "current_state": {
       "pending": $pending,
@@ -538,9 +554,13 @@ parse_arguments() {
                 exit 0
                 ;;
             *)
-                echo "[ERROR] Unknown option: $1" >&2
-                echo "Run 'claude-todo stats --help' for usage"
-                exit 1
+                if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+                    output_error "$E_INPUT_INVALID" "Unknown option: $1" "${EXIT_INVALID_INPUT:-1}" true "Run 'claude-todo stats --help' for usage"
+                else
+                    output_error "$E_INPUT_INVALID" "Unknown option: $1"
+                    echo "Run 'claude-todo stats --help' for usage" >&2
+                fi
+                exit "${EXIT_INVALID_INPUT:-1}"
                 ;;
         esac
     done
@@ -553,21 +573,36 @@ parse_arguments() {
 main() {
     parse_arguments "$@"
 
+    # Resolve format (TTY-aware auto-detection)
+    OUTPUT_FORMAT=$(resolve_format "${OUTPUT_FORMAT:-}")
+
     # Check if in a todo-enabled project
     if [[ ! -d "$CLAUDE_DIR" ]]; then
-        echo "[ERROR] Not in a todo-enabled project. Run 'claude-todo init' first." >&2
-        exit 1
+        if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+            output_error "$E_NOT_INITIALIZED" "Not in a todo-enabled project" "${EXIT_NOT_INITIALIZED:-1}" true "Run 'claude-todo init' first"
+        else
+            output_error "$E_NOT_INITIALIZED" "Not in a todo-enabled project. Run 'claude-todo init' first."
+        fi
+        exit "${EXIT_NOT_INITIALIZED:-1}"
     fi
 
     # Check if required commands are available
     if ! command -v jq &> /dev/null; then
-        echo "[ERROR] jq is required but not installed." >&2
-        exit 1
+        if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+            output_error "$E_DEPENDENCY_MISSING" "jq is required but not installed" "${EXIT_DEPENDENCY_MISSING:-1}" true "Install jq: https://stedolan.github.io/jq/download/"
+        else
+            output_error "$E_DEPENDENCY_MISSING" "jq is required but not installed."
+        fi
+        exit "${EXIT_DEPENDENCY_MISSING:-1}"
     fi
 
     if ! command -v bc &> /dev/null; then
-        echo "[ERROR] bc is required but not installed." >&2
-        exit 1
+        if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+            output_error "$E_DEPENDENCY_MISSING" "bc is required but not installed" "${EXIT_DEPENDENCY_MISSING:-1}" true "Install bc via your package manager"
+        else
+            output_error "$E_DEPENDENCY_MISSING" "bc is required but not installed."
+        fi
+        exit "${EXIT_DEPENDENCY_MISSING:-1}"
     fi
 
     # Generate statistics
