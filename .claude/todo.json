@@ -120,8 +120,8 @@
     "lastSessionId": null,
     "activeSession": null,
     "lastModified": "2025-12-19T18:50:02Z",
-    "version": "2.2.0",
-    "schemaVersion": "2.2.0"
+    "version": "2.3.0",
+    "schemaVersion": "2.3.0"
   },
   "focus": {
     "currentTask": null,
