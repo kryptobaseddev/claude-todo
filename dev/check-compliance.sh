@@ -62,8 +62,62 @@ if [[ -z "${DEV_EXIT_SUCCESS:-}" ]]; then
     DEV_EXIT_GENERAL_ERROR=1
     DEV_EXIT_INVALID_INPUT=2
     DEV_EXIT_NOT_FOUND=4
+    DEV_EXIT_DEPENDENCY_ERROR=5
     DEV_EXIT_COMPLIANCE_FAILED=12
 fi
+
+# Verify critical dependency: jq
+if ! command -v jq &>/dev/null; then
+    echo "ERROR: Required dependency 'jq' not found." >&2
+    echo "Install via: apt install jq (Debian/Ubuntu) or brew install jq (macOS)" >&2
+    exit "${DEV_EXIT_DEPENDENCY_ERROR:-5}"
+fi
+
+# ============================================================================
+# JSON ERROR OUTPUT - LLM-Agent-First compliant error envelope
+# ============================================================================
+
+# Output error in format-aware manner (JSON envelope for --format json)
+# Usage: output_compliance_error <error_code> <message> <exit_code> [recoverable] [suggestion]
+output_compliance_error() {
+    local error_code="$1"
+    local message="$2"
+    local exit_code="$3"
+    local recoverable="${4:-false}"
+    local suggestion="${5:-}"
+
+    if [[ "$OUTPUT_FORMAT" == "json" ]]; then
+        jq -n \
+            --arg code "$error_code" \
+            --arg msg "$message" \
+            --argjson exit "$exit_code" \
+            --argjson recoverable "$recoverable" \
+            --arg suggestion "$suggestion" \
+            --arg cmd "$COMMAND_NAME" \
+            --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg ver "$TOOL_VERSION" \
+            '{
+                "$schema": "https://claude-todo.dev/schemas/error.schema.json",
+                "_meta": {
+                    "format": "json",
+                    "command": $cmd,
+                    "version": $ver,
+                    "timestamp": $ts
+                },
+                "success": false,
+                "error": {
+                    "code": $code,
+                    "message": $msg,
+                    "exitCode": $exit,
+                    "recoverable": $recoverable,
+                    "suggestion": (if $suggestion == "" then null else $suggestion end)
+                }
+            }'
+    else
+        log_error "$message"
+        [[ -n "$suggestion" ]] && echo -e "  ${DIM}Suggestion: $suggestion${NC}" >&2
+    fi
+}
 
 # Default options
 OUTPUT_FORMAT="text"
@@ -84,7 +138,7 @@ DEV_SCRIPTS_MODE=false
 DEV_SCRIPTS_SCHEMA="$COMPLIANCE_DIR/dev-schema.json"
 
 # Version
-TOOL_VERSION="1.2.0"
+TOOL_VERSION="1.4.0"
 
 # Print usage
 usage() {
@@ -97,7 +151,8 @@ Options:
   -c, --command <name>      Check specific command(s) (comma-separated)
   -k, --check <category>    Run specific check category
                             (foundation, flags, json-envelope, exit-codes, errors)
-  -f, --format <format>     Output format: text (default), json, markdown
+  -f, --format <format>     Output format: text, json, jsonl, markdown, table
+                            (default: json for non-TTY, text for TTY)
   -t, --threshold <n>       Pass threshold percentage (default: 95)
       --ci                  CI mode (exit non-zero if below threshold)
       --incremental         Only check files changed since last run
@@ -124,7 +179,7 @@ Check Categories:
   flags         - --format, --quiet, --json, --human, resolve_format()
   exit-codes    - EXIT_* constants, no magic numbers
   errors        - output_error(), defensive checks, E_* codes
-  json-envelope - Runtime JSON structure ($schema, _meta, success)
+  json-envelope - Runtime JSON structure (\$schema, _meta, success)
 EOF
 }
 
@@ -201,7 +256,11 @@ parse_args() {
                 exit $DEV_EXIT_SUCCESS
                 ;;
             *)
-                log_error "Unknown option: $1"
+                output_compliance_error "E_INVALID_OPTION" \
+                    "Unknown option: $1" \
+                    "$DEV_EXIT_INVALID_INPUT" \
+                    true \
+                    "Run --help for valid options"
                 usage >&2
                 exit $DEV_EXIT_INVALID_INPUT
                 ;;
@@ -212,16 +271,137 @@ parse_args() {
 # Load and validate schema
 load_schema_file() {
     if [[ ! -f "$SCHEMA_PATH" ]]; then
-        log_error "Schema not found: $SCHEMA_PATH"
+        output_compliance_error "E_SCHEMA_NOT_FOUND" \
+            "Schema not found: $SCHEMA_PATH" \
+            "$DEV_EXIT_NOT_FOUND" \
+            true \
+            "Ensure compliance infrastructure is installed at dev/compliance/"
         exit $DEV_EXIT_NOT_FOUND
     fi
 
     if ! jq . "$SCHEMA_PATH" &>/dev/null; then
-        log_error "Invalid JSON in schema: $SCHEMA_PATH"
+        output_compliance_error "E_SCHEMA_INVALID" \
+            "Invalid JSON in schema: $SCHEMA_PATH" \
+            "$DEV_EXIT_GENERAL_ERROR" \
+            true \
+            "Run 'jq . $SCHEMA_PATH' to see parse errors"
         exit $DEV_EXIT_GENERAL_ERROR
     fi
 
     cat "$SCHEMA_PATH"
+}
+
+# ============================================================================
+# SCHEMA PATTERN PRE-EXTRACTION (Performance Optimization)
+# ============================================================================
+# Extract all patterns from schema once at startup to avoid repeated jq calls
+# This reduces ~480 jq invocations down to ~20
+
+# Global pattern variables (populated by preextract_schema_patterns)
+declare -g PATTERN_DEV_LIB_SOURCE=""
+declare -g PATTERN_DUAL_PATH=""
+declare -g PATTERN_COMMAND_NAME=""
+declare -g PATTERN_VERSION_CENTRAL=""
+declare -g PATTERN_FORMAT_FLAG=""
+declare -g PATTERN_QUIET_FLAG=""
+declare -g PATTERN_JSON_SHORTCUT=""
+declare -g PATTERN_HUMAN_SHORTCUT=""
+declare -g PATTERN_RESOLVE_FORMAT=""
+declare -g PATTERN_DRY_RUN=""
+declare -g PATTERN_EXIT_CONSTANTS=""
+declare -g PATTERN_EXIT_LIB=""
+declare -g PATTERN_ERROR_FUNCTION=""
+declare -g PATTERN_DEFENSIVE_CHECK=""
+declare -g PATTERN_ERROR_LIB=""
+declare -g SCHEMA_PATTERNS_LOADED=false
+
+# Pre-extract all patterns from schema into global variables
+# Args: $1 = schema JSON
+# Sets: All PATTERN_* global variables
+preextract_schema_patterns() {
+    local schema="$1"
+
+    # Extract all patterns in a single jq call for efficiency
+    local patterns
+    patterns=$(echo "$schema" | jq -r '
+        [
+            .requirements.foundation.libraries.patterns.dev_lib_source // .requirements.foundation.libraries.patterns.lib_source // "",
+            .requirements.foundation.libraries.patterns.dual_path // "",
+            .requirements.foundation.variables.patterns.command_name // "",
+            .requirements.foundation.variables.patterns.version_central // "",
+            .requirements.flags.universal.patterns.format_flag // "",
+            .requirements.flags.universal.patterns.quiet_flag // "",
+            .requirements.flags.universal.patterns.json_shortcut // "",
+            .requirements.flags.universal.patterns.human_shortcut // "",
+            .requirements.flags.format_resolution.pattern // "",
+            .requirements.flags.universal.patterns.dry_run_flag // "",
+            .requirements.exit_codes.pattern // "",
+            .requirements.exit_codes.exit_lib_pattern // "",
+            .requirements.error_handling.required_function // "",
+            .requirements.error_handling.defensive_check // "",
+            .requirements.error_handling.error_lib_pattern // ""
+        ] | @tsv
+    ')
+
+    # Parse TSV into variables (|| true to handle trailing empty fields)
+    IFS=$'\t' read -r \
+        PATTERN_DEV_LIB_SOURCE \
+        PATTERN_DUAL_PATH \
+        PATTERN_COMMAND_NAME \
+        PATTERN_VERSION_CENTRAL \
+        PATTERN_FORMAT_FLAG \
+        PATTERN_QUIET_FLAG \
+        PATTERN_JSON_SHORTCUT \
+        PATTERN_HUMAN_SHORTCUT \
+        PATTERN_RESOLVE_FORMAT \
+        PATTERN_DRY_RUN \
+        PATTERN_EXIT_CONSTANTS \
+        PATTERN_EXIT_LIB \
+        PATTERN_ERROR_FUNCTION \
+        PATTERN_DEFENSIVE_CHECK \
+        PATTERN_ERROR_LIB \
+        <<< "$patterns" || true
+
+    # Export for use in sourced check scripts
+    export PATTERN_DEV_LIB_SOURCE PATTERN_DUAL_PATH PATTERN_COMMAND_NAME PATTERN_VERSION_CENTRAL
+    export PATTERN_FORMAT_FLAG PATTERN_QUIET_FLAG PATTERN_JSON_SHORTCUT PATTERN_HUMAN_SHORTCUT
+    export PATTERN_RESOLVE_FORMAT PATTERN_DRY_RUN PATTERN_EXIT_CONSTANTS PATTERN_EXIT_LIB
+    export PATTERN_ERROR_FUNCTION PATTERN_DEFENSIVE_CHECK PATTERN_ERROR_LIB
+
+    SCHEMA_PATTERNS_LOADED=true
+
+    if [[ "$VERBOSE" == "true" ]] && [[ "$OUTPUT_FORMAT" == "text" ]]; then
+        echo -e "${DIM}Pre-extracted ${#patterns} schema patterns${NC}" >&2
+    fi
+}
+
+# Get a pre-extracted pattern (with fallback to jq for unlisted patterns)
+# Args: $1 = schema, $2 = jq path
+# Returns: pattern value
+get_pattern() {
+    local schema="$1"
+    local path="$2"
+
+    # Check if we have a pre-extracted pattern for common paths
+    case "$path" in
+        *.dev_lib_source|*.lib_source) echo "$PATTERN_DEV_LIB_SOURCE" ;;
+        *.dual_path) echo "$PATTERN_DUAL_PATH" ;;
+        *.command_name) echo "$PATTERN_COMMAND_NAME" ;;
+        *.version_central) echo "$PATTERN_VERSION_CENTRAL" ;;
+        *.format_flag) echo "$PATTERN_FORMAT_FLAG" ;;
+        *.quiet_flag) echo "$PATTERN_QUIET_FLAG" ;;
+        *.json_shortcut) echo "$PATTERN_JSON_SHORTCUT" ;;
+        *.human_shortcut) echo "$PATTERN_HUMAN_SHORTCUT" ;;
+        *.format_resolution.pattern) echo "$PATTERN_RESOLVE_FORMAT" ;;
+        *.dry_run_flag|*.dry_run) echo "$PATTERN_DRY_RUN" ;;
+        *.exit_codes.pattern) echo "$PATTERN_EXIT_CONSTANTS" ;;
+        *.exit_lib_pattern) echo "$PATTERN_EXIT_LIB" ;;
+        *.required_function) echo "$PATTERN_ERROR_FUNCTION" ;;
+        *.defensive_check) echo "$PATTERN_DEFENSIVE_CHECK" ;;
+        *.error_lib_pattern) echo "$PATTERN_ERROR_LIB" ;;
+        # Fallback to jq for unlisted patterns
+        *) echo "$schema" | jq -r "$path // \"\"" ;;
+    esac
 }
 
 # Initialize cache
@@ -730,15 +910,17 @@ format_json_output() {
         '{
             "$schema": "https://claude-todo.dev/schemas/compliance-report.schema.json",
             "_meta": {
-                "tool": "check-compliance",
+                "format": "json",
+                "command": "check-compliance",
                 "version": $toolVersion,
+                "timestamp": $timestamp,
                 "schemaVersion": $schemaVersion,
                 "specVersion": $specVersion,
-                "timestamp": $timestamp,
                 "ciMode": $ciMode,
                 "threshold": $threshold,
                 "suggestFixes": $suggestFixes
             },
+            "success": true,
             "summary": .summary,
             "commands": .commands,
             "failures": [.commands[] | select(.score < 100) | {command: .command, script: .script, score: .score, failed_checks: [.checks[]?.checks[]? | select(.passed == false) | .check]}]
@@ -746,9 +928,10 @@ format_json_output() {
 
     # Add fix suggestions to failures if enabled
     if [[ "$SUGGEST_FIXES" == "true" ]]; then
-        # Build suggestions object
-        local suggestions='{'
-        local first=true
+        # Use secure temp file (mktemp) instead of predictable /tmp path
+        local tmp_suggestions
+        tmp_suggestions=$(mktemp "${TMPDIR:-/tmp}/fix_suggestions.XXXXXX")
+        trap "rm -f '$tmp_suggestions'" EXIT
 
         echo "$base_output" | jq -r '.failures[] | "\(.command)|\(.script)|\(.failed_checks | join(","))"' 2>/dev/null | while read -r line; do
             [[ -z "$line" ]] && continue
@@ -763,11 +946,11 @@ format_json_output() {
                 fix=$(generate_fix_suggestions "$check" "$script" "" | jq -Rs '.')
                 echo "{\"$check\": $fix}"
             done
-        done | jq -s 'add // {}' > /tmp/fix_suggestions.json
+        done | jq -s 'add // {}' > "$tmp_suggestions"
 
         # Merge suggestions into output
-        echo "$base_output" | jq --slurpfile fixes /tmp/fix_suggestions.json '. + {fix_suggestions: $fixes[0]}'
-        rm -f /tmp/fix_suggestions.json
+        echo "$base_output" | jq --slurpfile fixes "$tmp_suggestions" '. + {fix_suggestions: $fixes[0]}'
+        rm -f "$tmp_suggestions"
     else
         echo "$base_output"
     fi
@@ -825,6 +1008,36 @@ EOF
     fi
 }
 
+# Format output as ASCII table
+format_table_output() {
+    local results="$1"
+    local schema="$2"
+
+    # Table header
+    printf "%-22s %-28s %8s %8s %8s\n" "COMMAND" "SCRIPT" "SCORE" "PASSED" "FAILED"
+    printf "%-22s %-28s %8s %8s %8s\n" "$(printf '%.0s-' {1..22})" "$(printf '%.0s-' {1..28})" "--------" "--------" "--------"
+
+    # Table rows
+    echo "$results" | jq -r '.commands[] | "\(.command)|\(.script)|\(.score)|\(.passed)|\(.failed)"' 2>/dev/null | while IFS='|' read -r cmd script score passed failed; do
+        [[ -z "$cmd" ]] && continue
+        printf "%-22s %-28s %7.1f%% %8s %8s\n" "$cmd" "$script" "$score" "$passed" "$failed"
+    done
+
+    # Summary footer
+    echo ""
+    local summary
+    summary=$(echo "$results" | jq '.summary')
+    local total passed partial failed overall
+    total=$(echo "$summary" | jq '.totalCommands')
+    passed=$(echo "$summary" | jq '.passed')
+    partial=$(echo "$summary" | jq '.partial')
+    failed=$(echo "$summary" | jq '.failed')
+    overall=$(echo "$summary" | jq '.overallScore')
+
+    printf "%-22s %-28s %8s\n" "" "TOTAL: $total commands" "${overall}%"
+    printf "%-22s %-28s\n" "" "Passed: $passed | Partial: $partial | Failed: $failed"
+}
+
 # Main execution
 main() {
     parse_args "$@"
@@ -839,8 +1052,11 @@ main() {
         CACHE_FILE="$CACHE_DIR/dev-cache.json"
 
         if [[ ! -f "$SCHEMA_PATH" ]]; then
-            log_error "Dev scripts schema not found: $SCHEMA_PATH"
-            echo -e "${DIM}Create it with: ./dev/check-compliance.sh --init-dev-schema${NC}" >&2
+            output_compliance_error "E_DEV_SCHEMA_NOT_FOUND" \
+                "Dev scripts schema not found: $SCHEMA_PATH" \
+                "$DEV_EXIT_NOT_FOUND" \
+                true \
+                "Create it with: ./dev/check-compliance.sh --init-dev-schema"
             exit $DEV_EXIT_NOT_FOUND
         fi
     fi
@@ -848,6 +1064,9 @@ main() {
     # Load schema
     local schema
     schema=$(load_schema_file)
+
+    # Pre-extract patterns for performance (reduces ~480 jq calls to ~20)
+    preextract_schema_patterns "$schema"
 
     # Discovery mode - find untracked scripts and exit
     if [[ "$DISCOVER_MODE" == "true" ]]; then
@@ -873,7 +1092,11 @@ main() {
             [[ "$QUIET" != "true" ]] && log_info "No changed files to check."
             exit $DEV_EXIT_SUCCESS
         else
-            log_error "No scripts found to check."
+            output_compliance_error "E_NO_SCRIPTS" \
+                "No scripts found to check" \
+                "$DEV_EXIT_NOT_FOUND" \
+                true \
+                "Verify schema.json has commandScripts entries, or check --command filter matches script names"
             exit $DEV_EXIT_NOT_FOUND
         fi
     fi
@@ -1000,8 +1223,16 @@ main() {
         json)
             format_json_output "$final_results" "$schema"
             ;;
+        jsonl)
+            # JSON Lines: one object per command for streaming
+            echo "$final_results" | jq -c '.commands[]'
+            ;;
         markdown)
             format_markdown_output "$final_results" "$schema"
+            ;;
+        table)
+            # ASCII table format for terminal display
+            format_table_output "$final_results" "$schema"
             ;;
         *)
             format_text_output "$final_results" "$schema"
