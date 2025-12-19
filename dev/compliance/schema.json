@@ -1,0 +1,133 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LLM-Agent-First Compliance Schema",
+  "description": "Central validation rules for claude-todo LLM-Agent-First compliance checking",
+  "version": "1.0.0",
+  "specVersion": "2.1",
+
+  "requirements": {
+    "foundation": {
+      "libraries": {
+        "required": ["exit-codes.sh", "error-json.sh", "output-format.sh"],
+        "patterns": {
+          "dual_path": "source.*\\$LIB_DIR.*\\.sh|source.*CLAUDE_TODO_HOME.*\\.sh"
+        }
+      },
+      "variables": {
+        "required": ["COMMAND_NAME", "VERSION"],
+        "patterns": {
+          "command_name": "^COMMAND_NAME=",
+          "version_central": "VERSION=.*CLAUDE_TODO_HOME/VERSION|VERSION=.*SCRIPT_DIR.*VERSION"
+        }
+      }
+    },
+
+    "flags": {
+      "universal": {
+        "required": ["--format", "--quiet"],
+        "shortcuts": ["--json", "--human"],
+        "patterns": {
+          "format_flag": "-f[|]--format|--format[)]",
+          "quiet_flag": "-q[|]--quiet|--quiet[)]",
+          "json_shortcut": "--json[)]",
+          "human_shortcut": "--human[)]"
+        }
+      },
+      "write_commands": {
+        "required": ["--dry-run"],
+        "commands": ["add", "archive", "complete", "extract", "inject", "migrate", "migrate-backups", "restore", "sync", "update"]
+      },
+      "format_resolution": {
+        "required": true,
+        "pattern": "resolve_format"
+      }
+    },
+
+    "json_envelope": {
+      "required_fields": ["$schema", "_meta", "success"],
+      "meta_fields": ["format", "version", "command", "timestamp"],
+      "patterns": {
+        "schema_field": "\\\"\\$schema\\\".*output\\.schema\\.json",
+        "meta_block": "\\\"_meta\\\"",
+        "success_field": "\\\"success\\\".*true|\\\"success\\\".*false"
+      }
+    },
+
+    "exit_codes": {
+      "required_constants": true,
+      "pattern": "exit.*\\$EXIT_|exit.*EXIT_",
+      "forbidden": "exit [0-9](?!\\})"
+    },
+
+    "error_handling": {
+      "required_function": "output_error",
+      "defensive_check": "declare -f output_error.*>/dev/null",
+      "error_codes_pattern": "E_[A-Z_]+"
+    }
+  },
+
+  "commands": {
+    "write": ["add", "archive", "complete", "focus", "phase", "session", "update"],
+    "read": ["analyze", "blockers", "dash", "deps", "exists", "export", "find", "history", "labels", "list", "log", "next", "phases", "show", "stats"],
+    "sync": ["extract", "inject", "sync"],
+    "maintenance": ["backup", "config", "init", "migrate", "migrate-backups", "restore", "validate"]
+  },
+
+  "commandScripts": {
+    "add": "add-task.sh",
+    "analyze": "analyze.sh",
+    "archive": "archive.sh",
+    "backup": "backup.sh",
+    "blockers": "blockers-command.sh",
+    "complete": "complete-task.sh",
+    "config": "config.sh",
+    "dash": "dash.sh",
+    "deps": "deps-command.sh",
+    "exists": "exists.sh",
+    "export": "export.sh",
+    "extract": "extract-todowrite.sh",
+    "find": "find.sh",
+    "focus": "focus.sh",
+    "history": "history.sh",
+    "init": "init.sh",
+    "inject": "inject-todowrite.sh",
+    "labels": "labels.sh",
+    "list": "list-tasks.sh",
+    "log": "log.sh",
+    "migrate": "migrate.sh",
+    "migrate-backups": "migrate-backups.sh",
+    "next": "next.sh",
+    "phase": "phase.sh",
+    "phases": "phases.sh",
+    "restore": "restore.sh",
+    "session": "session.sh",
+    "show": "show.sh",
+    "stats": "stats.sh",
+    "sync": "sync-todowrite.sh",
+    "update": "update-task.sh",
+    "validate": "validate.sh"
+  },
+
+  "scoring": {
+    "foundation_libs": 15,
+    "command_name": 5,
+    "version_central": 5,
+    "format_flag": 10,
+    "quiet_flag": 5,
+    "json_shortcut": 5,
+    "human_shortcut": 5,
+    "resolve_format": 15,
+    "schema_field": 10,
+    "meta_block": 10,
+    "success_field": 10,
+    "exit_constants": 5,
+    "output_error": 5,
+    "dry_run": 5
+  },
+
+  "thresholds": {
+    "pass": 95,
+    "warn": 80,
+    "fail": 0
+  }
+}

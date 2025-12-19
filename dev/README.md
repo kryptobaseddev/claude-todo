@@ -9,6 +9,7 @@ Scripts for project development and maintenance. **Not shipped to users.**
 | `bump-version.sh` | Bump semantic version across all files |
 | `validate-version.sh` | Verify version consistency |
 | `benchmark-performance.sh` | Performance testing |
+| `check-compliance.sh` | LLM-Agent-First compliance validation |
 
 ## Usage
 
@@ -21,6 +22,108 @@ Scripts for project development and maintenance. **Not shipped to users.**
 ./dev/validate-version.sh      # Check version sync
 
 ./dev/benchmark-performance.sh # Run benchmarks
+
+./dev/check-compliance.sh      # Full compliance check
+```
+
+## Compliance Checker
+
+The `check-compliance.sh` tool validates all claude-todo commands against the LLM-AGENT-FIRST-SPEC.md requirements.
+
+### Quick Start
+
+```bash
+# Full compliance check
+./dev/check-compliance.sh
+
+# Check specific command(s)
+./dev/check-compliance.sh --command list
+./dev/check-compliance.sh --command list,show,add
+
+# Run specific check category
+./dev/check-compliance.sh --check foundation
+./dev/check-compliance.sh --check flags
+./dev/check-compliance.sh --check json-envelope
+
+# Output formats
+./dev/check-compliance.sh --format json
+./dev/check-compliance.sh --format markdown
+
+# Verbose output (show all check details)
+./dev/check-compliance.sh --verbose
+
+# CI mode with threshold
+./dev/check-compliance.sh --ci --threshold 95
+./dev/check-compliance.sh --ci --threshold 100  # Strict mode
+
+# Incremental mode (only changed files)
+./dev/check-compliance.sh --incremental
+
+# Static analysis only (skip runtime tests)
+./dev/check-compliance.sh --static-only
+```
+
+### Check Categories
+
+| Category | What it checks |
+|----------|----------------|
+| `foundation` | Library sourcing (exit-codes.sh, error-json.sh, output-format.sh), COMMAND_NAME, VERSION |
+| `flags` | --format, --quiet, --json, --human shortcuts, resolve_format() |
+| `exit-codes` | EXIT_* constants, no magic numbers |
+| `errors` | output_error() usage, defensive checks, E_* error codes |
+| `json-envelope` | Runtime JSON structure: $schema, _meta, success fields |
+
+### CI/CD Integration
+
+```bash
+# In CI pipeline - fails if below 95%
+./dev/check-compliance.sh --ci --threshold 95
+
+# Generate JSON report for CI artifacts
+./dev/check-compliance.sh --format json > compliance-report.json
+
+# Quick check on changed files only
+./dev/check-compliance.sh --incremental --ci
+```
+
+### Pre-commit Hook Example
+
+```bash
+#!/bin/bash
+# .git/hooks/pre-commit
+
+# Check compliance on changed script files
+changed_scripts=$(git diff --cached --name-only -- 'scripts/*.sh')
+if [[ -n "$changed_scripts" ]]; then
+    ./dev/check-compliance.sh --static-only --ci --threshold 90
+fi
+```
+
+### Updating the Schema
+
+The compliance rules are defined in `dev/compliance/schema.json`. To add new requirements:
+
+1. Edit `dev/compliance/schema.json`
+2. Add patterns/rules to the appropriate section
+3. Update the corresponding check module in `dev/compliance/checks/`
+4. Test with `./dev/check-compliance.sh --verbose`
+
+### Directory Structure
+
+```
+dev/
+├── check-compliance.sh          # Main entry point
+├── compliance/
+│   ├── schema.json              # Central validation rules
+│   ├── checks/
+│   │   ├── foundation.sh        # Library sourcing checks
+│   │   ├── flags.sh             # Flag support checks
+│   │   ├── json-envelope.sh     # JSON output structure (runtime)
+│   │   ├── exit-codes.sh        # Exit code usage checks
+│   │   └── errors.sh            # Error handling checks
+│   └── lib/
+│       └── test-helpers.sh      # Common test utilities
+└── .compliance-cache/           # Incremental check cache (gitignored)
 ```
 
 ## Note
