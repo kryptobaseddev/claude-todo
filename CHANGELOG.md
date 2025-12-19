@@ -5,6 +5,23 @@ All notable changes to the claude-todo system will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.19.2] - 2025-12-18
+
+### Added
+- **find command** - Search tasks by ID, title, description, or fuzzy matching
+  - `claude-todo find <query>` - Fuzzy search across task titles and descriptions
+  - `--id` flag - Search by task ID prefix (e.g., `--id 37` finds T370, T371...)
+  - `--exact` flag - Exact match mode for precision searching
+  - `--field` flag - Search specific fields (title, description, labels, all)
+  - `--status` flag - Filter results by task status
+  - `--format json` - LLM-Agent-First compliant JSON output
+  - `--verbose` / `--quiet` modes for output control
+  - Exit codes: 0 (matches), 2 (invalid input), 100 (no matches)
+  - 99.7% context reduction vs full task list (355KB → 1KB typical)
+- **search alias** - Alias for find command (`claude-todo search`)
+- **BATS test suite** - 75 comprehensive tests for find command
+- **Documentation** - `docs/commands/find.md` with full usage guide
+
 ## [0.19.1] - 2025-12-18
 
 ### Fixed

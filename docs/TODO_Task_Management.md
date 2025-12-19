@@ -76,6 +76,19 @@ claude-todo show <id> --include-archive    # Search archive if not found
 claude-todo show <id> --format json        # JSON output for scripting
 ```
 
+### Task Search (v0.19.2+)
+```bash
+claude-todo find <query>                   # Fuzzy search tasks by title/description
+claude-todo find --id 37                   # Find tasks with ID prefix T37*
+claude-todo find "exact title" --exact     # Exact match mode
+claude-todo find "test" --status pending   # Filter by status
+claude-todo find "api" --field title       # Search specific fields
+claude-todo find "task" --format json      # JSON output for scripting
+claude-todo find "old" --include-archive   # Include archived tasks
+```
+
+**Aliases**: `search` → `find`
+
 ### Hierarchy (v0.17.0+)
 ```bash
 # Create with hierarchy

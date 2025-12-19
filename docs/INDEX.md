@@ -54,6 +54,7 @@
 | **[commands/exists.md](commands/exists.md)** | Task existence validation documentation | Validating task IDs in scripts and CI/CD pipelines |
 | **[commands/export.md](commands/export.md)** | Export command documentation | Exporting tasks in CSV, TSV, JSON, markdown formats |
 | **[commands/focus.md](commands/focus.md)** | Focus command documentation | Managing single-task workflow discipline |
+| **[commands/find.md](commands/find.md)** | Find command documentation | Searching tasks by pattern, ID, or fuzzy match |
 | **[commands/history.md](commands/history.md)** | Completion history and timeline analytics | Reviewing productivity trends and completion metrics |
 | **[commands/init.md](commands/init.md)** | Init command documentation | Project initialization and CLAUDE.md updates |
 | **[commands/labels.md](commands/labels.md)** | Labels command documentation | Managing and analyzing task labels |
