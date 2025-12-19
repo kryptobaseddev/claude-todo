@@ -38,6 +38,24 @@ else
     MIGRATION_AVAILABLE=false
 fi
 
+# Source exit codes library for standardized error codes
+if [[ -f "$_LIB_DIR/exit-codes.sh" ]]; then
+    # shellcheck source=lib/exit-codes.sh
+    source "$_LIB_DIR/exit-codes.sh"
+    EXIT_CODES_AVAILABLE=true
+else
+    EXIT_CODES_AVAILABLE=false
+fi
+
+# Source hierarchy library for parent/child validation (optional)
+if [[ -f "$_LIB_DIR/hierarchy.sh" ]]; then
+    # shellcheck source=lib/hierarchy.sh
+    source "$_LIB_DIR/hierarchy.sh"
+    HIERARCHY_AVAILABLE=true
+else
+    HIERARCHY_AVAILABLE=false
+fi
+
 # ============================================================================
 # CONSTANTS
 # ============================================================================
@@ -1099,6 +1117,122 @@ export -f validate_phase_timestamps
 export -f validate_phase_status_requirements
 
 # ============================================================================
+# HIERARCHY VALIDATION
+# ============================================================================
+
+# Validate task hierarchy integrity
+# Checks:
+#   - Orphan detection (parentId references must exist)
+#   - Depth limits (max 3 levels: epic -> task -> subtask)
+#   - Sibling limits (max 7 children per parent)
+#   - Circular reference detection
+#
+# Args: $1 = todo file path
+# Returns:
+#   0 = all validations passed
+#   EXIT_ORPHAN_DETECTED (15) = orphan tasks found
+#   EXIT_DEPTH_EXCEEDED (11) = hierarchy too deep
+#   EXIT_SIBLING_LIMIT (12) = too many siblings
+#   EXIT_CIRCULAR_REFERENCE (14) = circular parent chain
+validate_hierarchy_integrity() {
+    local todo_file="$1"
+    local errors=0
+
+    # Skip if hierarchy library not available
+    if [[ "$HIERARCHY_AVAILABLE" != "true" ]]; then
+        echo "INFO: Hierarchy library not available, skipping hierarchy validation" >&2
+        return 0
+    fi
+
+    # Skip if no tasks with parentId exist (no hierarchy to validate)
+    local has_hierarchy
+    has_hierarchy=$(jq '[.tasks[] | select(.parentId != null and .parentId != "null")] | length' "$todo_file" 2>/dev/null || echo 0)
+    if [[ "$has_hierarchy" -eq 0 ]]; then
+        return 0  # No hierarchy present, nothing to validate
+    fi
+
+    # 1. Detect orphan tasks (parentId references non-existent task)
+    local orphans
+    orphans=$(detect_orphans "$todo_file")
+    if [[ -n "$orphans" ]]; then
+        echo "ERROR: Orphan tasks detected (parentId references missing task):" >&2
+        for orphan_id in $orphans; do
+            local parent_id
+            parent_id=$(get_task_parent "$orphan_id" "$todo_file")
+            echo "  - $orphan_id (references non-existent parent: $parent_id)" >&2
+        done
+        echo "Fix: Remove parentId or restore the parent task" >&2
+        ((errors++))
+    fi
+
+    # 2. Validate depth limits (max 3 levels)
+    while IFS= read -r task_id; do
+        [[ -z "$task_id" ]] && continue
+
+        local depth
+        depth=$(get_task_depth "$task_id" "$todo_file")
+
+        if [[ "$depth" -eq -1 ]]; then
+            # Circular reference detected during depth calculation
+            echo "ERROR: Circular reference detected in parent chain for task: $task_id" >&2
+            echo "Fix: Break the circular parent reference" >&2
+            ((errors++))
+        elif [[ "$depth" -ge "$MAX_HIERARCHY_DEPTH" ]]; then
+            echo "ERROR: Task $task_id exceeds maximum depth (depth=$depth, max=$((MAX_HIERARCHY_DEPTH - 1)))" >&2
+            echo "Fix: Restructure hierarchy to reduce depth" >&2
+            ((errors++))
+        fi
+    done < <(jq -r '.tasks[].id' "$todo_file" 2>/dev/null)
+
+    # 3. Validate sibling limits (max 7 children per parent)
+    # Get unique parent IDs
+    local parent_ids
+    parent_ids=$(jq -r '.tasks[] | .parentId // "null"' "$todo_file" 2>/dev/null | sort -u)
+
+    for parent_id in $parent_ids; do
+        local sibling_count
+        sibling_count=$(count_siblings "$parent_id" "$todo_file")
+
+        if [[ "$sibling_count" -gt "$MAX_SIBLINGS" ]]; then
+            if [[ "$parent_id" == "null" ]]; then
+                echo "ERROR: Root level has too many tasks ($sibling_count > $MAX_SIBLINGS)" >&2
+            else
+                echo "ERROR: Parent $parent_id has too many children ($sibling_count > $MAX_SIBLINGS)" >&2
+            fi
+            echo "Fix: Move some tasks to different parents or create new parent tasks" >&2
+            ((errors++))
+        fi
+    done
+
+    # 4. Validate parent types (subtasks cannot have children)
+    while IFS= read -r task_id; do
+        [[ -z "$task_id" ]] && continue
+
+        local parent_id
+        parent_id=$(get_task_parent "$task_id" "$todo_file")
+
+        if [[ "$parent_id" != "null" && -n "$parent_id" ]]; then
+            local parent_type
+            parent_type=$(get_task_type "$parent_id" "$todo_file")
+
+            if [[ "$parent_type" == "subtask" ]]; then
+                echo "ERROR: Task $task_id has subtask parent ($parent_id)" >&2
+                echo "Fix: Subtasks cannot have children. Change parent or parent type" >&2
+                ((errors++))
+            fi
+        fi
+    done < <(jq -r '.tasks[].id' "$todo_file" 2>/dev/null)
+
+    if [[ $errors -gt 0 ]]; then
+        return "${EXIT_VALIDATION_ERROR:-6}"
+    fi
+
+    return 0
+}
+
+export -f validate_hierarchy_integrity
+
+# ============================================================================
 # COMPREHENSIVE VALIDATION
 # ============================================================================
 
@@ -1119,7 +1253,7 @@ validate_all() {
 
     # 0. Version Check (non-blocking warning)
     if [[ "$MIGRATION_AVAILABLE" == "true" ]]; then
-        echo "[0/9] Checking schema version..."
+        echo "[0/10] Checking schema version..."
         if ! validate_version "$file" "$schema_type"; then
             echo "⚠ WARNING: Version check failed"
         else
@@ -1130,7 +1264,7 @@ validate_all() {
     fi
 
     # 1. JSON Syntax Validation
-    echo "[1/9] Checking JSON syntax..."
+    echo "[1/10] Checking JSON syntax..."
     if ! validate_json_syntax "$file"; then
         ((schema_errors++))
         echo "✗ FAILED: JSON syntax invalid"
@@ -1139,7 +1273,7 @@ validate_all() {
     fi
 
     # 2. Schema Validation
-    echo "[2/9] Checking schema compliance..."
+    echo "[2/10] Checking schema compliance..."
     if ! validate_schema "$file" "$schema_type"; then
         ((schema_errors++))
         echo "✗ FAILED: Schema validation failed"
@@ -1157,7 +1291,7 @@ validate_all() {
 
     # 3. ID Uniqueness Check
     if [[ "$schema_type" == "todo" || "$schema_type" == "archive" ]]; then
-        echo "[3/9] Checking ID uniqueness..."
+        echo "[3/10] Checking ID uniqueness..."
         if ! check_id_uniqueness "$file" "$archive_file"; then
             ((semantic_errors++))
             echo "✗ FAILED: Duplicate IDs found"
@@ -1165,12 +1299,12 @@ validate_all() {
             echo "✓ PASSED: All IDs unique"
         fi
     else
-        echo "[3/9] Skipping ID uniqueness check (not applicable)"
+        echo "[3/10] Skipping ID uniqueness check (not applicable)"
     fi
 
     # 4. Individual Task Validation
     if [[ "$schema_type" == "todo" ]]; then
-        echo "[4/9] Validating individual tasks..."
+        echo "[4/10] Validating individual tasks..."
         local task_count
         task_count=$(jq '.tasks | length' "$file")
         local task_errors=0
@@ -1189,12 +1323,12 @@ validate_all() {
             echo "✓ PASSED: All tasks valid ($task_count tasks)"
         fi
     else
-        echo "[4/9] Skipping task validation (not applicable)"
+        echo "[4/10] Skipping task validation (not applicable)"
     fi
 
     # 5. Content Duplicate Check
     if [[ "$schema_type" == "todo" ]]; then
-        echo "[5/9] Checking for duplicate content..."
+        echo "[5/10] Checking for duplicate content..."
         local duplicate_content
         duplicate_content=$(jq -r '.tasks[].content' "$file" | sort | uniq -d)
 
@@ -1207,13 +1341,13 @@ validate_all() {
             echo "✓ PASSED: No duplicate content"
         fi
     else
-        echo "[5/9] Skipping duplicate content check (not applicable)"
+        echo "[5/10] Skipping duplicate content check (not applicable)"
     fi
 
     # 6. Phase Validation (v2.2.0+)
     if [[ "$schema_type" == "todo" ]]; then
         if jq -e '.project.phases' "$file" >/dev/null 2>&1; then
-            echo "[6/9] Validating phase configuration..."
+            echo "[6/10] Validating phase configuration..."
             local phase_errors=0
 
             if ! validate_single_active_phase "$file"; then
@@ -1239,15 +1373,15 @@ validate_all() {
                 echo "✓ PASSED: Phase configuration valid"
             fi
         else
-            echo "[6/9] Skipping phase validation (no phases defined)"
+            echo "[6/10] Skipping phase validation (no phases defined)"
         fi
     else
-        echo "[6/9] Skipping phase validation (not applicable)"
+        echo "[6/10] Skipping phase validation (not applicable)"
     fi
 
     # 7. Circular Dependency Check
     if [[ "$schema_type" == "todo" ]]; then
-        echo "[7/9] Checking for circular dependencies..."
+        echo "[7/10] Checking for circular dependencies..."
         local cycle_errors=0
 
         # Check each task with dependencies
@@ -1272,12 +1406,12 @@ validate_all() {
             echo "✓ PASSED: No circular dependencies"
         fi
     else
-        echo "[7/9] Skipping circular dependency check (not applicable)"
+        echo "[7/10] Skipping circular dependency check (not applicable)"
     fi
 
     # 8. Done Status Consistency
     if [[ "$schema_type" == "todo" ]]; then
-        echo "[8/9] Checking done status consistency..."
+        echo "[8/10] Checking done status consistency..."
         local invalid_done
         invalid_done=$(jq -r '.tasks[] | select(.status == "done" and (.completed_at == null or .completed_at == "")) | .id // "unknown"' "$file")
 
@@ -1290,7 +1424,7 @@ validate_all() {
             echo "✓ PASSED: Done status consistent"
         fi
     elif [[ "$schema_type" == "archive" ]]; then
-        echo "[8/9] Checking archive contains only done tasks..."
+        echo "[8/10] Checking archive contains only done tasks..."
         local non_done
         non_done=$(jq -r '.archived_tasks[] | select(.status != "done") | .id // "unknown"' "$file")
 
@@ -1303,16 +1437,33 @@ validate_all() {
             echo "✓ PASSED: Archive valid"
         fi
     else
-        echo "[8/9] Skipping status consistency check (not applicable)"
+        echo "[8/10] Skipping status consistency check (not applicable)"
     fi
 
-    # 9. Config-Specific Validation
+    # 9. Hierarchy Validation (v0.17.0+)
+    if [[ "$schema_type" == "todo" ]]; then
+        echo "[9/10] Validating task hierarchy..."
+        if [[ "$HIERARCHY_AVAILABLE" == "true" ]]; then
+            if ! validate_hierarchy_integrity "$file"; then
+                ((semantic_errors++))
+                echo "✗ FAILED: Hierarchy validation failed"
+            else
+                echo "✓ PASSED: Hierarchy valid"
+            fi
+        else
+            echo "[9/10] Skipping hierarchy validation (library not available)"
+        fi
+    else
+        echo "[9/10] Skipping hierarchy validation (not applicable)"
+    fi
+
+    # 10. Config-Specific Validation
     if [[ "$schema_type" == "config" ]]; then
-        echo "[9/9] Checking configuration backward compatibility..."
+        echo "[10/10] Checking configuration backward compatibility..."
         # Additional config-specific checks can be added here
         echo "✓ PASSED: Configuration valid"
     else
-        echo "[9/9] Skipping config-specific checks (not applicable)"
+        echo "[10/10] Skipping config-specific checks (not applicable)"
     fi
 
     # Summary

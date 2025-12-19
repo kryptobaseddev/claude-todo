@@ -16,7 +16,7 @@ Schema versions follow semantic versioning (MAJOR.MINOR.PATCH):
 
 ### Current Schema Versions
 
-- **todo.json**: 2.2.0
+- **todo.json**: 2.3.0 (hierarchy fields: type, parentId, size)
 - **todo-config.json**: 2.1.0
 - **todo-archive.json**: 2.1.0
 - **todo-log.json**: 2.1.0

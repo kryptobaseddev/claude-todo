@@ -57,7 +57,6 @@ fi
 
 # Default configuration
 FORMAT=""
-OUTPUT_FORMAT=""
 TASK_ID=""
 SHOW_TREE=false
 COMMAND_NAME="deps"
@@ -724,7 +723,7 @@ main() {
     parse_arguments "$@"
 
     # Resolve format with TTY-aware detection
-    OUTPUT_FORMAT=$(resolve_format "$FORMAT" "true" "text,json,markdown")
+    FORMAT=$(resolve_format "$FORMAT" "true" "text,json,markdown")
 
     # Check if in a todo-enabled project
     if [[ ! -d "$CLAUDE_DIR" ]]; then
@@ -749,7 +748,7 @@ main() {
     # Determine mode and output
     if [[ "$SHOW_TREE" == true ]]; then
         # Tree mode
-        case "$OUTPUT_FORMAT" in
+        case "$FORMAT" in
             text)
                 output_tree_text
                 ;;
@@ -766,7 +765,7 @@ main() {
         esac
     elif [[ -n "$TASK_ID" ]]; then
         # Specific task mode
-        case "$OUTPUT_FORMAT" in
+        case "$FORMAT" in
             text)
                 output_task_deps_text "$TASK_ID"
                 ;;
@@ -784,7 +783,7 @@ main() {
         local tasks_with_deps
         tasks_with_deps=$(get_tasks_with_deps)
 
-        case "$OUTPUT_FORMAT" in
+        case "$FORMAT" in
             text)
                 output_overview_text "$tasks_with_deps"
                 ;;

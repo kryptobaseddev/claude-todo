@@ -62,17 +62,34 @@ else
   RED='' GREEN='' YELLOW='' NC=''
 fi
 
+# Source version library for app version
+if [[ -f "$LIB_DIR/version.sh" ]]; then
+  # shellcheck source=../lib/version.sh
+  source "$LIB_DIR/version.sh"
+fi
+
 # Defaults
 STRICT=false
 FIX=false
 JSON_OUTPUT=false
 QUIET=false
-FORMAT="text"
+FORMAT=""
 NON_INTERACTIVE=false
 COMMAND_NAME="validate"
 
 ERRORS=0
 WARNINGS=0
+
+# Track validation details for JSON output
+declare -a DETAILS_JSON=()
+
+# Helper to add a check result to details
+add_detail() {
+  local check="$1"
+  local status="$2"  # ok, error, warning, fixed
+  local message="$3"
+  DETAILS_JSON+=("{\"check\":\"$check\",\"status\":\"$status\",\"message\":\"$message\"}")
+}
 
 usage() {
   cat << EOF
@@ -105,10 +122,12 @@ EOF
 }
 
 log_error() {
+  local check_name="${2:-unknown}"
   # In JSON mode, don't output intermediate messages - only final summary
   if [[ "$JSON_OUTPUT" != true ]]; then
     echo -e "${RED}[ERROR]${NC} $1"
   fi
+  add_detail "$check_name" "error" "$1"
   ERRORS=$((ERRORS + 1))
 }
 
@@ -123,18 +142,26 @@ output_fatal() {
 }
 
 log_warn() {
+  local check_name="${2:-unknown}"
   # In JSON mode, don't output intermediate messages - only final summary
   if [[ "$JSON_OUTPUT" != true ]]; then
     echo -e "${YELLOW}[WARN]${NC} $1"
   fi
+  add_detail "$check_name" "warning" "$1"
   WARNINGS=$((WARNINGS + 1))
 }
 
 log_info() {
-  if [[ "$QUIET" == true ]]; then return; fi
+  local check_name="${2:-unknown}"
+  if [[ "$QUIET" == true ]]; then
+    # Still add to details even in quiet mode
+    add_detail "$check_name" "ok" "$1"
+    return
+  fi
   if [[ "$JSON_OUTPUT" != true ]]; then
     echo -e "${GREEN}[OK]${NC} $1"
   fi
+  add_detail "$check_name" "ok" "$1"
 }
 
 #######################################
@@ -243,7 +270,7 @@ fi
 if ! jq empty "$TODO_FILE" 2>/dev/null; then
   output_fatal "$E_VALIDATION_SCHEMA" "Invalid JSON syntax" 1
 fi
-log_info "JSON syntax valid"
+log_info "JSON syntax valid" "json_syntax"
 
 # 2. Check for duplicate task IDs
 ARCHIVE_FILE="${TODO_FILE%.json}-archive.json"
@@ -251,7 +278,7 @@ TASK_IDS=$(jq -r '.tasks[].id' "$TODO_FILE" 2>/dev/null || echo "")
 DUPLICATE_IDS=$(echo "$TASK_IDS" | sort | uniq -d)
 
 if [[ -n "$DUPLICATE_IDS" ]]; then
-  log_error "Duplicate task IDs found in todo.json: $(echo "$DUPLICATE_IDS" | tr '\n' ', ' | sed 's/,$//')"
+  log_error "Duplicate task IDs found in todo.json: $(echo "$DUPLICATE_IDS" | tr '\n' ', ' | sed 's/,$//')" "duplicate_ids"
   if [[ "$FIX" == true ]]; then
     # Keep only first occurrence of each ID (atomic write with locking)
     if safe_json_write "$TODO_FILE" '
@@ -267,7 +294,7 @@ if [[ -n "$DUPLICATE_IDS" ]]; then
     fi
   fi
 else
-  log_info "No duplicate task IDs in todo.json"
+  log_info "No duplicate task IDs in todo.json" "duplicate_ids"
 fi
 
 # Check archive for duplicates too
@@ -292,7 +319,7 @@ if [[ -f "$ARCHIVE_FILE" ]]; then
       fi
     fi
   else
-    log_info "No duplicate IDs in archive"
+    log_info "No duplicate IDs in archive" "archive_duplicates"
   fi
 
   # Check for IDs that exist in both active and archive
@@ -316,7 +343,7 @@ if [[ -f "$ARCHIVE_FILE" ]]; then
         fi
       fi
     else
-      log_info "No cross-file duplicate IDs"
+      log_info "No cross-file duplicate IDs" "cross_duplicates"
     fi
   fi
 fi
@@ -337,9 +364,9 @@ if [[ "$ACTIVE_COUNT" -gt 1 ]]; then
     fi
   fi
 elif [[ "$ACTIVE_COUNT" -eq 1 ]]; then
-  log_info "Single active task"
+  log_info "Single active task" "active_task"
 else
-  log_info "No active tasks"
+  log_info "No active tasks" "active_task"
 fi
 
 # 4. Check all depends[] references exist
@@ -352,7 +379,7 @@ MISSING_COUNT=$(echo "$MISSING_DEPS" | jq 'length')
 if [[ "$MISSING_COUNT" -gt 0 ]]; then
   log_error "Missing dependency references: $(echo "$MISSING_DEPS" | jq -r 'join(", ")')"
 else
-  log_info "All dependencies exist"
+  log_info "All dependencies exist" "dependencies"
 fi
 
 # 5. Check for circular dependencies (full DFS)
@@ -375,7 +402,7 @@ done < <(jq -r '
 ' "$TODO_FILE")
 
 if [[ "$CIRCULAR_DETECTED" != "true" ]]; then
-  log_info "No circular dependencies"
+  log_info "No circular dependencies" "circular_deps"
 fi
 
 # 6. Check blocked tasks have blockedBy
@@ -383,7 +410,7 @@ BLOCKED_NO_REASON=$(jq '[.tasks[] | select(.status == "blocked" and (.blockedBy 
 if [[ "$BLOCKED_NO_REASON" -gt 0 ]]; then
   log_error "$BLOCKED_NO_REASON blocked task(s) missing blockedBy reason"
 else
-  log_info "All blocked tasks have reasons"
+  log_info "All blocked tasks have reasons" "blocked_reasons"
 fi
 
 # 7. Check done tasks have completedAt
@@ -402,7 +429,7 @@ if [[ "$DONE_NO_DATE" -gt 0 ]]; then
     fi
   fi
 else
-  log_info "All done tasks have completedAt"
+  log_info "All done tasks have completedAt" "completed_at"
 fi
 
 # 7.5. Check schema version compatibility
@@ -418,14 +445,14 @@ if [[ -n "$SCHEMA_VERSION" ]]; then
   if [[ "$MAJOR_VERSION" != "$EXPECTED_MAJOR" ]]; then
     log_error "Incompatible schema version: $SCHEMA_VERSION (expected major version $EXPECTED_MAJOR)"
   else
-    log_info "Schema version compatible ($SCHEMA_VERSION)"
+    log_info "Schema version compatible ($SCHEMA_VERSION)" "schema_version"
   fi
 else
   if [[ "$FIX" == true ]]; then
     # Atomic write with locking
     if safe_json_write "$TODO_FILE" '._meta.version = $ver' --arg ver "$DEFAULT_VERSION"; then
       echo "  Fixed: Added _meta.version = $DEFAULT_VERSION"
-      log_info "Schema version compatible ($DEFAULT_VERSION) (after fix)"
+      log_info "Schema version compatible ($DEFAULT_VERSION) (after fix)" "schema_version"
     else
       log_error "Failed to add schema version (could not acquire lock or write failed)"
     fi
@@ -465,7 +492,7 @@ while IFS= read -r task_index; do
 done < <(jq -r 'range(0; .tasks | length)' "$TODO_FILE")
 
 if [[ "$MISSING_FIELD_COUNT" -eq 0 ]]; then
-  log_info "All tasks have required fields"
+  log_info "All tasks have required fields" "required_fields"
 fi
 
 # 8. Check focus.currentTask matches active task
@@ -500,7 +527,7 @@ elif [[ -z "$FOCUS_TASK" ]] && [[ -n "$ACTIVE_TASK" ]]; then
     fi
   fi
 else
-  log_info "Focus matches active task"
+  log_info "Focus matches active task" "focus_match"
 fi
 
 # 9. Check for multiple active phases (phase validation)
@@ -610,9 +637,9 @@ if jq -e '.project.phases' "$TODO_FILE" >/dev/null 2>&1; then
       log_error "Multiple active phases found ($ACTIVE_PHASE_COUNT). Only ONE allowed."
     fi
   elif [[ "$ACTIVE_PHASE_COUNT" -eq 1 ]]; then
-    log_info "Single active phase"
+    log_info "Single active phase" "active_phase"
   else
-    log_info "No active phases"
+    log_info "No active phases" "active_phase"
   fi
 
   # Check phase status values are valid (pending/active/completed)
@@ -646,7 +673,7 @@ if jq -e '.project.phases' "$TODO_FILE" >/dev/null 2>&1; then
   # Validate phaseHistory if present
   PHASE_HISTORY_COUNT=$(jq '.project.phaseHistory // [] | length' "$TODO_FILE")
   if [[ "$PHASE_HISTORY_COUNT" -gt 0 ]]; then
-    log_info "Phase history entries: $PHASE_HISTORY_COUNT"
+    log_info "Phase history entries: $PHASE_HISTORY_COUNT" "phase_history"
 
     # Check phaseHistory entries reference valid phases
     INVALID_PHASE_REFS=$(jq -r '
@@ -708,7 +735,7 @@ if [[ -n "$STORED_CHECKSUM" ]]; then
       log_error "Checksum mismatch: stored=$STORED_CHECKSUM, computed=$COMPUTED_CHECKSUM"
     fi
   else
-    log_info "Checksum valid"
+    log_info "Checksum valid" "checksum"
   fi
 else
   log_warn "No checksum found"
@@ -739,7 +766,7 @@ if [[ -f "CLAUDE.md" ]] && [[ -f "$CLAUDE_TODO_HOME/templates/CLAUDE-INJECTION.m
       NEW_VERSION=$(grep -oP 'CLAUDE-TODO:START v\K[0-9.]+' CLAUDE.md 2>/dev/null || echo "")
       if [[ "$NEW_VERSION" == "$INSTALLED_INJECTION_VERSION" ]]; then
         echo "  Fixed: Updated legacy CLAUDE.md injection (unversioned → v${INSTALLED_INJECTION_VERSION})"
-        log_info "CLAUDE.md injection current (v${INSTALLED_INJECTION_VERSION})"
+        log_info "CLAUDE.md injection current (v${INSTALLED_INJECTION_VERSION})" "claude_md"
       else
         log_warn "CLAUDE.md has legacy (unversioned) injection. Run: claude-todo init --update-claude-md"
       fi
@@ -752,7 +779,7 @@ if [[ -f "CLAUDE.md" ]] && [[ -f "$CLAUDE_TODO_HOME/templates/CLAUDE-INJECTION.m
       "$CLAUDE_TODO_HOME/scripts/init.sh" --update-claude-md 2>/dev/null
       if grep -qP 'CLAUDE-TODO:START v[0-9.]+' CLAUDE.md 2>/dev/null; then
         echo "  Fixed: Added CLAUDE.md injection (v${INSTALLED_INJECTION_VERSION})"
-        log_info "CLAUDE.md injection current (v${INSTALLED_INJECTION_VERSION})"
+        log_info "CLAUDE.md injection current (v${INSTALLED_INJECTION_VERSION})" "claude_md"
       else
         log_warn "No CLAUDE-TODO injection found in CLAUDE.md. Run: claude-todo init --update-claude-md"
       fi
@@ -766,7 +793,7 @@ if [[ -f "CLAUDE.md" ]] && [[ -f "$CLAUDE_TODO_HOME/templates/CLAUDE-INJECTION.m
       NEW_VERSION=$(grep -oP 'CLAUDE-TODO:START v\K[0-9.]+' CLAUDE.md 2>/dev/null || echo "")
       if [[ "$NEW_VERSION" == "$INSTALLED_INJECTION_VERSION" ]]; then
         echo "  Fixed: Updated CLAUDE.md injection (${CURRENT_INJECTION_VERSION} → ${INSTALLED_INJECTION_VERSION})"
-        log_info "CLAUDE.md injection current (v${INSTALLED_INJECTION_VERSION})"
+        log_info "CLAUDE.md injection current (v${INSTALLED_INJECTION_VERSION})" "claude_md"
       else
         log_warn "CLAUDE.md injection outdated (${CURRENT_INJECTION_VERSION} → ${INSTALLED_INJECTION_VERSION}). Run: claude-todo init --update-claude-md"
       fi
@@ -774,14 +801,14 @@ if [[ -f "CLAUDE.md" ]] && [[ -f "$CLAUDE_TODO_HOME/templates/CLAUDE-INJECTION.m
       log_warn "CLAUDE.md injection outdated (${CURRENT_INJECTION_VERSION} → ${INSTALLED_INJECTION_VERSION}). Run with --fix or: claude-todo init --update-claude-md"
     fi
   else
-    log_info "CLAUDE.md injection current (v${CURRENT_INJECTION_VERSION})"
+    log_info "CLAUDE.md injection current (v${CURRENT_INJECTION_VERSION})" "claude_md"
   fi
 elif [[ -f "CLAUDE.md" ]]; then
   # CLAUDE.md exists but no injection template to compare against
   HAS_LEGACY_INJECTION=$(grep -q 'CLAUDE-TODO:START' CLAUDE.md 2>/dev/null && echo "true" || echo "false")
   CURRENT_INJECTION_VERSION=$(grep -oP 'CLAUDE-TODO:START v\K[0-9.]+' CLAUDE.md 2>/dev/null || echo "")
   if [[ -n "$CURRENT_INJECTION_VERSION" ]]; then
-    log_info "CLAUDE.md injection present (v${CURRENT_INJECTION_VERSION})"
+    log_info "CLAUDE.md injection present (v${CURRENT_INJECTION_VERSION})" "claude_md"
   elif [[ "$HAS_LEGACY_INJECTION" == "true" ]]; then
     log_warn "CLAUDE.md has legacy (unversioned) injection. Run with --fix or: claude-todo init --update-claude-md"
   else
@@ -792,17 +819,26 @@ fi
 # Summary
 if [[ "$FORMAT" == "json" ]]; then
   # Don't print blank line for JSON output
-  # Get version from config or default
-  VERSION=$(jq -r '._meta.version // "0.8.3"' "$TODO_FILE" 2>/dev/null || echo "0.8.3")
+  # Get app version (not schema version)
+  APP_VERSION="${CLAUDE_TODO_VERSION:-unknown}"
+  SCHEMA_VERSION=$(jq -r '._meta.version // "unknown"' "$TODO_FILE" 2>/dev/null || echo "unknown")
   TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
   VALID=$([[ $ERRORS -eq 0 ]] && echo "true" || echo "false")
+
+  # Build details array from collected details
+  DETAILS_ARRAY="[]"
+  if [[ ${#DETAILS_JSON[@]} -gt 0 ]]; then
+    DETAILS_ARRAY=$(printf '%s\n' "${DETAILS_JSON[@]}" | jq -s '.')
+  fi
 
   jq -n \
     --argjson errors "$ERRORS" \
     --argjson warnings "$WARNINGS" \
     --argjson valid "$VALID" \
-    --arg version "$VERSION" \
+    --arg version "$APP_VERSION" \
+    --arg schemaVersion "$SCHEMA_VERSION" \
     --arg timestamp "$TIMESTAMP" \
+    --argjson details "$DETAILS_ARRAY" \
     '{
       "$schema": "https://claude-todo.dev/schemas/v1/output.schema.json",
       "_meta": {
@@ -813,9 +849,10 @@ if [[ "$FORMAT" == "json" ]]; then
       },
       "success": true,
       "valid": $valid,
+      "schemaVersion": $schemaVersion,
       "errors": $errors,
       "warnings": $warnings,
-      "details": []
+      "details": $details
     }'
 
   # Exit with appropriate code

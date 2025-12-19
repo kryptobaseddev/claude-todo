@@ -101,6 +101,8 @@ DESCRIPTION
 
 OPTIONS
     -f, --format FORMAT      Output format: todowrite, json, markdown, csv, tsv (default: todowrite)
+        --json               Shortcut for --format json
+        --human              Shortcut for --format text (alias for todowrite)
     -s, --status STATUS      Comma-separated status filter (default: pending,active)
     -p, --priority PRIORITY  Filter by priority (critical|high|medium|low)
     -l, --label LABEL        Filter by label
@@ -217,6 +219,14 @@ parse_args() {
             -f|--format)
                 FORMAT="${2:-todowrite}"
                 shift 2
+                ;;
+            --json)
+                FORMAT="json"
+                shift
+                ;;
+            --human)
+                FORMAT="todowrite"
+                shift
                 ;;
             -s|--status)
                 STATUS_FILTER="${2:-pending,active}"

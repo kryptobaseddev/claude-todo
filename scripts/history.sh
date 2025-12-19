@@ -79,7 +79,7 @@ fi
 DAYS=30
 SINCE_DATE=""
 UNTIL_DATE=""
-OUTPUT_FORMAT=""
+FORMAT=""
 COMMAND_NAME="history"
 SHOW_CHARTS=true
 QUIET=false
@@ -612,7 +612,7 @@ parse_arguments() {
       --days)
         DAYS="$2"
         if ! [[ "$DAYS" =~ ^[0-9]+$ ]]; then
-          if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+          if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
             output_error "$E_INPUT_INVALID" "--days must be a positive integer" 1 true "Provide a number like --days 7"
           else
             output_error "$E_INPUT_INVALID" "--days must be a positive integer"
@@ -625,7 +625,7 @@ parse_arguments() {
         SINCE_DATE="$2"
         # Basic date validation (YYYY-MM-DD format)
         if ! [[ "$SINCE_DATE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
-          if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+          if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
             output_error "$E_INPUT_INVALID" "--since must be in YYYY-MM-DD format" 1 true "Use format like --since 2025-12-01"
           else
             output_error "$E_INPUT_INVALID" "--since must be in YYYY-MM-DD format"
@@ -637,7 +637,7 @@ parse_arguments() {
       --until)
         UNTIL_DATE="$2"
         if ! [[ "$UNTIL_DATE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
-          if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+          if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
             output_error "$E_INPUT_INVALID" "--until must be in YYYY-MM-DD format" 1 true "Use format like --until 2025-12-15"
           else
             output_error "$E_INPUT_INVALID" "--until must be in YYYY-MM-DD format"
@@ -647,8 +647,8 @@ parse_arguments() {
         shift 2
         ;;
       --format|-f)
-        OUTPUT_FORMAT="$2"
-        if ! validate_format "$OUTPUT_FORMAT" "text,json"; then
+        FORMAT="$2"
+        if ! validate_format "$FORMAT" "text,json"; then
           exit 1
         fi
         shift 2
@@ -658,11 +658,11 @@ parse_arguments() {
         shift
         ;;
       --json)
-        OUTPUT_FORMAT="json"
+        FORMAT="json"
         shift
         ;;
       --human)
-        OUTPUT_FORMAT="text"
+        FORMAT="text"
         shift
         ;;
       -q|--quiet)
@@ -673,7 +673,7 @@ parse_arguments() {
         usage
         ;;
       *)
-        if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+        if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
           output_error "$E_INPUT_INVALID" "Unknown option: $1" 1 true "Run 'claude-todo history --help' for usage"
         else
           output_error "$E_INPUT_INVALID" "Unknown option: $1"
@@ -693,11 +693,11 @@ main() {
   parse_arguments "$@"
 
   # Resolve format (TTY-aware auto-detection)
-  OUTPUT_FORMAT=$(resolve_format "${OUTPUT_FORMAT:-}")
+  FORMAT=$(resolve_format "${FORMAT:-}")
 
   # Check if log file exists
   if [[ ! -f "$HIST_LOG_FILE" ]]; then
-    if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+    if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
       output_error "$E_FILE_NOT_FOUND" "Log file not found: $HIST_LOG_FILE" 1 true "Run some commands to generate history"
     else
       output_error "$E_FILE_NOT_FOUND" "Log file not found: $HIST_LOG_FILE"
@@ -708,7 +708,7 @@ main() {
 
   # Check required commands
   if ! command -v jq &>/dev/null; then
-    if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+    if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
       output_error "$E_DEPENDENCY_MISSING" "jq is required but not installed" 1 true "Install jq: brew install jq (macOS) or apt install jq (Linux)"
     else
       output_error "$E_DEPENDENCY_MISSING" "jq is required but not installed"
@@ -717,7 +717,7 @@ main() {
   fi
 
   # Output in requested format
-  case "$OUTPUT_FORMAT" in
+  case "$FORMAT" in
     json)
       output_json_format
       ;;

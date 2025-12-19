@@ -58,6 +58,12 @@ if [[ -f "$LIB_DIR/error-json.sh" ]]; then
   source "$LIB_DIR/error-json.sh"
 fi
 
+# Source hierarchy library for type/parent/size validation
+if [[ -f "$LIB_DIR/hierarchy.sh" ]]; then
+  # shellcheck source=../lib/hierarchy.sh
+  source "$LIB_DIR/hierarchy.sh"
+fi
+
 # Fallback exit codes if libraries not loaded (for robustness)
 : "${EXIT_SUCCESS:=0}"
 : "${EXIT_INVALID_INPUT:=2}"
@@ -65,6 +71,11 @@ fi
 : "${EXIT_NOT_FOUND:=4}"
 : "${EXIT_VALIDATION_ERROR:=6}"
 : "${EXIT_NO_CHANGE:=102}"
+# Hierarchy exit codes
+: "${EXIT_PARENT_NOT_FOUND:=10}"
+: "${EXIT_DEPTH_EXCEEDED:=11}"
+: "${EXIT_SIBLING_LIMIT:=12}"
+: "${EXIT_INVALID_PARENT_TYPE:=13}"
 
 # Fallback error codes if error-json.sh not loaded
 : "${E_INPUT_MISSING:=E_INPUT_MISSING}"
@@ -75,6 +86,12 @@ fi
 : "${E_VALIDATION_REQUIRED:=E_VALIDATION_REQUIRED}"
 : "${E_VALIDATION_SCHEMA:=E_VALIDATION_SCHEMA}"
 : "${E_FILE_WRITE_ERROR:=E_FILE_WRITE_ERROR}"
+# Hierarchy error codes
+: "${E_PARENT_NOT_FOUND:=E_PARENT_NOT_FOUND}"
+: "${E_DEPTH_EXCEEDED:=E_DEPTH_EXCEEDED}"
+: "${E_SIBLING_LIMIT:=E_SIBLING_LIMIT}"
+: "${E_INVALID_PARENT_TYPE:=E_INVALID_PARENT_TYPE}"
+: "${E_INPUT_INVALID:=E_INPUT_INVALID}"
 
 # Colors (respects NO_COLOR and FORCE_COLOR environment variables per https://no-color.org)
 if declare -f should_use_color >/dev/null 2>&1 && should_use_color; then
@@ -97,6 +114,11 @@ NEW_PRIORITY=""
 NEW_DESCRIPTION=""
 NEW_PHASE=""
 NEW_BLOCKED_BY=""
+
+# Hierarchy fields (v0.20.0+)
+NEW_TYPE=""       # epic|task|subtask
+NEW_PARENT_ID=""  # Parent task ID for hierarchy
+NEW_SIZE=""       # small|medium|large - scope-based size
 
 # Array operations: append (default) vs set (replace) vs clear
 LABELS_TO_ADD=""
@@ -142,6 +164,13 @@ Scalar Field Options:
       --add-phase           Create new phase if it doesn't exist
       --blocked-by REASON   Set blocked reason (status becomes blocked)
 
+Hierarchy Options (v0.20.0+):
+      --type TYPE           Change task type: epic|task|subtask
+                            Note: epic cannot have parent, subtask requires parent
+      --parent ID           Set/change parent task ID (e.g., T001)
+                            Use --parent "" to remove parent (make root task)
+      --size SIZE           Set scope-based size: small|medium|large (NOT time)
+
 Array Field Options (append by default):
   -l, --labels LABELS       Append comma-separated labels
       --set-labels LABELS   Replace all labels with these
@@ -180,6 +209,10 @@ Examples:
   claude-todo update T005 --notes "Started implementation"
   claude-todo update T001 --json               # JSON output for agents
   claude-todo update T001 --dry-run            # Preview changes
+  claude-todo update T001 --type epic          # Convert task to epic
+  claude-todo update T042 --parent T001        # Set parent (make child of T001)
+  claude-todo update T042 --parent ""          # Remove parent (make root task)
+  claude-todo update T001 --size large         # Set scope-based size
 
 Exit Codes:
   0   = Success
@@ -187,6 +220,10 @@ Exit Codes:
   3   = File operation failure
   4   = Task not found
   6   = Validation error
+  10  = Parent task not found
+  11  = Max hierarchy depth exceeded
+  12  = Max siblings limit exceeded
+  13  = Invalid parent type (subtask cannot have children)
   102 = No changes (dry-run or no-op)
 EOF
   exit 0
@@ -408,6 +445,19 @@ while [[ $# -gt 0 ]]; do
       NEW_BLOCKED_BY="$2"
       shift 2
       ;;
+    # Hierarchy fields (v0.20.0+)
+    --type)
+      NEW_TYPE="$2"
+      shift 2
+      ;;
+    --parent)
+      NEW_PARENT_ID="$2"
+      shift 2
+      ;;
+    --size)
+      NEW_SIZE="$2"
+      shift 2
+      ;;
     # Labels
     -l|--labels)
       LABELS_TO_ADD="$2"
@@ -598,6 +648,121 @@ fi
 [[ -n "$NOTE_TO_ADD" ]] && { validate_note "$NOTE_TO_ADD" || exit 1; }
 [[ -n "$NEW_BLOCKED_BY" ]] && { validate_blocked_by "$NEW_BLOCKED_BY" || exit 1; }
 
+# Validate hierarchy fields (v0.20.0+)
+if [[ -n "$NEW_TYPE" ]]; then
+  if ! validate_task_type "$NEW_TYPE" 2>/dev/null; then
+    if [[ "$FORMAT" == "json" ]]; then
+      output_error "$E_INPUT_INVALID" "Invalid task type: $NEW_TYPE (must be epic|task|subtask)" "$EXIT_INVALID_INPUT" true "Valid types: epic, task, subtask"
+    else
+      log_error "Invalid task type: $NEW_TYPE (must be epic|task|subtask)"
+    fi
+    exit "${EXIT_INVALID_INPUT:-2}"
+  fi
+fi
+
+if [[ -n "$NEW_SIZE" ]]; then
+  if ! validate_task_size "$NEW_SIZE" 2>/dev/null; then
+    if [[ "$FORMAT" == "json" ]]; then
+      output_error "$E_INPUT_INVALID" "Invalid size: $NEW_SIZE (must be small|medium|large)" "$EXIT_INVALID_INPUT" true "Valid sizes: small, medium, large"
+    else
+      log_error "Invalid size: $NEW_SIZE (must be small|medium|large)"
+    fi
+    exit "${EXIT_INVALID_INPUT:-2}"
+  fi
+fi
+
+# Validate parent ID and hierarchy constraints
+if [[ -n "$NEW_PARENT_ID" ]]; then
+  # Empty string means remove parent (make root task)
+  if [[ "$NEW_PARENT_ID" != "" ]]; then
+    # Validate parent ID format
+    if ! [[ "$NEW_PARENT_ID" =~ ^T[0-9]{3,}$ ]]; then
+      if [[ "$FORMAT" == "json" ]]; then
+        output_error "$E_INPUT_INVALID" "Invalid parent ID format: $NEW_PARENT_ID (must be T### format)" "$EXIT_INVALID_INPUT" true "Use format T### (e.g., T001, T042)"
+      else
+        log_error "Invalid parent ID format: $NEW_PARENT_ID (must be T### format)"
+      fi
+      exit "${EXIT_INVALID_INPUT:-2}"
+    fi
+
+    # Can't set self as parent
+    if [[ "$NEW_PARENT_ID" == "$TASK_ID" ]]; then
+      if [[ "$FORMAT" == "json" ]]; then
+        output_error "$E_INPUT_INVALID" "Task cannot be its own parent" "$EXIT_INVALID_INPUT" false "Choose a different task as parent"
+      else
+        log_error "Task cannot be its own parent"
+      fi
+      exit "${EXIT_INVALID_INPUT:-2}"
+    fi
+
+    # Validate parent exists
+    if ! validate_parent_exists "$NEW_PARENT_ID" "$TODO_FILE"; then
+      if [[ "$FORMAT" == "json" ]]; then
+        output_error "$E_PARENT_NOT_FOUND" "Parent task not found: $NEW_PARENT_ID" "$EXIT_PARENT_NOT_FOUND" true "Use 'ct exists $NEW_PARENT_ID' to verify task ID"
+      else
+        log_error "Parent task not found: $NEW_PARENT_ID"
+      fi
+      exit "${EXIT_PARENT_NOT_FOUND:-10}"
+    fi
+
+    # Validate max depth (would this exceed 3 levels?)
+    if ! validate_max_depth "$NEW_PARENT_ID" "$TODO_FILE"; then
+      if [[ "$FORMAT" == "json" ]]; then
+        output_error "$E_DEPTH_EXCEEDED" "Cannot set parent to $NEW_PARENT_ID: max hierarchy depth (3) would be exceeded" "$EXIT_DEPTH_EXCEEDED" false "Refactor task hierarchy to reduce nesting depth"
+      else
+        log_error "Cannot set parent to $NEW_PARENT_ID: max hierarchy depth (3) would be exceeded"
+      fi
+      exit "${EXIT_DEPTH_EXCEEDED:-11}"
+    fi
+
+    # Validate max siblings
+    if ! validate_max_siblings "$NEW_PARENT_ID" "$TODO_FILE"; then
+      if [[ "$FORMAT" == "json" ]]; then
+        output_error "$E_SIBLING_LIMIT" "Cannot set parent to $NEW_PARENT_ID: max siblings (7) exceeded" "$EXIT_SIBLING_LIMIT" false "Group related tasks under a new parent task"
+      else
+        log_error "Cannot set parent to $NEW_PARENT_ID: max siblings (7) exceeded"
+      fi
+      exit "${EXIT_SIBLING_LIMIT:-12}"
+    fi
+
+    # Validate parent type (subtasks can't have children)
+    if ! validate_parent_type "$NEW_PARENT_ID" "$TODO_FILE"; then
+      if [[ "$FORMAT" == "json" ]]; then
+        output_error "$E_INVALID_PARENT_TYPE" "Cannot set parent to $NEW_PARENT_ID: subtasks cannot have children" "$EXIT_INVALID_PARENT_TYPE" false "Choose a task or epic as parent instead of a subtask"
+      else
+        log_error "Cannot set parent to $NEW_PARENT_ID: subtasks cannot have children"
+      fi
+      exit "${EXIT_INVALID_PARENT_TYPE:-13}"
+    fi
+  fi
+fi
+
+# Cross-validate type and parent constraints
+CURRENT_TYPE=$(echo "$TASK" | jq -r '.type // "task"')
+CURRENT_PARENT=$(echo "$TASK" | jq -r '.parentId // ""')
+FINAL_TYPE="${NEW_TYPE:-$CURRENT_TYPE}"
+FINAL_PARENT="${NEW_PARENT_ID:-$CURRENT_PARENT}"
+
+# Epic cannot have parent
+if [[ "$FINAL_TYPE" == "epic" && -n "$FINAL_PARENT" && "$FINAL_PARENT" != "" ]]; then
+  if [[ "$FORMAT" == "json" ]]; then
+    output_error "$E_INPUT_INVALID" "Epic tasks cannot have a parent - they must be root-level" "$EXIT_VALIDATION_ERROR" false "Remove --parent flag or change --type to task|subtask"
+  else
+    log_error "Epic tasks cannot have a parent - they must be root-level"
+  fi
+  exit "${EXIT_VALIDATION_ERROR:-6}"
+fi
+
+# Subtask requires parent
+if [[ "$FINAL_TYPE" == "subtask" && ( -z "$FINAL_PARENT" || "$FINAL_PARENT" == "" ) ]]; then
+  if [[ "$FORMAT" == "json" ]]; then
+    output_error "$E_INPUT_INVALID" "Subtask tasks require a parent - specify with --parent" "$EXIT_VALIDATION_ERROR" false "Add --parent T### flag or change --type to task|epic"
+  else
+    log_error "Subtask tasks require a parent"
+  fi
+  exit "${EXIT_VALIDATION_ERROR:-6}"
+fi
+
 # Add new phase if --add-phase flag is set and phase doesn't exist
 if [[ "$ADD_PHASE" == "true" ]] && [[ -n "$NEW_PHASE" ]]; then
   add_new_phase "$NEW_PHASE"
@@ -635,6 +800,7 @@ fi
 # Check if any update requested
 if [[ -z "$NEW_TITLE" && -z "$NEW_STATUS" && -z "$NEW_PRIORITY" && \
       -z "$NEW_DESCRIPTION" && -z "$NEW_PHASE" && -z "$NEW_BLOCKED_BY" && \
+      -z "$NEW_TYPE" && -z "$NEW_PARENT_ID" && -z "$NEW_SIZE" && \
       -z "$LABELS_TO_ADD" && -z "$LABELS_TO_SET" && "$CLEAR_LABELS" == false && \
       -z "$FILES_TO_ADD" && -z "$FILES_TO_SET" && "$CLEAR_FILES" == false && \
       -z "$ACCEPTANCE_TO_ADD" && -z "$ACCEPTANCE_TO_SET" && "$CLEAR_ACCEPTANCE" == false && \
@@ -725,6 +891,37 @@ if [[ -n "$NEW_BLOCKED_BY" ]]; then
   CHANGES+=("status: $CURRENT_STATUS → blocked")
   CHANGES_JSON=$(echo "$CHANGES_JSON" | jq --arg before "$OLD_BLOCKED_BY" --arg after "$NEW_BLOCKED_BY" '.blockedBy = {before: (if $before == "null" then null else $before end), after: $after}')
   CHANGES_JSON=$(echo "$CHANGES_JSON" | jq --arg before "$CURRENT_STATUS" '.status = {before: $before, after: "blocked"}')
+fi
+
+# Hierarchy fields (v0.20.0+)
+if [[ -n "$NEW_TYPE" ]]; then
+  OLD_TYPE=$(echo "$TASK" | jq -r '.type // "task"')
+  JQ_UPDATES="$JQ_UPDATES | .type = \$new_type"
+  CHANGES+=("type: $OLD_TYPE → $NEW_TYPE")
+  CHANGES_JSON=$(echo "$CHANGES_JSON" | jq --arg before "$OLD_TYPE" --arg after "$NEW_TYPE" '.type = {before: $before, after: $after}')
+fi
+
+if [[ -n "$NEW_PARENT_ID" ]]; then
+  OLD_PARENT=$(echo "$TASK" | jq -r '.parentId // null')
+  OLD_PARENT_DISPLAY="${OLD_PARENT:-"(none)"}"
+  if [[ "$NEW_PARENT_ID" == "" ]]; then
+    # Remove parent (make root task)
+    JQ_UPDATES="$JQ_UPDATES | del(.parentId)"
+    CHANGES+=("parentId: $OLD_PARENT_DISPLAY → (removed)")
+    CHANGES_JSON=$(echo "$CHANGES_JSON" | jq --arg before "$OLD_PARENT" '.parentId = {before: (if $before == "null" then null else $before end), after: null, action: "removed"}')
+  else
+    JQ_UPDATES="$JQ_UPDATES | .parentId = \$new_parent_id"
+    CHANGES+=("parentId: $OLD_PARENT_DISPLAY → $NEW_PARENT_ID")
+    CHANGES_JSON=$(echo "$CHANGES_JSON" | jq --arg before "$OLD_PARENT" --arg after "$NEW_PARENT_ID" '.parentId = {before: (if $before == "null" then null else $before end), after: $after}')
+  fi
+fi
+
+if [[ -n "$NEW_SIZE" ]]; then
+  OLD_SIZE=$(echo "$TASK" | jq -r '.size // null')
+  OLD_SIZE_DISPLAY="${OLD_SIZE:-"(none)"}"
+  JQ_UPDATES="$JQ_UPDATES | .size = \$new_size"
+  CHANGES+=("size: $OLD_SIZE_DISPLAY → $NEW_SIZE")
+  CHANGES_JSON=$(echo "$CHANGES_JSON" | jq --arg before "$OLD_SIZE" --arg after "$NEW_SIZE" '.size = {before: (if $before == "null" then null else $before end), after: $after}')
 fi
 
 # Labels array
@@ -835,6 +1032,9 @@ UPDATED_TODO=$(jq --arg id "$TASK_ID" \
   --arg new_description "$NEW_DESCRIPTION" \
   --arg new_phase "$NEW_PHASE" \
   --arg new_blocked_by "$NEW_BLOCKED_BY" \
+  --arg new_type "$NEW_TYPE" \
+  --arg new_parent_id "$NEW_PARENT_ID" \
+  --arg new_size "$NEW_SIZE" \
   --arg ts "$TIMESTAMP" "
   .tasks |= map(
     if .id == \$id then

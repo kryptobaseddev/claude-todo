@@ -186,20 +186,28 @@ claude-todo list --phase core              # Filter by phase
 claude-todo list --format json             # Output format (text|json|jsonl|markdown|table)
 ```
 
-### JSON Output Parsing
-JSON output is wrapped with metadata. Access tasks via `.tasks[]`:
+### LLM-Agent-First Output
+
+**JSON is automatic** when piped (non-TTY). No `--format` flag needed:
 ```bash
-# Structure: { "_meta": {...}, "summary": {...}, "tasks": [...] }
-
-# Get task IDs
-claude-todo list --format json | jq -r '.tasks[].id'
-
-# Filter pending tasks
-claude-todo list --format json | jq '.tasks[] | select(.status == "pending")'
-
-# Format as table
-claude-todo list --format json | jq -r '.tasks[] | "[\(.id)] \(.status) - \(.title)"'
+claude-todo list | jq '.tasks[0]'      # Auto-JSON when piped
+claude-todo analyze                     # JSON by default (use --human for text)
 ```
+
+**Prefer native filters over jq** (fewer tokens, no shell quoting issues):
+```bash
+# ✅ NATIVE (recommended)
+claude-todo list --status pending       # Built-in filter
+claude-todo find "auth"                 # Fuzzy search (99% less context)
+claude-todo list --label bug --phase core  # Combined filters
+
+# ⚠️ JQ (only when native filters insufficient)
+# Use SINGLE quotes to avoid shell interpretation
+claude-todo list | jq '.tasks[] | select(.type != "epic")'
+#                    ^ single quotes prevent bash ! expansion
+```
+
+**JSON envelope structure**: `{ "_meta": {...}, "summary": {...}, "tasks": [...] }`
 
 ## Session Protocol
 

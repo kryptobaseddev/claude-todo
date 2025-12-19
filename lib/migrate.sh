@@ -529,21 +529,37 @@ migrate_todo_to_2_3_0() {
     # - Add type: "task" if missing
     # - Add parentId: null if missing
     # - Add size: null if missing (optional field)
-    # - Migrate label conventions:
-    #   - "type:epic" → type: "epic", remove label
-    #   - "type:task" → type: "task", remove label
-    #   - "type:subtask" → type: "subtask", remove label
-    #   - "parent:T001" → parentId: "T001", remove label
-    #   - "size:small" → size: "small", remove label
-    #   - "size:medium" → size: "medium", remove label
-    #   - "size:large" → size: "large", remove label
+    # - Migrate label conventions (supports both colon and hyphen separators):
+    #   - "type:epic" or "type-epic" → type: "epic", remove label
+    #   - "type:task" or "type-task" → type: "task", remove label
+    #   - "type:subtask" or "type-subtask" → type: "subtask", remove label
+    #   - "parent:T001" or "parent-T001" → parentId: "T001", remove label
+    #   - "size:small" or "size-small" → size: "small", remove label
+    #   - "size:medium" or "size-medium" → size: "medium", remove label
+    #   - "size:large" or "size-large" → size: "large", remove label
     jq '
+        # Helper to check if label matches prefix with either : or - separator
+        def matches_prefix($prefix):
+            startswith($prefix + ":") or startswith($prefix + "-");
+
+        # Helper to extract value from label with either : or - separator
+        def extract_value($prefix):
+            if startswith($prefix + ":") then
+                split(":")[1]
+            elif startswith($prefix + "-") then
+                # Handle hyphen separator - split on first hyphen after prefix
+                (length - ($prefix | length) - 1) as $val_len |
+                .[$prefix | length + 1:]
+            else
+                null
+            end;
+
         # Helper to extract type from labels
         def extract_type_from_labels:
             if . then
                 . as $labels |
-                if ($labels | any(startswith("type:"))) then
-                    ($labels | map(select(startswith("type:"))) | .[0] | split(":")[1] // "task")
+                if ($labels | any(matches_prefix("type"))) then
+                    ($labels | map(select(matches_prefix("type"))) | .[0] | extract_value("type") // "task")
                 else
                     "task"
                 end
@@ -555,8 +571,8 @@ migrate_todo_to_2_3_0() {
         def extract_parent_from_labels:
             if . then
                 . as $labels |
-                if ($labels | any(startswith("parent:"))) then
-                    ($labels | map(select(startswith("parent:"))) | .[0] | split(":")[1] // null)
+                if ($labels | any(matches_prefix("parent"))) then
+                    ($labels | map(select(matches_prefix("parent"))) | .[0] | extract_value("parent") // null)
                 else
                     null
                 end
@@ -568,8 +584,8 @@ migrate_todo_to_2_3_0() {
         def extract_size_from_labels:
             if . then
                 . as $labels |
-                if ($labels | any(startswith("size:"))) then
-                    ($labels | map(select(startswith("size:"))) | .[0] | split(":")[1] // null)
+                if ($labels | any(matches_prefix("size"))) then
+                    ($labels | map(select(matches_prefix("size"))) | .[0] | extract_value("size") // null)
                 else
                     null
                 end
@@ -577,13 +593,13 @@ migrate_todo_to_2_3_0() {
                 null
             end;
 
-        # Helper to clean labels (remove migrated ones)
+        # Helper to clean labels (remove migrated ones - both : and - separators)
         def clean_labels:
             if . then
                 map(select(
-                    (startswith("type:") | not) and
-                    (startswith("parent:") | not) and
-                    (startswith("size:") | not)
+                    (matches_prefix("type") | not) and
+                    (matches_prefix("parent") | not) and
+                    (matches_prefix("size") | not)
                 ))
             else
                 []
@@ -611,8 +627,9 @@ migrate_todo_to_2_3_0() {
             .labels = ($labels | clean_labels)
         ] |
 
-        # Update version
-        .version = "2.3.0"
+        # Update version fields
+        .version = "2.3.0" |
+        ._meta.version = "2.3.0"
     ' "$file" > "$temp_file" || {
         echo "ERROR: Failed to add hierarchy fields" >&2
         rm -f "$temp_file"

@@ -3,9 +3,9 @@
   "version": "2.1.0",
   "project": "claude-todo",
   "_meta": {
-    "totalEntries": 981,
+    "totalEntries": 1113,
     "firstEntry": "2025-12-13T07:14:38Z",
-    "lastEntry": "2025-12-19T08:03:38Z",
+    "lastEntry": "2025-12-19T19:30:34Z",
     "entriesPruned": 0
   },
   "entries": [
@@ -25516,6 +25516,2044 @@
       "after": {
         "status": "done",
         "completedAt": "2025-12-19T08:03:38Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_d177d54f336a",
+      "timestamp": "2025-12-19T17:17:05Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T045",
+      "before": {
+        "status": "pending",
+        "completedAt": "2025-12-12T16:56:59Z"
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T17:17:05Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_a024a60a47f4",
+      "timestamp": "2025-12-19T17:17:06Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T295",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T17:17:06Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_023758770b92",
+      "timestamp": "2025-12-19T17:17:08Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T298",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T17:17:08Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_2cf9a9522b6a",
+      "timestamp": "2025-12-19T17:35:02Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T292",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T17:35:02Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_c1961ec8efe4",
+      "timestamp": "2025-12-19T17:35:04Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T293",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T17:35:04Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_e37ba13e25c1",
+      "timestamp": "2025-12-19T17:35:05Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T294",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T17:35:05Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_d56ae830742a",
+      "timestamp": "2025-12-19T17:35:07Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T296",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T17:35:07Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_58bf0a2fe323",
+      "timestamp": "2025-12-19T17:35:09Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T297",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T17:35:09Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_55805e78e79e",
+      "timestamp": "2025-12-19T17:39:27Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T408",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T17:39:27Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_31d59e226752",
+      "timestamp": "2025-12-19T17:39:28Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T409",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T17:39:28Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_917fd0e41a86",
+      "timestamp": "2025-12-19T17:39:28Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T420",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T17:39:28Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_1b2a03253c3c",
+      "timestamp": "2025-12-19T17:50:25Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T417",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T17:50:25Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_36b63fb236cb",
+      "timestamp": "2025-12-19T17:50:25Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T419",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T17:50:25Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log-1766167076-e837c6",
+      "timestamp": "2025-12-19T17:57:56Z",
+      "action": "task_created",
+      "taskId": "T511",
+      "actor": "system",
+      "details": {
+        "title": "Fix TTY detection bypass in 7 scripts (hardcoded FORMAT=text)",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Fix TTY detection bypass in 7 scripts (hardcoded FORMAT=text)",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log_53168eda2f89",
+      "timestamp": "2025-12-19T17:58:56Z",
+      "sessionId": "session_20251219_095856_7a1906",
+      "action": "session_start",
+      "actor": "system",
+      "taskId": null,
+      "before": null,
+      "after": null,
+      "details": "Session started"
+    },
+    {
+      "id": "log_a129e21f68e0",
+      "timestamp": "2025-12-19T17:58:56Z",
+      "sessionId": "session_20251219_095856_7a1906",
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": null,
+      "after": {
+        "currentTask": "T328"
+      },
+      "details": null
+    },
+    {
+      "id": "log_8cf7885f13d4",
+      "timestamp": "2025-12-19T18:02:06Z",
+      "sessionId": "session_20251219_095856_7a1906",
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T328",
+      "before": {
+        "title": "EPIC: Hierarchy Enhancement Phase 1 - Core (v0.15.0)",
+        "status": "active",
+        "priority": "critical",
+        "description": "## Overview\nImplement core hierarchical task management for claude-todo.\n\n## Scope\n- Schema v2.3.0 with type, parentId, size fields\n- Migration from v2.2.0 (label conventions to schema fields)\n- Validation rules (depth, siblings, parent existence, orphans)\n- CLI flags: --type, --parent, --size, --tree, --children\n- Anti-hallucination error messages\n\n## Success Criteria\n- All existing tests pass (1124+)\n- New hierarchy tests pass (100+)\n- Migration preserves all data\n- Validation catches invalid operations\n\n## NOT in scope (Phase 2)\n- Auto-complete parent\n- reparent/promote commands\n- Tab completion\n- Advanced automation",
+        "phase": "core",
+        "labels": [
+          "epic-type",
+          "hierarchy",
+          "v0.15.0",
+          "v0.17.0"
+        ],
+        "files": [
+          "docs/specs/HIERARCHY-ENHANCEMENT-SPEC.md",
+          "docs/specs/LLM-TASK-ID-SYSTEM-DESIGN-SPEC.md"
+        ],
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "after": {
+        "title": "EPIC: Hierarchy Enhancement Phase 1 - Core (v0.15.0)",
+        "status": "active",
+        "priority": "critical",
+        "description": "## Overview\nImplement core hierarchical task management for claude-todo.\n\n## Scope\n- Schema v2.3.0 with type, parentId, size fields\n- Migration from v2.2.0 (label conventions to schema fields)\n- Validation rules (depth, siblings, parent existence, orphans)\n- CLI flags: --type, --parent, --size, --tree, --children\n- Anti-hallucination error messages\n\n## Success Criteria\n- All existing tests pass (1124+)\n- New hierarchy tests pass (100+)\n- Migration preserves all data\n- Validation catches invalid operations\n\n## NOT in scope (Phase 2)\n- Auto-complete parent\n- reparent/promote commands\n- Tab completion\n- Advanced automation",
+        "phase": "core",
+        "labels": [
+          "epic-type",
+          "hierarchy",
+          "v0.15.0",
+          "v0.17.0"
+        ],
+        "files": [
+          "docs/specs/HIERARCHY-ENHANCEMENT-SPEC.md",
+          "docs/specs/LLM-TASK-ID-SYSTEM-DESIGN-SPEC.md"
+        ],
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_d3a680a2b257",
+      "timestamp": "2025-12-19T18:05:55Z",
+      "sessionId": "session_20251219_095856_7a1906",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T511",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T18:05:54Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_18b5b0708c36",
+      "timestamp": "2025-12-19T18:09:40Z",
+      "sessionId": "session_20251219_095856_7a1906",
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T329",
+      "before": {
+        "title": "T328.1: Update todo.schema.json to v2.3.0 with type, parentId, size fields",
+        "status": "pending",
+        "priority": "high",
+        "description": "Add new optional fields to task definition:\n- type: enum [epic, task, subtask], default task\n- parentId: string or null, pattern ^T\\d{3,}$\n- size: enum [small, medium, large] or null\n\nUpdate schema version to 2.3.0",
+        "phase": "core",
+        "labels": [
+          "hierarchy",
+          "schema",
+          "v0.15.0",
+          "v0.17.0"
+        ],
+        "files": [
+          "docs/specs/HIERARCHY-ENHANCEMENT-SPEC.md",
+          "docs/specs/LLM-TASK-ID-SYSTEM-DESIGN-SPEC.md"
+        ],
+        "acceptance": null,
+        "depends": [
+          "T328"
+        ],
+        "blockedBy": null
+      },
+      "after": {
+        "title": "T328.1: Update todo.schema.json to v2.3.0 with type, parentId, size fields",
+        "status": "pending",
+        "priority": "high",
+        "description": "Add new optional fields to task definition:\n- type: enum [epic, task, subtask], default task\n- parentId: string or null, pattern ^T\\d{3,}$\n- size: enum [small, medium, large] or null\n\nUpdate schema version to 2.3.0",
+        "phase": "core",
+        "labels": [
+          "hierarchy",
+          "schema",
+          "v0.15.0",
+          "v0.17.0"
+        ],
+        "files": [
+          "docs/specs/HIERARCHY-ENHANCEMENT-SPEC.md",
+          "docs/specs/LLM-TASK-ID-SYSTEM-DESIGN-SPEC.md",
+          "schemas/todo.schema.json"
+        ],
+        "acceptance": null,
+        "depends": [
+          "T328"
+        ],
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_b4085dd246bc",
+      "timestamp": "2025-12-19T18:09:42Z",
+      "sessionId": "session_20251219_095856_7a1906",
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T331",
+      "before": {
+        "title": "T328.3: Add hierarchy validation to lib/validation.sh",
+        "status": "pending",
+        "priority": "high",
+        "description": "Integrate hierarchy checks into validate_all():\n- Parent existence check\n- Depth limit check\n- Sibling limit check\n- Orphan detection\n- Type hierarchy rules (subtask cannot have children)\n\nAdd new exit codes:\n- EXIT_PARENT_NOT_FOUND=10\n- EXIT_DEPTH_EXCEEDED=11\n- EXIT_SIBLING_LIMIT=12\n- EXIT_INVALID_PARENT_TYPE=13\n- EXIT_ORPHAN_DETECTED=14\n- EXIT_CIRCULAR_REFERENCE=15",
+        "phase": "core",
+        "labels": [
+          "hierarchy",
+          "v0.15.0",
+          "v0.17.0",
+          "validation"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T328"
+        ],
+        "blockedBy": null
+      },
+      "after": {
+        "title": "T328.3: Add hierarchy validation to lib/validation.sh",
+        "status": "pending",
+        "priority": "high",
+        "description": "Integrate hierarchy checks into validate_all():\n- Parent existence check\n- Depth limit check\n- Sibling limit check\n- Orphan detection\n- Type hierarchy rules (subtask cannot have children)\n\nAdd new exit codes:\n- EXIT_PARENT_NOT_FOUND=10\n- EXIT_DEPTH_EXCEEDED=11\n- EXIT_SIBLING_LIMIT=12\n- EXIT_INVALID_PARENT_TYPE=13\n- EXIT_ORPHAN_DETECTED=14\n- EXIT_CIRCULAR_REFERENCE=15",
+        "phase": "core",
+        "labels": [
+          "hierarchy",
+          "v0.15.0",
+          "v0.17.0",
+          "validation"
+        ],
+        "files": [
+          "lib/exit-codes.sh",
+          "lib/hierarchy.sh",
+          "lib/validation.sh"
+        ],
+        "acceptance": null,
+        "depends": [
+          "T328"
+        ],
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_5d48961ec4fe",
+      "timestamp": "2025-12-19T18:09:43Z",
+      "sessionId": "session_20251219_095856_7a1906",
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T332",
+      "before": {
+        "title": "T328.4: Add v2.2.0 to v2.3.0 migration in lib/migrate.sh",
+        "status": "pending",
+        "priority": "high",
+        "description": "Migration logic:\n- Detect v2.2.0 projects\n- Add type=task to all existing tasks (default)\n- Add parentId=null to all existing tasks\n- Convert label conventions if present:\n  - type-epic label -> type=epic\n  - parent-TXXX label -> parentId=TXXX\n- Remove migrated labels from labels array\n- Update _meta.version to 2.3.0\n- Preserve all existing data",
+        "phase": "core",
+        "labels": [
+          "hierarchy",
+          "migration",
+          "v0.15.0",
+          "v0.17.0"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T329"
+        ],
+        "blockedBy": null
+      },
+      "after": {
+        "title": "T328.4: Add v2.2.0 to v2.3.0 migration in lib/migrate.sh",
+        "status": "pending",
+        "priority": "high",
+        "description": "Migration logic:\n- Detect v2.2.0 projects\n- Add type=task to all existing tasks (default)\n- Add parentId=null to all existing tasks\n- Convert label conventions if present:\n  - type-epic label -> type=epic\n  - parent-TXXX label -> parentId=TXXX\n- Remove migrated labels from labels array\n- Update _meta.version to 2.3.0\n- Preserve all existing data",
+        "phase": "core",
+        "labels": [
+          "hierarchy",
+          "migration",
+          "v0.15.0",
+          "v0.17.0"
+        ],
+        "files": [
+          "lib/migrate.sh"
+        ],
+        "acceptance": null,
+        "depends": [
+          "T329"
+        ],
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_ea66441ba3e3",
+      "timestamp": "2025-12-19T18:09:45Z",
+      "sessionId": "session_20251219_095856_7a1906",
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T335",
+      "before": {
+        "title": "T328.7: Enhance show.sh with hierarchy context",
+        "status": "pending",
+        "priority": "medium",
+        "description": "Extend show command output:\n- Show parent task (if exists): Parent: T001 (Title)\n- Show depth level: Depth: 2\n- Show child count: Children: 3\n- Show ancestors: Ancestors: T001 -> T002\n- Include in JSON output",
+        "phase": "core",
+        "labels": [
+          "cli",
+          "hierarchy",
+          "v0.15.0",
+          "v0.17.0"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T330"
+        ],
+        "blockedBy": null
+      },
+      "after": {
+        "title": "T328.7: Enhance show.sh with hierarchy context",
+        "status": "pending",
+        "priority": "medium",
+        "description": "Extend show command output:\n- Show parent task (if exists): Parent: T001 (Title)\n- Show depth level: Depth: 2\n- Show child count: Children: 3\n- Show ancestors: Ancestors: T001 -> T002\n- Include in JSON output",
+        "phase": "core",
+        "labels": [
+          "cli",
+          "hierarchy",
+          "v0.15.0",
+          "v0.17.0"
+        ],
+        "files": [
+          "lib/hierarchy.sh",
+          "scripts/show.sh"
+        ],
+        "acceptance": null,
+        "depends": [
+          "T330"
+        ],
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_aa688c300730",
+      "timestamp": "2025-12-19T18:09:46Z",
+      "sessionId": "session_20251219_095856_7a1906",
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T510",
+      "before": {
+        "title": "BUG: Hierarchy errors use log_error instead of output_error",
+        "status": "pending",
+        "priority": "high",
+        "description": "add-task.sh lines 646-659 use log_error for hierarchy errors. Should use output_error for JSON.",
+        "phase": "core",
+        "labels": [
+          "bug",
+          "hierarchy"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "after": {
+        "title": "BUG: Hierarchy errors use log_error instead of output_error",
+        "status": "pending",
+        "priority": "high",
+        "description": "add-task.sh lines 646-659 use log_error for hierarchy errors. Should use output_error for JSON.",
+        "phase": "core",
+        "labels": [
+          "bug",
+          "hierarchy"
+        ],
+        "files": [
+          "lib/error-json.sh",
+          "scripts/add-task.sh"
+        ],
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_41c84d282c07",
+      "timestamp": "2025-12-19T18:10:05Z",
+      "sessionId": "session_20251219_095856_7a1906",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T329",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T18:10:05Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_5c7e3b572bd4",
+      "timestamp": "2025-12-19T18:10:07Z",
+      "sessionId": "session_20251219_095856_7a1906",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T331",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T18:10:07Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_33c45fbf55f9",
+      "timestamp": "2025-12-19T18:10:08Z",
+      "sessionId": "session_20251219_095856_7a1906",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T332",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T18:10:08Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_e0d9a47539b0",
+      "timestamp": "2025-12-19T18:10:10Z",
+      "sessionId": "session_20251219_095856_7a1906",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T335",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T18:10:09Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_78ff4b7c5999",
+      "timestamp": "2025-12-19T18:10:11Z",
+      "sessionId": "session_20251219_095856_7a1906",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T510",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T18:10:11Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_1ec9ac85959c",
+      "timestamp": "2025-12-19T18:10:40Z",
+      "sessionId": "session_20251219_095856_7a1906",
+      "action": "session_end",
+      "actor": "system",
+      "taskId": null,
+      "before": null,
+      "after": null,
+      "details": null
+    },
+    {
+      "id": "log_72b16c65171d",
+      "timestamp": "2025-12-19T18:30:23Z",
+      "sessionId": "session_20251219_103023_ca4685",
+      "action": "session_start",
+      "actor": "system",
+      "taskId": null,
+      "before": null,
+      "after": null,
+      "details": "Session started"
+    },
+    {
+      "id": "log_ee997c6d4947",
+      "timestamp": "2025-12-19T18:30:23Z",
+      "sessionId": "session_20251219_103023_ca4685",
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": {
+        "currentTask": "T328"
+      },
+      "after": {
+        "currentTask": "T328"
+      },
+      "details": null
+    },
+    {
+      "id": "log_8ed3f84a0d1d",
+      "timestamp": "2025-12-19T18:31:41Z",
+      "sessionId": "session_20251219_103023_ca4685",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T330",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T18:31:41Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_dda2118549a0",
+      "timestamp": "2025-12-19T18:31:42Z",
+      "sessionId": "session_20251219_103023_ca4685",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T333",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T18:31:42Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_b063d936b040",
+      "timestamp": "2025-12-19T18:31:45Z",
+      "sessionId": "session_20251219_103023_ca4685",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T334",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T18:31:45Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_9faea59d8605",
+      "timestamp": "2025-12-19T18:35:04Z",
+      "sessionId": "session_20251219_103023_ca4685",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T336",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T18:35:04Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_d64b0ffbbd8a",
+      "timestamp": "2025-12-19T18:35:04Z",
+      "sessionId": "session_20251219_103023_ca4685",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T337",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T18:35:04Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log-1766169325-75d24f",
+      "timestamp": "2025-12-19T18:35:25Z",
+      "action": "task_created",
+      "taskId": "T512",
+      "actor": "system",
+      "details": {
+        "title": "EPIC: Standardize OUTPUT_FORMAT → FORMAT across all scripts",
+        "status": "pending",
+        "priority": "critical"
+      },
+      "before": null,
+      "after": {
+        "title": "EPIC: Standardize OUTPUT_FORMAT → FORMAT across all scripts",
+        "status": "pending",
+        "priority": "critical"
+      }
+    },
+    {
+      "id": "log-1766169356-4687d3",
+      "timestamp": "2025-12-19T18:35:56Z",
+      "action": "task_created",
+      "taskId": "T513",
+      "actor": "system",
+      "details": {
+        "title": "T512.1: Standardize labels.sh OUTPUT_FORMAT → FORMAT",
+        "status": "pending",
+        "priority": "critical"
+      },
+      "before": null,
+      "after": {
+        "title": "T512.1: Standardize labels.sh OUTPUT_FORMAT → FORMAT",
+        "status": "pending",
+        "priority": "critical"
+      }
+    },
+    {
+      "id": "log-1766169358-05236a",
+      "timestamp": "2025-12-19T18:35:58Z",
+      "action": "task_created",
+      "taskId": "T514",
+      "actor": "system",
+      "details": {
+        "title": "T512.2: Standardize history.sh OUTPUT_FORMAT → FORMAT",
+        "status": "pending",
+        "priority": "critical"
+      },
+      "before": null,
+      "after": {
+        "title": "T512.2: Standardize history.sh OUTPUT_FORMAT → FORMAT",
+        "status": "pending",
+        "priority": "critical"
+      }
+    },
+    {
+      "id": "log-1766169362-4c7066",
+      "timestamp": "2025-12-19T18:36:02Z",
+      "action": "task_created",
+      "taskId": "T515",
+      "actor": "system",
+      "details": {
+        "title": "T512.3: Standardize stats.sh & dash.sh OUTPUT_FORMAT → FORMAT",
+        "status": "pending",
+        "priority": "critical"
+      },
+      "before": null,
+      "after": {
+        "title": "T512.3: Standardize stats.sh & dash.sh OUTPUT_FORMAT → FORMAT",
+        "status": "pending",
+        "priority": "critical"
+      }
+    },
+    {
+      "id": "log-1766169363-a02f74",
+      "timestamp": "2025-12-19T18:36:03Z",
+      "action": "task_created",
+      "taskId": "T516",
+      "actor": "system",
+      "details": {
+        "title": "T512.4: Standardize next.sh OUTPUT_FORMAT → FORMAT",
+        "status": "pending",
+        "priority": "critical"
+      },
+      "before": null,
+      "after": {
+        "title": "T512.4: Standardize next.sh OUTPUT_FORMAT → FORMAT",
+        "status": "pending",
+        "priority": "critical"
+      }
+    },
+    {
+      "id": "log-1766169365-2c5978",
+      "timestamp": "2025-12-19T18:36:05Z",
+      "action": "task_created",
+      "taskId": "T517",
+      "actor": "system",
+      "details": {
+        "title": "T512.5: Clean up phases.sh FORMAT sync & standardize",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "T512.5: Clean up phases.sh FORMAT sync & standardize",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1766169366-d09d26",
+      "timestamp": "2025-12-19T18:36:06Z",
+      "action": "task_created",
+      "taskId": "T518",
+      "actor": "system",
+      "details": {
+        "title": "T512.6: Clean up deps-command.sh & log.sh dual variables",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "T512.6: Clean up deps-command.sh & log.sh dual variables",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1766169368-cb8390",
+      "timestamp": "2025-12-19T18:36:08Z",
+      "action": "task_created",
+      "taskId": "T519",
+      "actor": "system",
+      "details": {
+        "title": "T512.7: Standardize dev/check-compliance.sh & update docs",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "T512.7: Standardize dev/check-compliance.sh & update docs",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log-1766169745-10db07",
+      "timestamp": "2025-12-19T18:42:25Z",
+      "action": "task_created",
+      "taskId": "T520",
+      "actor": "system",
+      "details": {
+        "title": "RESEARCH: Review tech_stack.md memory for SPEC creation",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "RESEARCH: Review tech_stack.md memory for SPEC creation",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1766169746-6ef00c",
+      "timestamp": "2025-12-19T18:42:26Z",
+      "action": "task_created",
+      "taskId": "T521",
+      "actor": "system",
+      "details": {
+        "title": "RESEARCH: Review code_style_conventions.md memory for SPEC creation",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "RESEARCH: Review code_style_conventions.md memory for SPEC creation",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1766169749-094c92",
+      "timestamp": "2025-12-19T18:42:29Z",
+      "action": "task_created",
+      "taskId": "T522",
+      "actor": "system",
+      "details": {
+        "title": "RESEARCH: Review task_completion_checklist.md memory for SPEC creation",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "RESEARCH: Review task_completion_checklist.md memory for SPEC creation",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1766169751-433b50",
+      "timestamp": "2025-12-19T18:42:31Z",
+      "action": "task_created",
+      "taskId": "T523",
+      "actor": "system",
+      "details": {
+        "title": "RESEARCH: Review suggested_commands.md memory for consolidation or deletion",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "RESEARCH: Review suggested_commands.md memory for consolidation or deletion",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log-1766169763-c639d6",
+      "timestamp": "2025-12-19T18:42:43Z",
+      "action": "task_created",
+      "taskId": "T524",
+      "actor": "system",
+      "details": {
+        "title": "REVIEW: Decide todowrite-sync-research.md memory disposition",
+        "status": "pending",
+        "priority": "low"
+      },
+      "before": null,
+      "after": {
+        "title": "REVIEW: Decide todowrite-sync-research.md memory disposition",
+        "status": "pending",
+        "priority": "low"
+      }
+    },
+    {
+      "id": "log_af40e22f2adf",
+      "timestamp": "2025-12-19T18:49:43Z",
+      "sessionId": "session_20251219_103023_ca4685",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T338",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T18:49:43Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_e9c46ee1fe78",
+      "timestamp": "2025-12-19T18:50:00Z",
+      "sessionId": "session_20251219_103023_ca4685",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T328",
+      "before": {
+        "status": "active",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T18:50:00Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_ba053136f9d4",
+      "timestamp": "2025-12-19T18:50:02Z",
+      "sessionId": "session_20251219_103023_ca4685",
+      "action": "session_end",
+      "actor": "system",
+      "taskId": null,
+      "before": null,
+      "after": null,
+      "details": null
+    },
+    {
+      "id": "log_f9ec688a0e9f",
+      "timestamp": "2025-12-19T19:01:04Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T524",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T19:01:04Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_95eeff08b30a",
+      "timestamp": "2025-12-19T19:02:42Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T523",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T19:02:42Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_4c8976354c00",
+      "timestamp": "2025-12-19T19:03:32Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T520",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T19:03:32Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_c3e9d86a4b4e",
+      "timestamp": "2025-12-19T19:03:34Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T521",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T19:03:34Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_5c92190f1f8e",
+      "timestamp": "2025-12-19T19:03:36Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T522",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T19:03:36Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log-1766172138-f65e92",
+      "timestamp": "2025-12-19T19:22:18Z",
+      "action": "task_created",
+      "taskId": "T525",
+      "actor": "system",
+      "details": {
+        "title": "CHORE: Implement memory retention automation script",
+        "status": "pending",
+        "priority": "low"
+      },
+      "before": null,
+      "after": {
+        "title": "CHORE: Implement memory retention automation script",
+        "status": "pending",
+        "priority": "low"
+      }
+    },
+    {
+      "id": "log_787d793a5408",
+      "timestamp": "2025-12-19T19:28:40Z",
+      "sessionId": null,
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T429",
+      "before": {
+        "title": "EPIC: Smart Archive System Enhancement",
+        "status": "pending",
+        "priority": "critical",
+        "description": "## Overview\nComprehensive enhancement of the archive system to be smarter, more automated, and relationship-aware.\n\n## Current Limitations\n- Age-only retention (no task importance awareness)\n- No label filtering (can't exempt epics/important tasks)\n- No relationship awareness (archives children while parent active)\n- No dependency checking (breaks reference chains)\n- Limited retrieval (archived = essentially lost)\n\n## Proposed Solution\nThree-tier implementation:\n- Tier 1: Quick wins (exemptLabels, --exclude-labels, --safe flag, warnings)\n- Tier 2: Smart defaults (labelPolicies, relationship-aware, unarchive, list --include-archive)\n- Tier 3: Full automation (phase-triggered, cascade, interactive, analytics)\n\n## Dependencies\n- Requires Hierarchy Enhancement (T328/T339) for relationship-aware features\n- Schema changes needed for archive metadata and config\n\n## Success Criteria\n- [ ] Epics/important tasks protected from auto-archive\n- [ ] Archive respects parent-child and dependency relationships\n- [ ] Archived tasks searchable and restorable\n- [ ] Phase completion can trigger smart archiving\n- [ ] Clear warnings before breaking references",
+        "phase": "core",
+        "labels": [
+          "archive-enhancement",
+          "epic-type",
+          "feature"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "after": {
+        "title": "EPIC: Smart Archive System Enhancement",
+        "status": "pending",
+        "priority": "critical",
+        "description": "## Overview\nComprehensive enhancement of the archive system to be smarter, more automated, and relationship-aware.\n\n## Current Limitations\n- Age-only retention (no task importance awareness)\n- No label filtering (can't exempt epics/important tasks)\n- No relationship awareness (archives children while parent active)\n- No dependency checking (breaks reference chains)\n- Limited retrieval (archived = essentially lost)\n\n## Proposed Solution\nThree-tier implementation:\n- Tier 1: Quick wins (exemptLabels, --exclude-labels, --safe flag, warnings)\n- Tier 2: Smart defaults (labelPolicies, relationship-aware, unarchive, list --include-archive)\n- Tier 3: Full automation (phase-triggered, cascade, interactive, analytics)\n\n## Dependencies\n- Requires Hierarchy Enhancement (T328/T339) for relationship-aware features\n- Schema changes needed for archive metadata and config\n\n## Success Criteria\n- [ ] Epics/important tasks protected from auto-archive\n- [ ] Archive respects parent-child and dependency relationships\n- [ ] Archived tasks searchable and restorable\n- [ ] Phase completion can trigger smart archiving\n- [ ] Clear warnings before breaking references",
+        "phase": "core",
+        "labels": [
+          "archive-enhancement",
+          "epic-type",
+          "feature"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_2ae81ca48f0f",
+      "timestamp": "2025-12-19T19:28:40Z",
+      "sessionId": null,
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T339",
+      "before": {
+        "title": "EPIC: Hierarchy Enhancement Phase 2 - Automation (v0.16.0)",
+        "status": "pending",
+        "priority": "high",
+        "description": "## Overview\nAdvanced automation and UX enhancements for hierarchy.\n\n## Scope\n- Auto-complete parent when all children done\n- Auto-unblock when dependencies complete\n- Orphan detection and repair commands\n- tree, reparent, promote commands\n- Tab completion for --parent\n- Focus integration with hierarchy context\n- next command hierarchy awareness\n\n## Success Criteria\n- All Phase 1 + Phase 2 tests pass\n- Auto-behaviors work correctly\n- Commands are intuitive and documented\n- Performance acceptable for 500+ tasks",
+        "phase": "core",
+        "labels": [
+          "epic-type",
+          "hierarchy",
+          "v0.16.0",
+          "v0.18.0"
+        ],
+        "files": [
+          "docs/specs/HIERARCHY-ENHANCEMENT-SPEC.md"
+        ],
+        "acceptance": null,
+        "depends": [
+          "T328"
+        ],
+        "blockedBy": null
+      },
+      "after": {
+        "title": "EPIC: Hierarchy Enhancement Phase 2 - Automation (v0.16.0)",
+        "status": "pending",
+        "priority": "high",
+        "description": "## Overview\nAdvanced automation and UX enhancements for hierarchy.\n\n## Scope\n- Auto-complete parent when all children done\n- Auto-unblock when dependencies complete\n- Orphan detection and repair commands\n- tree, reparent, promote commands\n- Tab completion for --parent\n- Focus integration with hierarchy context\n- next command hierarchy awareness\n\n## Success Criteria\n- All Phase 1 + Phase 2 tests pass\n- Auto-behaviors work correctly\n- Commands are intuitive and documented\n- Performance acceptable for 500+ tasks",
+        "phase": "core",
+        "labels": [
+          "epic-type",
+          "hierarchy",
+          "v0.16.0",
+          "v0.18.0"
+        ],
+        "files": [
+          "docs/specs/HIERARCHY-ENHANCEMENT-SPEC.md"
+        ],
+        "acceptance": null,
+        "depends": [
+          "T328"
+        ],
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_b567700d9bb0",
+      "timestamp": "2025-12-19T19:28:41Z",
+      "sessionId": null,
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T382",
+      "before": {
+        "title": "Config System Integration & Completion",
+        "status": "pending",
+        "priority": "high",
+        "description": "Comprehensive integration of the config system. Currently ~40% of config settings are implemented. lib/config.sh exists but is only used by scripts/config.sh - not integrated into other scripts. Global config (~/.claude-todo/config.json) created but not used. Multiple config sections defined in schema but not implemented in code.",
+        "phase": "core",
+        "labels": [
+          "config",
+          "integration",
+          "technical-debt"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "after": {
+        "title": "Config System Integration & Completion",
+        "status": "pending",
+        "priority": "high",
+        "description": "Comprehensive integration of the config system. Currently ~40% of config settings are implemented. lib/config.sh exists but is only used by scripts/config.sh - not integrated into other scripts. Global config (~/.claude-todo/config.json) created but not used. Multiple config sections defined in schema but not implemented in code.",
+        "phase": "core",
+        "labels": [
+          "config",
+          "integration",
+          "technical-debt"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_6900f4237a02",
+      "timestamp": "2025-12-19T19:28:41Z",
+      "sessionId": null,
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T451",
+      "before": {
+        "title": "File Locking & Concurrency Safety",
+        "status": "pending",
+        "priority": "high",
+        "description": "Epic for file locking implementation ensuring data integrity during concurrent operations. Core locking mechanism implemented in lib/file-ops.sh (T132). Remaining work: integrate locking into all write scripts, fix remaining vulnerabilities in archive.sh and phase.sh.",
+        "phase": "core",
+        "labels": [
+          "concurrency",
+          "data-integrity",
+          "file-locking"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "after": {
+        "title": "File Locking & Concurrency Safety",
+        "status": "pending",
+        "priority": "high",
+        "description": "Epic for file locking implementation ensuring data integrity during concurrent operations. Core locking mechanism implemented in lib/file-ops.sh (T132). Remaining work: integrate locking into all write scripts, fix remaining vulnerabilities in archive.sh and phase.sh.",
+        "phase": "core",
+        "labels": [
+          "concurrency",
+          "data-integrity",
+          "file-locking"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_7319a5a182a9",
+      "timestamp": "2025-12-19T19:28:42Z",
+      "sessionId": null,
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T457",
+      "before": {
+        "title": "EPIC: Phase Discipline Documentation & Config Implementation",
+        "status": "pending",
+        "priority": "high",
+        "description": "Implement phase discipline across documentation and code. Addresses validated gaps from Guardrails-Assessment.md review: (1) CLAUDE-INJECTION.md lacks phase discipline instructions, (2) TODO_Task_Management.md lacks LLM phase workflow guidance, (3) complete-task.sh has zero phase validation, (4) add-task.sh has no phase mismatch warnings, (5) Config options enforcePhaseOrder/warnPhaseContext defined but never implemented. Also includes PHASE-SYSTEM-SPEC.md cleanup for status field and Section 5.2/10.1 contradiction. Follows permissive-by-default philosophy - warnings only, no blocking.",
+        "phase": "core",
+        "labels": [
+          "documentation",
+          "enforcement",
+          "phase-system"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "after": {
+        "title": "EPIC: Phase Discipline Documentation & Config Implementation",
+        "status": "pending",
+        "priority": "high",
+        "description": "Implement phase discipline across documentation and code. Addresses validated gaps from Guardrails-Assessment.md review: (1) CLAUDE-INJECTION.md lacks phase discipline instructions, (2) TODO_Task_Management.md lacks LLM phase workflow guidance, (3) complete-task.sh has zero phase validation, (4) add-task.sh has no phase mismatch warnings, (5) Config options enforcePhaseOrder/warnPhaseContext defined but never implemented. Also includes PHASE-SYSTEM-SPEC.md cleanup for status field and Section 5.2/10.1 contradiction. Follows permissive-by-default philosophy - warnings only, no blocking.",
+        "phase": "core",
+        "labels": [
+          "documentation",
+          "enforcement",
+          "phase-system"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_995b2dc8de8d",
+      "timestamp": "2025-12-19T19:28:42Z",
+      "sessionId": null,
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T481",
+      "before": {
+        "title": "EPIC: LLM-Agent-First Spec v3.0 Compliance Checker Implementation",
+        "status": "pending",
+        "priority": "critical",
+        "description": "Implement compliance checking for v3.0 spec requirements (Parts 5.3, 5.4, 5.6, 5.7). Reference: docs/specs/LLM-AGENT-FIRST-SPEC.md",
+        "phase": "core",
+        "labels": [
+          "compliance",
+          "spec",
+          "v3.0"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "after": {
+        "title": "EPIC: LLM-Agent-First Spec v3.0 Compliance Checker Implementation",
+        "status": "pending",
+        "priority": "critical",
+        "description": "Implement compliance checking for v3.0 spec requirements (Parts 5.3, 5.4, 5.6, 5.7). Reference: docs/specs/LLM-AGENT-FIRST-SPEC.md",
+        "phase": "core",
+        "labels": [
+          "compliance",
+          "spec",
+          "v3.0"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_47d11f31c901",
+      "timestamp": "2025-12-19T19:29:04Z",
+      "sessionId": null,
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T430",
+      "before": {
+        "title": "T429.1: Add exemptLabels config option",
+        "status": "pending",
+        "priority": "high",
+        "description": "Add exemptLabels array to archive config section.\n\n## Schema Change (config.schema.json)\n```json\n{\n  \"archive\": {\n    \"exemptLabels\": {\n      \"type\": \"array\",\n      \"items\": { \"type\": \"string\" },\n      \"default\": [\"epic-type\", \"keep\", \"reference\"],\n      \"description\": \"Labels that prevent automatic archiving\"\n    }\n  }\n}\n```\n\n## Implementation\n1. Update config.schema.json with exemptLabels field\n2. Update archive.sh to check exemptLabels before archiving\n3. Tasks with ANY exempt label are skipped\n4. Add --show-exempt flag to show what was skipped\n\n## Acceptance Criteria\n- [ ] Config schema updated with exemptLabels\n- [ ] Archive respects exemptLabels config\n- [ ] Default includes epic-type, keep, reference\n- [ ] Dry-run shows exempt tasks separately",
+        "phase": "core",
+        "labels": [
+          "archive-enhancement",
+          "config",
+          "tier-1"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T429"
+        ],
+        "blockedBy": null
+      },
+      "after": {
+        "title": "T429.1: Add exemptLabels config option",
+        "status": "pending",
+        "priority": "high",
+        "description": "Add exemptLabels array to archive config section.\n\n## Schema Change (config.schema.json)\n```json\n{\n  \"archive\": {\n    \"exemptLabels\": {\n      \"type\": \"array\",\n      \"items\": { \"type\": \"string\" },\n      \"default\": [\"epic-type\", \"keep\", \"reference\"],\n      \"description\": \"Labels that prevent automatic archiving\"\n    }\n  }\n}\n```\n\n## Implementation\n1. Update config.schema.json with exemptLabels field\n2. Update archive.sh to check exemptLabels before archiving\n3. Tasks with ANY exempt label are skipped\n4. Add --show-exempt flag to show what was skipped\n\n## Acceptance Criteria\n- [ ] Config schema updated with exemptLabels\n- [ ] Archive respects exemptLabels config\n- [ ] Default includes epic-type, keep, reference\n- [ ] Dry-run shows exempt tasks separately",
+        "phase": "core",
+        "labels": [
+          "archive-enhancement",
+          "config",
+          "tier-1"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T429"
+        ],
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_9fde3f96b9f3",
+      "timestamp": "2025-12-19T19:29:06Z",
+      "sessionId": null,
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T431",
+      "before": {
+        "title": "T429.2: Implement --exclude-labels flag",
+        "status": "pending",
+        "priority": "high",
+        "description": "Add --exclude-labels flag to archive command for runtime label exclusion.\n\n## CLI Enhancement\n```bash\narchive --exclude-labels epic-type,reference,keep\narchive --exclude-labels bug  # Single label\n```\n\n## Implementation\n1. Add --exclude-labels option to archive.sh argument parsing\n2. Parse comma-separated labels into array\n3. Filter out tasks with ANY matching label\n4. Combine with exemptLabels config (union)\n5. Show excluded count in output\n\n## Acceptance Criteria\n- [ ] --exclude-labels accepts comma-separated labels\n- [ ] Tasks with excluded labels are skipped\n- [ ] Works with --dry-run\n- [ ] Excluded count shown in summary",
+        "phase": "core",
+        "labels": [
+          "archive-enhancement",
+          "cli",
+          "tier-1"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T429"
+        ],
+        "blockedBy": null
+      },
+      "after": {
+        "title": "T429.2: Implement --exclude-labels flag",
+        "status": "pending",
+        "priority": "high",
+        "description": "Add --exclude-labels flag to archive command for runtime label exclusion.\n\n## CLI Enhancement\n```bash\narchive --exclude-labels epic-type,reference,keep\narchive --exclude-labels bug  # Single label\n```\n\n## Implementation\n1. Add --exclude-labels option to archive.sh argument parsing\n2. Parse comma-separated labels into array\n3. Filter out tasks with ANY matching label\n4. Combine with exemptLabels config (union)\n5. Show excluded count in output\n\n## Acceptance Criteria\n- [ ] --exclude-labels accepts comma-separated labels\n- [ ] Tasks with excluded labels are skipped\n- [ ] Works with --dry-run\n- [ ] Excluded count shown in summary",
+        "phase": "core",
+        "labels": [
+          "archive-enhancement",
+          "cli",
+          "tier-1"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T429"
+        ],
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_692c8b499b73",
+      "timestamp": "2025-12-19T19:29:08Z",
+      "sessionId": null,
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T432",
+      "before": {
+        "title": "T429.3: Implement --only-labels flag",
+        "status": "pending",
+        "priority": "high",
+        "description": "Add --only-labels flag to archive command for targeted archiving.\n\n## CLI Enhancement\n```bash\narchive --only-labels bug,chore      # Only archive bugs and chores\narchive --only-labels completed-work # Specific label targeting\n```\n\n## Implementation\n1. Add --only-labels option to archive.sh\n2. When specified, ONLY archive tasks with matching labels\n3. Mutually exclusive with --exclude-labels (error if both)\n4. Still respects exemptLabels config (exempt wins)\n\n## Acceptance Criteria\n- [ ] --only-labels accepts comma-separated labels\n- [ ] Only tasks with specified labels are archived\n- [ ] Error if used with --exclude-labels\n- [ ] exemptLabels still respected",
+        "phase": "core",
+        "labels": [
+          "archive-enhancement",
+          "cli",
+          "tier-1"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T429"
+        ],
+        "blockedBy": null
+      },
+      "after": {
+        "title": "T429.3: Implement --only-labels flag",
+        "status": "pending",
+        "priority": "high",
+        "description": "Add --only-labels flag to archive command for targeted archiving.\n\n## CLI Enhancement\n```bash\narchive --only-labels bug,chore      # Only archive bugs and chores\narchive --only-labels completed-work # Specific label targeting\n```\n\n## Implementation\n1. Add --only-labels option to archive.sh\n2. When specified, ONLY archive tasks with matching labels\n3. Mutually exclusive with --exclude-labels (error if both)\n4. Still respects exemptLabels config (exempt wins)\n\n## Acceptance Criteria\n- [ ] --only-labels accepts comma-separated labels\n- [ ] Only tasks with specified labels are archived\n- [ ] Error if used with --exclude-labels\n- [ ] exemptLabels still respected",
+        "phase": "core",
+        "labels": [
+          "archive-enhancement",
+          "cli",
+          "tier-1"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T429"
+        ],
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_6b61ea6afb84",
+      "timestamp": "2025-12-19T19:29:09Z",
+      "sessionId": null,
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T433",
+      "before": {
+        "title": "T429.4: Implement --safe flag with relationship checking",
+        "status": "pending",
+        "priority": "high",
+        "description": "Add --safe flag that prevents archiving tasks with active relationships.\n\n## CLI Enhancement\n```bash\narchive --safe  # Don't break parent-child or dependency chains\n```\n\n## Relationship Checks\n1. **Hierarchy check**: Don't archive if parentId points to active/pending task\n2. **Dependency check**: Don't archive if other pending tasks depend on this task\n3. **Child check**: Don't archive if task has non-archived children\n\n## Implementation\n1. Add --safe flag to archive.sh\n2. Before archiving each task, run relationship checks\n3. Requires lib/hierarchy.sh functions (depends on T328)\n4. Excluded tasks shown with reason\n\n## Output Example\n```\n⚠ Safe mode exclusions:\n  T045: Referenced by pending T328 (dependency)\n  T089: Has active parent T088 (hierarchy)\n  T102: Has 2 non-archived children\n\n45 tasks archived, 3 excluded (safe mode)\n```\n\n## Acceptance Criteria\n- [ ] --safe prevents hierarchy-breaking archives\n- [ ] --safe prevents dependency-breaking archives\n- [ ] Clear output showing why tasks excluded\n- [ ] Works with --dry-run",
+        "phase": "core",
+        "labels": [
+          "archive-enhancement",
+          "cli",
+          "tier-1"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T429",
+          "T328"
+        ],
+        "blockedBy": null
+      },
+      "after": {
+        "title": "T429.4: Implement --safe flag with relationship checking",
+        "status": "pending",
+        "priority": "high",
+        "description": "Add --safe flag that prevents archiving tasks with active relationships.\n\n## CLI Enhancement\n```bash\narchive --safe  # Don't break parent-child or dependency chains\n```\n\n## Relationship Checks\n1. **Hierarchy check**: Don't archive if parentId points to active/pending task\n2. **Dependency check**: Don't archive if other pending tasks depend on this task\n3. **Child check**: Don't archive if task has non-archived children\n\n## Implementation\n1. Add --safe flag to archive.sh\n2. Before archiving each task, run relationship checks\n3. Requires lib/hierarchy.sh functions (depends on T328)\n4. Excluded tasks shown with reason\n\n## Output Example\n```\n⚠ Safe mode exclusions:\n  T045: Referenced by pending T328 (dependency)\n  T089: Has active parent T088 (hierarchy)\n  T102: Has 2 non-archived children\n\n45 tasks archived, 3 excluded (safe mode)\n```\n\n## Acceptance Criteria\n- [ ] --safe prevents hierarchy-breaking archives\n- [ ] --safe prevents dependency-breaking archives\n- [ ] Clear output showing why tasks excluded\n- [ ] Works with --dry-run",
+        "phase": "core",
+        "labels": [
+          "archive-enhancement",
+          "cli",
+          "tier-1"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T429",
+          "T328"
+        ],
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_ddc1b7570f18",
+      "timestamp": "2025-12-19T19:29:11Z",
+      "sessionId": null,
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T434",
+      "before": {
+        "title": "T429.5: Add archive warnings before breaking references",
+        "status": "pending",
+        "priority": "high",
+        "description": "Add pre-archive analysis that warns about reference-breaking operations.\n\n## Behavior (Default)\nBefore archiving, analyze and warn:\n```\n⚠ Archive Warning:\n  T045 is referenced by pending T328 (dependency)\n  T089 has active parent T088 (hierarchy)\n  T102 has 2 pending children\n\n  3 tasks will break references if archived.\n  \nOptions:\n  --safe     Exclude problematic tasks\n  --force    Archive anyway (breaks references)\n  \nArchiving 45 tasks (3 with warnings). Continue? (y/N)\n```\n\n## Implementation\n1. Run relationship analysis before archive\n2. Categorize tasks: safe, warning, exempt\n3. Show warning summary\n4. Prompt for confirmation (unless --auto or --force)\n5. Log warnings in archive operation\n\n## Acceptance Criteria\n- [ ] Warnings shown before confirmation\n- [ ] Warning count in summary\n- [ ] --force bypasses warnings\n- [ ] --safe excludes warned tasks\n- [ ] Warnings logged to todo-log.json",
+        "phase": "core",
+        "labels": [
+          "anti-hallucination",
+          "archive-enhancement",
+          "cli",
+          "tier-1"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T429",
+          "T328"
+        ],
+        "blockedBy": null
+      },
+      "after": {
+        "title": "T429.5: Add archive warnings before breaking references",
+        "status": "pending",
+        "priority": "high",
+        "description": "Add pre-archive analysis that warns about reference-breaking operations.\n\n## Behavior (Default)\nBefore archiving, analyze and warn:\n```\n⚠ Archive Warning:\n  T045 is referenced by pending T328 (dependency)\n  T089 has active parent T088 (hierarchy)\n  T102 has 2 pending children\n\n  3 tasks will break references if archived.\n  \nOptions:\n  --safe     Exclude problematic tasks\n  --force    Archive anyway (breaks references)\n  \nArchiving 45 tasks (3 with warnings). Continue? (y/N)\n```\n\n## Implementation\n1. Run relationship analysis before archive\n2. Categorize tasks: safe, warning, exempt\n3. Show warning summary\n4. Prompt for confirmation (unless --auto or --force)\n5. Log warnings in archive operation\n\n## Acceptance Criteria\n- [ ] Warnings shown before confirmation\n- [ ] Warning count in summary\n- [ ] --force bypasses warnings\n- [ ] --safe excludes warned tasks\n- [ ] Warnings logged to todo-log.json",
+        "phase": "core",
+        "labels": [
+          "anti-hallucination",
+          "archive-enhancement",
+          "cli",
+          "tier-1"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T429",
+          "T328"
+        ],
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_29d389e57e41",
+      "timestamp": "2025-12-19T19:29:13Z",
+      "sessionId": null,
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T435",
+      "before": {
+        "title": "T429.6: Implement labelPolicies config for per-label retention",
+        "status": "pending",
+        "priority": "high",
+        "description": "Add labelPolicies config for per-label retention rules.\n\n## Schema Change (config.schema.json)\n```json\n{\n  \"archive\": {\n    \"labelPolicies\": {\n      \"type\": \"object\",\n      \"additionalProperties\": {\n        \"oneOf\": [\n          { \"const\": \"never\" },\n          { \"type\": \"object\", \"properties\": { \"daysUntilArchive\": { \"type\": \"integer\" } } }\n        ]\n      },\n      \"default\": {},\n      \"description\": \"Per-label retention policies\",\n      \"examples\": [{\n        \"epic-type\": \"never\",\n        \"bug\": { \"daysUntilArchive\": 3 },\n        \"documentation\": { \"daysUntilArchive\": 14 }\n      }]\n    }\n  }\n}\n```\n\n## Implementation\n1. Update config.schema.json with labelPolicies\n2. Archive evaluates policies per-task\n3. Most restrictive policy wins (never > longer days > default)\n4. Add --show-policies flag to display effective policies\n\n## Acceptance Criteria\n- [ ] Schema supports labelPolicies object\n- [ ] 'never' policy prevents archiving\n- [ ] Custom daysUntilArchive per label\n- [ ] Multiple labels use most restrictive",
+        "phase": "core",
+        "labels": [
+          "archive-enhancement",
+          "config",
+          "tier-2"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T429",
+          "T430"
+        ],
+        "blockedBy": null
+      },
+      "after": {
+        "title": "T429.6: Implement labelPolicies config for per-label retention",
+        "status": "pending",
+        "priority": "high",
+        "description": "Add labelPolicies config for per-label retention rules.\n\n## Schema Change (config.schema.json)\n```json\n{\n  \"archive\": {\n    \"labelPolicies\": {\n      \"type\": \"object\",\n      \"additionalProperties\": {\n        \"oneOf\": [\n          { \"const\": \"never\" },\n          { \"type\": \"object\", \"properties\": { \"daysUntilArchive\": { \"type\": \"integer\" } } }\n        ]\n      },\n      \"default\": {},\n      \"description\": \"Per-label retention policies\",\n      \"examples\": [{\n        \"epic-type\": \"never\",\n        \"bug\": { \"daysUntilArchive\": 3 },\n        \"documentation\": { \"daysUntilArchive\": 14 }\n      }]\n    }\n  }\n}\n```\n\n## Implementation\n1. Update config.schema.json with labelPolicies\n2. Archive evaluates policies per-task\n3. Most restrictive policy wins (never > longer days > default)\n4. Add --show-policies flag to display effective policies\n\n## Acceptance Criteria\n- [ ] Schema supports labelPolicies object\n- [ ] 'never' policy prevents archiving\n- [ ] Custom daysUntilArchive per label\n- [ ] Multiple labels use most restrictive",
+        "phase": "core",
+        "labels": [
+          "archive-enhancement",
+          "config",
+          "tier-2"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T429",
+          "T430"
+        ],
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_c66d2945af25",
+      "timestamp": "2025-12-19T19:29:15Z",
+      "sessionId": null,
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T436",
+      "before": {
+        "title": "T429.7: Implement relationship-aware archive logic",
+        "status": "pending",
+        "priority": "high",
+        "description": "Core library functions for relationship-aware archiving.\n\n## New Functions (lib/archive.sh or lib/archive-utils.sh)\n```bash\n# Check if task can be safely archived\ncan_archive_safely() {\n  local task_id=\"$1\"\n  # Returns 0 if safe, 1 if has warnings\n}\n\n# Get archive eligibility with reasons\nget_archive_eligibility() {\n  local task_id=\"$1\"\n  # Returns JSON: {eligible, reasons[], warnings[]}\n}\n\n# Check hierarchy constraints\ncheck_hierarchy_archivable() {\n  local task_id=\"$1\"\n  # Check parent active, children not archived\n}\n\n# Check dependency constraints\ncheck_deps_archivable() {\n  local task_id=\"$1\"\n  # Check no pending tasks depend on this\n}\n```\n\n## Integration Points\n- Used by archive.sh for each task evaluation\n- Used by --safe flag implementation\n- Used by warning system\n\n## Acceptance Criteria\n- [ ] Library functions created\n- [ ] Hierarchy checks implemented\n- [ ] Dependency checks implemented\n- [ ] Returns structured eligibility data",
+        "phase": "core",
+        "labels": [
+          "archive-enhancement",
+          "library",
+          "tier-2"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T429",
+          "T328",
+          "T433"
+        ],
+        "blockedBy": null
+      },
+      "after": {
+        "title": "T429.7: Implement relationship-aware archive logic",
+        "status": "pending",
+        "priority": "high",
+        "description": "Core library functions for relationship-aware archiving.\n\n## New Functions (lib/archive.sh or lib/archive-utils.sh)\n```bash\n# Check if task can be safely archived\ncan_archive_safely() {\n  local task_id=\"$1\"\n  # Returns 0 if safe, 1 if has warnings\n}\n\n# Get archive eligibility with reasons\nget_archive_eligibility() {\n  local task_id=\"$1\"\n  # Returns JSON: {eligible, reasons[], warnings[]}\n}\n\n# Check hierarchy constraints\ncheck_hierarchy_archivable() {\n  local task_id=\"$1\"\n  # Check parent active, children not archived\n}\n\n# Check dependency constraints\ncheck_deps_archivable() {\n  local task_id=\"$1\"\n  # Check no pending tasks depend on this\n}\n```\n\n## Integration Points\n- Used by archive.sh for each task evaluation\n- Used by --safe flag implementation\n- Used by warning system\n\n## Acceptance Criteria\n- [ ] Library functions created\n- [ ] Hierarchy checks implemented\n- [ ] Dependency checks implemented\n- [ ] Returns structured eligibility data",
+        "phase": "core",
+        "labels": [
+          "archive-enhancement",
+          "library",
+          "tier-2"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T429",
+          "T328",
+          "T433"
+        ],
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_e3d5d6aae682",
+      "timestamp": "2025-12-19T19:30:13Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T513",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T19:30:13Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_1ddbe3a3032f",
+      "timestamp": "2025-12-19T19:30:14Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T514",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T19:30:14Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_26657b1d76d2",
+      "timestamp": "2025-12-19T19:30:16Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T515",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T19:30:15Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_7fcb518f19a0",
+      "timestamp": "2025-12-19T19:30:17Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T516",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T19:30:17Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_75120a4715ef",
+      "timestamp": "2025-12-19T19:30:19Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T517",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T19:30:19Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_2d875146f773",
+      "timestamp": "2025-12-19T19:30:31Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T518",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T19:30:30Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_1b117cd3702b",
+      "timestamp": "2025-12-19T19:30:32Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T519",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T19:30:32Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_47bb933a01c5",
+      "timestamp": "2025-12-19T19:30:34Z",
+      "sessionId": null,
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T512",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-19T19:30:34Z"
       },
       "details": {
         "field": "status",

@@ -151,8 +151,12 @@ ct find "old feature" --include-archive
 
 ### JSON Output
 
+**LLM-Agent-First**: JSON is auto-detected when output is piped (non-TTY):
 ```bash
-# Machine-readable output
+# Auto-JSON when piped (no --format needed)
+ct find "auth" | jq '.matches[0]'
+
+# Explicit format override
 ct find "auth" --format json
 ```
 
@@ -267,17 +271,11 @@ fi
 ### Parsing JSON Output
 
 ```bash
-# Extract task IDs
-ct find "auth" --format json | jq -r '.matches[].id'
-
-# Get highest-scoring match
-ct find "auth" --format json | jq -r '.matches[0]'
-
-# Filter by score threshold
-ct find "test" --format json | jq '.matches[] | select(.score > 0.8)'
-
-# Check match count
-ct find "auth" --format json | jq '.summary.matches'
+# JSON auto-detected when piped - no --format needed
+ct find "auth" | jq -r '.matches[].id'        # Extract task IDs
+ct find "auth" | jq -r '.matches[0]'          # Get highest-scoring match
+ct find "test" | jq '.matches[] | select(.score > 0.8)'  # Filter by score
+ct find "auth" | jq '.summary.matches'        # Check match count
 ```
 
 ## Scoring Algorithm

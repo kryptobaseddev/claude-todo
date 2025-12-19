@@ -68,6 +68,8 @@ Options:
   --verbose           Show which file contains the task
   --include-archive   Search archive file too
   --format <format>   Output format: text (default) or json
+  --json              Shortcut for --format json
+  --human             Shortcut for --format text
   --help              Show this help message
 
 Exit Codes:
@@ -130,6 +132,12 @@ main() {
         ;;
       --include-archive)
         INCLUDE_ARCHIVE=true
+        ;;
+      --json)
+        FORMAT="json"
+        ;;
+      --human)
+        FORMAT="text"
         ;;
       --format)
         if [[ $# -lt 2 ]]; then

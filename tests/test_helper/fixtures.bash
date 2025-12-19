@@ -22,7 +22,7 @@ _update_fixture_checksum() {
 # Base meta block used in all todo.json fixtures
 _todo_meta() {
     cat << 'EOF'
-  "_meta": {"version": "2.2.0", "checksum": "test123"},
+  "_meta": {"version": "2.3.0", "checksum": "test123"},
 EOF
 }
 
@@ -30,12 +30,12 @@ EOF
 # Empty/Minimal Fixtures
 # =============================================================================
 
-# Create empty todo.json (no tasks) with v2.2.0 project structure
+# Create empty todo.json (no tasks) with v2.3.0 project structure
 create_empty_todo() {
     local dest="${1:-$TODO_FILE}"
     cat > "$dest" << 'EOF'
 {
-  "version": "2.2.0",
+  "version": "2.3.0",
   "project": {
     "name": "test-project",
     "currentPhase": "setup",
@@ -50,7 +50,7 @@ create_empty_todo() {
   "tasks": [],
   "focus": {"currentPhase": "setup"},
   "labels": {},
-  "_meta": {"version": "2.2.0", "checksum": "placeholder"},
+  "_meta": {"version": "2.3.0", "checksum": "placeholder"},
   "lastUpdated": "2025-12-01T12:00:00Z"
 }
 EOF
@@ -76,7 +76,7 @@ create_empty_todo_no_phases() {
     local dest="${1:-$TODO_FILE}"
     cat > "$dest" << 'EOF'
 {
-  "version": "2.2.0",
+  "version": "2.3.0",
   "project": {
     "name": "test-project",
     "currentPhase": null,
@@ -91,7 +91,7 @@ create_empty_todo_no_phases() {
   "tasks": [],
   "focus": {"currentPhase": null},
   "labels": {},
-  "_meta": {"version": "2.2.0", "checksum": "placeholder"},
+  "_meta": {"version": "2.3.0", "checksum": "placeholder"},
   "lastUpdated": "2025-12-01T12:00:00Z"
 }
 EOF
@@ -102,12 +102,12 @@ EOF
 # Basic Task Fixtures
 # =============================================================================
 
-# Create todo.json with independent tasks (no dependencies)
+# Create todo.json with independent tasks (no dependencies) - v2.3.0 schema
 create_independent_tasks() {
     local dest="${1:-$TODO_FILE}"
     cat > "$dest" << 'EOF'
 {
-  "version": "2.2.0",
+  "version": "2.3.0",
   "project": {
     "name": "test-project",
     "currentPhase": "setup",
@@ -119,11 +119,11 @@ create_independent_tasks() {
       "maintenance": {"order": 5, "name": "Maintenance", "description": "Bug fixes and support", "status": "pending", "startedAt": null, "completedAt": null}
     }
   },
-  "_meta": {"version": "2.2.0", "checksum": "placeholder"},
+  "_meta": {"version": "2.3.0", "checksum": "placeholder"},
   "tasks": [
-    {"id": "T001", "title": "First task", "description": "Task one", "status": "pending", "priority": "medium", "phase": "setup", "createdAt": "2025-12-01T10:00:00Z"},
-    {"id": "T002", "title": "Second task", "description": "Task two", "status": "pending", "priority": "high", "phase": "setup", "createdAt": "2025-12-01T11:00:00Z"},
-    {"id": "T003", "title": "Third task", "description": "Task three", "status": "pending", "priority": "low", "phase": "core", "createdAt": "2025-12-01T12:00:00Z"}
+    {"id": "T001", "title": "First task", "description": "Task one", "status": "pending", "priority": "medium", "phase": "setup", "type": "task", "parentId": null, "size": null, "createdAt": "2025-12-01T10:00:00Z"},
+    {"id": "T002", "title": "Second task", "description": "Task two", "status": "pending", "priority": "high", "phase": "setup", "type": "task", "parentId": null, "size": null, "createdAt": "2025-12-01T11:00:00Z"},
+    {"id": "T003", "title": "Third task", "description": "Task three", "status": "pending", "priority": "low", "phase": "core", "type": "task", "parentId": null, "size": null, "createdAt": "2025-12-01T12:00:00Z"}
   ],
   "focus": {"currentPhase": "setup"},
   "labels": {},
@@ -138,7 +138,7 @@ create_tasks_with_completed() {
     local dest="${1:-$TODO_FILE}"
     cat > "$dest" << 'EOF'
 {
-  "version": "2.2.0",
+  "version": "2.3.0",
   "project": {
     "name": "test-project",
     "currentPhase": "setup",
@@ -150,7 +150,7 @@ create_tasks_with_completed() {
       "maintenance": {"order": 5, "name": "Maintenance", "description": "Bug fixes and support", "status": "pending", "startedAt": null, "completedAt": null}
     }
   },
-  "_meta": {"version": "2.2.0", "checksum": "placeholder"},
+  "_meta": {"version": "2.3.0", "checksum": "placeholder"},
   "tasks": [
     {"id": "T001", "title": "Completed task", "description": "Done", "status": "done", "priority": "high", "phase": "setup", "createdAt": "2025-12-01T10:00:00Z", "completedAt": "2025-12-10T12:00:00Z"},
     {"id": "T002", "title": "Pending task", "description": "Not done", "status": "pending", "priority": "medium", "phase": "setup", "createdAt": "2025-12-01T11:00:00Z"}
@@ -172,7 +172,7 @@ create_linear_chain() {
     local dest="${1:-$TODO_FILE}"
     cat > "$dest" << 'EOF'
 {
-  "version": "2.2.0",
+  "version": "2.3.0",
   "project": {
     "name": "test-project",
     "currentPhase": "setup",
@@ -184,7 +184,7 @@ create_linear_chain() {
       "maintenance": {"order": 5, "name": "Maintenance", "description": "Bug fixes and support", "status": "pending", "startedAt": null, "completedAt": null}
     }
   },
-  "_meta": {"version": "2.2.0", "checksum": "placeholder"},
+  "_meta": {"version": "2.3.0", "checksum": "placeholder"},
   "tasks": [
     {"id": "T001", "title": "Foundation task", "description": "Base", "status": "pending", "priority": "high", "phase": "setup", "createdAt": "2025-12-01T10:00:00Z"},
     {"id": "T002", "title": "Depends on T001", "description": "Middle", "status": "pending", "priority": "medium", "phase": "setup", "createdAt": "2025-12-01T11:00:00Z", "depends": ["T001"]},
@@ -203,7 +203,7 @@ create_complex_deps() {
     local dest="${1:-$TODO_FILE}"
     cat > "$dest" << 'EOF'
 {
-  "version": "2.2.0",
+  "version": "2.3.0",
   "project": {
     "name": "test-project",
     "currentPhase": "core",
@@ -215,7 +215,7 @@ create_complex_deps() {
       "maintenance": {"order": 5, "name": "Maintenance", "description": "Bug fixes and support", "status": "pending", "startedAt": null, "completedAt": null}
     }
   },
-  "_meta": {"version": "2.2.0", "checksum": "placeholder"},
+  "_meta": {"version": "2.3.0", "checksum": "placeholder"},
   "tasks": [
     {"id": "T001", "title": "Core module", "description": "Core", "status": "pending", "priority": "critical", "phase": "core", "createdAt": "2025-12-01T10:00:00Z"},
     {"id": "T002", "title": "Auth module", "description": "Auth", "status": "pending", "priority": "high", "phase": "core", "createdAt": "2025-12-01T11:00:00Z"},
@@ -240,7 +240,7 @@ create_blocked_tasks() {
     local dest="${1:-$TODO_FILE}"
     cat > "$dest" << 'EOF'
 {
-  "version": "2.2.0",
+  "version": "2.3.0",
   "project": {
     "name": "test-project",
     "currentPhase": "setup",
@@ -252,7 +252,7 @@ create_blocked_tasks() {
       "maintenance": {"order": 5, "name": "Maintenance", "description": "Bug fixes and support", "status": "pending", "startedAt": null, "completedAt": null}
     }
   },
-  "_meta": {"version": "2.2.0", "checksum": "placeholder"},
+  "_meta": {"version": "2.3.0", "checksum": "placeholder"},
   "tasks": [
     {"id": "T001", "title": "Foundation task", "description": "Base", "status": "pending", "priority": "high", "phase": "setup", "createdAt": "2025-12-01T10:00:00Z"},
     {"id": "T002", "title": "Blocked by T001", "description": "Waiting", "status": "blocked", "priority": "medium", "phase": "setup", "createdAt": "2025-12-01T11:00:00Z", "depends": ["T001"], "blockedBy": "Waiting for T001"},
@@ -271,7 +271,7 @@ create_multi_blocker_tasks() {
     local dest="${1:-$TODO_FILE}"
     cat > "$dest" << 'EOF'
 {
-  "version": "2.2.0",
+  "version": "2.3.0",
   "project": {
     "name": "test-project",
     "currentPhase": "setup",
@@ -283,7 +283,7 @@ create_multi_blocker_tasks() {
       "maintenance": {"order": 5, "name": "Maintenance", "description": "Bug fixes and support", "status": "pending", "startedAt": null, "completedAt": null}
     }
   },
-  "_meta": {"version": "2.2.0", "checksum": "placeholder"},
+  "_meta": {"version": "2.3.0", "checksum": "placeholder"},
   "tasks": [
     {"id": "T001", "title": "First dependency", "description": "Dep 1", "status": "pending", "priority": "high", "phase": "setup", "createdAt": "2025-12-01T10:00:00Z"},
     {"id": "T002", "title": "Second dependency", "description": "Dep 2", "status": "pending", "priority": "high", "phase": "setup", "createdAt": "2025-12-01T11:00:00Z"},
@@ -302,7 +302,7 @@ create_completed_blocker() {
     local dest="${1:-$TODO_FILE}"
     cat > "$dest" << 'EOF'
 {
-  "version": "2.2.0",
+  "version": "2.3.0",
   "project": {
     "name": "test-project",
     "currentPhase": "setup",
@@ -314,7 +314,7 @@ create_completed_blocker() {
       "maintenance": {"order": 5, "name": "Maintenance", "description": "Bug fixes and support", "status": "pending", "startedAt": null, "completedAt": null}
     }
   },
-  "_meta": {"version": "2.2.0", "checksum": "placeholder"},
+  "_meta": {"version": "2.3.0", "checksum": "placeholder"},
   "tasks": [
     {"id": "T001", "title": "Completed blocker", "description": "Done", "status": "done", "priority": "high", "phase": "setup", "createdAt": "2025-12-01T10:00:00Z", "completedAt": "2025-12-10T12:00:00Z"},
     {"id": "T002", "title": "Was blocked by T001", "description": "Now unblocked", "status": "pending", "priority": "medium", "phase": "setup", "createdAt": "2025-12-01T11:00:00Z", "depends": ["T001"]}
@@ -336,7 +336,7 @@ create_circular_deps() {
     local dest="${1:-$TODO_FILE}"
     cat > "$dest" << 'EOF'
 {
-  "version": "2.2.0",
+  "version": "2.3.0",
   "project": {
     "name": "test-project",
     "currentPhase": "setup",
@@ -348,7 +348,7 @@ create_circular_deps() {
       "maintenance": {"order": 5, "name": "Maintenance", "description": "Bug fixes and support", "status": "pending", "startedAt": null, "completedAt": null}
     }
   },
-  "_meta": {"version": "2.2.0", "checksum": "placeholder"},
+  "_meta": {"version": "2.3.0", "checksum": "placeholder"},
   "tasks": [
     {"id": "T001", "title": "A depends on B", "description": "Circular A", "status": "pending", "priority": "medium", "phase": "setup", "createdAt": "2025-12-01T10:00:00Z", "depends": ["T002"]},
     {"id": "T002", "title": "B depends on A", "description": "Circular B", "status": "pending", "priority": "medium", "phase": "setup", "createdAt": "2025-12-01T11:00:00Z", "depends": ["T001"]}
@@ -438,7 +438,7 @@ create_empty_archive() {
     local dest="${1:-${ARCHIVE_FILE:-${TEST_TEMP_DIR}/.claude/todo-archive.json}}"
     cat > "$dest" << 'EOF'
 {
-  "_meta": {"version": "2.2.0", "checksum": "placeholder"},
+  "_meta": {"version": "2.3.0", "checksum": "placeholder"},
   "archivedTasks": [],
   "lastArchived": null
 }

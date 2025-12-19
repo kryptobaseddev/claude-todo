@@ -86,7 +86,7 @@ output_compliance_error() {
     local recoverable="${4:-false}"
     local suggestion="${5:-}"
 
-    if [[ "$OUTPUT_FORMAT" == "json" ]]; then
+    if [[ "$FORMAT" == "json" ]]; then
         jq -n \
             --arg code "$error_code" \
             --arg msg "$message" \
@@ -120,7 +120,7 @@ output_compliance_error() {
 }
 
 # Default options
-OUTPUT_FORMAT="text"
+FORMAT=""
 VERBOSE=false
 QUIET=false
 CI_MODE=false
@@ -196,15 +196,15 @@ parse_args() {
                 shift 2
                 ;;
             -f|--format)
-                OUTPUT_FORMAT="$2"
+                FORMAT="$2"
                 shift 2
                 ;;
             --json)
-                OUTPUT_FORMAT="json"
+                FORMAT="json"
                 shift
                 ;;
             --human)
-                OUTPUT_FORMAT="text"
+                FORMAT="text"
                 shift
                 ;;
             -t|--threshold)
@@ -370,7 +370,7 @@ preextract_schema_patterns() {
 
     SCHEMA_PATTERNS_LOADED=true
 
-    if [[ "$VERBOSE" == "true" ]] && [[ "$OUTPUT_FORMAT" == "text" ]]; then
+    if [[ "$VERBOSE" == "true" ]] && [[ "$FORMAT" == "text" ]]; then
         echo -e "${DIM}Pre-extracted ${#patterns} schema patterns${NC}" >&2
     fi
 }
@@ -1051,7 +1051,7 @@ main() {
     fi
 
     # Resolve format (TTY-aware for LLM-Agent-First)
-    OUTPUT_FORMAT=$(dev_resolve_format "$OUTPUT_FORMAT")
+    FORMAT=$(dev_resolve_format "$FORMAT")
 
     # Dev scripts mode - use different schema and paths
     if [[ "$DEV_SCRIPTS_MODE" == "true" ]]; then
@@ -1121,7 +1121,7 @@ main() {
     local total_failed=0
     local total_checks=0
 
-    [[ "$VERBOSE" == "true" ]] && [[ "$OUTPUT_FORMAT" == "text" ]] && echo -e "\n${BOLD}Running compliance checks...${NC}\n"
+    [[ "$VERBOSE" == "true" ]] && [[ "$FORMAT" == "text" ]] && echo -e "\n${BOLD}Running compliance checks...${NC}\n"
 
     while IFS= read -r entry; do
         [[ -z "$entry" ]] && continue
@@ -1130,7 +1130,7 @@ main() {
         local script="${entry#*:}"
         local script_path="$SCRIPTS_DIR/$script"
 
-        [[ "$VERBOSE" == "true" ]] && [[ "$OUTPUT_FORMAT" == "text" ]] && print_header "$cmd ($script)"
+        [[ "$VERBOSE" == "true" ]] && [[ "$FORMAT" == "text" ]] && print_header "$cmd ($script)"
 
         # Run static checks
         local static_results
@@ -1227,7 +1227,7 @@ main() {
     save_cache "$final_results"
 
     # Output results
-    case "$OUTPUT_FORMAT" in
+    case "$FORMAT" in
         json)
             format_json_output "$final_results" "$schema"
             ;;

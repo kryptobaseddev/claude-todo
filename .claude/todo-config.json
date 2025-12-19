@@ -40,7 +40,6 @@
     "warnStaleDays": 30
   },
   "output": {
-    "defaultFormat": "text",
     "showColor": true,
     "showUnicode": true,
     "showProgressBars": true,

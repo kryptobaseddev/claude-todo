@@ -91,6 +91,8 @@ Subcommands:
 
 Options:
   -f, --format FORMAT   Output format: text|json|markdown (default: text)
+  --json                Shortcut for --format json
+  --human               Shortcut for --format text
   -q, --quiet           Suppress informational messages
   -h, --help            Show this help
 
@@ -125,6 +127,8 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     -f|--format) FORMAT="$2"; shift 2 ;;
+    --json) FORMAT="json"; shift ;;
+    --human) FORMAT="text"; shift ;;
     -q|--quiet) QUIET=true; shift ;;
     -h|--help) usage ;;
     -*)

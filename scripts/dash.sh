@@ -97,7 +97,7 @@ fi
 
 # Default configuration
 PERIOD_DAYS=7
-OUTPUT_FORMAT=""
+FORMAT=""
 COMPACT_MODE=false
 SHOW_CHARTS=true
 SECTIONS="all"
@@ -128,6 +128,8 @@ Options:
     --no-chart        Disable ASCII charts/progress bars
     --sections LIST   Comma-separated: focus,summary,priority,blocked,phases,labels,activity,all
     -f, --format FORMAT   Output format: text | json (default: text)
+    --json            Shortcut for --format json
+    --human           Shortcut for --format text
     -h, --help        Show this help message
 
 Examples:
@@ -1096,7 +1098,7 @@ parse_arguments() {
       --period)
         PERIOD_DAYS="$2"
         if ! [[ "$PERIOD_DAYS" =~ ^[0-9]+$ ]]; then
-          if [[ "${OUTPUT_FORMAT:-}" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+          if [[ "${FORMAT:-}" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
             output_error "E_INPUT_INVALID" "--period must be a positive integer" "${EXIT_INVALID_INPUT:-2}" true "Example: --period 7"
           else
             log_error "--period must be a positive integer"
@@ -1114,11 +1116,19 @@ parse_arguments() {
         shift 2
         ;;
       --format|-f)
-        OUTPUT_FORMAT="$2"
-        if ! validate_format "$OUTPUT_FORMAT" "text,json"; then
+        FORMAT="$2"
+        if ! validate_format "$FORMAT" "text,json"; then
           exit 1
         fi
         shift 2
+        ;;
+      --json)
+        FORMAT="json"
+        shift
+        ;;
+      --human)
+        FORMAT="text"
+        shift
         ;;
       -q|--quiet)
         QUIET=true
@@ -1128,7 +1138,7 @@ parse_arguments() {
         usage
         ;;
       *)
-        if [[ "${OUTPUT_FORMAT:-}" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+        if [[ "${FORMAT:-}" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
           output_error "E_INPUT_INVALID" "Unknown option: $1" "${EXIT_INVALID_INPUT:-2}" true "Run 'claude-todo dash --help' for usage"
         else
           log_error "Unknown option: $1"
@@ -1148,11 +1158,11 @@ main() {
   parse_arguments "$@"
 
   # Resolve format (TTY-aware auto-detection)
-  OUTPUT_FORMAT=$(resolve_format "${OUTPUT_FORMAT:-}")
+  FORMAT=$(resolve_format "${FORMAT:-}")
 
   # Check if in a todo-enabled project
   if [[ ! -f "$TODO_FILE" ]]; then
-    if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+    if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
       output_error "E_NOT_INITIALIZED" "Todo file not found: $TODO_FILE" "${EXIT_FILE_ERROR:-3}" true "Run 'claude-todo init' to initialize project"
     else
       log_error "Todo file not found: $TODO_FILE"
@@ -1163,7 +1173,7 @@ main() {
 
   # Check required commands
   if ! command -v jq &>/dev/null; then
-    if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+    if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
       output_error "E_DEPENDENCY_MISSING" "jq is required but not installed" "${EXIT_DEPENDENCY_ERROR:-5}" true "Install jq: https://stedolan.github.io/jq/download/"
     else
       log_error "jq is required but not installed"
@@ -1172,7 +1182,7 @@ main() {
   fi
 
   # Output in requested format
-  case "$OUTPUT_FORMAT" in
+  case "$FORMAT" in
     json)
       output_json_format
       ;;

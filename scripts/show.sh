@@ -27,6 +27,12 @@ if [[ -f "$LIB_DIR/error-json.sh" ]]; then
   source "$LIB_DIR/error-json.sh"
 fi
 
+# Source hierarchy library
+if [[ -f "$LIB_DIR/hierarchy.sh" ]]; then
+  # shellcheck source=../lib/hierarchy.sh
+  source "$LIB_DIR/hierarchy.sh"
+fi
+
 # Colors (respects NO_COLOR and FORCE_COLOR environment variables)
 if declare -f should_use_color >/dev/null 2>&1 && should_use_color; then
   RED='\033[0;31m'
@@ -53,7 +59,7 @@ else
 fi
 
 # Options
-FORMAT="text"
+FORMAT=""
 INCLUDE_ARCHIVE=false
 SHOW_HISTORY=false
 SHOW_RELATED=false
@@ -71,6 +77,8 @@ Arguments:
 
 Options:
   -f, --format FORMAT Output format: text (default) or json
+  --json              Shortcut for --format json
+  --human             Shortcut for --format text
   -q, --quiet         Suppress decorative output (headers, borders)
   --include-archive   Search archive if not found in active tasks
   --history           Show task history from log
@@ -180,6 +188,67 @@ get_related_tasks() {
   ' "$file" 2>/dev/null | head -5
 }
 
+# Get hierarchy context for a task as JSON
+# Outputs JSON object with parent, depth, childCount, children
+get_hierarchy_context_json() {
+  local id="$1"
+  local file="$2"
+
+  # Check if hierarchy functions are available
+  if ! declare -f get_task_parent >/dev/null 2>&1; then
+    echo '{"parent":null,"depth":0,"childCount":0,"children":[]}'
+    return
+  fi
+
+  # Get parent info
+  local parent_id
+  parent_id=$(get_task_parent "$id" "$file")
+
+  local parent_obj="null"
+  if [[ "$parent_id" != "null" && -n "$parent_id" ]]; then
+    local parent_title
+    parent_title=$(jq -r --arg id "$parent_id" '.tasks[] | select(.id == $id) | .title // ""' "$file" 2>/dev/null)
+    parent_obj=$(jq -n --arg id "$parent_id" --arg title "$parent_title" '{"id": $id, "title": $title}')
+  fi
+
+  # Get depth
+  local depth
+  depth=$(get_task_depth "$id" "$file")
+  [[ -z "$depth" || "$depth" == "-1" ]] && depth="0"
+
+  # Get children
+  local children
+  children=$(get_children "$id" "$file")
+
+  local child_count=0
+  local children_json="[]"
+
+  if [[ -n "$children" ]]; then
+    # Count children
+    child_count=$(echo "$children" | wc -w | tr -d ' ')
+
+    # Build JSON array of children with id and title
+    children_json=$(jq -n '[]')
+    for child_id in $children; do
+      local child_title
+      child_title=$(jq -r --arg id "$child_id" '.tasks[] | select(.id == $id) | .title // ""' "$file" 2>/dev/null)
+      children_json=$(echo "$children_json" | jq --arg id "$child_id" --arg title "$child_title" '. + [{"id": $id, "title": $title}]')
+    done
+  fi
+
+  jq -n \
+    --argjson parent "$parent_obj" \
+    --argjson depth "$depth" \
+    --argjson childCount "$child_count" \
+    --argjson children "$children_json" \
+    '{
+      "parent": $parent,
+      "depth": $depth,
+      "childCount": $childCount,
+      "children": $children
+    }'
+}
+
 # Display task in quiet text format (no decorations)
 display_text_quiet() {
   local task="$1"
@@ -205,6 +274,23 @@ display_text_quiet() {
   echo "$id $symbol $title [$priority]"
   echo "Status: $status"
   [[ -n "$phase" && "$phase" != "null" ]] && echo "Phase: $phase"
+
+  # Hierarchy context
+  local hierarchy_json
+  hierarchy_json=$(get_hierarchy_context_json "$id" "$TODO_FILE")
+
+  local h_parent_id h_parent_title h_depth h_child_count
+  h_parent_id=$(echo "$hierarchy_json" | jq -r '.parent.id // "null"')
+  h_parent_title=$(echo "$hierarchy_json" | jq -r '.parent.title // ""')
+  h_depth=$(echo "$hierarchy_json" | jq -r '.depth')
+  h_child_count=$(echo "$hierarchy_json" | jq -r '.childCount')
+
+  if [[ "$h_parent_id" != "null" && -n "$h_parent_id" ]]; then
+    echo "Parent: $h_parent_id ($h_parent_title)"
+  fi
+  echo "Depth: $h_depth"
+  echo "Children: $h_child_count"
+
   [[ -n "$labels" ]] && echo "Labels: $labels"
   [[ -n "$depends" ]] && echo "Depends: $depends"
   [[ -n "$blocked_by" && "$blocked_by" != "null" ]] && echo "Blocked by: $blocked_by"
@@ -275,6 +361,31 @@ display_text() {
   [[ -n "$created" && "$created" != "null" ]] && echo -e "│  ${DIM}Created:${NC}     $created"
   [[ -n "$completed" && "$completed" != "null" ]] && echo -e "│  ${DIM}Completed:${NC}   $completed"
   [[ "$source" == "archive" ]] && echo -e "│  ${DIM}Source:${NC}      ${YELLOW}archived${NC}"
+
+  # Hierarchy context
+  local hierarchy_json
+  hierarchy_json=$(get_hierarchy_context_json "$id" "$TODO_FILE")
+
+  local h_parent_id h_parent_title h_depth h_child_count
+  h_parent_id=$(echo "$hierarchy_json" | jq -r '.parent.id // "null"')
+  h_parent_title=$(echo "$hierarchy_json" | jq -r '.parent.title // ""')
+  h_depth=$(echo "$hierarchy_json" | jq -r '.depth')
+  h_child_count=$(echo "$hierarchy_json" | jq -r '.childCount')
+
+  echo -e "├─────────────────────────────────────────────────────────────────┤"
+  echo -e "│  ${BOLD}Hierarchy${NC}"
+  if [[ "$h_parent_id" != "null" && -n "$h_parent_id" ]]; then
+    echo -e "│  ${DIM}Parent:${NC}      $h_parent_id ($h_parent_title)"
+  fi
+  echo -e "│  ${DIM}Depth:${NC}       $h_depth"
+  echo -e "│  ${DIM}Children:${NC}    $h_child_count"
+
+  # List direct children if any
+  if [[ "$h_child_count" -gt 0 ]]; then
+    echo "$hierarchy_json" | jq -r '.children[] | "\(.id): \(.title)"' 2>/dev/null | while read -r child_line; do
+      [[ -n "$child_line" ]] && echo -e "│    → $child_line"
+    done
+  fi
 
   # Description
   if [[ -n "$description" && "$description" != "null" ]]; then
@@ -392,6 +503,12 @@ display_json() {
   local dependents=$(get_dependents "$id" "$TODO_FILE" | jq -R -s 'split("\n") | map(select(length > 0))')
   task_data=$(echo "$task_data" | jq --argjson deps "$dependents" '. + {_dependents: $deps}')
 
+  # Add hierarchy context
+  local hierarchy_json
+  hierarchy_json=$(get_hierarchy_context_json "$id" "$TODO_FILE")
+
+  task_data=$(echo "$task_data" | jq --argjson hierarchy "$hierarchy_json" '. + {hierarchy: $hierarchy}')
+
   # Add history if requested
   if [[ "$SHOW_HISTORY" == true ]]; then
     local history=$(get_task_history "$id" | jq -R -s 'split("\n") | map(select(length > 0))')
@@ -434,6 +551,14 @@ while [[ $# -gt 0 ]]; do
     -f|--format)
       FORMAT="$2"
       shift 2
+      ;;
+    --json)
+      FORMAT="json"
+      shift
+      ;;
+    --human)
+      FORMAT="text"
+      shift
       ;;
     --include-archive)
       INCLUDE_ARCHIVE=true

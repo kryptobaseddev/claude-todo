@@ -152,6 +152,8 @@ Options:
   -e, --exact         Exact title match only
   --include-archive   Search archived tasks too
   -f, --format FMT    Output format: text|json (default: auto)
+  --json              Shortcut for --format json
+  --human             Shortcut for --format text
   -q, --quiet         Suppress non-essential output
   -v, --verbose       Include full task objects in output
   -h, --help          Show this help message
@@ -263,6 +265,14 @@ while [[ $# -gt 0 ]]; do
             fi
             FORMAT="$2"
             shift 2
+            ;;
+        --json)
+            FORMAT="json"
+            shift
+            ;;
+        --human)
+            FORMAT="text"
+            shift
             ;;
         -q|--quiet)
             QUIET=true

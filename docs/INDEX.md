@@ -40,8 +40,11 @@
 
 ### 🎯 Command Reference
 
+> **Machine Index**: [COMMANDS-INDEX.json](commands/COMMANDS-INDEX.json) (LLM-agent-first, schema-validated)
+
 | Document | Purpose | When to Read |
 |----------|---------|--------------|
+| **[COMMANDS-INDEX.json](commands/COMMANDS-INDEX.json)** | **Authoritative** command catalog (JSON, 32 commands) | LLM agents: `jq '.commands[] | select(.agentRelevance=="critical")'` |
 | **[commands/add.md](commands/add.md)** | Add task command documentation | Creating new tasks with options |
 | **[commands/analyze.md](commands/analyze.md)** | Analyze command documentation | Task triage with leverage scoring and bottleneck detection |
 | **[commands/archive.md](commands/archive.md)** | Archive command documentation | Archiving completed tasks |
@@ -55,6 +58,7 @@
 | **[commands/export.md](commands/export.md)** | Export command documentation | Exporting tasks in CSV, TSV, JSON, markdown formats |
 | **[commands/focus.md](commands/focus.md)** | Focus command documentation | Managing single-task workflow discipline |
 | **[commands/find.md](commands/find.md)** | Find command documentation | Searching tasks by pattern, ID, or fuzzy match |
+| **[commands/hierarchy.md](commands/hierarchy.md)** | Hierarchy system documentation | Epic/Task/Subtask organization (v0.17.0+) |
 | **[commands/history.md](commands/history.md)** | Completion history and timeline analytics | Reviewing productivity trends and completion metrics |
 | **[commands/init.md](commands/init.md)** | Init command documentation | Project initialization and CLAUDE.md updates |
 | **[commands/labels.md](commands/labels.md)** | Labels command documentation | Managing and analyzing task labels |
@@ -75,8 +79,12 @@
 
 ### 📐 Specifications (Immutable Design Documents)
 
+> **Complete Index**: [SPEC-INDEX.json](specs/SPEC-INDEX.json) (machine) | [SPEC-INDEX.md](specs/SPEC-INDEX.md) (human)
+
 | Document | Purpose | When to Read |
 |----------|---------|--------------|
+| **[SPEC-INDEX.json](specs/SPEC-INDEX.json)** | **Authoritative** spec catalog (JSON, schema-validated) | LLM agents: `jq '.authorities["domain"]'` |
+| **[SPEC-INDEX.md](specs/SPEC-INDEX.md)** | Human-readable view (generated from JSON) | Human navigation, quick reference |
 | **[LLM-TASK-ID-SYSTEM-DESIGN-SPEC.md](specs/LLM-TASK-ID-SYSTEM-DESIGN-SPEC.md)** | **IMMUTABLE** Task ID system design bible | Before any ID-related changes; authoritative source |
 | **[PHASE-SYSTEM-SPEC.md](specs/PHASE-SYSTEM-SPEC.md)** | **AUTHORITATIVE** Phase lifecycle system specification | Phase commands, history, validation, integration |
 | **[HIERARCHY-ENHANCEMENT-SPEC.md](specs/HIERARCHY-ENHANCEMENT-SPEC.md)** | Hierarchy feature specification (v0.17.0+) | Implementing Epic/Task/Subtask hierarchy |

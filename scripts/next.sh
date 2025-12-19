@@ -84,7 +84,7 @@ fi
 # Default configuration
 SHOW_EXPLAIN=false
 SUGGESTION_COUNT=1
-OUTPUT_FORMAT="text"
+FORMAT=""
 QUIET=false
 COMMAND_NAME="next"
 
@@ -106,6 +106,8 @@ Options:
     -e, --explain     Show detailed reasoning for suggestion
     -c, --count N     Show top N suggestions (default: 1)
     -f, --format FORMAT   Output format: text | json (default: text)
+    --json            Shortcut for --format json
+    --human           Shortcut for --format text
     -q, --quiet       Suppress decorative output (headers, footers)
     -h, --help        Show this help message
 
@@ -564,7 +566,7 @@ parse_arguments() {
       --count|-c)
         SUGGESTION_COUNT="$2"
         if ! [[ "$SUGGESTION_COUNT" =~ ^[0-9]+$ ]] || [[ "$SUGGESTION_COUNT" -lt 1 ]]; then
-          if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+          if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
             output_error "$E_INPUT_INVALID" "--count must be a positive integer" "${EXIT_INVALID_INPUT:-1}" true "Example: --count 3"
           else
             output_error "$E_INPUT_INVALID" "--count must be a positive integer"
@@ -574,11 +576,19 @@ parse_arguments() {
         shift 2
         ;;
       --format|-f)
-        OUTPUT_FORMAT="$2"
-        if ! validate_format "$OUTPUT_FORMAT" "text,json"; then
+        FORMAT="$2"
+        if ! validate_format "$FORMAT" "text,json"; then
           exit 1
         fi
         shift 2
+        ;;
+      --json)
+        FORMAT="json"
+        shift
+        ;;
+      --human)
+        FORMAT="text"
+        shift
         ;;
       --quiet|-q)
         QUIET=true
@@ -588,7 +598,7 @@ parse_arguments() {
         usage
         ;;
       *)
-        if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+        if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
           output_error "$E_INPUT_INVALID" "Unknown option: $1" "${EXIT_INVALID_INPUT:-1}" true "Run 'claude-todo next --help' for usage"
         else
           output_error "$E_INPUT_INVALID" "Unknown option: $1"
@@ -608,11 +618,11 @@ main() {
   parse_arguments "$@"
 
   # Resolve format (TTY-aware auto-detection)
-  OUTPUT_FORMAT=$(resolve_format "${OUTPUT_FORMAT:-}")
+  FORMAT=$(resolve_format "${FORMAT:-}")
 
   # Check if in a todo-enabled project
   if [[ ! -f "$TODO_FILE" ]]; then
-    if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+    if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
       output_error "$E_NOT_INITIALIZED" "Todo file not found: $TODO_FILE" "${EXIT_NOT_INITIALIZED:-1}" true "Run 'claude-todo init' first"
     else
       output_error "$E_NOT_INITIALIZED" "Todo file not found: $TODO_FILE"
@@ -623,7 +633,7 @@ main() {
 
   # Check required commands
   if ! command -v jq &>/dev/null; then
-    if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+    if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
       output_error "$E_DEPENDENCY_MISSING" "jq is required but not installed" "${EXIT_DEPENDENCY_MISSING:-1}" true "Install jq: https://stedolan.github.io/jq/download/"
     else
       output_error "$E_DEPENDENCY_MISSING" "jq is required but not installed"
@@ -636,7 +646,7 @@ main() {
   suggestions=$(get_suggestions "$SUGGESTION_COUNT")
 
   # Output in requested format
-  case "$OUTPUT_FORMAT" in
+  case "$FORMAT" in
     json)
       output_json_format "$suggestions"
       ;;

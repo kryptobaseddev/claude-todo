@@ -82,6 +82,7 @@ fi
 # Default configuration - JSON output for LLM agents
 OUTPUT_MODE="json"
 AUTO_FOCUS=false
+QUIET=false
 COMMAND_NAME="analyze"
 
 # File paths
@@ -103,6 +104,7 @@ Options:
     --human         Human-readable text output (brief summary)
     --full          Comprehensive human-readable report with all tiers
     --auto-focus    Automatically set focus to recommended task
+    -q, --quiet     Suppress non-essential output (exit 0 if tasks exist)
     -h, --help      Show this help message
 
 Analysis Components:
@@ -692,6 +694,10 @@ parse_arguments() {
         AUTO_FOCUS=true
         shift
         ;;
+      -q|--quiet)
+        QUIET=true
+        shift
+        ;;
       --help|-h)
         usage
         ;;
@@ -738,6 +744,17 @@ main() {
       log_error "jq is required but not installed"
     fi
     exit "${EXIT_DEPENDENCY_ERROR:-5}"
+  fi
+
+  # Quiet mode: just check if pending tasks exist and exit
+  if [[ "$QUIET" == "true" ]]; then
+    local pending_count
+    pending_count=$(jq -r '[.tasks[] | select(.status == "pending" or .status == "active")] | length' "$TODO_FILE")
+    if [[ "$pending_count" -gt 0 ]]; then
+      exit 0
+    else
+      exit 1
+    fi
   fi
 
   # Output in requested format

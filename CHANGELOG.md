@@ -5,6 +5,75 @@ All notable changes to the claude-todo system will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.20.1] - 2025-12-19
+
+### Changed
+- **LLM-Agent-First Documentation Overhaul**
+  - Updated `docs/TODO_Task_Management.md` - Replaced "JSON Output Parsing" with "LLM-Agent-First Output" section
+  - Updated `templates/CLAUDE-INJECTION.md` - Added `find` command, new "LLM-Agent-First Design" section
+  - Updated `docs/commands/list.md` - Added auto-detection note, "prefer native filters" guidance
+  - Updated `docs/commands/find.md` - Clarified auto-detection in JSON output sections
+
+- **validate.sh JSON output enhanced**
+  - Now includes full `details` array with all validation check results
+  - Each check includes: check name, status (ok/error/warning), message
+  - `_meta.version` now shows app version (0.20.1), not schema version
+  - Added `schemaVersion` field to JSON output for schema version (2.2.0)
+
+### Fixed
+- **Agent jq quoting issues** - Documentation now explicitly warns to use single quotes for jq expressions
+- **Unnecessary --format json flags** - Docs now teach that JSON is auto-detected when piped (non-TTY)
+- **Context bloat patterns** - Docs now recommend `find` over `list` for task discovery (99% context reduction)
+- **validate.sh version confusion** - `_meta.version` was incorrectly showing schema version instead of app version
+
+## [0.20.0] - 2025-12-19
+
+### Added
+- **Task Hierarchy System** - Epic → Task → Subtask organization (Schema v2.3.0)
+  - Three-level hierarchy with enforced constraints (max depth: 3, max siblings: 7)
+  - New task fields: `type` (epic|task|subtask), `parentId`, `size` (small|medium|large)
+  - Type inference: automatically determines task type based on parent
+  - Hierarchy validation in `lib/hierarchy.sh` (14KB, 500+ lines)
+
+- **add-task.sh hierarchy flags**
+  - `--type epic|task|subtask` - Explicit task type classification
+  - `--parent T###` - Set parent task for hierarchy relationship
+  - `--size small|medium|large` - Scope-based sizing (NOT time estimates)
+  - Validation: Epic cannot have parent, subtask requires parent
+
+- **list-tasks.sh hierarchy filters**
+  - `--tree` - Hierarchical tree view with ASCII art indentation
+  - `--type epic|task|subtask` - Filter by task type
+  - `--children T###` - Show direct children of a task
+  - `--parent T###` - Alias for --children filter
+
+- **show.sh hierarchy context** - Displays parent info, children count, and depth
+
+- **Migration v2.2.0 → v2.3.0** - Automatic migration with dual separator support
+  - Label-based type inference (`epic-*` → epic, `subtask-*` → subtask)
+  - Adds type, parentId, size fields with sensible defaults
+
+- **Hierarchy exit codes** (10-15) for structured error handling
+  - `EXIT_PARENT_NOT_FOUND` (10), `EXIT_DEPTH_EXCEEDED` (11)
+  - `EXIT_SIBLING_LIMIT` (12), `EXIT_INVALID_PARENT_TYPE` (13)
+  - `EXIT_CIRCULAR_REFERENCE` (14), `EXIT_ORPHAN_DETECTED` (15)
+
+- **Test coverage** - 96 new hierarchy tests
+  - `tests/unit/hierarchy.bats` - 67 unit tests
+  - `tests/integration/hierarchy-workflow.bats` - 29 integration tests
+
+- **Documentation** - `docs/commands/hierarchy.md` (383 lines)
+  - Complete usage guide with examples
+  - Migration instructions and troubleshooting
+
+### Changed
+- **Test fixtures updated** - All fixtures now use schema v2.3.0 with hierarchy fields
+- **docs/reference/migration-guide.md** - Updated current schema to v2.3.0
+
+### Fixed
+- **lib/hierarchy.sh** - Added readonly guards to prevent variable collision on re-source
+- **add-task.sh** - Added validation for epic/subtask type constraints
+
 ## [0.19.3] - 2025-12-19
 
 ### Added

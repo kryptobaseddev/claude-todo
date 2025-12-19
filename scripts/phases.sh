@@ -77,8 +77,7 @@ elif [[ -f "$LIB_DIR/exit-codes.sh" ]]; then
 fi
 
 # Default configuration
-OUTPUT_FORMAT="text"
-FORMAT="text"  # Alias for output_error compatibility
+FORMAT=""
 SUBCOMMAND="list"
 COMMAND_NAME="phases"
 PHASE_ARG=""
@@ -105,6 +104,8 @@ Subcommands:
 
 Options:
     --format, -f FORMAT   Output format: text | json (default: text)
+    --json                Shortcut for --format json
+    --human               Shortcut for --format text
     -q, --quiet           Suppress non-essential output (exit 0 if phases exist)
     -h, --help            Show this help message
 
@@ -169,8 +170,7 @@ log_error() {
   local exit_code="${3:-1}"
   local suggestion="${4:-}"
 
-  if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
-    FORMAT="$OUTPUT_FORMAT"  # Sync FORMAT for output_error
+  if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
     output_error "$error_code" "$message" "$exit_code" true "$suggestion"
   else
     echo -e "${RED}[ERROR]${NC} $message" >&2
@@ -179,7 +179,7 @@ log_error() {
 }
 
 log_info() {
-  if [[ "$OUTPUT_FORMAT" != "json" ]]; then
+  if [[ "$FORMAT" != "json" ]]; then
     echo -e "${DIM}[INFO]${NC} $1" >&2
   fi
 }
@@ -307,7 +307,7 @@ list_phases() {
     fi
   fi
 
-  if [[ "$OUTPUT_FORMAT" == "json" ]]; then
+  if [[ "$FORMAT" == "json" ]]; then
     # Get currentPhase from todo.json
     local current_phase
     current_phase=$(jq -r '.focus.currentPhase // .project.currentPhase // null' "$TODO_FILE")
@@ -440,7 +440,7 @@ show_phase() {
     }
   ' "$TODO_FILE")
 
-  if [[ "$OUTPUT_FORMAT" == "json" ]]; then
+  if [[ "$FORMAT" == "json" ]]; then
     echo "$phase_info" | jq --arg version "$VERSION" '{
       "$schema": "https://claude-todo.dev/schemas/v1/output.schema.json",
       "_meta": {
@@ -500,7 +500,7 @@ show_stats() {
   local phase_stats
   phase_stats=$(get_phase_stats)
 
-  if [[ "$OUTPUT_FORMAT" == "json" ]]; then
+  if [[ "$FORMAT" == "json" ]]; then
     echo "$phase_stats" | jq --arg version "$VERSION" '{
       "$schema": "https://claude-todo.dev/schemas/v1/output.schema.json",
       "_meta": {
@@ -610,8 +610,16 @@ while [[ $# -gt 0 ]]; do
       usage
       ;;
     -f|--format)
-      OUTPUT_FORMAT="$2"
+      FORMAT="$2"
       shift 2
+      ;;
+    --json)
+      FORMAT="json"
+      shift
+      ;;
+    --human)
+      FORMAT="text"
+      shift
       ;;
     -q|--quiet)
       QUIET_MODE=true
@@ -645,16 +653,13 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Resolve format (TTY-aware auto-detection)
-OUTPUT_FORMAT=$(resolve_format "${OUTPUT_FORMAT:-}")
+FORMAT=$(resolve_format "${FORMAT:-}")
 
 # Validate format
-if [[ "$OUTPUT_FORMAT" != "text" && "$OUTPUT_FORMAT" != "json" ]]; then
-  log_error "Invalid format: $OUTPUT_FORMAT (must be text or json)" "E_INPUT_INVALID" 1 "Valid formats: text, json"
+if [[ "$FORMAT" != "text" && "$FORMAT" != "json" ]]; then
+  log_error "Invalid format: $FORMAT (must be text or json)" "E_INPUT_INVALID" 1 "Valid formats: text, json"
   exit 1
 fi
-
-# Sync FORMAT for output_error compatibility
-FORMAT="$OUTPUT_FORMAT"
 
 check_deps
 

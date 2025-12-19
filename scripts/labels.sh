@@ -79,7 +79,7 @@ elif [[ -f "$CLAUDE_TODO_HOME/lib/output-format.sh" ]]; then
 fi
 
 # Default configuration
-OUTPUT_FORMAT="text"
+FORMAT=""
 COMMAND_NAME="labels"
 SUBCOMMAND="list"
 LABEL_ARG=""
@@ -106,6 +106,8 @@ Subcommands:
 
 Options:
     --format, -f FORMAT   Output format: text | json (default: text)
+    --json                Shortcut for --format json
+    --human               Shortcut for --format text
     -q, --quiet           Suppress non-essential output (exit 0 if labels exist)
     -h, --help            Show this help message
 
@@ -521,7 +523,7 @@ parse_arguments() {
           LABEL_ARG="$1"
           # Validate non-empty label
           if [[ -z "$LABEL_ARG" ]]; then
-            if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+            if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
               output_error "$E_INPUT_MISSING" "Label cannot be empty" "${EXIT_INVALID_INPUT:-1}" true "Usage: claude-todo labels show LABEL"
             else
               output_error "$E_INPUT_MISSING" "Label cannot be empty"
@@ -531,7 +533,7 @@ parse_arguments() {
           fi
           shift
         else
-          if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+          if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
             output_error "$E_INPUT_MISSING" "'show' requires a label argument" "${EXIT_INVALID_INPUT:-1}" true "Usage: claude-todo labels show LABEL"
           else
             output_error "$E_INPUT_MISSING" "'show' requires a label argument"
@@ -556,7 +558,7 @@ parse_arguments() {
         ;;
       *)
         # Invalid subcommand - show error
-        if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+        if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
           output_error "$E_INPUT_INVALID" "Invalid subcommand: $1" "${EXIT_INVALID_INPUT:-1}" true "Valid subcommands: $VALID_SUBCOMMANDS"
         else
           output_error "$E_INPUT_INVALID" "Invalid subcommand: $1"
@@ -572,11 +574,11 @@ parse_arguments() {
   while [[ $# -gt 0 ]]; do
     case $1 in
       --format|-f)
-        OUTPUT_FORMAT="$2"
+        FORMAT="$2"
         # Validate format
         local VALID_FORMATS="text json"
-        if [[ -z "$OUTPUT_FORMAT" ]]; then
-          if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+        if [[ -z "$FORMAT" ]]; then
+          if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
             output_error "$E_INPUT_MISSING" "--format requires a value" "${EXIT_INVALID_INPUT:-1}" true "Valid formats: $VALID_FORMATS"
           else
             output_error "$E_INPUT_MISSING" "--format requires a value"
@@ -584,16 +586,24 @@ parse_arguments() {
           fi
           exit "${EXIT_INVALID_INPUT:-1}"
         fi
-        if [[ ! " $VALID_FORMATS " =~ " $OUTPUT_FORMAT " ]]; then
-          if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
-            output_error "$E_INPUT_INVALID" "Invalid format: $OUTPUT_FORMAT" "${EXIT_INVALID_INPUT:-1}" true "Valid formats: $VALID_FORMATS"
+        if [[ ! " $VALID_FORMATS " =~ " $FORMAT " ]]; then
+          if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+            output_error "$E_INPUT_INVALID" "Invalid format: $FORMAT" "${EXIT_INVALID_INPUT:-1}" true "Valid formats: $VALID_FORMATS"
           else
-            output_error "$E_INPUT_INVALID" "Invalid format: $OUTPUT_FORMAT"
+            output_error "$E_INPUT_INVALID" "Invalid format: $FORMAT"
             echo "Valid formats: $VALID_FORMATS" >&2
           fi
           exit "${EXIT_INVALID_INPUT:-1}"
         fi
         shift 2
+        ;;
+      --json)
+        FORMAT="json"
+        shift
+        ;;
+      --human)
+        FORMAT="text"
+        shift
         ;;
       --help|-h)
         usage
@@ -603,7 +613,7 @@ parse_arguments() {
         shift
         ;;
       *)
-        if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+        if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
           output_error "$E_INPUT_INVALID" "Unknown option: $1" "${EXIT_INVALID_INPUT:-1}" true "Run 'claude-todo labels --help' for usage"
         else
           output_error "$E_INPUT_INVALID" "Unknown option: $1"
@@ -623,11 +633,11 @@ main() {
   parse_arguments "$@"
 
   # Resolve format (TTY-aware auto-detection)
-  OUTPUT_FORMAT=$(resolve_format "${OUTPUT_FORMAT:-}")
+  FORMAT=$(resolve_format "${FORMAT:-}")
 
   # Check if in a todo-enabled project
   if [[ ! -f "$TODO_FILE" ]]; then
-    if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+    if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
       output_error "$E_NOT_INITIALIZED" "Todo file not found: $TODO_FILE" "${EXIT_NOT_INITIALIZED:-1}" true "Run 'claude-todo init' first"
     else
       output_error "$E_NOT_INITIALIZED" "Todo file not found: $TODO_FILE"
@@ -638,7 +648,7 @@ main() {
 
   # Check required commands
   if ! command -v jq &>/dev/null; then
-    if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+    if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
       output_error "$E_DEPENDENCY_MISSING" "jq is required but not installed" "${EXIT_DEPENDENCY_MISSING:-1}" true "Install jq: https://stedolan.github.io/jq/download/"
     else
       output_error "$E_DEPENDENCY_MISSING" "jq is required but not installed"
@@ -662,7 +672,7 @@ main() {
         fi
       fi
 
-      case "$OUTPUT_FORMAT" in
+      case "$FORMAT" in
         json) output_list_json "$label_data" ;;
         text) output_list_text "$label_data" ;;
       esac
@@ -683,7 +693,7 @@ main() {
         fi
       fi
 
-      case "$OUTPUT_FORMAT" in
+      case "$FORMAT" in
         json) output_show_json "$LABEL_ARG" "$tasks" ;;
         text) output_show_text "$LABEL_ARG" "$tasks" ;;
       esac
@@ -706,7 +716,7 @@ main() {
         fi
       fi
 
-      case "$OUTPUT_FORMAT" in
+      case "$FORMAT" in
         json) output_stats_json "$label_data" "$stats" "$cooccurrence" ;;
         text) output_stats_text "$label_data" "$stats" "$cooccurrence" ;;
       esac

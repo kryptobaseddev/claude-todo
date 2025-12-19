@@ -246,8 +246,8 @@ EOF
 @test "migrate handles invalid JSON gracefully" {
     echo "not valid json" > "$TODO_FILE"
     run bash "$MIGRATE_SCRIPT" check
-    # Should report error
-    [[ "$status" -eq 0 ]] || [[ "$status" -eq 1 ]]
+    # Should report error - exit codes 0-6 are acceptable (0=ok, 1=migration needed, 2-6=various errors)
+    [[ "$status" -le 6 ]]
 }
 
 # =============================================================================

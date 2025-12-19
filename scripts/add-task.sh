@@ -619,6 +619,18 @@ if [[ -n "$TASK_TYPE" ]]; then
     log_error "Invalid task type: $TASK_TYPE (must be epic|task|subtask)"
     exit "${EXIT_VALIDATION_ERROR:-6}"
   fi
+
+  # Epic cannot have a parent (must be root-level)
+  if [[ "$TASK_TYPE" == "epic" && -n "$PARENT_ID" ]]; then
+    output_error "$E_INPUT_INVALID" "Epic tasks cannot have a parent - they must be root-level" "${EXIT_VALIDATION_ERROR:-6}" "false" "Remove --parent flag or change --type to task|subtask"
+    exit "${EXIT_VALIDATION_ERROR:-6}"
+  fi
+
+  # Subtask requires a parent
+  if [[ "$TASK_TYPE" == "subtask" && -z "$PARENT_ID" ]]; then
+    output_error "$E_INPUT_INVALID" "Subtask tasks require a parent - specify with --parent" "${EXIT_VALIDATION_ERROR:-6}" "false" "Add --parent T### flag or change --type to task|epic"
+    exit "${EXIT_VALIDATION_ERROR:-6}"
+  fi
 fi
 
 if [[ -n "$SIZE" ]]; then
@@ -639,22 +651,22 @@ if [[ -n "$PARENT_ID" ]]; then
   # Validate hierarchy constraints using lib/hierarchy.sh
   if declare -f validate_hierarchy >/dev/null 2>&1; then
     if ! validate_parent_exists "$PARENT_ID" "$TODO_FILE"; then
-      log_error "Parent task not found: $PARENT_ID"
+      output_error "$E_PARENT_NOT_FOUND" "Parent task not found: $PARENT_ID" "${EXIT_PARENT_NOT_FOUND:-10}" "true" "Use 'ct exists $PARENT_ID' to verify task ID"
       exit "${EXIT_PARENT_NOT_FOUND:-10}"
     fi
 
     if ! validate_max_depth "$PARENT_ID" "$TODO_FILE"; then
-      log_error "Cannot add child to $PARENT_ID: max hierarchy depth (3) would be exceeded"
+      output_error "$E_DEPTH_EXCEEDED" "Cannot add child to $PARENT_ID: max hierarchy depth (3) would be exceeded" "${EXIT_DEPTH_EXCEEDED:-11}" "false" "Refactor task hierarchy to reduce nesting depth"
       exit "${EXIT_DEPTH_EXCEEDED:-11}"
     fi
 
     if ! validate_max_siblings "$PARENT_ID" "$TODO_FILE"; then
-      log_error "Cannot add child to $PARENT_ID: max siblings (7) exceeded"
+      output_error "$E_SIBLING_LIMIT" "Cannot add child to $PARENT_ID: max siblings (7) exceeded" "${EXIT_SIBLING_LIMIT:-12}" "false" "Group related tasks under a new parent task"
       exit "${EXIT_SIBLING_LIMIT:-12}"
     fi
 
     if ! validate_parent_type "$PARENT_ID" "$TODO_FILE"; then
-      log_error "Cannot add child to $PARENT_ID: subtasks cannot have children"
+      output_error "$E_INVALID_PARENT_TYPE" "Cannot add child to $PARENT_ID: subtasks cannot have children" "${EXIT_INVALID_PARENT_TYPE:-13}" "false" "Choose a task or epic as parent instead of a subtask"
       exit "${EXIT_INVALID_PARENT_TYPE:-13}"
     fi
   fi

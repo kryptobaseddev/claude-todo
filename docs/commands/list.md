@@ -154,18 +154,27 @@ claude-todo list --compact
 
 ### Output Formats
 
+**LLM-Agent-First**: JSON is automatic when output is piped (non-TTY). No `--format` flag needed:
 ```bash
-# JSON (for scripting)
-claude-todo list --format json
+# Auto-detected JSON when piped
+claude-todo list | jq '.tasks[0]'
 
-# JSON Lines (one task per line)
-claude-todo list --format jsonl
+# Explicit format override
+claude-todo list --format json     # Force JSON
+claude-todo list --format jsonl    # JSON Lines (one task per line)
+claude-todo list --format markdown # Markdown (for documentation)
+claude-todo list --format table    # Table view
+claude-todo list --human           # Force human-readable text
+```
 
-# Markdown (for documentation)
-claude-todo list --format markdown
+**Prefer native filters over jq post-processing**:
+```bash
+# ✅ Native (recommended - fewer tokens, no shell quoting issues)
+claude-todo list --status pending --label bug
 
-# Table view
-claude-todo list --format table
+# ⚠️ jq (only when native filters insufficient)
+# Use SINGLE quotes to prevent shell interpretation
+claude-todo list | jq '.tasks[] | select(.type != "epic")'
 ```
 
 ### JSON Output Example
@@ -353,14 +362,14 @@ Verbose mode shows:
 ## JSON Output Parsing
 
 ```bash
-# Get task IDs
-claude-todo list -f json | jq -r '.tasks[].id'
+# Get task IDs (JSON auto-detected when piped)
+claude-todo list | jq -r '.tasks[].id'
 
-# Filter pending tasks
-claude-todo list -f json | jq '.tasks[] | select(.status == "pending")'
+# BETTER: Use native filters instead of jq
+claude-todo list --status pending   # No jq needed
 
-# Format as table
-claude-todo list -f json | jq -r '.tasks[] | "[\(.id)] \(.status) - \(.title)"'
+# When jq IS needed, use single quotes
+claude-todo list | jq '.tasks[] | select(.type != "epic")'
 ```
 
 ## See Also

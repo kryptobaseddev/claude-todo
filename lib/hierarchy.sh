@@ -20,17 +20,23 @@
 set -euo pipefail
 
 # ============================================================================
-# CONSTANTS
+# CONSTANTS (guarded to prevent readonly collision on re-source)
 # ============================================================================
 
 # Maximum hierarchy depth (epic=0, task=1, subtask=2)
-readonly MAX_HIERARCHY_DEPTH=3
+if [[ -z "${MAX_HIERARCHY_DEPTH:-}" ]]; then
+    readonly MAX_HIERARCHY_DEPTH=3
+fi
 
 # Maximum children per parent
-readonly MAX_SIBLINGS=7
+if [[ -z "${MAX_SIBLINGS:-}" ]]; then
+    readonly MAX_SIBLINGS=7
+fi
 
 # Valid task types
-readonly VALID_TASK_TYPES="epic task subtask"
+if [[ -z "${VALID_TASK_TYPES:-}" ]]; then
+    readonly VALID_TASK_TYPES="epic task subtask"
+fi
 
 # ============================================================================
 # DEPENDENCIES

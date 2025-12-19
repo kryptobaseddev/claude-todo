@@ -51,7 +51,7 @@ fi
 
 # Default configuration
 PERIOD_DAYS=30
-OUTPUT_FORMAT="text"
+FORMAT=""
 QUIET=false
 COMMAND_NAME="stats"
 
@@ -93,7 +93,7 @@ resolve_period() {
             if [[ "$period" =~ ^[0-9]+$ ]]; then
                 echo "$period"
             else
-                if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+                if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
                     output_error "$E_INPUT_INVALID" "Invalid period: $period" "${EXIT_INVALID_INPUT:-1}" true "Valid values: today/t, week/w, month/m, quarter/q, year/y, or a number"
                 else
                     output_error "$E_INPUT_INVALID" "Invalid period: $period"
@@ -116,6 +116,8 @@ Options:
                           Named: today/t, week/w, month/m, quarter/q, year/y
                           Numeric: any positive integer (days)
     -f, --format FORMAT   Output format: text | json (default: text)
+    --json                Shortcut for --format json
+    --human               Shortcut for --format text
     -q, --quiet           Suppress decorative output (headers, footers)
     -h, --help            Show this help message
 
@@ -539,11 +541,19 @@ parse_arguments() {
                 shift 2
                 ;;
             -f|--format)
-                OUTPUT_FORMAT="$2"
-                if ! validate_format "$OUTPUT_FORMAT" "text,json"; then
+                FORMAT="$2"
+                if ! validate_format "$FORMAT" "text,json"; then
                     exit 1
                 fi
                 shift 2
+                ;;
+            --json)
+                FORMAT="json"
+                shift
+                ;;
+            --human)
+                FORMAT="text"
+                shift
                 ;;
             -q|--quiet)
                 QUIET=true
@@ -554,7 +564,7 @@ parse_arguments() {
                 exit 0
                 ;;
             *)
-                if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+                if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
                     output_error "$E_INPUT_INVALID" "Unknown option: $1" "${EXIT_INVALID_INPUT:-1}" true "Run 'claude-todo stats --help' for usage"
                 else
                     output_error "$E_INPUT_INVALID" "Unknown option: $1"
@@ -574,11 +584,11 @@ main() {
     parse_arguments "$@"
 
     # Resolve format (TTY-aware auto-detection)
-    OUTPUT_FORMAT=$(resolve_format "${OUTPUT_FORMAT:-}")
+    FORMAT=$(resolve_format "${FORMAT:-}")
 
     # Check if in a todo-enabled project
     if [[ ! -d "$CLAUDE_DIR" ]]; then
-        if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+        if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
             output_error "$E_NOT_INITIALIZED" "Not in a todo-enabled project" "${EXIT_NOT_INITIALIZED:-1}" true "Run 'claude-todo init' first"
         else
             output_error "$E_NOT_INITIALIZED" "Not in a todo-enabled project. Run 'claude-todo init' first."
@@ -588,7 +598,7 @@ main() {
 
     # Check if required commands are available
     if ! command -v jq &> /dev/null; then
-        if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+        if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
             output_error "$E_DEPENDENCY_MISSING" "jq is required but not installed" "${EXIT_DEPENDENCY_MISSING:-1}" true "Install jq: https://stedolan.github.io/jq/download/"
         else
             output_error "$E_DEPENDENCY_MISSING" "jq is required but not installed."
@@ -597,7 +607,7 @@ main() {
     fi
 
     if ! command -v bc &> /dev/null; then
-        if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
+        if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
             output_error "$E_DEPENDENCY_MISSING" "bc is required but not installed" "${EXIT_DEPENDENCY_MISSING:-1}" true "Install bc via your package manager"
         else
             output_error "$E_DEPENDENCY_MISSING" "bc is required but not installed."
@@ -610,7 +620,7 @@ main() {
     stats_json=$(generate_statistics "$PERIOD_DAYS")
 
     # Output in requested format
-    case "$OUTPUT_FORMAT" in
+    case "$FORMAT" in
         text)
             output_text_format "$stats_json"
             ;;

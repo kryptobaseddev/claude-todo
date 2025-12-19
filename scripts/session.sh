@@ -83,8 +83,8 @@ log_error() {
 }
 log_step()    { echo -e "${BLUE}[SESSION]${NC} $1"; }
 
-# Global format variable for output_error
-FORMAT="text"
+# Global format variable for output_error (empty allows TTY auto-detection)
+FORMAT=""
 QUIET=false
 
 COMMAND_NAME="session"

@@ -201,11 +201,11 @@ case "$SUBCOMMAND" in
     done
 
     # Resolve format with TTY-aware detection
-    OUTPUT_FORMAT=$(resolve_format "$FORMAT")
+    FORMAT=$(resolve_format "$FORMAT")
 
     # Validate log file exists
     if [[ ! -f "$LOG_FILE" ]]; then
-      if [[ "$OUTPUT_FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
+      if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then
         output_error "$E_FILE_NOT_FOUND" "Log file not found: $LOG_FILE" "${EXIT_FILE_ERROR:-4}" true "Initialize project with 'claude-todo init' first"
       else
         log_error "Log file not found: $LOG_FILE"
@@ -241,7 +241,7 @@ case "$SUBCOMMAND" in
     fi
 
     # Output format
-    if [[ "$OUTPUT_FORMAT" == "json" ]]; then
+    if [[ "$FORMAT" == "json" ]]; then
       # Wrap in standard envelope per LLM-Agent-First spec
       current_timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
       entries=$(jq -c "$JQ_FILTER" "$LOG_FILE")
