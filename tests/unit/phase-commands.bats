@@ -202,7 +202,7 @@ EOF
     run bash "$PHASE_SCRIPT" --human set
     assert_failure
     assert_output --partial "ERROR"
-    assert_output --partial "phase slug required"
+    assert_output --partial "Phase slug required"
 }
 
 @test "phase set validates phase exists" {
@@ -271,7 +271,7 @@ EOF
     run bash "$PHASE_SCRIPT" --human start
     assert_failure
     assert_output --partial "ERROR"
-    assert_output --partial "phase slug required"
+    assert_output --partial "Phase slug required"
 }
 
 @test "phase start only works on pending phases" {
@@ -320,7 +320,7 @@ EOF
     run bash "$PHASE_SCRIPT" --human complete
     assert_failure
     assert_output --partial "ERROR"
-    assert_output --partial "phase slug required"
+    assert_output --partial "Phase slug required"
 }
 
 @test "phase complete only works on active phases" {

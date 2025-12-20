@@ -741,10 +741,13 @@ if [[ -n "$NEW_PARENT_ID" ]]; then
 
     # Validate max siblings
     if ! validate_max_siblings "$NEW_PARENT_ID" "$TODO_FILE"; then
+      local max_sibs
+      max_sibs=$(get_max_siblings)
       if [[ "$FORMAT" == "json" ]]; then
-        output_error "$E_SIBLING_LIMIT" "Cannot set parent to $NEW_PARENT_ID: max siblings (7) exceeded" "$EXIT_SIBLING_LIMIT" false "Group related tasks under a new parent task"
+        output_error "$E_SIBLING_LIMIT" "Cannot set parent to $NEW_PARENT_ID: max siblings ($max_sibs) exceeded" "$EXIT_SIBLING_LIMIT" false "Complete tasks, set hierarchy.maxSiblings=0 for unlimited, or group under new epic"
       else
-        log_error "Cannot set parent to $NEW_PARENT_ID: max siblings (7) exceeded"
+        log_error "Cannot set parent to $NEW_PARENT_ID: max siblings ($max_sibs) exceeded"
+        log_info "Tip: Set hierarchy.maxSiblings in config, or use 0 for unlimited"
       fi
       exit "${EXIT_SIBLING_LIMIT:-12}"
     fi

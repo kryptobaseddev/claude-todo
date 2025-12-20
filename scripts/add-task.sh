@@ -693,7 +693,9 @@ if [[ -n "$PARENT_ID" ]]; then
     fi
 
     if ! validate_max_siblings "$PARENT_ID" "$TODO_FILE"; then
-      output_error "$E_SIBLING_LIMIT" "Cannot add child to $PARENT_ID: max siblings (7) exceeded" "${EXIT_SIBLING_LIMIT:-12}" "false" "Group related tasks under a new parent task"
+      local max_sibs
+      max_sibs=$(get_max_siblings)
+      output_error "$E_SIBLING_LIMIT" "Cannot add child to $PARENT_ID: max siblings ($max_sibs) exceeded" "${EXIT_SIBLING_LIMIT:-12}" "false" "Complete tasks, set hierarchy.maxSiblings=0 for unlimited, or group under new epic"
       exit "${EXIT_SIBLING_LIMIT:-12}"
     fi
 

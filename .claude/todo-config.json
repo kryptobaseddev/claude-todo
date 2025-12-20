@@ -1,6 +1,6 @@
 {
   "$schema": "./schemas/config.schema.json",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "archive": {
     "enabled": true,
     "daysUntilArchive": 7,
@@ -71,5 +71,11 @@
       "checksumVerify": true,
       "showTimings": false
     }
+  },
+  "hierarchy": {
+    "maxSiblings": 20,
+    "maxDepth": 3,
+    "countDoneInLimit": false,
+    "maxActiveSiblings": 8
   }
 }

@@ -563,7 +563,7 @@ parse_arguments() {
         SHOW_EXPLAIN=true
         shift
         ;;
-      --count|-c)
+      --count|-c|-n)
         SUGGESTION_COUNT="$2"
         if ! [[ "$SUGGESTION_COUNT" =~ ^[0-9]+$ ]] || [[ "$SUGGESTION_COUNT" -lt 1 ]]; then
           if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then

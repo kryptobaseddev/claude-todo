@@ -149,21 +149,53 @@ Level 2: Subtask (atomic operation)
 - Agents lose context tracking deep trees
 - Research shows 3 levels optimal for comprehension
 
-### 3.2 Maximum Siblings
+### 3.2 Maximum Siblings (Configurable)
 
-**Limit: 7 children per parent**
+**Default: 20 children per parent** (configurable, 0 = unlimited)
 
-**Rationale**:
-- Cognitive science: 4-5 items in working memory
-- 7 provides buffer without overwhelming
-- Forces meaningful grouping
+> **Configuration**: See [CONFIG-SYSTEM-SPEC.md](CONFIG-SYSTEM-SPEC.md) Appendix A.5 for hierarchy settings.
+
+#### LLM-Agent-First Design Rationale
+
+The sibling limit is designed for **LLM agents as primary users**, not human cognitive limits:
+
+| Factor | Humans | LLM Agents |
+|--------|--------|------------|
+| Working memory | 4-5 items (Miller's 7±2) | 200K+ token context window |
+| Cognitive fatigue | Yes, degrades with list size | No fatigue, consistent processing |
+| List processing | Serial, tires quickly | Parallel, no degradation |
+| Context switching | High cost | Minimal overhead |
+
+**Key Insight**: The original 7-sibling limit (v0.17.0) was based on Miller's 7±2 law for human short-term memory. However:
+- LLM agents don't have 4-5 item working memory limits
+- Agents benefit from hierarchy for **organization**, not cognitive load management
+- Restricting to 7 created unnecessary friction for large projects
+
+#### Configuration Options
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `hierarchy.maxSiblings` | `20` | Total children limit (0 = unlimited) |
+| `hierarchy.countDoneInLimit` | `false` | Whether done tasks count toward limit |
+| `hierarchy.maxActiveSiblings` | `8` | Active (non-done) children limit |
+
+#### Active vs Done Task Distinction
+
+- **Done tasks**: Historical record, don't consume agent context. Excluded from limit by default.
+- **Active tasks**: Current work, benefit from context focus. Limited by `maxActiveSiblings`.
+
+This allows organizing unlimited completed work under an epic while maintaining focus on active tasks.
 
 **Enforcement**:
 ```bash
-# CLI rejects 8th child
-claude-todo add "Task 8" --parent T001
-ERROR: Parent T001 has 7 children (maximum reached)
-Fix: Group related tasks under a new epic, or complete existing tasks
+# With default config (maxSiblings=20, countDoneInLimit=false)
+claude-todo add "Task 21" --parent T001
+ERROR: Parent T001 has 20 active children (maximum reached)
+Fix: Complete existing tasks, or set hierarchy.maxSiblings=0 for unlimited
+
+# Done tasks don't count
+claude-todo complete T002  # Now T001 has 19 active + 1 done
+claude-todo add "Task 21" --parent T001  # Succeeds (19 < 20)
 ```
 
 ### 3.3 ID System
@@ -653,8 +685,8 @@ All major design questions have been resolved. See [LLM-TASK-ID-SYSTEM-DESIGN-SP
 | Question | Decision | Rationale |
 |----------|----------|-----------|
 | Feature type needed? | **NO** | Use labels; avoids classification ambiguity |
-| Max depth? | **3 levels** | Cognitive limit; deeper = navigation overhead |
-| Max siblings? | **7 children** | 4-5 in working memory + buffer |
+| Max depth? | **3 levels** | Organizational; deeper = navigation overhead |
+| Max siblings? | **20 (configurable)** | LLM-first design; 0 = unlimited; done tasks excluded |
 | Story type needed? | **NO** | Scrum artifact; agents don't need personas |
 
 ### Operational Behaviors (RESOLVED)
@@ -795,6 +827,7 @@ claude-todo validate --fix-orphans [--unlink|--delete]
 | 1.0.0 | 2025-01-16 | Initial draft |
 | 1.1.0 | 2025-01-17 | APPROVED: Added ID spec references; resolved all open questions; updated status |
 | 1.2.0 | 2025-01-17 | Version reconciliation: v0.15.0/v0.16.0 → v0.17.0/v0.18.0 |
+| 1.3.0 | 2025-12-20 | LLM-Agent-First sibling limits: maxSiblings=20 (configurable), done tasks excluded, maxActiveSiblings=8 |
 
 ---
 
@@ -805,6 +838,7 @@ claude-todo validate --fix-orphans [--unlink|--delete]
 | **[SPEC-BIBLE-GUIDELINES.md](SPEC-BIBLE-GUIDELINES.md)** | **AUTHORITATIVE** for specification standards |
 | **[LLM-TASK-ID-SYSTEM-DESIGN-SPEC.md](LLM-TASK-ID-SYSTEM-DESIGN-SPEC.md)** | **AUTHORITATIVE** for ID system design; this spec defers to it |
 | **[LLM-AGENT-FIRST-SPEC.md](LLM-AGENT-FIRST-SPEC.md)** | LLM-first design principles underlying both specs |
+| **[CONFIG-SYSTEM-SPEC.md](CONFIG-SYSTEM-SPEC.md)** | Hierarchy configuration settings (Appendix A.5) |
 | **[LLM-TASK-ID-SYSTEM-DESIGN-IMPLEMENTATION-REPORT.md](LLM-TASK-ID-SYSTEM-DESIGN-IMPLEMENTATION-REPORT.md)** | Tracks implementation status against all LLM specs |
 
 ---

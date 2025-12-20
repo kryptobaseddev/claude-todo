@@ -5,6 +5,48 @@ All notable changes to the claude-todo system will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.22.0] - 2025-12-20
+
+### Added
+- **Configurable Hierarchy Sibling Limits (LLM-Agent-First)** - T527
+  - New `hierarchy` config section in `todo-config.json`
+  - `maxSiblings`: Default 20 (was hardcoded 7), 0 = unlimited
+  - `maxDepth`: Default 3 (configurable but rarely changed)
+  - `countDoneInLimit`: Default false (done tasks excluded from sibling count)
+  - `maxActiveSiblings`: Default 8 (aligns with TodoWrite sync limit)
+  - Config schema updated to v2.2.0 with migration
+
+- **Metadata Updates on Completed Tasks** - T526
+  - Done tasks now allow metadata-only updates: `--type`, `--parent`, `--size`, `--labels`
+  - Work fields remain blocked: `--title`, `--description`, `--status`, `--priority`, `--notes`
+  - Enables hierarchy restructuring without losing completion history
+
+### Changed
+- **HIERARCHY-ENHANCEMENT-SPEC.md** v1.3.0 - Updated Part 3.2 with LLM-Agent-First rationale
+  - Original 7-sibling limit was based on Miller's 7±2 law (human cognitive limits)
+  - LLM agents have 200K+ token context windows, not 4-5 item working memory
+  - New design: organizational limits, not cognitive constraints
+
+- **CONFIG-SYSTEM-SPEC.md** v1.1.0 - Added Appendix A.5 Hierarchy Section
+  - Full documentation of hierarchy config options
+  - LLM-Agent-First design rationale
+
+- **lib/hierarchy.sh** - Config-aware sibling validation
+  - `get_hierarchy_config()`, `get_max_siblings()`, `should_count_done_in_limit()`
+  - `count_siblings()` now excludes done tasks by default
+  - `count_active_siblings()` for context management
+  - `validate_max_siblings()` uses configurable limits
+
+- **Error messages** - Dynamic sibling limit display
+  - `scripts/add-task.sh`, `scripts/update-task.sh` now show actual configured limit
+
+### Fixed
+- **T382 children** - Can now add more children to config epic (sibling limit raised)
+
+### Migrations
+- **Config schema 2.1.0 → 2.2.0**: Adds `hierarchy` section with defaults
+  - Run `claude-todo migrate run` to update existing projects
+
 ## [0.21.2] - 2025-12-20
 
 ### Fixed

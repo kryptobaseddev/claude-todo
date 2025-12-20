@@ -7,7 +7,8 @@ setup() {
     TEST_FILE_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")" && pwd)"
     PROJECT_ROOT="$(cd "$TEST_FILE_DIR/../.." && pwd)"
 
-    # Source the file-ops library
+    # Source required libraries
+    source "$PROJECT_ROOT/lib/exit-codes.sh"
     source "$PROJECT_ROOT/lib/file-ops.sh"
 
     # Create test directory
@@ -58,7 +59,8 @@ teardown() {
 @test "lock_file fails without file path" {
     run lock_file ""
 
-    [ "$status" -eq "$E_INVALID_ARGS" ]
+    # lock_file returns 1 for missing path error
+    [ "$status" -eq 1 ]
     [[ "$output" =~ "File path required" ]]
 }
 

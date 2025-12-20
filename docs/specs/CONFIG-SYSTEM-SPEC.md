@@ -110,6 +110,7 @@ Project config MAY contain all configuration sections:
 | `display` | Display preferences |
 | `cli` | CLI settings |
 | `backup` | Backup configuration |
+| `hierarchy` | Hierarchy constraints (sibling limits, depth) |
 
 ### 3.3 Schema
 
@@ -334,6 +335,38 @@ Deprecated settings:
 | `warnOnIssues` | boolean | `true` | Show validation warnings |
 | `autoFix` | boolean | `false` | Auto-fix validation issues |
 
+### A.5 Hierarchy Section
+
+Configuration for Epic → Task → Subtask hierarchy constraints.
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `maxSiblings` | integer | `20` | Maximum children per parent (0 = unlimited) |
+| `maxDepth` | integer | `3` | Maximum hierarchy depth (epic=0, task=1, subtask=2) |
+| `countDoneInLimit` | boolean | `false` | Include done tasks in sibling count |
+| `maxActiveSiblings` | integer | `8` | Maximum active/pending children for context management |
+
+**Design Rationale (LLM-Agent-First)**:
+
+The sibling limits are designed for **LLM agents as primary users**, not human cognitive limits:
+
+| Setting | Purpose | Rationale |
+|---------|---------|-----------|
+| `maxSiblings: 20` | Organizational limit | Practical grouping without artificial constraints |
+| `countDoneInLimit: false` | Done tasks excluded | Completed work is historical; doesn't consume context |
+| `maxActiveSiblings: 8` | Context management | Aligns with TodoWrite sync limit (Part 3.1 of TODOWRITE-SYNC-SPEC) |
+| `0 = unlimited` | No artificial ceiling | LLM agents can process any list size |
+
+**Key Insight**: The original 7-sibling limit was based on Miller's 7±2 law for human short-term memory. LLM agents:
+- Have 200K+ token context windows, not 4-5 item working memory
+- Don't experience cognitive fatigue
+- Process lists in parallel without degradation
+- Benefit from hierarchy for organization, not cognitive load management
+
+**Active vs Done Task Distinction**:
+- **Active siblings** (pending/active/blocked): Limited by `maxActiveSiblings` for context focus
+- **Done siblings**: Unlimited by default (`countDoneInLimit: false`) since they're historical record
+
 ---
 
 ## Appendix B: Version History
@@ -341,6 +374,7 @@ Deprecated settings:
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0.0 | 2025-12-19 | Initial specification |
+| 1.1.0 | 2025-12-20 | Added hierarchy section (A.5) with LLM-agent-first rationale |
 
 ---
 

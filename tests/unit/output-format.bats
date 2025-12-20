@@ -172,11 +172,13 @@ teardown() {
     assert_output "markdown"
 }
 
-@test "resolve_format returns default 'text' when nothing set" {
+@test "resolve_format returns 'json' in non-TTY when nothing set" {
+    # LLM-Agent-First: non-TTY defaults to JSON for agent compatibility
+    # TTY would default to 'text' but tests run in non-TTY (bats/CI)
     unset CLAUDE_TODO_FORMAT
     run resolve_format
     assert_success
-    assert_output "text"
+    assert_output "json"
 }
 
 @test "resolve_format CLI takes precedence over env" {

@@ -20,25 +20,6 @@
 set -euo pipefail
 
 # ============================================================================
-# CONSTANTS (guarded to prevent readonly collision on re-source)
-# ============================================================================
-
-# Maximum hierarchy depth (epic=0, task=1, subtask=2)
-if [[ -z "${MAX_HIERARCHY_DEPTH:-}" ]]; then
-    readonly MAX_HIERARCHY_DEPTH=3
-fi
-
-# Maximum children per parent
-if [[ -z "${MAX_SIBLINGS:-}" ]]; then
-    readonly MAX_SIBLINGS=7
-fi
-
-# Valid task types
-if [[ -z "${VALID_TASK_TYPES:-}" ]]; then
-    readonly VALID_TASK_TYPES="epic task subtask"
-fi
-
-# ============================================================================
 # DEPENDENCIES
 # ============================================================================
 
@@ -50,6 +31,104 @@ if [[ -z "${EXIT_PARENT_NOT_FOUND:-}" ]]; then
         # shellcheck source=lib/exit-codes.sh
         source "$_HIERARCHY_LIB_DIR/exit-codes.sh"
     fi
+fi
+
+# Source config library for get_config_value
+if [[ -f "$_HIERARCHY_LIB_DIR/config.sh" ]]; then
+    # shellcheck source=lib/config.sh
+    source "$_HIERARCHY_LIB_DIR/config.sh" 2>/dev/null || true
+fi
+
+# ============================================================================
+# CONFIGURABLE CONSTANTS
+# ============================================================================
+#
+# LLM-Agent-First Design Rationale:
+# ---------------------------------
+# The original 7-sibling limit was based on Miller's 7±2 law for human short-term
+# memory. However, claude-todo is designed for LLM agents as primary users:
+#
+# - LLM agents have 200K+ token context windows, not 4-5 item working memory
+# - Agents don't experience cognitive fatigue
+# - Agents process lists in parallel without degradation
+# - Hierarchy benefits are organizational, not cognitive load management
+#
+# Therefore:
+# - maxSiblings defaults to 20 (practical grouping, not cognitive limit)
+# - 0 = unlimited (LLM agents can handle any list size)
+# - Done tasks don't count toward limit (historical record, not active context)
+# - maxActiveSiblings aligns with TodoWrite sync (8 active tasks max)
+#
+# See: CONFIG-SYSTEM-SPEC.md Appendix A.5, HIERARCHY-ENHANCEMENT-SPEC.md Part 3.2
+# ============================================================================
+
+# get_hierarchy_config - Get hierarchy configuration value with fallback
+#
+# Args:
+#   $1 - Config key (maxSiblings, maxDepth, countDoneInLimit, maxActiveSiblings)
+#
+# Returns: Config value or default
+get_hierarchy_config() {
+    local key="$1"
+    local value=""
+
+    # Try to get from config system if available
+    if command -v get_config_value &>/dev/null; then
+        value=$(get_config_value "hierarchy.$key" 2>/dev/null || echo "")
+    fi
+
+    # Return value or default based on key
+    if [[ -n "$value" && "$value" != "null" ]]; then
+        echo "$value"
+    else
+        case "$key" in
+            maxSiblings) echo "20" ;;           # Default: 20 (was 7)
+            maxDepth) echo "3" ;;               # Default: 3 levels
+            countDoneInLimit) echo "false" ;;   # Default: exclude done
+            maxActiveSiblings) echo "8" ;;      # Default: align with TodoWrite
+            *) echo "" ;;
+        esac
+    fi
+}
+
+# Maximum hierarchy depth (epic=0, task=1, subtask=2)
+# Configurable but rarely changed
+get_max_hierarchy_depth() {
+    get_hierarchy_config "maxDepth"
+}
+
+# Maximum children per parent (0 = unlimited)
+# Configurable per project
+get_max_siblings() {
+    get_hierarchy_config "maxSiblings"
+}
+
+# Maximum active (non-done) children per parent
+# Aligns with TodoWrite sync context limit
+get_max_active_siblings() {
+    get_hierarchy_config "maxActiveSiblings"
+}
+
+# Whether to count done tasks in sibling limit
+# Default false: done tasks are historical, don't consume context
+should_count_done_in_limit() {
+    local value
+    value=$(get_hierarchy_config "countDoneInLimit")
+    [[ "$value" == "true" ]]
+}
+
+# Legacy constants for backward compatibility (read from config)
+if [[ -z "${MAX_HIERARCHY_DEPTH:-}" ]]; then
+    MAX_HIERARCHY_DEPTH=$(get_max_hierarchy_depth)
+fi
+
+if [[ -z "${MAX_SIBLINGS:-}" ]]; then
+    MAX_SIBLINGS=$(get_max_siblings)
+fi
+
+# Valid task types (not configurable)
+if [[ -z "${VALID_TASK_TYPES:-}" ]]; then
+    readonly VALID_TASK_TYPES="epic task subtask"
 fi
 
 # ============================================================================
@@ -210,16 +289,54 @@ get_children() {
 # Args:
 #   $1 - Parent ID (use "null" for root-level tasks)
 #   $2 - Path to todo.json
+#   $3 - (Optional) "all" to include done tasks, default excludes done
 #
 # Returns: Numeric count
+# Note: By default, done tasks are excluded from sibling count since they are
+#       historical record and don't consume agent context. See LLM-Agent-First
+#       rationale in CONFIG-SYSTEM-SPEC.md Appendix A.5.
 count_siblings() {
+    local parent_id="$1"
+    local todo_file="$2"
+    local include_done="${3:-}"
+
+    # Determine if we should count done tasks
+    local count_done=false
+    if [[ "$include_done" == "all" ]] || should_count_done_in_limit; then
+        count_done=true
+    fi
+
+    if [[ "$parent_id" == "null" ]]; then
+        if [[ "$count_done" == true ]]; then
+            jq '[.tasks[] | select(.parentId == null or .parentId == "null")] | length' "$todo_file" 2>/dev/null || echo "0"
+        else
+            jq '[.tasks[] | select((.parentId == null or .parentId == "null") and .status != "done")] | length' "$todo_file" 2>/dev/null || echo "0"
+        fi
+    else
+        if [[ "$count_done" == true ]]; then
+            jq --arg pid "$parent_id" '[.tasks[] | select(.parentId == $pid)] | length' "$todo_file" 2>/dev/null || echo "0"
+        else
+            jq --arg pid "$parent_id" '[.tasks[] | select(.parentId == $pid and .status != "done")] | length' "$todo_file" 2>/dev/null || echo "0"
+        fi
+    fi
+}
+
+# count_active_siblings - Count only active/pending/blocked siblings (not done)
+#
+# Args:
+#   $1 - Parent ID (use "null" for root-level tasks)
+#   $2 - Path to todo.json
+#
+# Returns: Numeric count of non-done siblings
+# Note: Used for context management with maxActiveSiblings config
+count_active_siblings() {
     local parent_id="$1"
     local todo_file="$2"
 
     if [[ "$parent_id" == "null" ]]; then
-        jq '[.tasks[] | select(.parentId == null or .parentId == "null")] | length' "$todo_file" 2>/dev/null || echo "0"
+        jq '[.tasks[] | select((.parentId == null or .parentId == "null") and .status != "done")] | length' "$todo_file" 2>/dev/null || echo "0"
     else
-        jq --arg pid "$parent_id" '[.tasks[] | select(.parentId == $pid)] | length' "$todo_file" 2>/dev/null || echo "0"
+        jq --arg pid "$parent_id" '[.tasks[] | select(.parentId == $pid and .status != "done")] | length' "$todo_file" 2>/dev/null || echo "0"
     fi
 }
 
@@ -315,14 +432,63 @@ validate_max_depth() {
 #   $2 - Path to todo.json
 #
 # Returns: 0 if valid, EXIT_SIBLING_LIMIT if at limit
+#
+# Note: Uses configurable maxSiblings from hierarchy config.
+#       - 0 = unlimited (no sibling limit enforced)
+#       - Done tasks excluded by default (configurable via countDoneInLimit)
+#       - See CONFIG-SYSTEM-SPEC.md Appendix A.5 for rationale
 validate_max_siblings() {
     local parent_id="$1"
     local todo_file="$2"
 
+    # Get configured limit
+    local max_siblings
+    max_siblings=$(get_max_siblings)
+
+    # 0 = unlimited - skip validation
+    if [[ "$max_siblings" -eq 0 ]]; then
+        return 0
+    fi
+
+    # Count siblings (excludes done by default)
     local sibling_count
     sibling_count=$(count_siblings "$parent_id" "$todo_file")
 
-    if [[ "$sibling_count" -ge "$MAX_SIBLINGS" ]]; then
+    if [[ "$sibling_count" -ge "$max_siblings" ]]; then
+        return "${EXIT_SIBLING_LIMIT:-12}"
+    fi
+
+    return 0
+}
+
+# validate_max_active_siblings - Check if parent has room for active children
+#
+# Args:
+#   $1 - Parent ID
+#   $2 - Path to todo.json
+#
+# Returns: 0 if valid, EXIT_SIBLING_LIMIT if at limit
+#
+# Note: Uses maxActiveSiblings config (default 8, aligned with TodoWrite sync).
+#       This is separate from maxSiblings - enforces context focus.
+validate_max_active_siblings() {
+    local parent_id="$1"
+    local todo_file="$2"
+
+    # Get configured active limit
+    local max_active
+    max_active=$(get_max_active_siblings)
+
+    # 0 = unlimited
+    if [[ "$max_active" -eq 0 ]]; then
+        return 0
+    fi
+
+    # Count only active siblings
+    local active_count
+    active_count=$(count_active_siblings "$parent_id" "$todo_file")
+
+    if [[ "$active_count" -ge "$max_active" ]]; then
         return "${EXIT_SIBLING_LIMIT:-12}"
     fi
 
@@ -534,6 +700,14 @@ export MAX_HIERARCHY_DEPTH
 export MAX_SIBLINGS
 export VALID_TASK_TYPES
 
+# Config accessors
+export -f get_hierarchy_config
+export -f get_max_hierarchy_depth
+export -f get_max_siblings
+export -f get_max_active_siblings
+export -f should_count_done_in_limit
+
+# Helper functions
 export -f get_task_by_id
 export -f get_task_type
 export -f get_task_parent
@@ -541,11 +715,14 @@ export -f get_task_depth
 export -f get_parent_chain
 export -f get_children
 export -f count_siblings
+export -f count_active_siblings
 export -f get_descendants
 
+# Validation functions
 export -f validate_parent_exists
 export -f validate_max_depth
 export -f validate_max_siblings
+export -f validate_max_active_siblings
 export -f validate_parent_type
 export -f validate_no_circular_reference
 export -f validate_hierarchy

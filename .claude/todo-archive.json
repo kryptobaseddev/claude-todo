@@ -3,10 +3,10 @@
   "version": "2.1.0",
   "project": "claude-todo",
   "_meta": {
-    "totalArchived": 35,
-    "lastArchived": "2025-12-13T18:41:40Z",
+    "totalArchived": 48,
+    "lastArchived": "2025-12-20T05:29:47Z",
     "oldestTask": "2025-12-06T06:35:41Z",
-    "newestTask": "2025-12-06T18:13:18Z"
+    "newestTask": "2025-12-12T19:59:37Z"
   },
   "archivedTasks": [
     {
@@ -654,17 +654,351 @@
         "sessionId": "system",
         "cycleTimeDays": 0
       }
+    },
+    {
+      "id": "T057",
+      "title": "Update schema-reference.md with label pattern changes",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-12T19:59:32Z",
+      "labels": [
+        "v0.6.1",
+        "documentation"
+      ],
+      "completedAt": "2025-12-12T19:59:37Z",
+      "type": "task",
+      "parentId": null,
+      "size": null,
+      "_archive": {
+        "archivedAt": "2025-12-20T05:29:47Z",
+        "reason": "auto",
+        "sessionId": "system",
+        "cycleTimeDays": 0
+      }
+    },
+    {
+      "id": "T056",
+      "title": "Create PLUGINS.md architecture documentation",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-12T19:59:31Z",
+      "labels": [
+        "v0.6.1",
+        "documentation"
+      ],
+      "completedAt": "2025-12-12T19:59:37Z",
+      "type": "task",
+      "parentId": null,
+      "size": null,
+      "_archive": {
+        "archivedAt": "2025-12-20T05:29:47Z",
+        "reason": "auto",
+        "sessionId": "system",
+        "cycleTimeDays": 0
+      }
+    },
+    {
+      "id": "T055",
+      "title": "Fix label pattern to allow version tags",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-12T19:59:29Z",
+      "labels": [
+        "v0.6.1",
+        "schema",
+        "bug-fix"
+      ],
+      "completedAt": "2025-12-12T19:59:37Z",
+      "type": "task",
+      "parentId": null,
+      "size": null,
+      "_archive": {
+        "archivedAt": "2025-12-20T05:29:47Z",
+        "reason": "auto",
+        "sessionId": "system",
+        "cycleTimeDays": 0
+      }
+    },
+    {
+      "id": "T054",
+      "title": "Test version labels",
+      "status": "done",
+      "priority": "low",
+      "createdAt": "2025-12-12T19:58:05Z",
+      "labels": [
+        "v0.6.0",
+        "feature"
+      ],
+      "completedAt": "2025-12-12T19:58:16Z",
+      "type": "task",
+      "parentId": null,
+      "size": null,
+      "_archive": {
+        "archivedAt": "2025-12-20T05:29:47Z",
+        "reason": "auto",
+        "sessionId": "system",
+        "cycleTimeDays": 0
+      }
+    },
+    {
+      "id": "T053",
+      "title": "Extend config schema with CLI section",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-12T19:47:01Z",
+      "description": "Added cli.aliases, cli.plugins, cli.debug sections to config schema",
+      "labels": [
+        "schema",
+        "config",
+        "release-060"
+      ],
+      "completedAt": "2025-12-12T19:47:10Z",
+      "type": "task",
+      "parentId": null,
+      "size": null,
+      "_archive": {
+        "archivedAt": "2025-12-20T05:29:47Z",
+        "reason": "auto",
+        "sessionId": "system",
+        "cycleTimeDays": 0
+      }
+    },
+    {
+      "id": "T052",
+      "title": "Add CLI debug validation mode",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-12T19:47:01Z",
+      "description": "Added --validate/--debug flags, checksum verification, mapping validation",
+      "labels": [
+        "feature",
+        "cli",
+        "release-060"
+      ],
+      "completedAt": "2025-12-12T19:47:10Z",
+      "type": "task",
+      "parentId": null,
+      "size": null,
+      "_archive": {
+        "archivedAt": "2025-12-20T05:29:47Z",
+        "reason": "auto",
+        "sessionId": "system",
+        "cycleTimeDays": 0
+      }
+    },
+    {
+      "id": "T051",
+      "title": "Implement plugin system foundation",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-12T19:47:01Z",
+      "description": "Auto-discovery from ~/.claude-todo/plugins/ and ./.claude/plugins/, plugin metadata format",
+      "labels": [
+        "feature",
+        "plugins",
+        "release-060"
+      ],
+      "completedAt": "2025-12-12T19:47:10Z",
+      "type": "task",
+      "parentId": null,
+      "size": null,
+      "_archive": {
+        "archivedAt": "2025-12-20T05:29:47Z",
+        "reason": "auto",
+        "sessionId": "system",
+        "cycleTimeDays": 0
+      }
+    },
+    {
+      "id": "T050",
+      "title": "Implement CLI command aliases",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-12T19:47:01Z",
+      "description": "Added ls, done, new, edit, rm, check aliases with config override support",
+      "labels": [
+        "feature",
+        "cli",
+        "release-060"
+      ],
+      "completedAt": "2025-12-12T19:47:10Z",
+      "type": "task",
+      "parentId": null,
+      "size": null,
+      "_archive": {
+        "archivedAt": "2025-12-20T05:29:47Z",
+        "reason": "auto",
+        "sessionId": "system",
+        "cycleTimeDays": 0
+      }
+    },
+    {
+      "id": "T049",
+      "title": "Add Task Management documentation with auto-install",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-12T19:47:01Z",
+      "description": "Created TODO_Task_Management.md, install copies to ~/.claude/, auto-appends reference to CLAUDE.md",
+      "labels": [
+        "docs",
+        "feature",
+        "release-050"
+      ],
+      "completedAt": "2025-12-12T19:47:09Z",
+      "type": "task",
+      "parentId": null,
+      "size": null,
+      "_archive": {
+        "archivedAt": "2025-12-20T05:29:47Z",
+        "reason": "auto",
+        "sessionId": "system",
+        "cycleTimeDays": 0
+      }
+    },
+    {
+      "id": "T012",
+      "title": "Decouple CLI wrapper from hardcoded script mappings",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-06T04:51:17Z",
+      "description": "MEDIUM RISK: The claude-todo wrapper has hardcoded case statement mapping commands to scripts. If scripts are renamed (like we almost did with -todo suffix), wrapper breaks silently. FIX: Generate wrapper from script directory listing, use config file for mappings, or convention-based routing (command name = script name).",
+      "labels": [
+        "fragile-coupling",
+        "medium"
+      ],
+      "notes": [
+        "2025-12-09 01:15:23 UTC: Testing update script",
+        "2025-12-09 01:17:53 UTC: Verified update command works through CLI"
+      ],
+      "completedAt": "2025-12-12T19:41:28Z",
+      "type": "task",
+      "parentId": null,
+      "size": null,
+      "_archive": {
+        "archivedAt": "2025-12-20T05:29:47Z",
+        "reason": "auto",
+        "sessionId": "system",
+        "cycleTimeDays": 6
+      }
+    },
+    {
+      "id": "T048",
+      "title": "Test task for verification",
+      "status": "done",
+      "priority": "medium",
+      "createdAt": "2025-12-12T18:47:18Z",
+      "description": "Testing the full add/update/complete workflow",
+      "labels": [
+        "test",
+        "verification"
+      ],
+      "notes": [
+        "2025-12-12 18:47:26 UTC: Updated via test"
+      ],
+      "completedAt": "2025-12-12T18:47:26Z",
+      "type": "task",
+      "parentId": null,
+      "size": null,
+      "_archive": {
+        "archivedAt": "2025-12-20T05:29:47Z",
+        "reason": "auto",
+        "sessionId": "system",
+        "cycleTimeDays": 0
+      }
+    },
+    {
+      "id": "T047",
+      "title": "Update install.sh to install TODO_Task_Management.md",
+      "status": "done",
+      "priority": "high",
+      "createdAt": "2025-12-12T16:56:09Z",
+      "description": "Ensure docs are copied during global installation",
+      "labels": [
+        "installation",
+        "task-management"
+      ],
+      "completedAt": "2025-12-12T16:57:56Z",
+      "type": "task",
+      "parentId": null,
+      "size": null,
+      "_archive": {
+        "archivedAt": "2025-12-20T05:29:47Z",
+        "reason": "auto",
+        "sessionId": "system",
+        "cycleTimeDays": 0
+      }
+    },
+    {
+      "id": "T046",
+      "title": "Update CLAUDE.md injection with missing commands",
+      "status": "done",
+      "priority": "critical",
+      "createdAt": "2025-12-12T16:56:08Z",
+      "description": "Add update, export --format todowrite, and update --notes to Quick Reference",
+      "labels": [
+        "documentation",
+        "task-management"
+      ],
+      "completedAt": "2025-12-12T16:57:33Z",
+      "type": "task",
+      "parentId": null,
+      "size": null,
+      "_archive": {
+        "archivedAt": "2025-12-20T05:29:47Z",
+        "reason": "auto",
+        "sessionId": "system",
+        "cycleTimeDays": 0
+      }
     }
   ],
   "statistics": {
-    "byPhase": {},
-    "byPriority": {
-      "critical": 0,
-      "high": 0,
-      "medium": 0,
-      "low": 0
+    "byPhase": {
+      "no-phase": 1
     },
-    "byLabel": {},
-    "averageCycleTime": null
+    "byPriority": {
+      "critical": 8,
+      "high": 19,
+      "medium": 11,
+      "low": 10
+    },
+    "byLabel": {
+      "bug-fix": 1,
+      "cleanup": 1,
+      "cli": 2,
+      "config": 1,
+      "consolidation": 1,
+      "critical": 7,
+      "docs": 1,
+      "documentation": 25,
+      "enhancement": 3,
+      "feature": 5,
+      "fragile-coupling": 7,
+      "high": 2,
+      "important": 8,
+      "installation": 1,
+      "integration": 3,
+      "low": 2,
+      "medium": 1,
+      "minor": 6,
+      "opensource": 2,
+      "plugins": 1,
+      "release-050": 1,
+      "release-060": 4,
+      "research": 1,
+      "schema": 2,
+      "task-management": 2,
+      "test": 1,
+      "v0.6.0": 1,
+      "v0.6.1": 3,
+      "verification": 1
+    },
+    "averageCycleTime": 0.12
+  },
+  "phaseSummary": {
+    "no-phase": {
+      "totalTasks": 48,
+      "firstCompleted": "2025-12-06T06:35:41Z",
+      "lastCompleted": "2025-12-12T19:59:37Z"
+    }
   }
 }

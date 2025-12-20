@@ -21,7 +21,7 @@ source "$SCRIPT_DIR/logging.sh"
 
 # Current schema versions (single source of truth)
 SCHEMA_VERSION_TODO="2.3.0"
-SCHEMA_VERSION_CONFIG="2.1.0"
+SCHEMA_VERSION_CONFIG="2.2.0"
 SCHEMA_VERSION_ARCHIVE="2.1.0"
 SCHEMA_VERSION_LOG="2.1.0"
 
@@ -420,6 +420,23 @@ migrate_config_to_2_1_0() {
 
     # Update version
     update_version_field "$file" "2.1.0"
+}
+
+# Migration from 2.1.0 to 2.2.0 for config.json
+# Adds hierarchy configuration section with LLM-Agent-First defaults
+# See CONFIG-SYSTEM-SPEC.md Appendix A.5, HIERARCHY-ENHANCEMENT-SPEC.md Part 3.2
+migrate_config_to_2_2_0() {
+    local file="$1"
+
+    # Add hierarchy section with LLM-Agent-First defaults
+    # - maxSiblings: 20 (was 7, based on human cognitive limits)
+    # - countDoneInLimit: false (done tasks are historical, not active context)
+    # - maxActiveSiblings: 8 (aligns with TodoWrite sync limit)
+    # - maxDepth: 3 (organizational, rarely needs changing)
+    add_field_if_missing "$file" ".hierarchy" '{"maxSiblings":20,"maxDepth":3,"countDoneInLimit":false,"maxActiveSiblings":8}' || return 1
+
+    # Update version
+    update_version_field "$file" "2.2.0"
 }
 
 # Example: Migration from 2.0.0 to 2.1.0 for todo.json
