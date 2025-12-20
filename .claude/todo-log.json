@@ -3,9 +3,9 @@
   "version": "2.1.0",
   "project": "claude-todo",
   "_meta": {
-    "totalEntries": 1113,
+    "totalEntries": 1120,
     "firstEntry": "2025-12-13T07:14:38Z",
-    "lastEntry": "2025-12-19T19:30:34Z",
+    "lastEntry": "2025-12-20T00:39:10Z",
     "entriesPruned": 0
   },
   "entries": [
@@ -27558,6 +27558,421 @@
       "details": {
         "field": "status",
         "operation": "complete"
+      }
+    },
+    {
+      "id": "log_5bab75cf2b11",
+      "timestamp": "2025-12-20T00:39:01Z",
+      "sessionId": null,
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T340",
+      "before": {
+        "title": "T339.1: Implement parent auto-complete in complete-task.sh",
+        "status": "pending",
+        "priority": "high",
+        "description": "When completing a task:\n1. Check if task has parent\n2. Check if all siblings are done\n3. If yes: auto-complete parent (configurable mode)\n\nConfig options in todo-config.json:\n- hierarchy.autoCompleteParent: true|false\n- hierarchy.autoCompleteMode: auto|suggest|off\n\nModes:\n- auto: Complete parent silently\n- suggest: Prompt user (default)\n- off: No auto-complete",
+        "phase": "core",
+        "labels": [
+          "automation",
+          "hierarchy",
+          "v0.16.0",
+          "v0.18.0"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T339"
+        ],
+        "blockedBy": null
+      },
+      "after": {
+        "title": "T339.1: Implement parent auto-complete in complete-task.sh",
+        "status": "pending",
+        "priority": "high",
+        "description": "When completing a task:\n1. Check if task has parent\n2. Check if all siblings are done\n3. If yes: auto-complete parent (configurable mode)\n\nConfig options in todo-config.json:\n- hierarchy.autoCompleteParent: true|false\n- hierarchy.autoCompleteMode: auto|suggest|off\n\nModes:\n- auto: Complete parent silently\n- suggest: Prompt user (default)\n- off: No auto-complete",
+        "phase": "core",
+        "labels": [
+          "automation",
+          "hierarchy",
+          "v0.16.0",
+          "v0.18.0"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T339"
+        ],
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_078e5f4292aa",
+      "timestamp": "2025-12-20T00:39:03Z",
+      "sessionId": null,
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T341",
+      "before": {
+        "title": "T339.2: Implement orphan detection and repair",
+        "status": "pending",
+        "priority": "high",
+        "description": "Enhance validate command:\n- Detect tasks with parentId referencing non-existent task\n- Detect tasks with parentId referencing archived task\n\nAdd --fix-orphans flag:\n- --unlink: Set parentId=null (promote to root)\n- --delete: Remove orphaned tasks\n- Default: show orphans, don't fix\n\nAdd to regular validation output as warning",
+        "phase": "core",
+        "labels": [
+          "hierarchy",
+          "v0.16.0",
+          "v0.18.0",
+          "validation"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T339"
+        ],
+        "blockedBy": null
+      },
+      "after": {
+        "title": "T339.2: Implement orphan detection and repair",
+        "status": "pending",
+        "priority": "high",
+        "description": "Enhance validate command:\n- Detect tasks with parentId referencing non-existent task\n- Detect tasks with parentId referencing archived task\n\nAdd --fix-orphans flag:\n- --unlink: Set parentId=null (promote to root)\n- --delete: Remove orphaned tasks\n- Default: show orphans, don't fix\n\nAdd to regular validation output as warning",
+        "phase": "core",
+        "labels": [
+          "hierarchy",
+          "v0.16.0",
+          "v0.18.0",
+          "validation"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T339"
+        ],
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_85b38fdc8d7a",
+      "timestamp": "2025-12-20T00:39:04Z",
+      "sessionId": null,
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T342",
+      "before": {
+        "title": "T339.3: Create scripts/tree.sh command",
+        "status": "pending",
+        "priority": "medium",
+        "description": "New tree command (alias for list --tree):\n- claude-todo tree: Show full tree\n- claude-todo tree TXXX: Show subtree rooted at TXXX\n- Supports --depth, --status, --priority filters\n\nClean, focused command for hierarchy visualization",
+        "phase": "core",
+        "labels": [
+          "cli",
+          "hierarchy",
+          "v0.16.0",
+          "v0.18.0"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T339"
+        ],
+        "blockedBy": null
+      },
+      "after": {
+        "title": "T339.3: Create scripts/tree.sh command",
+        "status": "pending",
+        "priority": "medium",
+        "description": "New tree command (alias for list --tree):\n- claude-todo tree: Show full tree\n- claude-todo tree TXXX: Show subtree rooted at TXXX\n- Supports --depth, --status, --priority filters\n\nClean, focused command for hierarchy visualization",
+        "phase": "core",
+        "labels": [
+          "cli",
+          "hierarchy",
+          "v0.16.0",
+          "v0.18.0"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T339"
+        ],
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_ead0006e5dc1",
+      "timestamp": "2025-12-20T00:39:05Z",
+      "sessionId": null,
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T343",
+      "before": {
+        "title": "T339.4: Create scripts/reparent.sh command",
+        "status": "pending",
+        "priority": "medium",
+        "description": "New reparent command:\n- claude-todo reparent TXXX --to TYYY\n\nValidates:\n- Source task exists\n- Target parent exists\n- Target has valid type (not subtask)\n- Move doesn't exceed depth limit\n- Move doesn't create circular reference\n- Target doesn't exceed sibling limit\n\nLogs operation to todo-log.json",
+        "phase": "core",
+        "labels": [
+          "cli",
+          "hierarchy",
+          "v0.16.0",
+          "v0.18.0"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T339"
+        ],
+        "blockedBy": null
+      },
+      "after": {
+        "title": "T339.4: Create scripts/reparent.sh command",
+        "status": "pending",
+        "priority": "medium",
+        "description": "New reparent command:\n- claude-todo reparent TXXX --to TYYY\n\nValidates:\n- Source task exists\n- Target parent exists\n- Target has valid type (not subtask)\n- Move doesn't exceed depth limit\n- Move doesn't create circular reference\n- Target doesn't exceed sibling limit\n\nLogs operation to todo-log.json",
+        "phase": "core",
+        "labels": [
+          "cli",
+          "hierarchy",
+          "v0.16.0",
+          "v0.18.0"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T339"
+        ],
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_f8185babbf8c",
+      "timestamp": "2025-12-20T00:39:07Z",
+      "sessionId": null,
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T344",
+      "before": {
+        "title": "T339.5: Create scripts/promote.sh command",
+        "status": "pending",
+        "priority": "medium",
+        "description": "New promote command:\n- claude-todo promote TXXX\n\nRemoves parentId (makes task root-level).\nOptionally updates type if was subtask -> task.\n\nSimple command for removing parent relationship.",
+        "phase": "core",
+        "labels": [
+          "cli",
+          "hierarchy",
+          "v0.16.0",
+          "v0.18.0"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T339"
+        ],
+        "blockedBy": null
+      },
+      "after": {
+        "title": "T339.5: Create scripts/promote.sh command",
+        "status": "pending",
+        "priority": "medium",
+        "description": "New promote command:\n- claude-todo promote TXXX\n\nRemoves parentId (makes task root-level).\nOptionally updates type if was subtask -> task.\n\nSimple command for removing parent relationship.",
+        "phase": "core",
+        "labels": [
+          "cli",
+          "hierarchy",
+          "v0.16.0",
+          "v0.18.0"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T339"
+        ],
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_825bc091a5c8",
+      "timestamp": "2025-12-20T00:39:09Z",
+      "sessionId": null,
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T345",
+      "before": {
+        "title": "T339.6: Add hierarchy awareness to focus.sh",
+        "status": "pending",
+        "priority": "medium",
+        "description": "Enhance focus show output:\n- Show parent context: Parent: T001 (Title)\n- Show child status: Children: 2 done, 1 pending\n- Show ancestor breadcrumb\n\nWhen focusing on epic, show child summary.\nWhen focusing on task with parent, show parent context.",
+        "phase": "core",
+        "labels": [
+          "focus",
+          "hierarchy",
+          "v0.16.0",
+          "v0.18.0"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T339"
+        ],
+        "blockedBy": null
+      },
+      "after": {
+        "title": "T339.6: Add hierarchy awareness to focus.sh",
+        "status": "pending",
+        "priority": "medium",
+        "description": "Enhance focus show output:\n- Show parent context: Parent: T001 (Title)\n- Show child status: Children: 2 done, 1 pending\n- Show ancestor breadcrumb\n\nWhen focusing on epic, show child summary.\nWhen focusing on task with parent, show parent context.",
+        "phase": "core",
+        "labels": [
+          "focus",
+          "hierarchy",
+          "v0.16.0",
+          "v0.18.0"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T339"
+        ],
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_7c4a839c9471",
+      "timestamp": "2025-12-20T00:39:10Z",
+      "sessionId": null,
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T346",
+      "before": {
+        "title": "T339.7: Add hierarchy awareness to next.sh",
+        "status": "pending",
+        "priority": "medium",
+        "description": "Enhance next task suggestion:\n- Prefer tasks in currently focused epic (+30 score)\n- Prefer leaf tasks (no children) (+10 score)\n- Consider sibling completion status\n- Show parent context in suggestion\n\nExample output:\nSuggested: T002 - JWT middleware\n  Parent: T001 - Authentication System\n  Score: 95 (priority:50, same-epic:30, leaf:10, unblocked:5)",
+        "phase": "core",
+        "labels": [
+          "hierarchy",
+          "suggestion",
+          "v0.16.0",
+          "v0.18.0"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T339"
+        ],
+        "blockedBy": null
+      },
+      "after": {
+        "title": "T339.7: Add hierarchy awareness to next.sh",
+        "status": "pending",
+        "priority": "medium",
+        "description": "Enhance next task suggestion:\n- Prefer tasks in currently focused epic (+30 score)\n- Prefer leaf tasks (no children) (+10 score)\n- Consider sibling completion status\n- Show parent context in suggestion\n\nExample output:\nSuggested: T002 - JWT middleware\n  Parent: T001 - Authentication System\n  Score: 95 (priority:50, same-epic:30, leaf:10, unblocked:5)",
+        "phase": "core",
+        "labels": [
+          "hierarchy",
+          "suggestion",
+          "v0.16.0",
+          "v0.18.0"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": [
+          "T339"
+        ],
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log-1766191550-1bfb6a",
+      "timestamp": "2025-12-20T00:45:50Z",
+      "action": "task_created",
+      "taskId": "T526",
+      "actor": "system",
+      "details": {
+        "title": "BUG: Allow metadata updates on completed tasks (type, parentId, labels, size)",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "BUG: Allow metadata updates on completed tasks (type, parentId, labels, size)",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1766191552-f97dca",
+      "timestamp": "2025-12-20T00:45:52Z",
+      "action": "task_created",
+      "taskId": "T527",
+      "actor": "system",
+      "details": {
+        "title": "ENHANCE: Make sibling limit configurable in todo-config.json",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "ENHANCE: Make sibling limit configurable in todo-config.json",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log-1766191971-1ae80f",
+      "timestamp": "2025-12-20T00:52:51Z",
+      "action": "task_created",
+      "taskId": "T528",
+      "actor": "system",
+      "details": {
+        "title": "Add error code test coverage (E_* codes)",
+        "status": "pending",
+        "priority": "low"
+      },
+      "before": null,
+      "after": {
+        "title": "Add error code test coverage (E_* codes)",
+        "status": "pending",
+        "priority": "low"
+      }
+    },
+    {
+      "id": "log-1766191973-4f3c87",
+      "timestamp": "2025-12-20T00:52:53Z",
+      "action": "task_created",
+      "taskId": "T529",
+      "actor": "system",
+      "details": {
+        "title": "Add cache schema version tracking to compliance checker",
+        "status": "pending",
+        "priority": "low"
+      },
+      "before": null,
+      "after": {
+        "title": "Add cache schema version tracking to compliance checker",
+        "status": "pending",
+        "priority": "low"
       }
     }
   ]

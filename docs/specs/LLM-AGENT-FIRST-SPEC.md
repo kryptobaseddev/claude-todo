@@ -62,7 +62,7 @@ Design CLI tools with **LLM-agent-first** principles: JSON output by default for
 
 ## Part 1: Command Inventory
 
-### All Commands (32 total)
+### All Commands (33 total)
 
 | # | Command | Script | Category | Requirements |
 |---|---------|--------|----------|--------------|

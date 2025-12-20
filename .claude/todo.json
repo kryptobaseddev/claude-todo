@@ -113,9 +113,9 @@
       }
     ]
   },
-  "lastUpdated": "2025-12-19T19:30:34Z",
+  "lastUpdated": "2025-12-20T00:52:53Z",
   "_meta": {
-    "checksum": "c9999deef715dc77",
+    "checksum": "6e4ba6f8edecc750",
     "configVersion": "2.1.0",
     "lastSessionId": null,
     "activeSession": null,
@@ -5768,7 +5768,7 @@
         "T339"
       ],
       "type": "task",
-      "parentId": null,
+      "parentId": "T339",
       "size": null,
       "notes": [
         "2025-12-18 18:23:50 UTC: Updated target version from v0.16.0 to v0.18.0 per HIERARCHY-ENHANCEMENT-SPEC.md reconciliation"
@@ -5792,7 +5792,7 @@
         "T339"
       ],
       "type": "task",
-      "parentId": null,
+      "parentId": "T339",
       "size": null,
       "notes": [
         "2025-12-18 18:23:50 UTC: Updated target version from v0.16.0 to v0.18.0 per HIERARCHY-ENHANCEMENT-SPEC.md reconciliation"
@@ -5816,7 +5816,7 @@
         "T339"
       ],
       "type": "task",
-      "parentId": null,
+      "parentId": "T339",
       "size": null,
       "notes": [
         "2025-12-18 18:23:51 UTC: Updated target version from v0.16.0 to v0.18.0 per HIERARCHY-ENHANCEMENT-SPEC.md reconciliation"
@@ -5840,7 +5840,7 @@
         "T339"
       ],
       "type": "task",
-      "parentId": null,
+      "parentId": "T339",
       "size": null,
       "notes": [
         "2025-12-18 18:23:51 UTC: Updated target version from v0.16.0 to v0.18.0 per HIERARCHY-ENHANCEMENT-SPEC.md reconciliation"
@@ -5864,7 +5864,7 @@
         "T339"
       ],
       "type": "task",
-      "parentId": null,
+      "parentId": "T339",
       "size": null,
       "notes": [
         "2025-12-18 18:23:51 UTC: Updated target version from v0.16.0 to v0.18.0 per HIERARCHY-ENHANCEMENT-SPEC.md reconciliation"
@@ -5888,7 +5888,7 @@
         "T339"
       ],
       "type": "task",
-      "parentId": null,
+      "parentId": "T339",
       "size": null,
       "notes": [
         "2025-12-18 18:23:51 UTC: Updated target version from v0.16.0 to v0.18.0 per HIERARCHY-ENHANCEMENT-SPEC.md reconciliation"
@@ -5912,7 +5912,7 @@
         "T339"
       ],
       "type": "task",
-      "parentId": null,
+      "parentId": "T339",
       "size": null,
       "notes": [
         "2025-12-18 18:23:52 UTC: Updated target version from v0.16.0 to v0.18.0 per HIERARCHY-ENHANCEMENT-SPEC.md reconciliation"
@@ -9213,6 +9213,68 @@
         "automation",
         "chore",
         "memory-management"
+      ]
+    },
+    {
+      "id": "T526",
+      "title": "BUG: Allow metadata updates on completed tasks (type, parentId, labels, size)",
+      "status": "pending",
+      "priority": "high",
+      "type": "task",
+      "parentId": null,
+      "createdAt": "2025-12-20T00:45:50Z",
+      "phase": "core",
+      "description": "update-task.sh blocks ALL updates to done tasks (line 617-626). But metadata fields are corrections, not work changes.\n\nCURRENT BEHAVIOR:\n```bash\nif [[ \"$CURRENT_STATUS\" == \"done\" ]]; then\n  output_error \"Cannot update completed task\"\n  exit\nfi\n```\n\nPROPOSED FIX:\nAllow updates to metadata-only fields on completed tasks:\n- type (categorization: task→epic)\n- parentId (hierarchy structure)\n- labels (tagging)\n- size (estimation correction)\n\nBLOCK changes to:\n- status (can't un-complete)\n- title/description (historical record)\n- completedAt (audit trail)\n\nRATIONALE:\nChanging T328 from type=task to type=epic is a classification correction, not changing what work was done. Same for hierarchy restructuring.\n\nIMPLEMENTATION:\nAdd whitelist check after the done check:\n```bash\nMETADATA_ONLY_FIELDS=(type parentId labels size)\nif [[ \"$CURRENT_STATUS\" == \"done\" ]]; then\n  # Check if only metadata fields are being updated\n  if only_metadata_fields_changed; then\n    log_info \"Allowing metadata correction on completed task\"\n  else\n    output_error \"Cannot update work fields on completed task\"\n    exit\n  fi\nfi\n```",
+      "labels": [
+        "bug",
+        "hierarchy",
+        "update"
+      ]
+    },
+    {
+      "id": "T527",
+      "title": "ENHANCE: Make sibling limit configurable in todo-config.json",
+      "status": "pending",
+      "priority": "medium",
+      "type": "task",
+      "parentId": null,
+      "createdAt": "2025-12-20T00:45:52Z",
+      "phase": "core",
+      "description": "HIERARCHY-ENHANCEMENT-SPEC.md sets max 7 siblings based on Miller's 7±2 cognitive load research.\n\nPROBLEM:\n- 7 is appropriate for active work (human working memory)\n- Too restrictive for organizing completed work or large epics\n- Hit limit trying to set parentId on T347-T349 (T339 children)\n- Hit limit on T390-T396 (T382 already has 7 children)\n\nPROPOSED FIX:\nAdd to todo-config.json:\n```json\n{\n  \"hierarchy\": {\n    \"maxSiblings\": 7,\n    \"maxDepth\": 3,\n    \"allowMetadataUpdateOnDone\": true\n  }\n}\n```\n\nSPEC UPDATE:\nUpdate HIERARCHY-ENHANCEMENT-SPEC.md to note:\n- Default 7 is recommended for cognitive load\n- Configurable for projects with larger task groups\n- Document trade-off: larger groups = harder to track manually\n\nIMPLEMENTATION:\n1. Add hierarchy.* config keys to CONFIG-SYSTEM-SPEC.md\n2. Update lib/hierarchy.sh to read from config\n3. Update add-task.sh/update-task.sh sibling checks",
+      "labels": [
+        "config",
+        "enhancement",
+        "hierarchy"
+      ]
+    },
+    {
+      "id": "T528",
+      "title": "Add error code test coverage (E_* codes)",
+      "status": "pending",
+      "priority": "low",
+      "type": "task",
+      "parentId": null,
+      "createdAt": "2025-12-20T00:52:51Z",
+      "phase": "polish",
+      "description": "Create tests/unit/error-codes.bats to verify all 29 E_* error codes are triggered correctly and return proper JSON structure. Reference: LLM-AGENT-FIRST-SPEC.md Part 3.2, FINALIZATION-PLAN Task 3.1",
+      "labels": [
+        "quality",
+        "testing"
+      ]
+    },
+    {
+      "id": "T529",
+      "title": "Add cache schema version tracking to compliance checker",
+      "status": "pending",
+      "priority": "low",
+      "type": "task",
+      "parentId": null,
+      "createdAt": "2025-12-20T00:52:53Z",
+      "phase": "polish",
+      "description": "Track schemaHash in cache.json and invalidate cache when schema.json or check scripts change. Reference: FINALIZATION-PLAN Task 3.6",
+      "labels": [
+        "maintenance",
+        "performance"
       ]
     }
   ],
