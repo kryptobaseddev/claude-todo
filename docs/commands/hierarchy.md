@@ -373,6 +373,63 @@ The hierarchy system is implemented in `lib/hierarchy.sh`:
 | `12` | Sibling limit | Parent already has 7 children |
 | `13` | Invalid parent type | Subtask cannot have children |
 
+## Populating Hierarchy (v0.23.2+)
+
+The `populate-hierarchy` command automatically sets `parentId` for existing tasks based on conventions:
+
+```bash
+claude-todo populate-hierarchy [OPTIONS]
+```
+
+### Detection Strategies
+
+| Strategy | Example | Result |
+|----------|---------|--------|
+| **Naming convention** | Title `T328.1: Schema update` | parentId → `T328` |
+| **Depends on epic** | `depends: ["T328"]` where T328.type=epic | parentId → `T328` |
+
+### Options
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--dry-run` | | Preview changes without applying |
+| `--format` | `-f` | Output format: `text`, `json` |
+| `--json` | | Force JSON output |
+| `--human` | | Force human-readable output |
+| `--quiet` | `-q` | Suppress non-essential output |
+
+### Examples
+
+```bash
+# Preview changes
+claude-todo populate-hierarchy --dry-run
+
+# Apply changes
+claude-todo populate-hierarchy
+
+# JSON output for agents
+claude-todo populate-hierarchy --json
+```
+
+### JSON Output
+
+```json
+{
+  "_meta": {"command": "populate-hierarchy", "version": "0.23.2"},
+  "success": true,
+  "dryRun": false,
+  "summary": {
+    "totalChanges": 47,
+    "byNamingConvention": 39,
+    "byDependsOnEpic": 8,
+    "skippedAlreadyHasParent": 0
+  },
+  "changes": [
+    {"taskId": "T329", "title": "T328.1: ...", "newParentId": "T328", "source": "naming"}
+  ]
+}
+```
+
 ## See Also
 
 - [add](add.md) - Task creation with hierarchy options
