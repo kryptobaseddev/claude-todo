@@ -108,10 +108,26 @@ Examples:
 
 ## Exit Codes
 
-| Code | Meaning |
-|------|---------|
-| `0` | Success |
-| `1` | Invalid arguments or task not found |
+| Code | Meaning | Recoverable |
+|------|---------|:-----------:|
+| `0` | Success | N/A |
+| `2` | Invalid arguments | No |
+| `3` | File operation failure | No |
+| `4` | Task not found | No |
+| `6` | Validation error | No |
+| `7` | Lock timeout | **Yes** |
+| `20` | Checksum mismatch | **Yes** |
+| `102` | Already complete (idempotent) | N/A |
+
+### Idempotency (Exit Code 102)
+
+The complete command is idempotent. Completing an already-done task returns:
+- Exit code: `102` (EXIT_NO_CHANGE)
+- JSON: `{"success": true, "noChange": true, "message": "Task T001 is already complete"}`
+
+LLM agents **SHOULD** treat exit code 102 as success without retry.
+
+See [Exit Codes Reference](../reference/exit-codes.md) for full retry protocol.
 
 ## See Also
 

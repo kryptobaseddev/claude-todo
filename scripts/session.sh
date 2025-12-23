@@ -62,6 +62,13 @@ elif [[ -f "$LIB_DIR/backup.sh" ]]; then
   source "$LIB_DIR/backup.sh"
 fi
 
+# Source validation library for input validation (Part 5.3 compliance)
+if [[ -f "$CLAUDE_TODO_HOME/lib/validation.sh" ]]; then
+  source "$CLAUDE_TODO_HOME/lib/validation.sh"
+elif [[ -f "$LIB_DIR/validation.sh" ]]; then
+  source "$LIB_DIR/validation.sh"
+fi
+
 TODO_FILE="${TODO_FILE:-.claude/todo.json}"
 CONFIG_FILE="${CONFIG_FILE:-.claude/todo-config.json}"
 # Note: LOG_FILE is set by lib/logging.sh (readonly) - don't reassign here

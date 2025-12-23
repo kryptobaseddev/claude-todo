@@ -178,19 +178,31 @@ View with: jq '.tasks[] | select(.id == "T001")' .claude/todo.json
 
 ## Exit Codes
 
-| Code | Meaning |
-|------|---------|
-| `0` | Success |
-| `1` | General error (invalid arguments or unknown options) |
-| `2` | Invalid argument value |
-| `3` | File operation failure |
-| `4` | Task not found |
-| `6` | Validation failure (schema, circular dependency, etc.) |
-| `10` | Parent task not found |
-| `11` | Max hierarchy depth exceeded (max 3 levels) |
-| `12` | Max siblings exceeded (max 7 per parent) |
-| `13` | Invalid parent type (subtasks cannot have children) |
-| `102` | No changes (dry-run or no-op) |
+| Code | Meaning | Recoverable |
+|------|---------|:-----------:|
+| `0` | Success | N/A |
+| `1` | General error (invalid arguments or unknown options) | No |
+| `2` | Invalid argument value | No |
+| `3` | File operation failure | No |
+| `4` | Task not found | No |
+| `6` | Validation failure (schema, circular dependency, etc.) | No |
+| `7` | Lock timeout | **Yes** |
+| `10` | Parent task not found | No |
+| `11` | Max hierarchy depth exceeded (max 3 levels) | No |
+| `12` | Max siblings exceeded (max 7 per parent) | No |
+| `13` | Invalid parent type (subtasks cannot have children) | No |
+| `20` | Checksum mismatch | **Yes** |
+| `102` | No change (idempotent operation) | N/A |
+
+### Idempotency (Exit Code 102)
+
+The update command is idempotent. When updating with identical values, it returns:
+- Exit code: `102` (EXIT_NO_CHANGE)
+- JSON: `{"success": true, "noChange": true, "message": "..."}`
+
+LLM agents **SHOULD** treat exit code 102 as success without retry.
+
+See [Exit Codes Reference](../reference/exit-codes.md) for full retry protocol.
 
 ## See Also
 

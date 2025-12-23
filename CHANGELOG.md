@@ -5,6 +5,27 @@ All notable changes to the claude-todo system will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.31.2] - 2025-12-23
+
+### Added
+- **LLM-Agent-First Spec v3.0 Compliance** (T481 EPIC): Complete compliance checker implementation
+  - New compliance check modules: `input-validation.sh`, `idempotency.sh`, `dry-run-semantics.sh`
+  - Command idempotency with `EXIT_NO_CHANGE` (102) exit code
+  - Duplicate detection in `add` command (60s window)
+  - Dry-run format compliance with `dryRun`/`wouldCreate` JSON fields
+
+### Fixed
+- **Input validation compliance**: Added `validation.sh` sourcing to `complete-task.sh`, `archive.sh`, `session.sh`
+
+### Documentation
+- New `docs/reference/exit-codes.md` - comprehensive exit codes and retry protocol reference
+- Updated `docs/commands/add.md`, `update.md`, `complete.md` with idempotency sections
+- Updated `LLM-AGENT-FIRST-IMPLEMENTATION-REPORT.md` to v5.0
+
+### Tests
+- New `tests/unit/compliance-checks.bats` (22 tests) - compliance check module tests
+- New `tests/integration/idempotency.bats` (14 tests) - EXIT_NO_CHANGE behavior tests
+
 ## [0.31.1] - 2025-12-23
 
 ### Fixed

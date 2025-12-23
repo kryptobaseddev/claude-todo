@@ -3,9 +3,9 @@
   "version": "2.1.0",
   "project": "claude-todo",
   "_meta": {
-    "totalEntries": 1657,
+    "totalEntries": 1671,
     "firstEntry": "2025-12-13T07:14:38Z",
-    "lastEntry": "2025-12-23T17:21:05Z",
+    "lastEntry": "2025-12-23T17:35:18Z",
     "entriesPruned": 0
   },
   "entries": [
@@ -39413,6 +39413,356 @@
       "before": null,
       "after": null,
       "details": "Session started"
+    },
+    {
+      "id": "log_ee97f8ad0529",
+      "timestamp": "2025-12-23T17:22:33Z",
+      "sessionId": "session_20251223_092105_7e08d7",
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": {
+        "currentTask": "T495"
+      },
+      "after": {
+        "currentTask": "T496"
+      },
+      "details": null
+    },
+    {
+      "id": "log_342da95ca14d",
+      "timestamp": "2025-12-23T17:22:42Z",
+      "sessionId": "session_20251223_092105_7e08d7",
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": {
+        "currentTask": "T496"
+      },
+      "after": {
+        "currentTask": "T496"
+      },
+      "details": null
+    },
+    {
+      "id": "log_ca14154a0a27",
+      "timestamp": "2025-12-23T17:22:58Z",
+      "sessionId": "session_20251223_092105_7e08d7",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T495",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-23T17:22:57Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_8973f056c787",
+      "timestamp": "2025-12-23T17:25:10Z",
+      "sessionId": "session_20251223_092105_7e08d7",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T496",
+      "before": {
+        "status": "active",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-23T17:25:10Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_113cf511a865",
+      "timestamp": "2025-12-23T17:25:12Z",
+      "sessionId": "session_20251223_092105_7e08d7",
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": null,
+      "after": {
+        "currentTask": "T498"
+      },
+      "details": null
+    },
+    {
+      "id": "log_d163e4de3b49",
+      "timestamp": "2025-12-23T17:26:39Z",
+      "sessionId": "session_20251223_092105_7e08d7",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T498",
+      "before": {
+        "status": "active",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-23T17:26:39Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_c6ee81e0a673",
+      "timestamp": "2025-12-23T17:26:41Z",
+      "sessionId": "session_20251223_092105_7e08d7",
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": null,
+      "after": {
+        "currentTask": "T499"
+      },
+      "details": null
+    },
+    {
+      "id": "log_477a8af0371a",
+      "timestamp": "2025-12-23T17:28:36Z",
+      "sessionId": "session_20251223_092105_7e08d7",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T499",
+      "before": {
+        "status": "active",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-23T17:28:36Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_27485d738541",
+      "timestamp": "2025-12-23T17:28:38Z",
+      "sessionId": "session_20251223_092105_7e08d7",
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": null,
+      "after": {
+        "currentTask": "T500"
+      },
+      "details": null
+    },
+    {
+      "id": "log_4fc8b0f387ca",
+      "timestamp": "2025-12-23T17:32:10Z",
+      "sessionId": "session_20251223_092105_7e08d7",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T500",
+      "before": {
+        "status": "active",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-23T17:32:09Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_77e05eeec1c1",
+      "timestamp": "2025-12-23T17:32:12Z",
+      "sessionId": "session_20251223_092105_7e08d7",
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": null,
+      "after": {
+        "currentTask": "T501"
+      },
+      "details": null
+    },
+    {
+      "id": "log_ee297637b79b",
+      "timestamp": "2025-12-23T17:35:16Z",
+      "sessionId": "session_20251223_092105_7e08d7",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T501",
+      "before": {
+        "status": "active",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-23T17:35:16Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_abb2da5457c2",
+      "timestamp": "2025-12-23T17:35:18Z",
+      "sessionId": "session_20251223_092105_7e08d7",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T497",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-23T17:35:18Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_292f371448f3",
+      "timestamp": "2025-12-23T17:35:18Z",
+      "sessionId": "session_20251223_092105_7e08d7",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T481",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-23T17:35:18Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "auto_complete"
+      }
+    },
+    {
+      "id": "log-1766512753-ea8d39",
+      "timestamp": "2025-12-23T17:59:13Z",
+      "action": "task_created",
+      "taskId": "T694",
+      "actor": "system",
+      "details": {
+        "title": "EPIC: Test Suite Failures - Archive/Backup (20 failed, 7 skipped)",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "EPIC: Test Suite Failures - Archive/Backup (20 failed, 7 skipped)",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1766512775-5a792c",
+      "timestamp": "2025-12-23T17:59:35Z",
+      "action": "task_created",
+      "taskId": "T695",
+      "actor": "system",
+      "details": {
+        "title": "Fix archive --cascade-from tests (7 failures)",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Fix archive --cascade-from tests (7 failures)",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1766512776-d5ddeb",
+      "timestamp": "2025-12-23T17:59:36Z",
+      "action": "task_created",
+      "taskId": "T696",
+      "actor": "system",
+      "details": {
+        "title": "Fix backup/restore tests (6 failures)",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Fix backup/restore tests (6 failures)",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log-1766512779-28711c",
+      "timestamp": "2025-12-23T17:59:39Z",
+      "action": "task_created",
+      "taskId": "T697",
+      "actor": "system",
+      "details": {
+        "title": "Fix orphaned dependency cleanup tests (4 failures)",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "Fix orphaned dependency cleanup tests (4 failures)",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log-1766512781-ec520d",
+      "timestamp": "2025-12-23T17:59:41Z",
+      "action": "task_created",
+      "taskId": "T698",
+      "actor": "system",
+      "details": {
+        "title": "Fix archive metadata/timestamp tests (3 failures)",
+        "status": "pending",
+        "priority": "medium"
+      },
+      "before": null,
+      "after": {
+        "title": "Fix archive metadata/timestamp tests (3 failures)",
+        "status": "pending",
+        "priority": "medium"
+      }
+    },
+    {
+      "id": "log-1766512783-aa7873",
+      "timestamp": "2025-12-23T17:59:43Z",
+      "action": "task_created",
+      "taskId": "T699",
+      "actor": "system",
+      "details": {
+        "title": "Investigate 7 skipped tests",
+        "status": "pending",
+        "priority": "low"
+      },
+      "before": null,
+      "after": {
+        "title": "Investigate 7 skipped tests",
+        "status": "pending",
+        "priority": "low"
+      }
     }
   ]
 }

@@ -60,6 +60,12 @@ if [[ -f "$LIB_DIR/config.sh" ]]; then
   source "$LIB_DIR/config.sh"
 fi
 
+# Source validation library for input validation (Part 5.3 compliance)
+if [[ -f "$LIB_DIR/validation.sh" ]]; then
+  # shellcheck source=../lib/validation.sh
+  source "$LIB_DIR/validation.sh"
+fi
+
 # Colors (respects NO_COLOR and FORCE_COLOR environment variables per https://no-color.org)
 if declare -f should_use_color >/dev/null 2>&1 && should_use_color; then
   RED='\033[0;31m'

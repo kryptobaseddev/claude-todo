@@ -3,7 +3,7 @@
   "version": "2.3.0",
   "project": {
     "name": "claude-todo",
-    "currentPhase": "core",
+    "currentPhase": "polish",
     "phases": {
       "setup": {
         "name": "Setup & Foundation",
@@ -121,22 +121,22 @@
       }
     ]
   },
-  "lastUpdated": "2025-12-23T07:55:50Z",
+  "lastUpdated": "2025-12-23T17:59:43Z",
   "_meta": {
-    "checksum": "b03eb409638258d2",
+    "checksum": "06d674a377b265df",
     "configVersion": "2.1.0",
     "lastSessionId": null,
     "activeSession": "session_20251223_092105_7e08d7",
-    "lastModified": "2025-12-23T17:21:05Z",
+    "lastModified": "2025-12-23T17:46:26Z",
     "version": "2.3.0",
     "schemaVersion": "2.3.0"
   },
   "focus": {
-    "currentTask": "T495",
+    "currentTask": null,
     "blockedUntil": null,
-    "sessionNote": "T481 EPIC v3.0 Compliance - SESSION END. COMPLETED: Batches 1-3 (16/23 tasks). Schema specVersion 3.0 added. 3 new compliance check modules created (input-validation.sh, idempotency.sh, dry-run-semantics.sh). Command idempotency implemented (EXIT_NO_CHANGE 102, noChange JSON). Duplicate detection in add-task.sh. All unit tests pass. v0.31.0 installed. NEXT SESSION: Focus T495, complete Batch 4 (T495-T496), then Batch 5 (T497-T501 docs/tests). Final version bump + commit. Reference: docs/specs/LLM-AGENT-FIRST-SPEC.md Parts 5.3, 5.4, 5.6, 5.7.",
+    "sessionNote": "SESSION 2025-12-23: EPIC T481 COMPLETE. All 23 subtasks done. New: compliance-checks.bats (22 tests), idempotency.bats (14 tests), exit-codes.md reference doc, updated add/update/complete docs. Fixed validation.sh sourcing in complete-task.sh, archive.sh, session.sh. Implementation report v5.0.",
     "nextAction": "T481 EPIC Batch 4: Start with T495 (verify add-task.sh dry-run format), then T496 (input validation). After Batch 4, do Batch 5 (T497-T501 docs/tests). Final: version bump patch, full test suite, commit. Spec: docs/specs/LLM-AGENT-FIRST-SPEC.md",
-    "currentPhase": "core"
+    "currentPhase": "polish"
   },
   "tasks": [
     {
@@ -3985,7 +3985,7 @@
     {
       "id": "T481",
       "title": "EPIC: LLM-Agent-First Spec v3.0 Compliance Checker Implementation",
-      "status": "pending",
+      "status": "done",
       "priority": "critical",
       "type": "epic",
       "parentId": null,
@@ -3998,8 +3998,10 @@
         "v3.0"
       ],
       "notes": [
-        "2025-12-23 07:43:48 UTC: SESSION 2025-12-23: Batches 1-3 COMPLETE (16/23 tasks). IMPLEMENTED: specVersion 3.0 schema, 3 new compliance check modules (input-validation.sh, idempotency.sh, dry-run-semantics.sh), command idempotency (EXIT_NO_CHANGE 102), duplicate detection in add. REMAINING: T495 (dry-run add), T496 (input validation verify), T497-T501 (docs/tests). All unit tests pass. v0.31.0 installed."
-      ]
+        "2025-12-23 07:43:48 UTC: SESSION 2025-12-23: Batches 1-3 COMPLETE (16/23 tasks). IMPLEMENTED: specVersion 3.0 schema, 3 new compliance check modules (input-validation.sh, idempotency.sh, dry-run-semantics.sh), command idempotency (EXIT_NO_CHANGE 102), duplicate detection in add. REMAINING: T495 (dry-run add), T496 (input validation verify), T497-T501 (docs/tests). All unit tests pass. v0.31.0 installed.",
+        "[AUTO-COMPLETED 2025-12-23T17:35:18Z] All child tasks completed"
+      ],
+      "completedAt": "2025-12-23T17:35:18Z"
     },
     {
       "id": "T482",
@@ -4273,7 +4275,7 @@
     {
       "id": "T495",
       "title": "T481.A.6: Add --dry-run flag to add-task.sh",
-      "status": "active",
+      "status": "done",
       "priority": "high",
       "type": "task",
       "parentId": "T481",
@@ -4288,17 +4290,19 @@
         "T489"
       ],
       "notes": [
-        "2025-12-23 07:44:05 UTC: CONTEXT: Part of T481 Batch 4. add-task.sh already has dry-run flag but needs verification. Check: 1) dryRun:true in JSON output, 2) wouldCreate field naming, 3) No state modification. See Part 5.4 in docs/specs/LLM-AGENT-FIRST-SPEC.md. Related: T494 (completed - dry-run format standard)."
+        "2025-12-23 07:44:05 UTC: CONTEXT: Part of T481 Batch 4. add-task.sh already has dry-run flag but needs verification. Check: 1) dryRun:true in JSON output, 2) wouldCreate field naming, 3) No state modification. See Part 5.4 in docs/specs/LLM-AGENT-FIRST-SPEC.md. Related: T494 (completed - dry-run format standard).",
+        "[COMPLETED 2025-12-23T17:22:57Z] Verified dry-run output compliant with Part 5.4 spec: $schema, _meta envelope, dryRun:true, wouldCreate field. Tested successfully."
       ],
       "files": [
         "docs/specs/LLM-AGENT-FIRST-SPEC.md",
         "scripts/add-task.sh"
-      ]
+      ],
+      "completedAt": "2025-12-23T17:22:57Z"
     },
     {
       "id": "T496",
       "title": "T481.A.7: Verify input validation in write commands",
-      "status": "pending",
+      "status": "done",
       "priority": "high",
       "type": "task",
       "parentId": "T481",
@@ -4313,7 +4317,8 @@
         "T489"
       ],
       "notes": [
-        "2025-12-23 07:44:07 UTC: CONTEXT: Part of T481 Batch 4. Verify all write commands use E_INPUT_* error codes per Part 5.3. Check: add-task.sh, update-task.sh, complete-task.sh. Use compliance checker: ./dev/compliance/checks/input-validation.sh scripts/add-task.sh dev/compliance/schema.json. Field limits: title 120, description 2000, notes 500, label 50, phase 30."
+        "2025-12-23 07:44:07 UTC: CONTEXT: Part of T481 Batch 4. Verify all write commands use E_INPUT_* error codes per Part 5.3. Check: add-task.sh, update-task.sh, complete-task.sh. Use compliance checker: ./dev/compliance/checks/input-validation.sh scripts/add-task.sh dev/compliance/schema.json. Field limits: title 120, description 2000, notes 500, label 50, phase 30.",
+        "[COMPLETED 2025-12-23T17:25:10Z] Verified input validation compliance. Fixed complete-task.sh, archive.sh, session.sh to source validation.sh. All core write commands (add, update, complete, focus, session) at 100%. Archive at 85.7% acceptable for maintenance command."
       ],
       "files": [
         "dev/compliance/checks/input-validation.sh",
@@ -4321,12 +4326,13 @@
         "scripts/add-task.sh",
         "scripts/complete-task.sh",
         "scripts/update-task.sh"
-      ]
+      ],
+      "completedAt": "2025-12-23T17:25:10Z"
     },
     {
       "id": "T497",
       "title": "T481.B: Documentation and Testing for v3.0 Spec",
-      "status": "pending",
+      "status": "done",
       "priority": "medium",
       "type": "task",
       "parentId": "T481",
@@ -4339,13 +4345,15 @@
         "v3.0"
       ],
       "notes": [
-        "2025-12-23 07:44:09 UTC: CONTEXT: Parent task for T498-T501 documentation batch. Children implement: Implementation Report update (T498), retry protocol help text (T499), compliance check module tests (T500), idempotency behavior tests (T501). Can complete when all children done."
-      ]
+        "2025-12-23 07:44:09 UTC: CONTEXT: Parent task for T498-T501 documentation batch. Children implement: Implementation Report update (T498), retry protocol help text (T499), compliance check module tests (T500), idempotency behavior tests (T501). Can complete when all children done.",
+        "[COMPLETED 2025-12-23T17:35:18Z] T481.B documentation and testing subtasks complete: T498 (report), T499 (retry docs), T500 (compliance tests), T501 (idempotency tests). All passing."
+      ],
+      "completedAt": "2025-12-23T17:35:18Z"
     },
     {
       "id": "T498",
       "title": "T481.B.1: Update Implementation Report for v3.0 tracking",
-      "status": "pending",
+      "status": "done",
       "priority": "medium",
       "type": "task",
       "parentId": "T481",
@@ -4359,17 +4367,19 @@
         "T497"
       ],
       "notes": [
-        "2025-12-23 07:44:10 UTC: CONTEXT: Update docs/specs/LLM-AGENT-FIRST-SPEC-IMPLEMENTATION-REPORT.md to track v3.0 implementation. Add sections for: Part 5.3 (input validation), Part 5.4 (dry-run), Part 5.6 (idempotency), Part 5.7 (retry protocol). Mark completed items from Batches 1-3."
+        "2025-12-23 07:44:10 UTC: CONTEXT: Update docs/specs/LLM-AGENT-FIRST-SPEC-IMPLEMENTATION-REPORT.md to track v3.0 implementation. Add sections for: Part 5.3 (input validation), Part 5.4 (dry-run), Part 5.6 (idempotency), Part 5.7 (retry protocol). Mark completed items from Batches 1-3.",
+        "[COMPLETED 2025-12-23T17:26:39Z] Updated implementation report to v5.0. Added new session 2025-12-23 documenting T481 EPIC completion, new compliance check modules, command implementations, schema updates, and verification results."
       ],
       "files": [
         "docs/specs/LLM-AGENT-FIRST-SPEC-IMPLEMENTATION-REPORT.md",
         "docs/specs/LLM-AGENT-FIRST-SPEC.md"
-      ]
+      ],
+      "completedAt": "2025-12-23T17:26:39Z"
     },
     {
       "id": "T499",
       "title": "T481.B.2: Add retry protocol documentation to help text",
-      "status": "pending",
+      "status": "done",
       "priority": "medium",
       "type": "task",
       "parentId": "T481",
@@ -4383,13 +4393,15 @@
         "T497"
       ],
       "notes": [
-        "2025-12-23 07:44:26 UTC: CONTEXT: Add Part 5.7 retry protocol to command help text. Recoverable errors (7,20,21,22) with backoff. Document EXIT_NO_CHANGE (102) semantics - agents should NOT retry. Add to: claude-todo help, scripts/update-task.sh --help, scripts/complete-task.sh --help."
-      ]
+        "2025-12-23 07:44:26 UTC: CONTEXT: Add Part 5.7 retry protocol to command help text. Recoverable errors (7,20,21,22) with backoff. Document EXIT_NO_CHANGE (102) semantics - agents should NOT retry. Add to: claude-todo help, scripts/update-task.sh --help, scripts/complete-task.sh --help.",
+        "[COMPLETED 2025-12-23T17:28:36Z] Created docs/reference/exit-codes.md with full retry protocol. Updated add.md, update.md, complete.md with recoverable error info, idempotency sections, and links to exit codes reference."
+      ],
+      "completedAt": "2025-12-23T17:28:36Z"
     },
     {
       "id": "T500",
       "title": "T481.B.3: Create tests for new compliance check modules",
-      "status": "pending",
+      "status": "done",
       "priority": "medium",
       "type": "task",
       "parentId": "T481",
@@ -4403,19 +4415,21 @@
         "T497"
       ],
       "notes": [
-        "2025-12-23 07:44:28 UTC: CONTEXT: Create BATS tests for new compliance check modules. Files to test: dev/compliance/checks/input-validation.sh, dev/compliance/checks/idempotency.sh, dev/compliance/checks/dry-run-semantics.sh. Test: JSON output format, check pass/fail logic, skip behavior for non-applicable commands."
+        "2025-12-23 07:44:28 UTC: CONTEXT: Create BATS tests for new compliance check modules. Files to test: dev/compliance/checks/input-validation.sh, dev/compliance/checks/idempotency.sh, dev/compliance/checks/dry-run-semantics.sh. Test: JSON output format, check pass/fail logic, skip behavior for non-applicable commands.",
+        "[COMPLETED 2025-12-23T17:32:09Z] Created tests/unit/compliance-checks.bats with 22 tests covering input-validation.sh, idempotency.sh, dry-run-semantics.sh, exit-codes.sh, and flags.sh modules. All tests passing."
       ],
       "files": [
         "dev/compliance/checks/dry-run-semantics.sh",
         "dev/compliance/checks/idempotency.sh",
         "dev/compliance/checks/input-validation.sh",
         "tests/unit/"
-      ]
+      ],
+      "completedAt": "2025-12-23T17:32:09Z"
     },
     {
       "id": "T501",
       "title": "T481.B.4: Create tests for command idempotency behavior",
-      "status": "pending",
+      "status": "done",
       "priority": "medium",
       "type": "task",
       "parentId": "T481",
@@ -4429,8 +4443,10 @@
         "T497"
       ],
       "notes": [
-        "2025-12-23 07:44:30 UTC: CONTEXT: Create BATS tests for idempotency behavior. Test: update same values returns 102, complete already-done returns 102, archive already-archived skips, add duplicate returns existing task. Use tests/unit/update-task.bats as reference (has 14 idempotency tests already)."
-      ]
+        "2025-12-23 07:44:30 UTC: CONTEXT: Create BATS tests for idempotency behavior. Test: update same values returns 102, complete already-done returns 102, archive already-archived skips, add duplicate returns existing task. Use tests/unit/update-task.bats as reference (has 14 idempotency tests already).",
+        "[COMPLETED 2025-12-23T17:35:16Z] Created tests/integration/idempotency.bats with 14 tests covering EXIT_NO_CHANGE (102) behavior for update, complete, archive, restore commands. All tests passing."
+      ],
+      "completedAt": "2025-12-23T17:35:16Z"
     },
     {
       "id": "T502",
@@ -7650,6 +7666,97 @@
       "notes": [
         "[COMPLETED 2025-12-23T07:41:37Z] Added normalize_date_for_compare() function to handle date-only inputs (YYYY-MM-DD) by appending T00:00:00Z for --since and T23:59:59Z for --until. Fixes string comparison issue where '2025-12-05' was incorrectly compared against '2025-12-05T10:00:00Z'. All 42 archive-stats tests pass.",
         "[COMPLETED 2025-12-23T07:55:50Z] Patch workflow complete: v0.31.1 released with fix committed, CHANGELOG updated, installed and verified."
+      ]
+    },
+    {
+      "id": "T694",
+      "title": "EPIC: Test Suite Failures - Archive/Backup (20 failed, 7 skipped)",
+      "status": "pending",
+      "priority": "high",
+      "type": "epic",
+      "parentId": null,
+      "createdAt": "2025-12-23T17:59:13Z",
+      "phase": "maintenance",
+      "description": "Address 20 failed and 7 skipped tests from full test suite run 2025-12-23. Categories: archive cascade (7), backup operations (6), orphan cleanup (4), archive metadata (3). Discovered during T481 EPIC completion.",
+      "labels": [
+        "archive",
+        "backup",
+        "bug",
+        "test"
+      ]
+    },
+    {
+      "id": "T695",
+      "title": "Fix archive --cascade-from tests (7 failures)",
+      "status": "pending",
+      "priority": "high",
+      "type": "task",
+      "parentId": "T694",
+      "createdAt": "2025-12-23T17:59:35Z",
+      "phase": "polish",
+      "description": "Tests: archive --cascade-from only archives completed descendants, archive shows effective exempt labels, archiveSource phase-trigger tests, orphaned dependencies cleanup. Files: tests/unit/archive-cascade.bats",
+      "labels": [
+        "archive",
+        "test"
+      ]
+    },
+    {
+      "id": "T696",
+      "title": "Fix backup/restore tests (6 failures)",
+      "status": "pending",
+      "priority": "high",
+      "type": "task",
+      "parentId": "T694",
+      "createdAt": "2025-12-23T17:59:36Z",
+      "phase": "polish",
+      "description": "Tests: backup created before destructive operations, backup preserves original/complete data, can restore from backup after corruption, multiple backups maintained. Files: tests/unit/backup.bats, tests/integration/backup.bats",
+      "labels": [
+        "backup",
+        "test"
+      ]
+    },
+    {
+      "id": "T697",
+      "title": "Fix orphaned dependency cleanup tests (4 failures)",
+      "status": "pending",
+      "priority": "medium",
+      "type": "task",
+      "parentId": "T694",
+      "createdAt": "2025-12-23T17:59:39Z",
+      "phase": "polish",
+      "description": "Tests: orphaned dependencies cleaned on archive, multiple orphaned dependencies all cleaned, archive --all cleans up all orphaned dependencies. Files: tests/unit/archive.bats, tests/integration/archive.bats",
+      "labels": [
+        "archive",
+        "test"
+      ]
+    },
+    {
+      "id": "T698",
+      "title": "Fix archive metadata/timestamp tests (3 failures)",
+      "status": "pending",
+      "priority": "medium",
+      "type": "task",
+      "parentId": "T694",
+      "createdAt": "2025-12-23T17:59:41Z",
+      "phase": "polish",
+      "description": "Tests: archive --exclude-labels merges with config exemptLabels, archive updates lastUpdated timestamp, archive creates backups before modification. Files: tests/unit/archive-metadata.bats, tests/integration/archive.bats",
+      "labels": [
+        "archive",
+        "test"
+      ]
+    },
+    {
+      "id": "T699",
+      "title": "Investigate 7 skipped tests",
+      "status": "pending",
+      "priority": "low",
+      "type": "task",
+      "parentId": "T694",
+      "createdAt": "2025-12-23T17:59:43Z",
+      "phase": "polish",
+      "description": "Review 7 skipped tests from full test suite run. Determine if tests are obsolete, need environment setup, or have legitimate skip reasons.",
+      "labels": [
+        "test"
       ]
     }
   ],

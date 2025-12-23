@@ -169,19 +169,30 @@ T042
 
 ## Exit Codes
 
-| Code | Meaning |
-|------|---------|
-| `0` | Success |
-| `2` | Invalid input or arguments |
-| `3` | File operation failure |
-| `4` | Resource not found |
-| `5` | Missing dependency (jq) |
-| `6` | Validation error |
-| `7` | Lock timeout |
-| `10` | Parent task not found |
-| `11` | Max depth exceeded |
-| `12` | Max siblings exceeded |
-| `13` | Invalid parent type (subtask cannot have children) |
+| Code | Meaning | Recoverable |
+|------|---------|:-----------:|
+| `0` | Success | N/A |
+| `2` | Invalid input or arguments | No |
+| `3` | File operation failure | No |
+| `4` | Resource not found | No |
+| `5` | Missing dependency (jq) | No |
+| `6` | Validation error | No |
+| `7` | Lock timeout | **Yes** |
+| `10` | Parent task not found | No |
+| `11` | Max depth exceeded | No |
+| `12` | Max siblings exceeded | No |
+| `13` | Invalid parent type (subtask cannot have children) | No |
+| `20` | Checksum mismatch | **Yes** |
+| `22` | ID collision | **Yes** |
+
+### Retry Protocol (for LLM Agents)
+
+Recoverable errors (7, 20, 22) support exponential backoff retry:
+- **Lock timeout (7)**: Max 3 retries, 100ms initial delay, 2x backoff
+- **Checksum mismatch (20)**: Max 5 retries, 50ms initial delay, 1.5x backoff
+- **ID collision (22)**: Max 3 retries, immediate retry (regenerate ID)
+
+See [Exit Codes Reference](../reference/exit-codes.md) for full retry protocol.
 
 ## See Also
 
