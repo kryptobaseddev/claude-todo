@@ -165,17 +165,40 @@ if [[ ! -f "$ARCHIVE_FILE" ]]; then
     exit "${EXIT_SUCCESS:-0}"
 fi
 
+# Normalize date for comparison
+# Date-only format (YYYY-MM-DD) needs time component for proper ISO string comparison
+normalize_date_for_compare() {
+    local date="$1"
+    local mode="$2"  # "since" or "until"
+
+    # If already has time component (contains T), use as-is
+    if [[ "$date" == *"T"* ]]; then
+        echo "$date"
+    else
+        # Date-only: append time based on mode
+        if [[ "$mode" == "since" ]]; then
+            echo "${date}T00:00:00Z"  # Start of day
+        else
+            echo "${date}T23:59:59Z"  # End of day
+        fi
+    fi
+}
+
 # Build date filter for jq
 build_date_filter() {
     local filter=""
     if [[ -n "$SINCE_DATE" ]]; then
-        filter="select(._archive.archivedAt >= \"$SINCE_DATE\")"
+        local normalized_since
+        normalized_since=$(normalize_date_for_compare "$SINCE_DATE" "since")
+        filter="select(._archive.archivedAt >= \"$normalized_since\")"
     fi
     if [[ -n "$UNTIL_DATE" ]]; then
+        local normalized_until
+        normalized_until=$(normalize_date_for_compare "$UNTIL_DATE" "until")
         if [[ -n "$filter" ]]; then
-            filter="$filter | select(._archive.archivedAt <= \"$UNTIL_DATE\")"
+            filter="$filter | select(._archive.archivedAt <= \"$normalized_until\")"
         else
-            filter="select(._archive.archivedAt <= \"$UNTIL_DATE\")"
+            filter="select(._archive.archivedAt <= \"$normalized_until\")"
         fi
     fi
     echo "$filter"

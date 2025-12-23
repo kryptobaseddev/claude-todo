@@ -5,6 +5,25 @@ All notable changes to the claude-todo system will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.31.1] - 2025-12-23
+
+### Fixed
+- **Archive-stats date filter** (T693): Fixed `--since` and `--until` combined filter
+  - Date-only inputs (YYYY-MM-DD) now properly compare against ISO timestamps
+  - Added `normalize_date_for_compare()` function to handle date normalization
+  - `--since` dates append `T00:00:00Z` (start of day)
+  - `--until` dates append `T23:59:59Z` (end of day)
+  - Full ISO timestamps pass through unchanged
+
+## [0.31.0] - 2025-12-22
+
+### Added
+- **Smart Archive System Enhancement** (T429 EPIC): Advanced archive analytics and filtering
+  - `archive-stats` command with summary, by-phase, by-label, cycle-times, and trends reports
+  - Date filtering with `--since` and `--until` options
+  - Multiple output formats: JSON, text, CSV
+  - Cycle time analytics with percentiles and distribution
+
 ## [0.30.3] - 2025-12-23
 
 ### Fixed
