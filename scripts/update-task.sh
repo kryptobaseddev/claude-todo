@@ -9,13 +9,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOG_SCRIPT="${SCRIPT_DIR}/log.sh"
 CLAUDE_TODO_HOME="${CLAUDE_TODO_HOME:-$HOME/.claude-todo}"
 
-# Source version from central location
-if [[ -f "$CLAUDE_TODO_HOME/VERSION" ]]; then
-  VERSION="$(cat "$CLAUDE_TODO_HOME/VERSION" | tr -d '[:space:]')"
-elif [[ -f "$SCRIPT_DIR/../VERSION" ]]; then
-  VERSION="$(cat "$SCRIPT_DIR/../VERSION" | tr -d '[:space:]')"
-else
-  VERSION="0.16.0"
+# Source version library for proper version management
+if [[ -f "$CLAUDE_TODO_HOME/lib/version.sh" ]]; then
+  source "$CLAUDE_TODO_HOME/lib/version.sh"
+elif [[ -f "$SCRIPT_DIR/../lib/version.sh" ]]; then
+  source "$SCRIPT_DIR/../lib/version.sh"
 fi
 
 # Command name for JSON output
@@ -1100,7 +1098,7 @@ if [[ "$DRY_RUN" == true ]]; then
   if [[ "$FORMAT" == "json" ]]; then
     # JSON dry-run output
     jq -n \
-      --arg version "$VERSION" \
+      --arg version "${CLAUDE_TODO_VERSION:-$(get_version)}" \
       --arg command "$COMMAND_NAME" \
       --arg timestamp "$TIMESTAMP" \
       --arg task_id "$TASK_ID" \

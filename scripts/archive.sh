@@ -6,13 +6,11 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_TODO_HOME="${CLAUDE_TODO_HOME:-$HOME/.claude-todo}"
 
-# Source version from central location
-if [[ -f "$CLAUDE_TODO_HOME/VERSION" ]]; then
-  VERSION="$(cat "$CLAUDE_TODO_HOME/VERSION" | tr -d '[:space:]')"
-elif [[ -f "$SCRIPT_DIR/../VERSION" ]]; then
-  VERSION="$(cat "$SCRIPT_DIR/../VERSION" | tr -d '[:space:]')"
-else
-  VERSION="0.1.0"
+# Source version library for proper version management
+LIB_DIR="${SCRIPT_DIR}/../lib"
+if [[ -f "$LIB_DIR/version.sh" ]]; then
+  # shellcheck source=../lib/version.sh
+  source "$LIB_DIR/version.sh"
 fi
 
 TODO_FILE="${TODO_FILE:-.claude/todo.json}"
@@ -189,7 +187,7 @@ if [[ ! -f "$ARCHIVE_FILE" ]]; then
   PROJECT_NAME=$(jq -r '.project.name // .project // "unknown"' "$TODO_FILE")
   INITIAL_ARCHIVE_CONTENT=$(cat << EOF
 {
-  "version": "$VERSION",
+  "version": "${CLAUDE_TODO_VERSION:-$(get_version)}",
   "project": "$PROJECT_NAME",
   "_meta": { "totalArchived": 0, "lastArchived": null, "oldestTask": null, "newestTask": null },
   "archivedTasks": [],
@@ -247,7 +245,7 @@ if [[ "$COMPLETED_COUNT" -eq 0 ]]; then
 
     jq -n \
       --arg ts "$TIMESTAMP" \
-      --arg ver "$VERSION" \
+      --arg ver "${CLAUDE_TODO_VERSION:-$(get_version)}" \
       --argjson total "$REMAINING_TOTAL" \
       --argjson pending "$REMAINING_PENDING" \
       --argjson active "$REMAINING_ACTIVE" \
@@ -299,7 +297,7 @@ if [[ "$ARCHIVE_COUNT" -eq 0 ]]; then
 
     jq -n \
       --arg ts "$TIMESTAMP" \
-      --arg ver "$VERSION" \
+      --arg ver "${CLAUDE_TODO_VERSION:-$(get_version)}" \
       --argjson total "$REMAINING_TOTAL" \
       --argjson pending "$REMAINING_PENDING" \
       --argjson active "$REMAINING_ACTIVE" \
@@ -332,7 +330,7 @@ if [[ "$DRY_RUN" == true ]]; then
 
     jq -n \
       --arg ts "$TIMESTAMP" \
-      --arg ver "$VERSION" \
+      --arg ver "${CLAUDE_TODO_VERSION:-$(get_version)}" \
       --argjson count "$ARCHIVE_COUNT" \
       --argjson ids "$ARCHIVE_IDS_JSON" \
       --argjson total "$REMAINING_AFTER" \

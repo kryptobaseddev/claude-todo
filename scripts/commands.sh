@@ -15,13 +15,10 @@ source "${LIB_DIR}/exit-codes.sh"
 source "${LIB_DIR}/error-json.sh"
 source "${LIB_DIR}/output-format.sh"
 
-# Load VERSION from central location
-if [[ -n "${CLAUDE_TODO_HOME:-}" ]] && [[ -f "$CLAUDE_TODO_HOME/VERSION" ]]; then
-    VERSION=$(cat "$CLAUDE_TODO_HOME/VERSION" | tr -d '[:space:]')
-elif [[ -f "${SCRIPT_DIR}/../VERSION" ]]; then
-    VERSION=$(cat "${SCRIPT_DIR}/../VERSION" | tr -d '[:space:]')
-else
-    VERSION="0.0.0"
+# Source version library for proper version management
+if [[ -f "$LIB_DIR/version.sh" ]]; then
+  # shellcheck source=../lib/version.sh
+  source "$LIB_DIR/version.sh"
 fi
 
 # Command identification (for error reporting)
@@ -242,7 +239,7 @@ output_json() {
     if [[ "$SHOW_WORKFLOWS" == true ]]; then
         jq -n \
             --arg schema "https://claude-todo.dev/schemas/v1/output.schema.json" \
-            --arg version "$VERSION" \
+            --arg version "${CLAUDE_TODO_VERSION:-$(get_version)}" \
             --arg cmd "$COMMAND_NAME" \
             --arg ts "$TIMESTAMP" \
             --slurpfile index "$COMMANDS_INDEX" \
@@ -260,7 +257,7 @@ output_json() {
     elif [[ "$SHOW_LOOKUP" == true ]]; then
         jq -n \
             --arg schema "https://claude-todo.dev/schemas/v1/output.schema.json" \
-            --arg version "$VERSION" \
+            --arg version "${CLAUDE_TODO_VERSION:-$(get_version)}" \
             --arg cmd "$COMMAND_NAME" \
             --arg ts "$TIMESTAMP" \
             --slurpfile index "$COMMANDS_INDEX" \
@@ -279,7 +276,7 @@ output_json() {
         # Single command detail
         jq -n \
             --arg schema "https://claude-todo.dev/schemas/v1/output.schema.json" \
-            --arg version "$VERSION" \
+            --arg version "${CLAUDE_TODO_VERSION:-$(get_version)}" \
             --arg cmd "$COMMAND_NAME" \
             --arg ts "$TIMESTAMP" \
             --argjson commands "$commands" \
@@ -298,7 +295,7 @@ output_json() {
         # Full commands list
         jq -n \
             --arg schema "https://claude-todo.dev/schemas/v1/output.schema.json" \
-            --arg version "$VERSION" \
+            --arg version "${CLAUDE_TODO_VERSION:-$(get_version)}" \
             --arg cmd "$COMMAND_NAME" \
             --arg ts "$TIMESTAMP" \
             --argjson count "$count" \

@@ -6,13 +6,11 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_TODO_HOME="${CLAUDE_TODO_HOME:-$HOME/.claude-todo}"
 
-# Source version
-if [[ -f "$CLAUDE_TODO_HOME/VERSION" ]]; then
-  VERSION="$(cat "$CLAUDE_TODO_HOME/VERSION" | tr -d '[:space:]')"
-elif [[ -f "$SCRIPT_DIR/../VERSION" ]]; then
-  VERSION="$(cat "$SCRIPT_DIR/../VERSION" | tr -d '[:space:]')"
-else
-  VERSION="0.1.0"
+# Source version library for proper version management
+if [[ -f "$CLAUDE_TODO_HOME/lib/version.sh" ]]; then
+  source "$CLAUDE_TODO_HOME/lib/version.sh"
+elif [[ -f "$SCRIPT_DIR/../lib/version.sh" ]]; then
+  source "$SCRIPT_DIR/../lib/version.sh"
 fi
 
 # Source libraries
@@ -47,6 +45,13 @@ if [[ -f "$CLAUDE_TODO_HOME/lib/error-json.sh" ]]; then
   source "$CLAUDE_TODO_HOME/lib/error-json.sh"
 elif [[ -f "$LIB_DIR/error-json.sh" ]]; then
   source "$LIB_DIR/error-json.sh"
+fi
+
+# Source hierarchy library for hierarchy awareness (T345)
+if [[ -f "$CLAUDE_TODO_HOME/lib/hierarchy.sh" ]]; then
+  source "$CLAUDE_TODO_HOME/lib/hierarchy.sh"
+elif [[ -f "$LIB_DIR/hierarchy.sh" ]]; then
+  source "$LIB_DIR/hierarchy.sh"
 fi
 
 TODO_FILE="${TODO_FILE:-.claude/todo.json}"
@@ -291,7 +296,7 @@ cmd_set() {
 
     jq -n \
       --arg timestamp "$current_timestamp" \
-      --arg version "$VERSION" \
+      --arg version "${CLAUDE_TODO_VERSION:-$(get_version)}" \
       --arg task_id "$task_id" \
       --arg old_focus "${old_focus:-null}" \
       --argjson task "$task_details" \
@@ -328,7 +333,7 @@ cmd_clear() {
       current_timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
       jq -n \
         --arg timestamp "$current_timestamp" \
-        --arg version "$VERSION" \
+        --arg version "${CLAUDE_TODO_VERSION:-$(get_version)}" \
         '{
           "$schema": "https://claude-todo.dev/schemas/v1/output.schema.json",
           "_meta": {
@@ -380,7 +385,7 @@ cmd_clear() {
     current_timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
     jq -n \
       --arg timestamp "$current_timestamp" \
-      --arg version "$VERSION" \
+      --arg version "${CLAUDE_TODO_VERSION:-$(get_version)}" \
       --arg old_focus "$old_focus" \
       '{
         "$schema": "https://claude-todo.dev/schemas/v1/output.schema.json",
@@ -406,6 +411,31 @@ cmd_show() {
   # FORMAT and QUIET already parsed globally
   check_todo_exists
 
+  # Build hierarchy context functions
+  build_breadcrumb() {
+    local task_id="$1"
+    local breadcrumb=""
+    local current_id="$task_id"
+    local max_depth=5
+    local depth=0
+
+    while [[ -n "$current_id" && "$current_id" != "null" && $depth -lt $max_depth ]]; do
+      local parent_id=$(jq -r --arg id "$current_id" '.tasks[] | select(.id == $id) | .parentId // ""' "$TODO_FILE")
+      if [[ -n "$parent_id" && "$parent_id" != "null" ]]; then
+        local parent_title=$(jq -r --arg id "$parent_id" '.tasks[] | select(.id == $id) | .title' "$TODO_FILE")
+        if [[ -n "$breadcrumb" ]]; then
+          breadcrumb="$parent_id > $breadcrumb"
+        else
+          breadcrumb="$parent_id"
+        fi
+      fi
+      current_id="$parent_id"
+      ((depth++))
+    done
+
+    echo "$breadcrumb"
+  }
+
   if [[ "$FORMAT" == "json" ]]; then
     local current_timestamp
     current_timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -418,16 +448,52 @@ cmd_show() {
     local current_task
     current_task=$(jq -r '.focus.currentTask // ""' "$TODO_FILE")
     local task_details="null"
+    local hierarchy_context="null"
 
     if [[ -n "$current_task" ]]; then
-      task_details=$(jq --arg id "$current_task" '.tasks[] | select(.id == $id) | {id: .id, title: .title, status: .status, priority: .priority, phase: .phase}' "$TODO_FILE")
+      task_details=$(jq --arg id "$current_task" '.tasks[] | select(.id == $id) | {id: .id, title: .title, status: .status, priority: .priority, phase: .phase, parentId: .parentId, type: .type}' "$TODO_FILE")
+      
+      # Build hierarchy context
+      local parent_id=$(jq -r --arg id "$current_task" '.tasks[] | select(.id == $id) | .parentId // ""' "$TODO_FILE")
+      local parent_context=""
+      local children_context=""
+      local breadcrumb=""
+      
+      # Get parent info if task has parent
+      if [[ -n "$parent_id" && "$parent_id" != "null" ]]; then
+        local parent_title=$(jq -r --arg id "$parent_id" '.tasks[] | select(.id == $id) | .title // "Unknown"' "$TODO_FILE")
+        parent_context="Parent: $parent_id ($parent_title)"
+      fi
+      
+      # Get children summary if task has children
+      local child_count=$(jq --arg id "$current_task" '[.tasks[] | select(.parentId == $id)] | length' "$TODO_FILE")
+      if [[ "$child_count" -gt 0 ]]; then
+        local done_children=$(jq --arg id "$current_task" '[.tasks[] | select(.parentId == $id and .status == "done")] | length' "$TODO_FILE")
+        local pending_children=$((child_count - done_children))
+        children_context="Children: $done_children done, $pending_children pending"
+      fi
+      
+      # Build breadcrumb for deeply nested tasks
+      breadcrumb=$(build_breadcrumb "$current_task")
+      
+      # Create hierarchy context JSON
+      hierarchy_context=$(jq -n \
+        --arg parent "$parent_context" \
+        --arg children "$children_context" \
+        --arg breadcrumb "$breadcrumb" \
+        '{
+          "parent": (if $parent != "" then $parent else null end),
+          "children": (if $children != "" then $children else null end),
+          "breadcrumb": (if $breadcrumb != "" then $breadcrumb else null end)
+        }')
     fi
 
     jq -n \
       --arg timestamp "$current_timestamp" \
-      --arg version "$VERSION" \
+      --arg version "${CLAUDE_TODO_VERSION:-$(get_version)}" \
       --argjson focus "$focus_obj" \
       --argjson task "$task_details" \
+      --argjson hierarchy "$hierarchy_context" \
       '{
         "$schema": "https://claude-todo.dev/schemas/v1/output.schema.json",
         "_meta": {
@@ -438,7 +504,8 @@ cmd_show() {
         },
         "success": true,
         "focus": $focus,
-        "focusedTask": $task
+        "focusedTask": $task,
+        "hierarchy": $hierarchy
       }'
   else
     local current_task
@@ -457,11 +524,41 @@ cmd_show() {
     if [[ -n "$current_task" ]]; then
       local task_title
       local task_status
+      local parent_id
+      local parent_title
+      local parent_context=""
+      local children_context=""
+      local breadcrumb=""
+      
       task_title=$(jq -r --arg id "$current_task" '.tasks[] | select(.id == $id) | .title // "Unknown"' "$TODO_FILE")
       task_status=$(jq -r --arg id "$current_task" '.tasks[] | select(.id == $id) | .status // "unknown"' "$TODO_FILE")
+      parent_id=$(jq -r --arg id "$current_task" '.tasks[] | select(.id == $id) | .parentId // ""' "$TODO_FILE")
+      
+      # Get parent info if task has parent
+      if [[ -n "$parent_id" && "$parent_id" != "null" ]]; then
+        parent_title=$(jq -r --arg id "$parent_id" '.tasks[] | select(.id == $id) | .title // "Unknown"' "$TODO_FILE")
+        parent_context="Parent: $parent_id ($parent_title)"
+      fi
+      
+      # Get children summary if task has children
+      local child_count=$(jq --arg id "$current_task" '[.tasks[] | select(.parentId == $id)] | length' "$TODO_FILE")
+      if [[ "$child_count" -gt 0 ]]; then
+        local done_children=$(jq --arg id "$current_task" '[.tasks[] | select(.parentId == $id and .status == "done")] | length' "$TODO_FILE")
+        local pending_children=$((child_count - done_children))
+        children_context="Children: $done_children done, $pending_children pending"
+      fi
+      
+      # Build breadcrumb for deeply nested tasks
+      breadcrumb=$(build_breadcrumb "$current_task")
+      
       echo -e "Task: ${GREEN}$task_title${NC}"
       echo "  ID: $current_task"
       echo "  Status: $task_status"
+      
+      # Add hierarchy context
+      [[ -n "$breadcrumb" ]] && echo "  Path: $breadcrumb > $current_task"
+      [[ -n "$parent_context" ]] && echo "  $parent_context"
+      [[ -n "$children_context" ]] && echo "  $children_context"
     else
       echo -e "Task: ${YELLOW}None${NC}"
     fi
@@ -534,7 +631,7 @@ cmd_note() {
     current_timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
     jq -n \
       --arg timestamp "$current_timestamp" \
-      --arg version "$VERSION" \
+      --arg version "${CLAUDE_TODO_VERSION:-$(get_version)}" \
       --arg note "$note" \
       '{
         "$schema": "https://claude-todo.dev/schemas/v1/output.schema.json",
@@ -592,7 +689,7 @@ cmd_next() {
     current_timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
     jq -n \
       --arg timestamp "$current_timestamp" \
-      --arg version "$VERSION" \
+      --arg version "${CLAUDE_TODO_VERSION:-$(get_version)}" \
       --arg action "$action" \
       '{
         "$schema": "https://claude-todo.dev/schemas/v1/output.schema.json",

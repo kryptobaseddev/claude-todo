@@ -7,12 +7,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_TODO_HOME="${CLAUDE_TODO_HOME:-$HOME/.claude-todo}"
 
 # Source version
-if [[ -f "$CLAUDE_TODO_HOME/VERSION" ]]; then
-  VERSION="$(cat "$CLAUDE_TODO_HOME/VERSION" | tr -d '[:space:]')"
-elif [[ -f "$SCRIPT_DIR/../VERSION" ]]; then
-  VERSION="$(cat "$SCRIPT_DIR/../VERSION" | tr -d '[:space:]')"
-else
-  VERSION="0.1.0"
+# Source version library for proper version management
+if [[ -f "$CLAUDE_TODO_HOME/lib/version.sh" ]]; then
+  source "$CLAUDE_TODO_HOME/lib/version.sh"
+elif [[ -f "$SCRIPT_DIR/../lib/version.sh" ]]; then
+  source "$SCRIPT_DIR/../lib/version.sh"
 fi
 
 # Source libraries
@@ -47,6 +46,13 @@ if [[ -f "$CLAUDE_TODO_HOME/lib/config.sh" ]]; then
   source "$CLAUDE_TODO_HOME/lib/config.sh"
 elif [[ -f "$LIB_DIR/config.sh" ]]; then
   source "$LIB_DIR/config.sh"
+fi
+
+# Source phase tracking library for phase capture (v2.2.0)
+if [[ -f "$CLAUDE_TODO_HOME/lib/phase-tracking.sh" ]]; then
+  source "$CLAUDE_TODO_HOME/lib/phase-tracking.sh"
+elif [[ -f "$LIB_DIR/phase-tracking.sh" ]]; then
+  source "$LIB_DIR/phase-tracking.sh"
 fi
 
 TODO_FILE="${TODO_FILE:-.claude/todo.json}"
@@ -305,6 +311,15 @@ cmd_start() {
     log_info "Suggested next action: $next_action"
   fi
 
+  # Capture and display current project phase (passive - no validation)
+  if declare -f get_current_phase >/dev/null 2>&1; then
+    local current_phase
+    current_phase=$(get_current_phase "$TODO_FILE")
+    if [[ -n "$current_phase" && "$current_phase" != "null" ]]; then
+      log_info "Project phase: $current_phase"
+    fi
+  fi
+
   # Check if CLAUDE.md injection is outdated
   if [[ -f "CLAUDE.md" ]] && [[ -f "$CLAUDE_TODO_HOME/templates/CLAUDE-INJECTION.md" ]]; then
     local current_version installed_version
@@ -448,6 +463,15 @@ cmd_end() {
   log_step "Session ended: $current_session"
   [[ -n "$note" ]] && log_info "Note saved: $note" || true
 
+  # Display phase context in session end summary (passive capture)
+  if declare -f get_current_phase >/dev/null 2>&1; then
+    local end_phase
+    end_phase=$(get_current_phase "$TODO_FILE")
+    if [[ -n "$end_phase" && "$end_phase" != "null" ]]; then
+      log_info "Project phase: $end_phase"
+    fi
+  fi
+
   # Check and rotate log if needed (T214)
   if declare -f check_and_rotate_log >/dev/null 2>&1; then
     local config_file="${CONFIG_FILE:-.claude/todo-config.json}"
@@ -491,7 +515,7 @@ cmd_status() {
 
     jq -n \
       --arg timestamp "$current_timestamp" \
-      --arg version "$VERSION" \
+      --arg version "${CLAUDE_TODO_VERSION:-$(get_version)}" \
       --arg session "$session_id" \
       --arg focus "$focus_task" \
       --arg note "$session_note" \

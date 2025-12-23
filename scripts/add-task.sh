@@ -11,6 +11,10 @@ LOG_FILE="${LOG_FILE:-.claude/todo-log.json}"
 
 # Source logging library for should_use_color function
 LIB_DIR="${SCRIPT_DIR}/../lib"
+if [[ -f "$LIB_DIR/version.sh" ]]; then
+  # shellcheck source=../lib/version.sh
+  source "$LIB_DIR/version.sh"
+fi
 if [[ -f "$LIB_DIR/logging.sh" ]]; then
   # shellcheck source=../lib/logging.sh
   source "$LIB_DIR/logging.sh"
@@ -54,6 +58,12 @@ fi
 if [[ -f "$LIB_DIR/config.sh" ]]; then
   # shellcheck source=../lib/config.sh
   source "$LIB_DIR/config.sh"
+fi
+
+# Source phase tracking library for phase context validation (v2.2.0)
+if [[ -f "$LIB_DIR/phase-tracking.sh" ]]; then
+  # shellcheck source=../lib/phase-tracking.sh
+  source "$LIB_DIR/phase-tracking.sh"
 fi
 
 # Colors (respects NO_COLOR and FORCE_COLOR environment variables per https://no-color.org)
@@ -590,15 +600,7 @@ check_deps
 FORMAT=$(resolve_format "$FORMAT")
 COMMAND_NAME="add"
 
-# Get VERSION for JSON output
-CLAUDE_TODO_HOME="${CLAUDE_TODO_HOME:-$HOME/.claude-todo}"
-if [[ -f "$CLAUDE_TODO_HOME/VERSION" ]]; then
-  VERSION=$(cat "$CLAUDE_TODO_HOME/VERSION" | tr -d '[:space:]')
-elif [[ -f "$SCRIPT_DIR/../VERSION" ]]; then
-  VERSION=$(cat "$SCRIPT_DIR/../VERSION" | tr -d '[:space:]')
-else
-  VERSION="0.16.0"
-fi
+
 
 # Validate required arguments
 if [[ -z "$TITLE" ]]; then
@@ -869,6 +871,11 @@ fi
 # Add optional fields
 if [[ -n "$PHASE" ]]; then
   TASK_JSON=$(echo "$TASK_JSON" | jq --arg phase "$PHASE" '.phase = $phase')
+
+  # Phase context warning (permissive - warn only, never block creation)
+  if declare -f check_phase_context >/dev/null 2>&1; then
+    check_phase_context "$PHASE" "$TODO_FILE" || true  # Never block task creation
+  fi
 fi
 
 if [[ -n "$DESCRIPTION" ]]; then
@@ -920,7 +927,7 @@ if [[ "$DRY_RUN" == true ]]; then
 
   if [[ "$FORMAT" == "json" ]]; then
     jq -n \
-      --arg version "$VERSION" \
+      --arg version "${CLAUDE_TODO_VERSION:-$(get_version)}" \
       --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
       --argjson task "$TASK_JSON" \
       '{
@@ -1033,7 +1040,7 @@ if [[ "$FORMAT" == "json" ]]; then
   TASK_JSON_OUTPUT=$(jq --arg id "$TASK_ID" '.tasks[] | select(.id == $id)' "$TODO_FILE")
 
   jq -n \
-    --arg version "$VERSION" \
+    --arg version "${CLAUDE_TODO_VERSION:-$(get_version)}" \
     --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
     --argjson task "$TASK_JSON_OUTPUT" \
     '{

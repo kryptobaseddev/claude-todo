@@ -25,13 +25,11 @@ CLAUDE_TODO_HOME="${CLAUDE_TODO_HOME:-$HOME/.claude-todo}"
 # Capture start time for execution metrics (nanoseconds)
 START_TIME_NS=$(date +%s%N 2>/dev/null || echo "0")
 
-# Source version from central location
-if [[ -f "$CLAUDE_TODO_HOME/VERSION" ]]; then
-    VERSION="$(cat "$CLAUDE_TODO_HOME/VERSION" | tr -d '[:space:]')"
-elif [[ -f "$SCRIPT_DIR/../VERSION" ]]; then
-    VERSION="$(cat "$SCRIPT_DIR/../VERSION" | tr -d '[:space:]')"
-else
-    VERSION="0.19.0"
+# Source version library for proper version management
+LIB_DIR="${SCRIPT_DIR}/../lib"
+if [[ -f "$LIB_DIR/version.sh" ]]; then
+  # shellcheck source=../lib/version.sh
+  source "$LIB_DIR/version.sh"
 fi
 
 # File paths
@@ -663,7 +661,7 @@ case "$FORMAT" in
     json)
         # JSON output with LLM-Agent-First envelope
         jq -n \
-            --arg version "$VERSION" \
+            --arg version "${CLAUDE_TODO_VERSION:-$(get_version)}" \
             --arg timestamp "$CURRENT_TIMESTAMP" \
             --argjson execution_ms "$EXECUTION_MS" \
             --arg query "${QUERY:-$ID_PATTERN}" \

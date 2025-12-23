@@ -36,11 +36,10 @@ source "$LIB_DIR/config.sh"
 # Command identification
 COMMAND_NAME="config"
 
-# Get version
-if [[ -f "$LIB_DIR/../VERSION" ]]; then
-    VERSION=$(cat "$LIB_DIR/../VERSION" | tr -d '[:space:]')
-else
-    VERSION="0.17.0"
+# Source version library for proper version management
+if [[ -f "$LIB_DIR/version.sh" ]]; then
+  # shellcheck source=../lib/version.sh
+  source "$LIB_DIR/version.sh"
 fi
 
 # ============================================================================
@@ -137,7 +136,7 @@ output_json() {
     timestamp=$(get_iso_timestamp 2>/dev/null || date -u +"%Y-%m-%dT%H:%M:%SZ")
 
     jq -n \
-        --arg version "$VERSION" \
+        --arg version "${CLAUDE_TODO_VERSION:-$(get_version)}" \
         --arg scope "$SCOPE" \
         --arg ts "$timestamp" \
         --argjson data "$data" \
@@ -163,7 +162,7 @@ output_change_json() {
     timestamp=$(get_iso_timestamp 2>/dev/null || date -u +"%Y-%m-%dT%H:%M:%SZ")
 
     jq -n \
-        --arg version "$VERSION" \
+        --arg version "${CLAUDE_TODO_VERSION:-$(get_version)}" \
         --arg scope "$SCOPE" \
         --arg ts "$timestamp" \
         --arg path "$path" \
@@ -259,7 +258,7 @@ cmd_get() {
             --arg path "$path" \
             --arg value "$value" \
             --arg timestamp "$timestamp" \
-            --arg version "$VERSION" \
+            --arg version "${CLAUDE_TODO_VERSION:-$(get_version)}" \
             '{
                 "$schema": "https://claude-todo.dev/schemas/v1/output.schema.json",
                 "_meta": {

@@ -37,13 +37,11 @@ FORMAT=""
 COMMAND_NAME="phase"
 
 # Source version
-CLAUDE_TODO_HOME="${CLAUDE_TODO_HOME:-$HOME/.claude-todo}"
-if [[ -f "$CLAUDE_TODO_HOME/VERSION" ]]; then
-    VERSION="$(cat "$CLAUDE_TODO_HOME/VERSION" | tr -d '[:space:]')"
-elif [[ -f "$SCRIPT_DIR/../VERSION" ]]; then
-    VERSION="$(cat "$SCRIPT_DIR/../VERSION" | tr -d '[:space:]')"
-else
-    VERSION="0.1.0"
+# Source version library for proper version management
+LIB_DIR="${SCRIPT_DIR}/../lib"
+if [[ -f "$LIB_DIR/version.sh" ]]; then
+  # shellcheck source=../lib/version.sh
+  source "$LIB_DIR/version.sh"
 fi
 QUIET=false
 
@@ -60,7 +58,7 @@ cmd_show() {
             timestamp=$(get_iso_timestamp)
             jq -n \
                 --arg ts "$timestamp" \
-                --arg version "$VERSION" \
+                --arg version "${CLAUDE_TODO_VERSION:-$(get_version)}" \
                 '{
                     "$schema": "https://claude-todo.dev/schemas/v1/output.schema.json",
                     "_meta": {
@@ -90,7 +88,7 @@ cmd_show() {
         echo "$phase_info" | jq \
             --arg ts "$timestamp" \
             --arg slug "$current_phase" \
-            --arg version "$VERSION" \
+            --arg version "${CLAUDE_TODO_VERSION:-$(get_version)}" \
             '{
                 "$schema": "https://claude-todo.dev/schemas/v1/output.schema.json",
                 "_meta": {
