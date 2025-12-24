@@ -537,13 +537,13 @@ parse_arguments() {
     while [[ $# -gt 0 ]]; do
         case $1 in
             -p|--period)
-                PERIOD_DAYS=$(resolve_period "$2") || exit 1
+                PERIOD_DAYS=$(resolve_period "$2") || exit "$EXIT_INVALID_INPUT"
                 shift 2
                 ;;
             -f|--format)
                 FORMAT="$2"
                 if ! validate_format "$FORMAT" "text,json"; then
-                    exit 1
+                    exit "$EXIT_INVALID_INPUT"
                 fi
                 shift 2
                 ;;
@@ -561,7 +561,7 @@ parse_arguments() {
                 ;;
             -h|--help)
                 usage
-                exit 0
+                exit "$EXIT_SUCCESS"
                 ;;
             *)
                 if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then

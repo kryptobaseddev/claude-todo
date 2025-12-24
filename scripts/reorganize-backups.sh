@@ -26,6 +26,16 @@ IFS=$'\n\t'
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 LIB_DIR="$PROJECT_ROOT/lib"
+CLAUDE_TODO_HOME="${CLAUDE_TODO_HOME:-$HOME/.claude-todo}"
+
+# Load VERSION from central location
+if [[ -f "$CLAUDE_TODO_HOME/VERSION" ]]; then
+  VERSION="$(cat "$CLAUDE_TODO_HOME/VERSION" | tr -d '[:space:]')"
+elif [[ -f "$PROJECT_ROOT/VERSION" ]]; then
+  VERSION="$(cat "$PROJECT_ROOT/VERSION" | tr -d '[:space:]')"
+else
+  VERSION="unknown"
+fi
 
 # Source required libraries
 # shellcheck source=lib/logging.sh
@@ -61,6 +71,7 @@ readonly MIGRATION_LOG=".claude/backup-migration.log"
 COMMAND_NAME="reorganize-backups"
 FORMAT=""
 QUIET=false
+DRY_RUN=false
 
 # ============================================================================
 # LEGACY BACKUP CLASSIFICATION
@@ -538,6 +549,7 @@ migrate_all_backups() {
                 "legacyDir": $legacyDir,
                 "newDir": $newDir,
                 "logFile": (if $dryRun then null else $logFile end),
+                "wouldMigrate": (if $dryRun then $migrated else null end),
                 "summary": {
                     "total": $total,
                     "migrated": $migrated,
@@ -801,7 +813,7 @@ main() {
 
     if [[ $# -eq 0 ]]; then
         show_usage
-        exit 1
+        exit "$EXIT_INVALID_INPUT"
     fi
 
     # Parse arguments
@@ -813,6 +825,7 @@ main() {
                 ;;
             --dry-run)
                 ACTION="dry-run"
+                DRY_RUN=true
                 shift
                 ;;
             --run)
@@ -841,7 +854,7 @@ main() {
                 ;;
             -h|--help)
                 show_usage
-                exit 0
+                exit "$EXIT_SUCCESS"
                 ;;
             *)
                 if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then

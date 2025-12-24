@@ -26,21 +26,41 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIB_DIR="$(dirname "$SCRIPT_DIR")/lib"
 
-# Source libraries
-source "$LIB_DIR/platform-compat.sh"
-source "$LIB_DIR/output-format.sh"
-source "$LIB_DIR/exit-codes.sh"
-source "$LIB_DIR/error-json.sh"
-source "$LIB_DIR/config.sh"
-
-# Command identification
-COMMAND_NAME="config"
-
 # Source version library for proper version management
 if [[ -f "$LIB_DIR/version.sh" ]]; then
   # shellcheck source=../lib/version.sh
   source "$LIB_DIR/version.sh"
 fi
+
+# Source version from central location (fallback)
+CLAUDE_TODO_HOME="${CLAUDE_TODO_HOME:-$HOME/.claude-todo}"
+if [[ -f "$CLAUDE_TODO_HOME/VERSION" ]]; then
+  VERSION="$(cat "$CLAUDE_TODO_HOME/VERSION" | tr -d '[:space:]')"
+elif [[ -f "$SCRIPT_DIR/../VERSION" ]]; then
+  VERSION="$(cat "$SCRIPT_DIR/../VERSION" | tr -d '[:space:]')"
+else
+  VERSION="unknown"
+fi
+
+# Source libraries (with defensive checks)
+if [[ -f "$LIB_DIR/platform-compat.sh" ]]; then
+  source "$LIB_DIR/platform-compat.sh"
+fi
+if [[ -f "$LIB_DIR/output-format.sh" ]]; then
+  source "$LIB_DIR/output-format.sh"
+fi
+if [[ -f "$LIB_DIR/exit-codes.sh" ]]; then
+  source "$LIB_DIR/exit-codes.sh"
+fi
+if [[ -f "$LIB_DIR/error-json.sh" ]]; then
+  source "$LIB_DIR/error-json.sh"
+fi
+if [[ -f "$LIB_DIR/config.sh" ]]; then
+  source "$LIB_DIR/config.sh"
+fi
+
+# Command identification
+COMMAND_NAME="config"
 
 # ============================================================================
 # DEFAULTS

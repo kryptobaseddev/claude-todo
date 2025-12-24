@@ -7,6 +7,16 @@ set -euo pipefail
 # Determine the library directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIB_DIR="$SCRIPT_DIR/../lib"
+CLAUDE_TODO_HOME="${CLAUDE_TODO_HOME:-$HOME/.claude-todo}"
+
+# Load VERSION from central location
+if [[ -f "$CLAUDE_TODO_HOME/VERSION" ]]; then
+  VERSION="$(cat "$CLAUDE_TODO_HOME/VERSION" | tr -d '[:space:]')"
+elif [[ -f "$SCRIPT_DIR/../VERSION" ]]; then
+  VERSION="$(cat "$SCRIPT_DIR/../VERSION" | tr -d '[:space:]')"
+else
+  VERSION="unknown"
+fi
 
 # Source required libraries
 # shellcheck source=lib/backup.sh
@@ -34,6 +44,7 @@ fi
 # Global variables
 FORMAT=""
 QUIET=false
+DRY_RUN=false
 COMMAND_NAME="migrate"
 
 # ============================================================================
@@ -171,6 +182,43 @@ cmd_repair() {
         exit "${EXIT_FILE_ERROR:-1}"
     fi
 
+    # For dry-run mode with JSON format, provide structured output
+    if [[ "$mode" == "dry-run" && "$FORMAT" == "json" ]]; then
+        # Get repair actions from lib/migrate.sh
+        local actions
+        if declare -f get_repair_actions &>/dev/null; then
+            actions=$(get_repair_actions "$todo_file" 2>/dev/null || echo '{"needs_repair":false}')
+        else
+            actions='{"needs_repair":false}'
+        fi
+
+        local needs_repair
+        needs_repair=$(echo "$actions" | jq -r '.needs_repair // false')
+
+        jq -n \
+            --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+            --arg projectDir "$project_dir" \
+            --arg todoFile "$todo_file" \
+            --argjson needsRepair "$needs_repair" \
+            --argjson actions "$actions" \
+            '{
+                "$schema": "https://claude-todo.dev/schemas/v1/output.schema.json",
+                "_meta": {
+                    "command": "migrate",
+                    "subcommand": "repair",
+                    "timestamp": $timestamp,
+                    "format": "json"
+                },
+                "success": true,
+                "dryRun": true,
+                "projectDir": $projectDir,
+                "file": $todoFile,
+                "needsRepair": $needsRepair,
+                "wouldRepair": (if $needsRepair then $actions else null end)
+            }'
+        exit "$EXIT_SUCCESS"
+    fi
+
     echo "Schema Repair"
     echo "============="
     echo ""
@@ -180,7 +228,7 @@ cmd_repair() {
 
     # Call the repair function from lib/migrate.sh
     if ! repair_todo_schema "$todo_file" "$mode"; then
-        exit 1
+        exit "$EXIT_GENERAL_ERROR"
     fi
 }
 
@@ -343,17 +391,17 @@ cmd_check() {
                 "migrationNeeded": $needed
             }'
         if [[ "$needs_migration" == "true" ]]; then
-            exit 1
+            exit "$EXIT_GENERAL_ERROR"
         else
-            exit 0
+            exit "$EXIT_SUCCESS"
         fi
     else
         if [[ "$needs_migration" == "true" ]]; then
             echo "Migration needed"
-            exit 1
+            exit "$EXIT_GENERAL_ERROR"
         else
             echo "All files up to date"
-            exit 0
+            exit "$EXIT_SUCCESS"
         fi
     fi
 }
@@ -427,7 +475,7 @@ cmd_run() {
 
     if [[ "$migration_needed" == "false" && "$force_migration" == "false" ]]; then
         echo "✓ All files already at current versions"
-        exit 0
+        exit "$EXIT_SUCCESS"
     fi
 
     if [[ "$force_migration" == "true" ]]; then
@@ -443,7 +491,7 @@ cmd_run() {
 
         if [[ ! $REPLY =~ ^[Yy]$ ]]; then
             echo "Migration cancelled"
-            exit 0
+            exit "$EXIT_SUCCESS"
         fi
     fi
 
@@ -559,7 +607,7 @@ cmd_file() {
     case $status in
         0)
             echo "✓ File already at current version"
-            exit 0
+            exit "$EXIT_SUCCESS"
             ;;
         1)
             local current_version expected_version
@@ -573,10 +621,10 @@ cmd_file() {
 
             if migrate_file "$file" "$file_type" "$current_version" "$expected_version"; then
                 echo "✓ Migration successful"
-                exit 0
+                exit "$EXIT_SUCCESS"
             else
                 echo "✗ Migration failed" >&2
-                exit 1
+                exit "$EXIT_GENERAL_ERROR"
             fi
             ;;
         2)
@@ -697,7 +745,7 @@ cmd_rollback() {
 
         if [[ ! $REPLY =~ ^[Yy]$ ]]; then
             echo "Rollback cancelled"
-            exit 0
+            exit "$EXIT_SUCCESS"
         fi
     fi
 
@@ -846,7 +894,7 @@ main() {
     # Handle global help flag first
     if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
         show_usage
-        exit 0
+        exit "$EXIT_SUCCESS"
     fi
 
     local command="${1:-}"
@@ -888,6 +936,7 @@ main() {
                 ;;
             --dry-run)
                 dry_run=true
+                DRY_RUN=true
                 shift
                 ;;
             -f|--format)
@@ -908,7 +957,7 @@ main() {
                 ;;
             -h|--help)
                 show_usage
-                exit 0
+                exit "$EXIT_SUCCESS"
                 ;;
             *)
                 break
@@ -963,7 +1012,7 @@ main() {
             ;;
         "")
             show_usage
-            exit 1
+            exit "$EXIT_INVALID_INPUT"
             ;;
         *)
             if [[ "$FORMAT" == "json" ]] && declare -f output_error &>/dev/null; then

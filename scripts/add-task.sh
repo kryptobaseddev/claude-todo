@@ -177,7 +177,7 @@ Exit Codes:
   12 = Max siblings exceeded (EXIT_SIBLING_LIMIT)
   13 = Invalid parent type (EXIT_INVALID_PARENT_TYPE)
 EOF
-  exit 0
+  exit "$EXIT_SUCCESS"
 }
 
 log_error() {

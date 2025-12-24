@@ -13,6 +13,23 @@ BACKUP_DIR="${BACKUP_DIR:-.claude/backups}"
 
 # Source logging library for should_use_color function
 LIB_DIR="${SCRIPT_DIR}/../lib"
+
+# Source version library for proper version management
+if [[ -f "$LIB_DIR/version.sh" ]]; then
+  # shellcheck source=../lib/version.sh
+  source "$LIB_DIR/version.sh"
+fi
+
+# Source version from central location (fallback)
+CLAUDE_TODO_HOME="${CLAUDE_TODO_HOME:-$HOME/.claude-todo}"
+if [[ -f "$CLAUDE_TODO_HOME/VERSION" ]]; then
+  VERSION="$(cat "$CLAUDE_TODO_HOME/VERSION" | tr -d '[:space:]')"
+elif [[ -f "$SCRIPT_DIR/../VERSION" ]]; then
+  VERSION="$(cat "$SCRIPT_DIR/../VERSION" | tr -d '[:space:]')"
+else
+  VERSION="unknown"
+fi
+
 if [[ -f "$LIB_DIR/logging.sh" ]]; then
   # shellcheck source=../lib/logging.sh
   source "$LIB_DIR/logging.sh"
@@ -99,7 +116,7 @@ Examples:
   $(basename "$0") backup_20251205 --dry-run    # Preview restore
   $(basename "$0") backup_20251205 --json       # JSON output for scripting
 EOF
-  exit 0
+  exit "$EXIT_SUCCESS"
 }
 
 log_info()  { [[ "$QUIET" != true && "$FORMAT" != "json" ]] && echo -e "${GREEN}[INFO]${NC} $1" || true; }
@@ -258,7 +275,7 @@ confirm_restore() {
 
   if [[ ! $REPLY =~ ^[Yy][Ee][Ss]$ ]]; then
     log_info "Restore cancelled by user"
-    exit 0
+    exit "$EXIT_SUCCESS"
   fi
 }
 
@@ -435,7 +452,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -*)
       log_error "Unknown option: $1"
-      exit 1
+      exit "$EXIT_INVALID_INPUT"
       ;;
     *)
       shift
@@ -462,7 +479,7 @@ check_deps
 
 # Validate backup source
 if ! validate_backup_source "$BACKUP_SOURCE"; then
-  exit 1
+  exit "$EXIT_VALIDATION_ERROR"
 fi
 
 # Extract tarball if needed
@@ -470,7 +487,7 @@ TEMP_EXTRACT=""
 if [[ -f "$BACKUP_SOURCE" ]] && [[ "$BACKUP_SOURCE" =~ \.tar\.gz$ ]]; then
   TEMP_EXTRACT=$(extract_tarball "$BACKUP_SOURCE")
   if [[ -z "$TEMP_EXTRACT" ]]; then
-    exit 1
+    exit "$EXIT_FILE_ERROR"
   fi
   BACKUP_SOURCE="$TEMP_EXTRACT"
   log_debug "Using extracted backup: $BACKUP_SOURCE"
@@ -480,6 +497,37 @@ fi
 if [[ "$FORMAT" != "json" ]]; then
   show_backup_info "$BACKUP_SOURCE"
 fi
+
+# Check for no-change condition (idempotency)
+check_no_change() {
+  local all_identical=true
+  for file_name in todo.json todo-archive.json todo-config.json todo-log.json; do
+    if [[ -n "$TARGET_FILE" && "$TARGET_FILE" != "$file_name" ]]; then
+      continue
+    fi
+    local source_file="${BACKUP_SOURCE}/${file_name}"
+    local target_file
+    case "$file_name" in
+      todo.json) target_file="$TODO_FILE" ;;
+      todo-archive.json) target_file="$ARCHIVE_FILE" ;;
+      todo-config.json) target_file="$CONFIG_FILE" ;;
+      todo-log.json) target_file="$LOG_FILE" ;;
+    esac
+
+    if [[ -f "$source_file" && -f "$target_file" ]]; then
+      if ! diff -q "$source_file" "$target_file" &>/dev/null; then
+        all_identical=false
+        break
+      fi
+    elif [[ -f "$source_file" ]]; then
+      # Source exists but target doesn't - change needed
+      all_identical=false
+      break
+    fi
+  done
+
+  [[ "$all_identical" == "true" ]]
+}
 
 # Handle dry-run mode
 if [[ "$DRY_RUN" == true ]]; then
@@ -523,7 +571,31 @@ if [[ "$DRY_RUN" == true ]]; then
     done
     echo ""
   fi
-  exit 0
+  exit "$EXIT_SUCCESS"
+fi
+
+# Check for no-change condition (idempotency)
+if check_no_change; then
+  if [[ "$FORMAT" == "json" ]]; then
+    jq -n \
+      --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+      --arg from "$BACKUP_SOURCE" \
+      '{
+        "$schema": "https://claude-todo.dev/schemas/v1/output.schema.json",
+        "_meta": {
+          "command": "restore",
+          "timestamp": $timestamp,
+          "format": "json"
+        },
+        "success": true,
+        "noChange": true,
+        "reason": "All files are already identical to backup",
+        "from": $from
+      }'
+  else
+    log_info "No changes needed - files are already identical to backup"
+  fi
+  exit "${EXIT_NO_CHANGE:-102}"
 fi
 
 # Confirm restore
@@ -573,7 +645,7 @@ if [[ -n "$TARGET_FILE" ]]; then
     *)
       log_error "Unknown file: $TARGET_FILE"
       log_error "Valid files: todo.json, todo-archive.json, todo-config.json, todo-log.json"
-      exit 1
+      exit "$EXIT_INVALID_INPUT"
       ;;
   esac
 else
@@ -622,7 +694,7 @@ if [[ $RESTORE_ERRORS -gt 0 ]]; then
     fi
   fi
 
-  exit 1
+  exit "$EXIT_GENERAL_ERROR"
 fi
 
 # Validate all restored files
@@ -667,7 +739,7 @@ if [[ $VALIDATION_ERRORS -gt 0 ]]; then
     fi
   fi
 
-  exit 1
+  exit "$EXIT_VALIDATION_ERROR"
 fi
 
 # Get tasks count from restored todo.json
@@ -723,4 +795,4 @@ else
   fi
 fi
 
-exit 0
+exit "$EXIT_SUCCESS"

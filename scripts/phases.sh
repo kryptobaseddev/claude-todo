@@ -76,6 +76,14 @@ elif [[ -f "$LIB_DIR/exit-codes.sh" ]]; then
   source "$LIB_DIR/exit-codes.sh"
 fi
 
+# Source validation library for input validation
+if [[ -f "$LIB_DIR/validation.sh" ]]; then
+  # shellcheck source=../lib/validation.sh
+  source "$LIB_DIR/validation.sh"
+elif [[ -f "$CLAUDE_TODO_HOME/lib/validation.sh" ]]; then
+  source "$CLAUDE_TODO_HOME/lib/validation.sh"
+fi
+
 # Default configuration
 FORMAT=""
 SUBCOMMAND="list"
@@ -120,7 +128,7 @@ Output:
     Phases are ordered by their defined order in the configuration.
 
 EOF
-  exit 0
+  exit "$EXIT_SUCCESS"
 }
 
 #####################################################################
@@ -188,7 +196,7 @@ log_info() {
 check_deps() {
   if ! command -v jq &> /dev/null; then
     log_error "jq is required but not installed" "E_DEPENDENCY_MISSING" 1 "Install jq: brew install jq (macOS) or apt install jq (Linux)"
-    exit 1
+    exit "$EXIT_DEPENDENCY_ERROR"
   fi
 }
 
@@ -301,9 +309,9 @@ list_phases() {
   # Handle quiet mode
   if [[ "$QUIET_MODE" == "true" ]]; then
     if [[ $count -gt 0 ]]; then
-      exit 0
+      exit "$EXIT_SUCCESS"
     else
-      exit 1
+      exit "$EXIT_GENERAL_ERROR"
     fi
   fi
 
@@ -425,7 +433,7 @@ show_phase() {
 
   if [[ "$phase_exists" != "true" ]]; then
     log_error "Phase '$phase_slug' not found" "E_PHASE_NOT_FOUND" 1 "Run 'claude-todo phases' to see available phases"
-    exit 1
+    exit "$EXIT_NOT_FOUND"
   fi
 
   # Get phase info (support v2.2.0 project.phases and legacy .phases)
@@ -658,7 +666,7 @@ FORMAT=$(resolve_format "${FORMAT:-}")
 # Validate format
 if [[ "$FORMAT" != "text" && "$FORMAT" != "json" ]]; then
   log_error "Invalid format: $FORMAT (must be text or json)" "E_INPUT_INVALID" 1 "Valid formats: text, json"
-  exit 1
+  exit "$EXIT_INVALID_INPUT"
 fi
 
 check_deps
@@ -666,7 +674,7 @@ check_deps
 # Check if todo.json exists
 if [[ ! -f "$TODO_FILE" ]]; then
   log_error "todo.json not found. Run 'claude-todo init' first." "E_NOT_INITIALIZED" 1 "Run 'claude-todo init' to initialize"
-  exit 1
+  exit "$EXIT_NOT_INITIALIZED"
 fi
 
 # Execute subcommand
@@ -677,7 +685,7 @@ case "$SUBCOMMAND" in
   show)
     if [[ -z "$PHASE_ARG" ]]; then
       log_error "Phase slug required. Usage: claude-todo phases show <phase>" "E_INPUT_MISSING" 1 "Provide a phase slug: claude-todo phases show core"
-      exit 1
+      exit "$EXIT_INVALID_INPUT"
     fi
     show_phase "$PHASE_ARG"
     ;;

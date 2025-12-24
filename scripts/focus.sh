@@ -6,6 +6,15 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_TODO_HOME="${CLAUDE_TODO_HOME:-$HOME/.claude-todo}"
 
+# Load VERSION from central location
+if [[ -f "$CLAUDE_TODO_HOME/VERSION" ]]; then
+  VERSION="$(cat "$CLAUDE_TODO_HOME/VERSION" | tr -d '[:space:]')"
+elif [[ -f "$SCRIPT_DIR/../VERSION" ]]; then
+  VERSION="$(cat "$SCRIPT_DIR/../VERSION" | tr -d '[:space:]')"
+else
+  VERSION="unknown"
+fi
+
 # Source version library for proper version management
 if [[ -f "$CLAUDE_TODO_HOME/lib/version.sh" ]]; then
   source "$CLAUDE_TODO_HOME/lib/version.sh"
@@ -73,6 +82,7 @@ else
 fi
 
 QUIET=false
+DRY_RUN=false
 
 log_info()    { [[ "$QUIET" != true ]] && echo -e "${GREEN}[INFO]${NC} $1" || true; }
 log_warn()    { [[ "$QUIET" != true ]] && echo -e "${YELLOW}[WARN]${NC} $1" || true; }
@@ -114,7 +124,7 @@ Examples:
   claude-todo focus show --json
   claude-todo focus show --format json
 EOF
-  exit 0
+  exit "$EXIT_SUCCESS"
 }
 
 # Check dependencies
@@ -226,6 +236,34 @@ cmd_set() {
   # Get current focus for logging
   local old_focus
   old_focus=$(jq -r '.focus.currentTask // ""' "$TODO_FILE")
+
+  # Dry-run mode - show what would happen
+  if [[ "$DRY_RUN" == "true" ]]; then
+    if [[ "${FORMAT:-}" == "json" ]]; then
+      jq -n \
+        --arg taskId "$task_id" \
+        --arg oldFocus "$old_focus" \
+        --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+        '{
+          "$schema": "https://claude-todo.dev/schemas/v1/output.schema.json",
+          "_meta": {
+            "command": "focus set",
+            "timestamp": $timestamp,
+            "format": "json"
+          },
+          "success": true,
+          "dryRun": true,
+          "wouldSet": {
+            "taskId": $taskId,
+            "previousFocus": (if $oldFocus == "" then null else $oldFocus end)
+          }
+        }'
+    else
+      echo "DRY RUN - Would set focus to task: $task_id"
+      [[ -n "$old_focus" ]] && echo "  Previous focus: $old_focus"
+    fi
+    exit "$EXIT_SUCCESS"
+  fi
 
   # Check if there's already an active task (not this one)
   local active_count
@@ -349,7 +387,7 @@ cmd_clear() {
     else
       log_info "No focus to clear"
     fi
-    exit 0
+    exit "$EXIT_SUCCESS"
   fi
 
   local timestamp
@@ -720,6 +758,7 @@ while [[ $# -gt 0 ]]; do
     --human) FORMAT="text"; shift ;;
     --json) FORMAT="json"; shift ;;
     -q|--quiet) QUIET=true; shift ;;
+    --dry-run) DRY_RUN=true; shift ;;
     -h|--help|help)
       if [[ -z "$COMMAND" ]]; then
         usage

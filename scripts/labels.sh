@@ -123,7 +123,7 @@ Output:
     Shows labels sorted by task count with visual bars.
     Labels with critical or high priority tasks are highlighted.
 EOF
-  exit 0
+  exit "$EXIT_SUCCESS"
 }
 
 #####################################################################
@@ -665,9 +665,9 @@ main() {
         local count
         count=$(echo "$label_data" | jq -r 'length')
         if [[ "$count" -gt 0 ]]; then
-          exit 0
+          exit "$EXIT_SUCCESS"
         else
-          exit 1
+          exit "$EXIT_NO_DATA"
         fi
       fi
 
@@ -686,9 +686,9 @@ main() {
         local count
         count=$(echo "$tasks" | jq -r 'length')
         if [[ "$count" -gt 0 ]]; then
-          exit 0
+          exit "$EXIT_SUCCESS"
         else
-          exit 1
+          exit "$EXIT_NO_DATA"
         fi
       fi
 
@@ -709,9 +709,9 @@ main() {
         local count
         count=$(echo "$label_data" | jq -r 'length')
         if [[ "$count" -gt 0 ]]; then
-          exit 0
+          exit "$EXIT_SUCCESS"
         else
-          exit 1
+          exit "$EXIT_NO_DATA"
         fi
       fi
 

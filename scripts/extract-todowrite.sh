@@ -27,6 +27,16 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIB_DIR="$(dirname "$SCRIPT_DIR")/lib"
+CLAUDE_TODO_HOME="${CLAUDE_TODO_HOME:-$HOME/.claude-todo}"
+
+# Load VERSION from central location
+if [[ -f "$CLAUDE_TODO_HOME/VERSION" ]]; then
+  VERSION="$(cat "$CLAUDE_TODO_HOME/VERSION" | tr -d '[:space:]')"
+elif [[ -f "$SCRIPT_DIR/../VERSION" ]]; then
+  VERSION="$(cat "$SCRIPT_DIR/../VERSION" | tr -d '[:space:]')"
+else
+  VERSION="unknown"
+fi
 
 # Source required libraries
 source "$LIB_DIR/todowrite-integration.sh"
@@ -45,6 +55,14 @@ elif [[ -f "$LIB_DIR/exit-codes.sh" ]]; then
   # Fallback: source exit codes directly if error-json.sh not available
   # shellcheck source=../lib/exit-codes.sh
   source "$LIB_DIR/exit-codes.sh"
+fi
+
+# Source validation library for input validation
+if [[ -f "$LIB_DIR/validation.sh" ]]; then
+  # shellcheck source=../lib/validation.sh
+  source "$LIB_DIR/validation.sh"
+elif [[ -f "$CLAUDE_TODO_HOME/lib/validation.sh" ]]; then
+  source "$CLAUDE_TODO_HOME/lib/validation.sh"
 fi
 
 # =============================================================================
@@ -129,7 +147,7 @@ EXAMPLES
     claude-todo sync --extract --default-phase polish /tmp/todowrite-state.json
 
 EOF
-    exit 0
+    exit "$EXIT_SUCCESS"
 }
 
 # =============================================================================
@@ -146,7 +164,7 @@ parse_args() {
                 DRY_RUN=true
                 shift
                 ;;
-            --quiet|-q)
+            -q|--quiet)
                 QUIET=true
                 shift
                 ;;
@@ -171,7 +189,7 @@ parse_args() {
                 else
                     log_error "Unknown option: $1"
                 fi
-                exit 1
+                exit "$EXIT_INVALID_INPUT"
                 ;;
             *)
                 if [[ -z "$TODOWRITE_INPUT" ]]; then
@@ -182,7 +200,7 @@ parse_args() {
                     else
                         log_error "Unexpected argument: $1"
                     fi
-                    exit 1
+                    exit "$EXIT_INVALID_INPUT"
                 fi
                 shift
                 ;;
@@ -461,7 +479,7 @@ main() {
             log_error "TodoWrite state file required"
             echo "Usage: extract-todowrite.sh <todowrite-state.json>"
         fi
-        exit 1
+        exit "$EXIT_INVALID_INPUT"
     fi
 
     if [[ ! -f "$TODOWRITE_INPUT" ]]; then
@@ -470,7 +488,7 @@ main() {
         else
             log_error "File not found: $TODOWRITE_INPUT"
         fi
-        exit 1
+        exit "$EXIT_NOT_FOUND"
     fi
 
     if [[ ! -f "$TODO_FILE" ]]; then
@@ -479,7 +497,7 @@ main() {
         else
             log_error "todo.json not found at $TODO_FILE"
         fi
-        exit 1
+        exit "$EXIT_NOT_INITIALIZED"
     fi
 
     # Load TodoWrite state
@@ -493,7 +511,7 @@ main() {
         else
             log_error "Invalid JSON in $TODOWRITE_INPUT"
         fi
-        exit 1
+        exit "$EXIT_INVALID_INPUT"
     fi
 
     log_info "Analyzing TodoWrite state..."
@@ -557,7 +575,7 @@ main() {
         else
             log_info "No changes to apply"
         fi
-        exit 0
+        exit "$EXIT_SUCCESS"
     fi
 
     # Apply changes

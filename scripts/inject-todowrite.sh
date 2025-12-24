@@ -30,8 +30,30 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIB_DIR="$(dirname "$SCRIPT_DIR")/lib"
 
+# Source version library for proper version management
+if [[ -f "$LIB_DIR/version.sh" ]]; then
+  # shellcheck source=../lib/version.sh
+  source "$LIB_DIR/version.sh"
+fi
+
+# Source version from central location (fallback)
+CLAUDE_TODO_HOME="${CLAUDE_TODO_HOME:-$HOME/.claude-todo}"
+if [[ -f "$CLAUDE_TODO_HOME/VERSION" ]]; then
+  VERSION="$(cat "$CLAUDE_TODO_HOME/VERSION" | tr -d '[:space:]')"
+elif [[ -f "$SCRIPT_DIR/../VERSION" ]]; then
+  VERSION="$(cat "$SCRIPT_DIR/../VERSION" | tr -d '[:space:]')"
+else
+  VERSION="unknown"
+fi
+
 # Source required libraries
 source "$LIB_DIR/todowrite-integration.sh"
+
+# Source validation library
+if [[ -f "$LIB_DIR/validation.sh" ]]; then
+  # shellcheck source=../lib/validation.sh
+  source "$LIB_DIR/validation.sh"
+fi
 
 # Source output formatting library
 if [[ -f "$LIB_DIR/output-format.sh" ]]; then
@@ -143,7 +165,7 @@ EXAMPLES
     claude-todo sync --inject --output /tmp/inject.json
 
 EOF
-    exit 0
+    exit "$EXIT_SUCCESS"
 }
 
 # =============================================================================
@@ -201,7 +223,7 @@ parse_args() {
                 else
                     output_error "$E_INPUT_INVALID" "Unknown option: $1"
                 fi
-                exit "${EXIT_INVALID_INPUT:-1}"
+                exit "$EXIT_INVALID_INPUT"
                 ;;
         esac
     done
@@ -392,7 +414,7 @@ main() {
         else
             output_error "$E_NOT_INITIALIZED" "todo.json not found at $TODO_FILE"
         fi
-        exit "${EXIT_NOT_INITIALIZED:-1}"
+        exit "$EXIT_NOT_FOUND"
     fi
 
     # Determine effective phase filter
@@ -447,7 +469,7 @@ main() {
         else
             echo '{"todos": []}'
         fi
-        exit 0
+        exit "$EXIT_SUCCESS"
     fi
 
     log_info "Injecting $task_count tasks to TodoWrite format"
@@ -506,7 +528,7 @@ main() {
             echo ""
             echo -e "${YELLOW}No state file created (dry-run mode)${NC}"
         fi
-        exit 0
+        exit "$EXIT_SUCCESS"
     fi
 
     # Save session state if requested

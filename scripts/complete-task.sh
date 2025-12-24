@@ -144,7 +144,7 @@ Examples:
 After completion, if autoArchiveOnComplete is enabled in config,
 the archive script will run automatically.
 EOF
-  exit 0
+  exit "$EXIT_SUCCESS"
 }
 
 log_info()  { [[ "$QUIET" != true ]] && echo -e "${GREEN}[INFO]${NC} $1" || true; }
@@ -155,7 +155,7 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1" >&2; }
 check_deps() {
   if ! command -v jq &> /dev/null; then
     log_error "jq is required but not installed"
-    exit 1
+    exit "$EXIT_DEPENDENCY_ERROR"
   fi
 }
 
@@ -173,7 +173,7 @@ while [[ $# -gt 0 ]]; do
       NOTES="${2:-}"
       if [[ -z "$NOTES" ]]; then
         log_error "--notes requires a text argument"
-        exit 1
+        exit "$EXIT_INVALID_INPUT"
       fi
       shift 2
       ;;
@@ -181,7 +181,7 @@ while [[ $# -gt 0 ]]; do
       FORMAT="${2:-}"
       if [[ -z "$FORMAT" ]]; then
         log_error "--format requires an argument (text or json)"
-        exit 1
+        exit "$EXIT_INVALID_INPUT"
       fi
       shift 2
       ;;
@@ -190,7 +190,7 @@ while [[ $# -gt 0 ]]; do
     --dry-run) DRY_RUN=true; shift ;;
     --skip-notes) SKIP_NOTES=true; shift ;;
     --skip-archive) SKIP_ARCHIVE=true; shift ;;
-    -*) log_error "Unknown option: $1"; exit 1 ;;
+    -*) log_error "Unknown option: $1"; exit "$EXIT_INVALID_INPUT" ;;
     *) TASK_ID="$1"; shift ;;
   esac
 done
@@ -215,7 +215,7 @@ if [[ -z "$NOTES" && "$SKIP_NOTES" == false ]]; then
     echo "Example:" >&2
     echo "  claude-todo complete $TASK_ID --notes 'Implemented feature. Tests passing.'" >&2
     echo "  claude-todo complete $TASK_ID --skip-notes" >&2
-    exit 1
+    exit "$EXIT_INVALID_INPUT"
   fi
 fi
 
@@ -229,7 +229,7 @@ if [[ ! "$TASK_ID" =~ ^T[0-9]{3,}$ ]]; then
     exit "${EXIT_INVALID_INPUT:-2}"
   else
     log_error "Invalid task ID format: $TASK_ID (must be T### format)"
-    exit 1
+    exit "$EXIT_INVALID_INPUT"
   fi
 fi
 
@@ -241,7 +241,7 @@ if [[ ! -f "$TODO_FILE" ]]; then
     exit "${EXIT_FILE_ERROR:-3}"
   else
     log_error "$TODO_FILE not found. Run claude-todo init first."
-    exit 1
+    exit "$EXIT_FILE_ERROR"
   fi
 fi
 
@@ -252,7 +252,7 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
     exit "${EXIT_FILE_ERROR:-3}"
   else
     log_error "$CONFIG_FILE not found. Run claude-todo init first."
-    exit 1
+    exit "$EXIT_FILE_ERROR"
   fi
 fi
 
@@ -277,7 +277,7 @@ if [[ -z "$TASK" ]]; then
     exit "${EXIT_NOT_FOUND:-4}"
   else
     log_error "Task $TASK_ID not found"
-    exit 1
+    exit "$EXIT_NOT_FOUND"
   fi
 fi
 
@@ -340,7 +340,7 @@ if [[ ! "$CURRENT_STATUS" =~ ^(pending|active|blocked)$ ]]; then
     exit "${EXIT_VALIDATION_ERROR:-6}"
   else
     log_error "Invalid status transition: $CURRENT_STATUS → done"
-    exit 1
+    exit "$EXIT_VALIDATION_ERROR"
   fi
 fi
 
@@ -404,7 +404,7 @@ if [[ "$DRY_RUN" == true ]]; then
     echo ""
     echo -e "${YELLOW}No changes made (dry-run mode)${NC}"
   fi
-  exit 0
+  exit "$EXIT_SUCCESS"
 fi
 
 # Create safety backup before modification using unified backup library
@@ -449,7 +449,7 @@ if [[ -n "$NOTES" ]]; then
     )
   ' "$TODO_FILE") || {
     log_error "jq failed to update tasks (with notes)"
-    exit 1
+    exit "$EXIT_FILE_ERROR"
   }
 else
   UPDATED_TASKS=$(jq --arg id "$TASK_ID" --arg ts "$TIMESTAMP" '
@@ -462,19 +462,19 @@ else
     )
   ' "$TODO_FILE") || {
     log_error "jq failed to update tasks (no notes)"
-    exit 1
+    exit "$EXIT_FILE_ERROR"
   }
 fi
 
 # Verify UPDATED_TASKS is valid JSON and not empty
 if [[ -z "$UPDATED_TASKS" ]]; then
   log_error "Generated empty JSON structure"
-  exit 1
+  exit "$EXIT_FILE_ERROR"
 fi
 
 if ! echo "$UPDATED_TASKS" | jq empty 2>/dev/null; then
   log_error "Generated invalid JSON structure"
-  exit 1
+  exit "$EXIT_FILE_ERROR"
 fi
 
 # Recalculate checksum
@@ -495,14 +495,14 @@ FINAL_JSON=$(echo "$UPDATED_TASKS" | jq --arg checksum "$NEW_CHECKSUM" --arg ts 
 # - Proper error handling
 if ! save_json "$TODO_FILE" "$FINAL_JSON"; then
   log_error "Failed to write todo file. Rolling back."
-  exit 1
+  exit "$EXIT_FILE_ERROR"
 fi
 
 # Verify task was actually updated
 VERIFY_STATUS=$(jq --arg id "$TASK_ID" '.tasks[] | select(.id == $id) | .status' "$TODO_FILE")
 if [[ "$VERIFY_STATUS" != '"done"' ]]; then
   log_error "Failed to update task status."
-  exit 1
+  exit "$EXIT_FILE_ERROR"
 fi
 
 # Capture after state

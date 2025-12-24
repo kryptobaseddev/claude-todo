@@ -131,7 +131,7 @@ Exit Codes:
     1:  Error (file not found, jq missing)
     2:  No tasks to analyze
 EOF
-  exit 0
+  exit "$EXIT_SUCCESS"
 }
 
 #####################################################################
@@ -456,7 +456,7 @@ output_json() {
       "action_order": [],
       "message": "No pending tasks to analyze"
     }'
-    exit 2
+    exit "$EXIT_NO_DATA"
   fi
 
   run_complete_analysis "$todo_file"
@@ -479,7 +479,7 @@ output_human() {
     echo ""
     echo -e "${YELLOW}No pending tasks to analyze.${NC}"
     echo ""
-    exit 2
+    exit "$EXIT_NO_DATA"
   fi
 
   local unicode
@@ -751,9 +751,9 @@ main() {
     local pending_count
     pending_count=$(jq -r '[.tasks[] | select(.status == "pending" or .status == "active")] | length' "$TODO_FILE")
     if [[ "$pending_count" -gt 0 ]]; then
-      exit 0
+      exit "$EXIT_SUCCESS"
     else
-      exit 1
+      exit "$EXIT_NO_DATA"
     fi
   fi
 

@@ -172,7 +172,7 @@ Dashboard Features:
     - Shows phase name in compact mode
     - Gracefully handles both legacy (string) and new (object) project format
 EOF
-  exit 0
+  exit "$EXIT_SUCCESS"
 }
 
 #####################################################################
@@ -1243,7 +1243,7 @@ parse_arguments() {
       --format|-f)
         FORMAT="$2"
         if ! validate_format "$FORMAT" "text,json"; then
-          exit 1
+          exit "$EXIT_INVALID_INPUT"
         fi
         shift 2
         ;;

@@ -6,6 +6,15 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_TODO_HOME="${CLAUDE_TODO_HOME:-$HOME/.claude-todo}"
 
+# Source version from central location
+if [[ -f "$CLAUDE_TODO_HOME/VERSION" ]]; then
+  VERSION="$(cat "$CLAUDE_TODO_HOME/VERSION" | tr -d '[:space:]')"
+elif [[ -f "$SCRIPT_DIR/../VERSION" ]]; then
+  VERSION="$(cat "$SCRIPT_DIR/../VERSION" | tr -d '[:space:]')"
+else
+  VERSION="unknown"
+fi
+
 # Source version library for proper version management
 LIB_DIR="${SCRIPT_DIR}/../lib"
 if [[ -f "$LIB_DIR/version.sh" ]]; then
@@ -208,7 +217,7 @@ Examples:
   claude-todo archive --no-safe     # Disable relationship safety checks
   claude-todo archive --json        # JSON output for scripting
 EOF
-  exit 0
+  exit "$EXIT_SUCCESS"
 }
 
 log_info()  { echo -e "${GREEN}[INFO]${NC} $1"; }
@@ -269,7 +278,7 @@ check_deps
 # Mutual exclusion check for --only-labels and --exclude-labels
 if [[ -n "$ONLY_LABELS" && -n "$EXCLUDE_LABELS" ]]; then
   if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
-    output_error "E_INVALID_INPUT" "--only-labels and --exclude-labels cannot be used together" "${EXIT_INVALID_INPUT:-1}" true
+    output_error "$E_INPUT_INVALID" "--only-labels and --exclude-labels cannot be used together" "${EXIT_INVALID_INPUT:-1}" true
   else
     log_error "--only-labels and --exclude-labels cannot be used together"
   fi

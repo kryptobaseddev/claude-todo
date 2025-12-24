@@ -135,7 +135,7 @@ Output:
     Shows the suggested task with its ID, title, priority, and phase.
     With --explain, shows why this task was chosen over alternatives.
 EOF
-  exit 0
+  exit "$EXIT_SUCCESS"
 }
 
 #####################################################################
@@ -706,10 +706,10 @@ parse_arguments() {
         fi
         shift 2
         ;;
-      --format|-f)
+      -f|--format)
         FORMAT="$2"
         if ! validate_format "$FORMAT" "text,json"; then
-          exit 1
+          exit "$EXIT_INVALID_INPUT"
         fi
         shift 2
         ;;
@@ -721,7 +721,7 @@ parse_arguments() {
         FORMAT="text"
         shift
         ;;
-      --quiet|-q)
+      -q|--quiet)
         QUIET=true
         shift
         ;;

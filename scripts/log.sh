@@ -46,6 +46,9 @@ else
   RED='' GREEN='' NC=''
 fi
 
+# Command name for output formatting
+COMMAND_NAME="log"
+
 # Defaults
 ACTION=""
 TASK_ID=""
@@ -138,7 +141,7 @@ Examples:
   claude-todo log --action status_changed --task-id T001 --before '{"status":"pending"}' --after '{"status":"active"}'
   claude-todo log --action task_created --task-id T005 --after '{"title":"New task"}'
 EOF
-  exit 0
+  exit "$EXIT_SUCCESS"
 }
 
 log_info()  { echo -e "${GREEN}[INFO]${NC} $1"; }
@@ -276,7 +279,7 @@ case "$SUBCOMMAND" in
       ' "$LOG_FILE"
     fi
 
-    exit 0
+    exit "$EXIT_SUCCESS"
     ;;
 
   show)
@@ -329,7 +332,7 @@ case "$SUBCOMMAND" in
       (if .details then "Details:\n\(.details | if type == "string" then . else tojson end)" else "" end)
     ' | grep -v '^$' || true
 
-    exit 0
+    exit "$EXIT_SUCCESS"
     ;;
 
   migrate)
@@ -347,10 +350,10 @@ case "$SUBCOMMAND" in
     migrated_count=$(migrate_log_entries "$LOG_FILE")
     if [[ $? -eq 0 ]]; then
       log_info "Migration completed successfully ($migrated_count entries migrated)"
-      exit 0
+      exit "$EXIT_SUCCESS"
     else
       log_error "Migration failed"
-      exit 1
+      exit "$EXIT_GENERAL_ERROR"
     fi
     ;;
   rotate)
@@ -376,7 +379,7 @@ case "$SUBCOMMAND" in
           echo "Options:"
           echo "  --force    Force rotation regardless of size"
           echo "  --help     Show this help"
-          exit 0
+          exit "$EXIT_SUCCESS"
           ;;
         *) shift ;;
       esac
@@ -410,7 +413,7 @@ case "$SUBCOMMAND" in
         log_info "Use --force to rotate anyway"
       fi
     fi
-    exit 0
+    exit "$EXIT_SUCCESS"
     ;;
 
   add|"")
@@ -555,7 +558,7 @@ UPDATED_LOG=$(jq --argjson entry "$ENTRY" --arg ts "$TIMESTAMP" '
 # Atomic write with file locking via save_json
 if ! save_json "$LOG_FILE" "$UPDATED_LOG"; then
   log_error "Failed to save log entry"
-  exit 1
+  exit "$EXIT_FILE_ERROR"
 fi
 
 log_info "Logged: $ACTION ($LOG_ID)"

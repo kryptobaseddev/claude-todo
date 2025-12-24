@@ -73,6 +73,7 @@ fi
 : "${EXIT_INVALID_INPUT:=2}"
 : "${EXIT_FILE_ERROR:=3}"
 : "${EXIT_NOT_FOUND:=4}"
+: "${EXIT_DEPENDENCY_ERROR:=5}"
 : "${EXIT_VALIDATION_ERROR:=6}"
 : "${EXIT_NO_CHANGE:=102}"
 # Hierarchy exit codes
@@ -236,7 +237,7 @@ Exit Codes:
   13  = Invalid parent type (subtask cannot have children)
   102 = No changes (dry-run or no-op)
 EOF
-  exit 0
+  exit "$EXIT_SUCCESS"
 }
 
 log_error() { echo -e "${RED}[ERROR]${NC} $1" >&2; }
@@ -246,7 +247,7 @@ log_info()  { echo -e "${GREEN}[INFO]${NC} $1"; }
 check_deps() {
   if ! command -v jq &> /dev/null; then
     log_error "jq is required but not installed"
-    exit 1
+    exit "$EXIT_DEPENDENCY_ERROR"
   fi
 }
 
@@ -552,14 +553,14 @@ while [[ $# -gt 0 ]]; do
     -*)
       log_error "Unknown option: $1"
       echo "Use --help for usage information" >&2
-      exit 1
+      exit "$EXIT_INVALID_INPUT"
       ;;
     *)
       if [[ -z "$TASK_ID" ]]; then
         TASK_ID="$1"
       else
         log_error "Unexpected argument: $1"
-        exit 1
+        exit "$EXIT_INVALID_INPUT"
       fi
       shift
       ;;
@@ -662,19 +663,19 @@ if [[ -n "$LABELS_TO_SET" ]]; then
 fi
 
 # Validate inputs
-[[ -n "$NEW_TITLE" ]] && { validate_title_local "$NEW_TITLE" || exit 1; }
-[[ -n "$NEW_STATUS" ]] && { validate_status "$NEW_STATUS" || exit 1; }
-[[ -n "$NEW_PRIORITY" ]] && { validate_priority "$NEW_PRIORITY" || exit 1; }
-[[ -n "$NEW_PHASE" ]] && { validate_phase "$NEW_PHASE" || exit 1; }
-[[ -n "$LABELS_TO_ADD" ]] && { validate_labels "$LABELS_TO_ADD" || exit 1; }
-[[ -n "$LABELS_TO_SET" ]] && { validate_labels "$LABELS_TO_SET" || exit 1; }
-[[ -n "$DEPENDS_TO_ADD" ]] && { validate_depends "$DEPENDS_TO_ADD" || exit 1; }
-[[ -n "$DEPENDS_TO_SET" ]] && { validate_depends "$DEPENDS_TO_SET" || exit 1; }
+[[ -n "$NEW_TITLE" ]] && { validate_title_local "$NEW_TITLE" || exit "$EXIT_VALIDATION_ERROR"; }
+[[ -n "$NEW_STATUS" ]] && { validate_status "$NEW_STATUS" || exit "$EXIT_VALIDATION_ERROR"; }
+[[ -n "$NEW_PRIORITY" ]] && { validate_priority "$NEW_PRIORITY" || exit "$EXIT_VALIDATION_ERROR"; }
+[[ -n "$NEW_PHASE" ]] && { validate_phase "$NEW_PHASE" || exit "$EXIT_VALIDATION_ERROR"; }
+[[ -n "$LABELS_TO_ADD" ]] && { validate_labels "$LABELS_TO_ADD" || exit "$EXIT_VALIDATION_ERROR"; }
+[[ -n "$LABELS_TO_SET" ]] && { validate_labels "$LABELS_TO_SET" || exit "$EXIT_VALIDATION_ERROR"; }
+[[ -n "$DEPENDS_TO_ADD" ]] && { validate_depends "$DEPENDS_TO_ADD" || exit "$EXIT_VALIDATION_ERROR"; }
+[[ -n "$DEPENDS_TO_SET" ]] && { validate_depends "$DEPENDS_TO_SET" || exit "$EXIT_VALIDATION_ERROR"; }
 
 # Validate field lengths (v0.20.0+)
-[[ -n "$NEW_DESCRIPTION" ]] && { validate_description "$NEW_DESCRIPTION" || exit 1; }
-[[ -n "$NOTE_TO_ADD" ]] && { validate_note "$NOTE_TO_ADD" || exit 1; }
-[[ -n "$NEW_BLOCKED_BY" ]] && { validate_blocked_by "$NEW_BLOCKED_BY" || exit 1; }
+[[ -n "$NEW_DESCRIPTION" ]] && { validate_description "$NEW_DESCRIPTION" || exit "$EXIT_VALIDATION_ERROR"; }
+[[ -n "$NOTE_TO_ADD" ]] && { validate_note "$NOTE_TO_ADD" || exit "$EXIT_VALIDATION_ERROR"; }
+[[ -n "$NEW_BLOCKED_BY" ]] && { validate_blocked_by "$NEW_BLOCKED_BY" || exit "$EXIT_VALIDATION_ERROR"; }
 
 # Validate hierarchy fields (v0.20.0+)
 if [[ -n "$NEW_TYPE" ]]; then

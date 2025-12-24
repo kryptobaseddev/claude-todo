@@ -149,7 +149,7 @@ Examples:
   $(basename "$0") search --on 2025-12-20                     # Find backups from exact date
   $(basename "$0") search --task-id T001 --verbose            # Show matched content snippets
 EOF
-  exit 0
+  exit "$EXIT_SUCCESS"
 }
 
 log_info()  { [[ "$QUIET" != true && "$FORMAT" != "json" ]] && echo -e "${GREEN}[INFO]${NC} $1" || true; }
@@ -1470,7 +1470,7 @@ if [[ "$LIST_MODE" != true && "$VERIFY_MODE" != true ]]; then
     else
       log_info "Backups disabled by config (backup.enabled=false)"
     fi
-    exit 0
+    exit "$EXIT_SUCCESS"
   fi
 fi
 
@@ -1489,7 +1489,7 @@ fi
 # Handle --list mode
 if [[ "$LIST_MODE" == true ]]; then
   list_backups "$BACKUP_DIR"
-  exit 0
+  exit "$EXIT_SUCCESS"
 fi
 
 # Handle verify subcommand
@@ -1531,7 +1531,7 @@ fi
 # Handle status subcommand
 if [[ "$STATUS_MODE" == true ]]; then
   show_status "$BACKUP_DIR"
-  exit 0
+  exit "$EXIT_SUCCESS"
 fi
 
 # Handle --auto mode (scheduled/interval-based backups)
@@ -1593,7 +1593,7 @@ if [[ "$AUTO_MODE" == true ]]; then
       else
         log_error "Failed to create scheduled backup"
       fi
-      exit 1
+      exit "$EXIT_GENERAL_ERROR"
     fi
   else
     # Backup not due
@@ -1621,7 +1621,7 @@ if [[ "$AUTO_MODE" == true ]]; then
       fi
     fi
   fi
-  exit 0
+  exit "$EXIT_SUCCESS"
 fi
 
 # Handle find/search subcommand
@@ -1762,7 +1762,7 @@ if [[ "$FIND_MODE" == true ]]; then
     echo ""
   fi
 
-  exit 0
+  exit "$EXIT_SUCCESS"
 fi
 
 # Create timestamped backup directory
@@ -2014,4 +2014,4 @@ if [[ "$MAX_BACKUPS" -gt 0 ]]; then
   fi
 fi
 
-exit 0
+exit "$EXIT_SUCCESS"

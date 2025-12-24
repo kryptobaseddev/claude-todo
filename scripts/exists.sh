@@ -153,7 +153,7 @@ main() {
         ;;
       --help|-h)
         usage
-        exit 0
+        exit "$EXIT_SUCCESS"
         ;;
       -*)
         if [[ "${FORMAT:-}" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
