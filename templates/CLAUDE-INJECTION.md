@@ -25,6 +25,8 @@ ct exists <id>             # Verify task exists
 ct dash                    # Project overview
 ct analyze                 # Task triage (JSON default)
 ct analyze --auto-focus    # Auto-set focus to top task
+ct delete <id> --reason "..."  # Cancel/soft-delete task
+ct uncancel <id>           # Restore cancelled task
 ```
 
 ### Command Discovery
