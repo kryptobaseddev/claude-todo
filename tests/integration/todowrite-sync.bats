@@ -260,6 +260,30 @@ EOF
     refute_output --partial 'T004'
 }
 
+@test "inject: excludes cancelled tasks" {
+    create_sync_test_fixture
+
+    # Add a cancelled task to the fixture
+    jq '.tasks += [{
+      "id": "T005",
+      "title": "Cancelled task should not appear",
+      "description": "This task was cancelled",
+      "status": "cancelled",
+      "priority": "medium",
+      "phase": "core",
+      "createdAt": "2025-12-15T10:00:00Z",
+      "cancelledAt": "2025-12-15T11:00:00Z"
+    }]' "$TODO_FILE" > "${TODO_FILE}.tmp"
+    mv "${TODO_FILE}.tmp" "$TODO_FILE"
+
+    run bash "$INJECT_SCRIPT" --quiet --json
+    assert_success
+
+    # T005 is cancelled, should not be injected
+    refute_output --partial 'T005'
+    refute_output --partial 'Cancelled task'
+}
+
 @test "inject: creates session state file for round-trip" {
     create_sync_test_fixture
 

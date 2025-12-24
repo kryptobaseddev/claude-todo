@@ -548,6 +548,44 @@
       }
     },
 
+    "cancellation": {
+      "type": "object",
+      "description": "Configuration for task cancellation/deletion behavior. Safety-first defaults for automation.",
+      "additionalProperties": false,
+      "properties": {
+        "cascadeConfirmThreshold": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 10,
+          "description": "Prompt for confirmation when cascade operation affects more than N tasks. Covers typical epic sizes."
+        },
+        "requireReason": {
+          "type": "boolean",
+          "default": true,
+          "description": "Require --reason flag when cancelling tasks. Enforces accountability and audit trails."
+        },
+        "daysUntilArchive": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 365,
+          "default": 3,
+          "description": "Days before cancelled tasks are automatically archived. 0 disables auto-archive."
+        },
+        "allowCascade": {
+          "type": "boolean",
+          "default": true,
+          "description": "Allow --children=cascade mode for parent tasks. When false, only block/orphan/fail modes permitted."
+        },
+        "defaultChildStrategy": {
+          "type": "string",
+          "enum": ["block", "orphan", "cascade", "fail"],
+          "default": "block",
+          "description": "Default behavior for --children flag. block=prevent if has children, orphan=detach children, cascade=cancel children, fail=error."
+        }
+      }
+    },
+
     "hierarchy": {
       "type": "object",
       "description": "Hierarchy constraints for Epic → Task → Subtask structure. LLM-Agent-First design: limits are organizational, not cognitive.",

@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://claude-todo.dev/schemas/v3/todo.schema.json",
+  "$id": "https://claude-todo.dev/schemas/v3.1/todo.schema.json",
   "title": "CLAUDE-TODO Task Schema",
-  "description": "LLM-Agent-First task tracking (Spec v3.0) with hierarchy support (Epic/Task/Subtask), integrity verification, session tracking, and anti-hallucination safeguards.",
+  "description": "LLM-Agent-First task tracking (Spec v3.1) with hierarchy support (Epic/Task/Subtask), soft-delete cancellation, integrity verification, session tracking, and anti-hallucination safeguards.",
   "type": "object",
   "required": ["version", "project", "lastUpdated", "tasks", "_meta"],
   "additionalProperties": false,
@@ -95,7 +95,7 @@
         "specVersion": {
           "type": "string",
           "pattern": "^\\d+\\.\\d+\\.\\d+$",
-          "default": "3.0.0",
+          "default": "3.1.0",
           "description": "LLM-Agent-First Spec version this data conforms to. Semantic versioning (major.minor.patch)."
         },
         "checksum": {
@@ -233,8 +233,8 @@
         },
         "status": {
           "type": "string",
-          "enum": ["pending", "active", "blocked", "done"],
-          "description": "pending=ready, active=working (ONE ONLY), blocked=stuck, done=completed."
+          "enum": ["pending", "active", "blocked", "done", "cancelled"],
+          "description": "pending=ready, active=working (ONE ONLY), blocked=stuck, done=completed, cancelled=soft-deleted."
         },
         "priority": {
           "type": "string",
@@ -311,6 +311,18 @@
           "type": "string",
           "format": "date-time",
           "description": "ISO 8601 completion timestamp. REQUIRED when status='done'."
+        },
+        "cancelledAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 cancellation timestamp. REQUIRED when status='cancelled'."
+        },
+        "cancellationReason": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 300,
+          "pattern": "^[^`$;|&<>]*$",
+          "description": "Reason for cancellation. REQUIRED when status='cancelled'. 5-300 chars, no shell metacharacters."
         }
       },
       "allOf": [
@@ -321,6 +333,10 @@
         {
           "if": { "properties": { "status": { "const": "done" } } },
           "then": { "required": ["completedAt"] }
+        },
+        {
+          "if": { "properties": { "status": { "const": "cancelled" } } },
+          "then": { "required": ["cancelledAt", "cancellationReason"] }
         }
       ]
     }

@@ -258,8 +258,8 @@ get_tasks_to_inject() {
     fi
 
     if [[ "$focused_only" == "true" && -n "$focus_id" ]]; then
-        # Only return focused task
-        jq -c "[.tasks[] | select(.id == \"$focus_id\")]" "$todo_file"
+        # Only return focused task (exclude if cancelled)
+        jq -c "[.tasks[] | select(.id == \"$focus_id\" and .status != \"cancelled\")]" "$todo_file"
         return
     fi
 
@@ -271,11 +271,11 @@ get_tasks_to_inject() {
 
     # Build task list with tiers and phase filtering
     jq -c --arg focus_id "$focus_id" --arg focus_phase "$focus_phase" --arg phase_filter "$effective_phase" --argjson max "$max_tasks" '
-        # Get focused task (tier 1)
-        (.tasks[] | select(.id == $focus_id and .status != "done")) as $focused |
+        # Get focused task (tier 1) - exclude done and cancelled
+        (.tasks[] | select(.id == $focus_id and .status != "done" and .status != "cancelled")) as $focused |
 
-        # Get all non-done tasks, optionally filtered by phase
-        [.tasks[] | select(.status != "done") |
+        # Get all active tasks (exclude done and cancelled), optionally filtered by phase
+        [.tasks[] | select(.status != "done" and .status != "cancelled") |
          if $phase_filter != "" then select(.phase == $phase_filter) else . end] |
 
         # Sort by tier priority

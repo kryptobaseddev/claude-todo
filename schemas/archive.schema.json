@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://claude-todo.dev/schemas/v1/archive.schema.json",
+  "$id": "https://claude-todo.dev/schemas/v3.1/archive.schema.json",
   "title": "CLAUDE-TODO Archive Schema",
-  "description": "Storage for completed tasks. Archived tasks are IMMUTABLE - never modify after archival.",
+  "description": "Storage for completed and cancelled tasks. Archived tasks are IMMUTABLE - never modify after archival.",
   "type": "object",
   "required": ["version", "project", "archivedTasks", "_meta"],
   "additionalProperties": false,
@@ -92,6 +92,12 @@
       "type": "object",
       "description": "Computed statistics. Regenerate on archive operations.",
       "properties": {
+        "cancelled": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Total count of cancelled tasks archived."
+        },
         "byPhase": {
           "type": "object",
           "description": "Task counts by phase.",
@@ -133,7 +139,7 @@
       "properties": {
         "id": { "type": "string", "pattern": "^T\\d{3,}$" },
         "title": { "type": "string" },
-        "status": { "type": "string", "const": "done" },
+        "status": { "type": "string", "enum": ["done", "cancelled"] },
         "priority": { "type": "string", "enum": ["critical", "high", "medium", "low"] },
         "phase": { "type": "string" },
         "description": { "type": "string" },
@@ -144,6 +150,13 @@
         "labels": { "type": "array", "items": { "type": "string" } },
         "createdAt": { "type": "string", "format": "date-time" },
         "completedAt": { "type": "string", "format": "date-time" },
+        "cancelledAt": { "type": "string", "format": "date-time" },
+        "cancellationReason": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 300,
+          "pattern": "^[^`$;|&<>]*$"
+        },
         "_archive": {
           "type": "object",
           "required": ["archivedAt", "reason"],
@@ -157,8 +170,8 @@
             },
             "reason": {
               "type": "string",
-              "enum": ["auto", "manual", "stale", "force", "cascade", "phase-complete", "label-policy"],
-              "description": "Archival trigger: auto=config rules, manual=user request, stale=exceeded retention, force=forced archive, cascade=parent archived, phase-complete=phase finished, label-policy=label rule matched."
+              "enum": ["auto", "manual", "stale", "force", "cascade", "phase-complete", "label-policy", "cancelled"],
+              "description": "Archival trigger: auto=config rules, manual=user request, stale=exceeded retention, force=forced archive, cascade=parent archived, phase-complete=phase finished, label-policy=label rule matched, cancelled=task was cancelled/soft-deleted."
             },
             "sessionId": {
               "type": "string",
@@ -254,6 +267,33 @@
                     "type": "string"
                   },
                   "description": "Reasons why restoration might fail or require manual intervention."
+                }
+              }
+            },
+            "cancellationDetails": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "Details about task cancellation. Present when reason='cancelled'.",
+              "properties": {
+                "cancelledAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "ISO 8601 timestamp when the task was cancelled."
+                },
+                "cancellationReason": {
+                  "type": "string",
+                  "minLength": 5,
+                  "maxLength": 300,
+                  "description": "User-provided reason for cancellation."
+                },
+                "cancelledBy": {
+                  "type": "string",
+                  "description": "Session ID or user that performed the cancellation."
+                },
+                "previousStatus": {
+                  "type": "string",
+                  "enum": ["pending", "active", "blocked"],
+                  "description": "Task status before cancellation."
                 }
               }
             }

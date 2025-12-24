@@ -96,6 +96,22 @@ readonly EXIT_CIRCULAR_REFERENCE=14
 # Examples: parentId references deleted/archived task
 readonly EXIT_ORPHAN_DETECTED=15
 
+# Task has children, cannot delete without strategy
+# Examples: delete T001 where T001 has child tasks
+readonly EXIT_HAS_CHILDREN=16
+
+# Task is completed, should use archive instead
+# Examples: delete T001 where T001.status is "done"
+readonly EXIT_TASK_COMPLETED=17
+
+# Cascade deletion partially failed
+# Examples: some child tasks failed to delete during --children=cascade
+readonly EXIT_CASCADE_FAILED=18
+
+# Task has dependents, cannot delete without --orphan flag
+# Examples: delete T001 where other tasks have T001 in their depends array
+readonly EXIT_HAS_DEPENDENTS=19
+
 # ============================================================================
 # CONCURRENCY ERROR CODES (20-29)
 # Multi-agent coordination errors
@@ -194,6 +210,10 @@ get_exit_code_name() {
         13)  echo "INVALID_PARENT_TYPE" ;;
         14)  echo "CIRCULAR_REFERENCE" ;;
         15)  echo "ORPHAN_DETECTED" ;;
+        16)  echo "HAS_CHILDREN" ;;
+        17)  echo "TASK_COMPLETED" ;;
+        18)  echo "CASCADE_FAILED" ;;
+        19)  echo "HAS_DEPENDENTS" ;;
         # Concurrency (20-29)
         20)  echo "CHECKSUM_MISMATCH" ;;
         21)  echo "CONCURRENT_MODIFICATION" ;;
@@ -226,7 +246,9 @@ is_recoverable_code() {
         # Recoverable general errors
         1|2|4|6|7|8) return 0 ;;
         # Recoverable hierarchy errors (can be fixed by user action)
-        10|11|12|13|15) return 0 ;;
+        10|11|12|13|15|16|17|19) return 0 ;;
+        # Not recoverable: cascade failure (partial state, needs manual intervention)
+        18) return 1 ;;
         # Recoverable concurrency errors (retry may succeed)
         20|21|22) return 0 ;;
         # Special codes are not errors, so "recoverable" doesn't apply
@@ -295,6 +317,10 @@ export EXIT_SIBLING_LIMIT
 export EXIT_INVALID_PARENT_TYPE
 export EXIT_CIRCULAR_REFERENCE
 export EXIT_ORPHAN_DETECTED
+export EXIT_HAS_CHILDREN
+export EXIT_TASK_COMPLETED
+export EXIT_CASCADE_FAILED
+export EXIT_HAS_DEPENDENTS
 
 # Export constants - Concurrency (20-29)
 export EXIT_CHECKSUM_MISMATCH

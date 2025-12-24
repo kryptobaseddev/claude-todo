@@ -5,6 +5,47 @@ All notable changes to the claude-todo system will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.0] - 2025-12-24
+
+### Added
+- **Task Deletion System with Cancelled Status** (T700 EPIC): Complete soft-delete functionality
+  - New `delete` command (`cancel` alias) for task cancellation with required `--reason`
+  - Child handling strategies: `--children cascade|orphan|block` (default: block)
+  - Cascade limit with `--limit N` (default: 10) for safety
+  - Dry-run preview with `--dry-run` flag showing impact analysis
+  - New `uncancel` command (`restore-cancelled` alias) to restore cancelled tasks
+  - Cascade restore with `--cascade` flag for parent+children restoration
+  - New `cancelled` status in task schema (v3.1.0)
+  - Exit codes: `EXIT_HAS_CHILDREN` (16), `EXIT_TASK_COMPLETED` (17), `EXIT_CASCADE_FAILED` (18)
+  - Focus auto-clear when deleting focused task
+  - Archive integration with `cancellationDetails` object
+  - Dependency cleanup on delete (removes from dependents' `depends` arrays)
+  - Audit logging with `task_cancelled` and `task_restored_from_cancelled` actions
+  - TodoWrite sync excludes cancelled tasks from injection
+
+### New Files
+- `scripts/delete.sh` - Delete command entry point
+- `scripts/uncancel.sh` - Restore cancelled tasks command
+- `lib/cancel-ops.sh` - Core cancellation operations
+- `lib/deletion-strategy.sh` - Child handling strategy pattern
+- `lib/delete-preview.sh` - Dry-run preview functionality
+- `lib/archive-cancel.sh` - Archive integration for cancelled tasks
+- `docs/commands/delete.md` - Delete command documentation
+- `docs/commands/uncancel.md` - Uncancel command documentation
+
+### Schema Updates
+- `todo.schema.json` v3.1.0: Added `cancelled` status, `cancelledAt`, `cancellationReason` fields
+- `archive.schema.json`: Added `cancelled` reason, `cancellationDetails` object, `statistics.cancelled`
+- `config.schema.json`: Added `cancellation.*` settings (cascadeConfirmThreshold, requireReason, etc.)
+- `error.schema.json`: Added deletion-related error codes
+
+### Tests
+- `tests/unit/delete.bats` (41 tests) - Delete command unit tests
+- `tests/unit/uncancel.bats` (25 tests) - Uncancel command unit tests
+- `tests/unit/cancel-ops.bats` (39 tests) - Core operations tests
+- `tests/unit/delete-preview.bats` (26 tests) - Dry-run preview tests
+- `tests/integration/delete-workflow.bats` (30 tests) - Full lifecycle tests
+
 ## [0.31.2] - 2025-12-23
 
 ### Added

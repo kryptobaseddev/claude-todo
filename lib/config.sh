@@ -107,6 +107,16 @@ declare -A ENV_TO_CONFIG=(
 
     # Debug settings
     ["CLAUDE_TODO_DEBUG"]="cli.debug.enabled"
+
+    # Cancellation settings
+    # NOTE: These mappings are explicit overrides for documentation purposes.
+    # While env_to_config_path() would auto-convert these, explicit mappings
+    # make the supported environment variables discoverable and self-documenting.
+    ["CLAUDE_TODO_CANCELLATION_CASCADE_CONFIRM_THRESHOLD"]="cancellation.cascadeConfirmThreshold"
+    ["CLAUDE_TODO_CANCELLATION_REQUIRE_REASON"]="cancellation.requireReason"
+    ["CLAUDE_TODO_CANCELLATION_DAYS_UNTIL_ARCHIVE"]="cancellation.daysUntilArchive"
+    ["CLAUDE_TODO_CANCELLATION_ALLOW_CASCADE"]="cancellation.allowCascade"
+    ["CLAUDE_TODO_CANCELLATION_DEFAULT_CHILD_STRATEGY"]="cancellation.defaultChildStrategy"
 )
 
 # ============================================================================
@@ -499,3 +509,56 @@ export -f get_effective_config
 export -f get_config_section
 export -f validate_config
 export -f init_global_config
+
+# ============================================================================
+# CANCELLATION CONFIGURATION GETTERS
+# ============================================================================
+
+# Get cascade confirmation threshold
+# Returns: integer (default: 10)
+# Usage: threshold=$(get_cascade_threshold)
+get_cascade_threshold() {
+    get_config_value "cancellation.cascadeConfirmThreshold" "10"
+}
+
+# Check if reason is required for cancellation
+# Returns: "true" or "false" (default: true)
+# Usage: if [[ "$(get_require_reason)" == "true" ]]; then ...
+get_require_reason() {
+    get_config_value "cancellation.requireReason" "true"
+}
+
+# Get days until cancelled tasks are archived
+# Returns: integer (default: 3)
+# Usage: days=$(get_cancel_days_until_archive)
+get_cancel_days_until_archive() {
+    get_config_value "cancellation.daysUntilArchive" "3"
+}
+
+# Check if cascade mode is allowed
+# Returns: "true" or "false" (default: true)
+# Usage: if [[ "$(get_allow_cascade)" == "true" ]]; then ...
+get_allow_cascade() {
+    get_config_value "cancellation.allowCascade" "true"
+}
+
+# Get default child strategy for cancellation
+# Returns: "block", "orphan", "cascade", or "fail" (default: block)
+# Usage: strategy=$(get_default_child_strategy)
+get_default_child_strategy() {
+    get_config_value "cancellation.defaultChildStrategy" "block"
+}
+
+# Get entire cancellation config section as JSON
+# Returns: JSON object with all cancellation settings
+# Usage: config_json=$(get_cancellation_config)
+get_cancellation_config() {
+    get_config_section "cancellation" "effective"
+}
+
+export -f get_cascade_threshold
+export -f get_require_reason
+export -f get_cancel_days_until_archive
+export -f get_allow_cascade
+export -f get_default_child_strategy
+export -f get_cancellation_config

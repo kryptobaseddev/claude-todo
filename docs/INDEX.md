@@ -64,6 +64,7 @@
 | **[commands/commands.md](commands/commands.md)** | Commands query and discovery | LLM-first command lookup (JSON default, native filters) |
 | **[commands/config.md](commands/config.md)** | Configuration command documentation | Viewing and modifying settings (project and global) |
 | **[commands/dash.md](commands/dash.md)** | Dashboard command documentation | Using project overview features |
+| **[commands/delete.md](commands/delete.md)** | Delete/cancel task command documentation | Soft-delete tasks with child handling strategies |
 | **[commands/deps.md](commands/deps.md)** | Dependency visualization documentation | Understanding task dependencies |
 | **[commands/exists.md](commands/exists.md)** | Task existence validation documentation | Validating task IDs in scripts and CI/CD pipelines |
 | **[commands/export.md](commands/export.md)** | Export command documentation | Exporting tasks in CSV, TSV, JSON, markdown formats |
@@ -89,6 +90,7 @@
 | **[commands/sync.md](commands/sync.md)** | TodoWrite synchronization command | Bidirectional sync with Claude Code's TodoWrite |
 | **[commands/stats.md](commands/stats.md)** | Statistics command documentation | Generating project statistics |
 | **[commands/tab-completion.md](commands/tab-completion.md)** | Tab completion setup and configuration | Setting up bash/zsh shell completions |
+| **[commands/uncancel.md](commands/uncancel.md)** | Restore cancelled tasks documentation | Restore cancelled tasks back to pending status |
 | **[commands/update.md](commands/update.md)** | Update task command documentation | Modifying existing tasks |
 | **[commands/validate.md](commands/validate.md)** | Validate command documentation | Checking project integrity |
 

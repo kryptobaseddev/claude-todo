@@ -66,6 +66,9 @@ if [[ -z "${VALID_ACTIONS:-}" ]]; then
         "task_updated"
         "status_changed"
         "task_archived"
+        "task_cancelled"
+        "task_restored_from_cancelled"
+        "dependency_removed"
         "focus_changed"
         "config_changed"
         "validation_run"
@@ -872,6 +875,114 @@ handle_log_error() {
     local error_msg="$1"
     echo "WARNING: Logging failed: $error_msg" >&2
     echo "This will not prevent the operation from completing" >&2
+}
+
+
+# ============================================================================
+# CANCELLATION LOGGING FUNCTIONS
+# ============================================================================
+
+# Log task cancellation with full cascade details
+# Parameters:
+#   $1 - Primary task ID being cancelled
+#   $2 - Cancellation reason
+#   $3 - Child handling mode (cascade, orphan, block)
+#   $4 - JSON array of all affected task IDs (including primary)
+#   $5 - Session ID (optional)
+log_task_cancelled() {
+    local task_id="$1"
+    local reason="$2"
+    local child_mode="${3:-orphan}"
+    local affected_ids="${4:-[]}"
+    local session_id="${5:-null}"
+    local before
+    local after
+    local details
+    local cascade_count
+    local original_status="${6:-pending}"
+
+    # Calculate cascade count (affected minus primary task)
+    cascade_count=$(echo "$affected_ids" | jq 'length - 1')
+    [[ "$cascade_count" -lt 0 ]] && cascade_count=0
+
+    before=$(jq -n --arg status "$original_status" '{status: $status}')
+    after=$(jq -n '{status: "cancelled"}')
+
+    details=$(jq -n \
+        --arg reason "$reason" \
+        --arg mode "$child_mode" \
+        --argjson affected "$affected_ids" \
+        --argjson count "$cascade_count" \
+        '{
+            originalStatus: $status,
+            cancellationReason: $reason,
+            childHandlingMode: $mode,
+            affectedTaskIds: $affected,
+            cascadeCount: $count
+        }' --arg status "$original_status")
+
+    log_operation "task_cancelled" "system" "$task_id" "$before" "$after" "$details" "$session_id"
+}
+
+# Log task restoration from cancelled status
+# Parameters:
+#   $1 - Task ID being restored
+#   $2 - Original cancellation reason (for audit trail)
+#   $3 - New status to restore to
+#   $4 - Session ID (optional)
+log_task_restored() {
+    local task_id="$1"
+    local original_reason="${2:-}"
+    local new_status="${3:-pending}"
+    local session_id="${4:-null}"
+    local before
+    local after
+    local details
+
+    before=$(jq -n '{status: "cancelled"}')
+    after=$(jq -n --arg status "$new_status" '{status: $status}')
+
+    if [[ -n "$original_reason" ]]; then
+        details=$(jq -n \
+            --arg reason "$original_reason" \
+            --arg new_status "$new_status" \
+            '{
+                restoredFrom: "cancelled",
+                originalCancellationReason: $reason,
+                restoredToStatus: $new_status
+            }')
+    else
+        details=$(jq -n --arg new_status "$new_status" '{
+            restoredFrom: "cancelled",
+            restoredToStatus: $new_status
+        }')
+    fi
+
+    log_operation "task_restored_from_cancelled" "system" "$task_id" "$before" "$after" "$details" "$session_id"
+}
+
+# Log dependency removal (e.g., when a depended-upon task is cancelled)
+# Parameters:
+#   $1 - Task ID that had dependency removed
+#   $2 - Removed dependency ID (the cancelled task)
+#   $3 - Reason for removal
+#   $4 - Session ID (optional)
+log_dependency_removed() {
+    local task_id="$1"
+    local removed_dep_id="$2"
+    local reason="${3:-task_cancelled}"
+    local session_id="${4:-null}"
+    local details
+
+    details=$(jq -n \
+        --arg removed "$removed_dep_id" \
+        --arg reason "$reason" \
+        '{
+            removedDependencyId: $removed,
+            removalReason: $reason
+        }')
+
+    log_operation "dependency_removed" "system" "$task_id" "null" "null" "$details" "$session_id"
 }
 
 # ============================================================================

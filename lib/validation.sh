@@ -69,7 +69,7 @@ fi
 # CONSTANTS
 # ============================================================================
 
-readonly VALID_STATUSES=("pending" "active" "done" "blocked")
+readonly VALID_STATUSES=("pending" "active" "done" "blocked" "cancelled")
 readonly VALID_OPERATIONS=("create" "update" "complete" "archive" "restore" "delete" "validate" "backup")
 readonly VALID_PHASE_STATUSES=("pending" "active" "completed")
 
@@ -683,6 +683,162 @@ validate_session_note() {
 export -f validate_session_note
 
 # ============================================================================
+# CANCELLATION VALIDATION
+# ============================================================================
+
+# Minimum and maximum length for cancellation reason
+readonly MIN_CANCEL_REASON_LENGTH=5
+readonly MAX_CANCEL_REASON_LENGTH=300
+
+# Validate cancellation reason
+# Args: $1 = reason string
+# Returns: 0 if valid, 1 if invalid (with structured error output)
+validate_cancel_reason() {
+    local reason="$1"
+
+    # Check for empty reason
+    if [[ -z "$reason" ]]; then
+        echo "[ERROR] Cancellation reason cannot be empty" >&2
+        echo "  field: cancellationReason" >&2
+        echo "  constraint: required" >&2
+        return 1
+    fi
+
+    # Check minimum length
+    if [[ ${#reason} -lt $MIN_CANCEL_REASON_LENGTH ]]; then
+        echo "[ERROR] Cancellation reason too short (${#reason}/$MIN_CANCEL_REASON_LENGTH minimum characters)" >&2
+        echo "  field: cancellationReason" >&2
+        echo "  constraint: minLength=$MIN_CANCEL_REASON_LENGTH" >&2
+        echo "  provided: ${#reason}" >&2
+        return 1
+    fi
+
+    # Check maximum length
+    if [[ ${#reason} -gt $MAX_CANCEL_REASON_LENGTH ]]; then
+        echo "[ERROR] Cancellation reason too long (${#reason}/$MAX_CANCEL_REASON_LENGTH maximum characters)" >&2
+        echo "  field: cancellationReason" >&2
+        echo "  constraint: maxLength=$MAX_CANCEL_REASON_LENGTH" >&2
+        echo "  provided: ${#reason}" >&2
+        return 1
+    fi
+
+    # Check for newlines and carriage returns (must be single-line)
+    if [[ "$reason" == *$'\n'* ]] || [[ "$reason" == *$'\r'* ]]; then
+        echo "[ERROR] Cancellation reason cannot contain newlines or carriage returns" >&2
+        echo "  field: cancellationReason" >&2
+        echo "  constraint: single-line text only" >&2
+        echo "  security: prevents injection attacks" >&2
+        return 1
+    fi
+
+    # Check for shell metacharacters that could enable injection attacks
+    # Disallowed: | ; & $ ` \ < > ( ) { } [ ] ! " '
+    if [[ "$reason" == *'|'* ]] || [[ "$reason" == *';'* ]] || \
+       [[ "$reason" == *'&'* ]] || [[ "$reason" == *'$'* ]] || \
+       [[ "$reason" == *'`'* ]] || [[ "$reason" == *'\'* ]] || \
+       [[ "$reason" == *'<'* ]] || [[ "$reason" == *'>'* ]] || \
+       [[ "$reason" == *'('* ]] || [[ "$reason" == *')'* ]] || \
+       [[ "$reason" == *'{'* ]] || [[ "$reason" == *'}'* ]] || \
+       [[ "$reason" == *'['* ]] || [[ "$reason" == *']'* ]] || \
+       [[ "$reason" == *'!'* ]] || [[ "$reason" == *'"'* ]] || \
+       [[ "$reason" == *"'"* ]]; then
+        echo "[ERROR] Cancellation reason contains disallowed characters" >&2
+        echo "  field: cancellationReason" >&2
+        echo "  constraint: no shell metacharacters (|;&\$\`\\<>(){}[]!\"')" >&2
+        echo "  security: prevents injection attacks" >&2
+        return 1
+    fi
+
+    return 0
+}
+
+export -f validate_cancel_reason
+
+# Check cancelled fields consistency
+# When status=cancelled: cancelledAt and cancellationReason must be present
+# When status!=cancelled: these fields should not be present
+# Args: $1 = todo file path, $2 = task index
+# Returns: 0 if valid, 1 if invalid
+check_cancelled_fields() {
+    local file="$1"
+    local task_idx="$2"
+    local errors=0
+
+    # Get task status and cancellation fields
+    local status cancelled_at cancellation_reason
+    status=$(jq -r ".tasks[$task_idx].status // empty" "$file")
+    cancelled_at=$(jq -r ".tasks[$task_idx].cancelledAt // empty" "$file")
+    cancellation_reason=$(jq -r ".tasks[$task_idx].cancellationReason // empty" "$file")
+
+    if [[ "$status" == "cancelled" ]]; then
+        # Cancelled tasks MUST have cancelledAt
+        if [[ -z "$cancelled_at" ]]; then
+            echo "[ERROR] Task at index $task_idx: cancelled status requires cancelledAt timestamp" >&2
+            echo "  field: cancelledAt" >&2
+            echo "  constraint: required when status=cancelled" >&2
+            ((errors++))
+        fi
+
+        # Cancelled tasks MUST have cancellationReason
+        if [[ -z "$cancellation_reason" ]]; then
+            echo "[ERROR] Task at index $task_idx: cancelled status requires cancellationReason" >&2
+            echo "  field: cancellationReason" >&2
+            echo "  constraint: required when status=cancelled" >&2
+            ((errors++))
+        else
+            # Validate the reason content
+            if ! validate_cancel_reason "$cancellation_reason" 2>/dev/null; then
+                validate_cancel_reason "$cancellation_reason"
+                ((errors++))
+            fi
+        fi
+
+        # Validate cancelledAt timestamp format if present
+        if [[ -n "$cancelled_at" ]]; then
+            if [[ ! "$cancelled_at" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$ ]]; then
+                echo "[ERROR] Task at index $task_idx: invalid cancelledAt timestamp format" >&2
+                echo "  field: cancelledAt" >&2
+                echo "  expected: ISO 8601 format (YYYY-MM-DDTHH:MM:SSZ)" >&2
+                echo "  provided: $cancelled_at" >&2
+                ((errors++))
+            else
+                # Check timestamp is not in the future
+                local cancelled_epoch current_epoch
+                cancelled_epoch=$(timestamp_to_epoch "$cancelled_at")
+                current_epoch=$(date +%s)
+                if [[ $cancelled_epoch -gt $current_epoch ]]; then
+                    echo "[ERROR] Task at index $task_idx: cancelledAt is in the future" >&2
+                    echo "  field: cancelledAt" >&2
+                    echo "  constraint: must not be future timestamp" >&2
+                    ((errors++))
+                fi
+            fi
+        fi
+    else
+        # Non-cancelled tasks should NOT have cancellation fields
+        if [[ -n "$cancelled_at" ]]; then
+            echo "[WARN] Task at index $task_idx: cancelledAt present but status is '$status'" >&2
+            echo "  field: cancelledAt" >&2
+            echo "  constraint: only allowed when status=cancelled" >&2
+            echo "  recommendation: remove cancelledAt or change status to cancelled" >&2
+            # Warning only, not counted as error for backward compatibility
+        fi
+
+        if [[ -n "$cancellation_reason" ]]; then
+            echo "[WARN] Task at index $task_idx: cancellationReason present but status is '$status'" >&2
+            echo "  field: cancellationReason" >&2
+            echo "  constraint: only allowed when status=cancelled" >&2
+            echo "  recommendation: remove cancellationReason or change status to cancelled" >&2
+            # Warning only, not counted as error for backward compatibility
+        fi
+    fi
+
+    [[ $errors -eq 0 ]]
+}
+
+export -f check_cancelled_fields
+
+# ============================================================================
 # TASK OBJECT VALIDATION
 # ============================================================================
 
@@ -714,7 +870,7 @@ validate_task() {
 
     if [[ -z "$status" ]]; then
         echo "ERROR: Task $task_idx missing 'status' field" >&2
-        echo "Fix: Add status field (pending|active|done|blocked)" >&2
+        echo "Fix: Add status field (pending|active|done|blocked|cancelled)" >&2
         ((errors++))
     fi
 
@@ -779,6 +935,11 @@ validate_task() {
             echo "Fix: ID should contain only alphanumeric, dash, and underscore" >&2
             ((errors++))
         fi
+    fi
+
+    # 6. Check cancelled status field consistency
+    if ! check_cancelled_fields "$file" "$task_idx"; then
+        ((errors++))
     fi
 
     [[ $errors -eq 0 ]]
@@ -955,27 +1116,35 @@ validate_status_transition() {
     case "$old_status" in
         "pending")
             case "$new_status" in
-                "active"|"blocked") return 0 ;;
+                "active"|"blocked"|"cancelled") return 0 ;;
                 *) ;;
             esac
             ;;
         "active")
             case "$new_status" in
-                "done"|"blocked"|"pending") return 0 ;;
+                "done"|"blocked"|"pending"|"cancelled") return 0 ;;
                 *) ;;
             esac
             ;;
         "done")
-            # Done tasks can only go back to pending (rare)
+            # Done tasks are terminal - can only restore to pending (rare edge case)
+            # Cannot cancel completed work - done is permanent state
             case "$new_status" in
                 "pending") return 0 ;;
                 *) ;;
             esac
             ;;
         "blocked")
-            # Blocked tasks can return to pending or active
+            # Blocked tasks can return to pending, active, or be cancelled
             case "$new_status" in
-                "pending"|"active") return 0 ;;
+                "pending"|"active"|"cancelled") return 0 ;;
+                *) ;;
+            esac
+            ;;
+        "cancelled")
+            # Cancelled is a terminal-ish state - can only restore to pending
+            case "$new_status" in
+                "pending") return 0 ;;
                 *) ;;
             esac
             ;;
@@ -983,10 +1152,11 @@ validate_status_transition() {
 
     echo "ERROR: Invalid status transition: '$old_status' → '$new_status'" >&2
     echo "Valid transitions:" >&2
-    echo "  pending → active, blocked" >&2
-    echo "  active → done, blocked, pending" >&2
-    echo "  done → pending" >&2
-    echo "  blocked → pending, active" >&2
+    echo "  pending → active, blocked, cancelled" >&2
+    echo "  active → done, blocked, pending, cancelled" >&2
+    echo "  done → pending (use archive for completed tasks)" >&2
+    echo "  blocked → pending, active, cancelled" >&2
+    echo "  cancelled → pending (restore only)" >&2
     return 1
 }
 

@@ -88,5 +88,13 @@
     "maxIncremental": 10,
     "maxArchiveBackups": 3,
     "safetyRetentionDays": 7
+  },
+
+  "cancellation": {
+    "cascadeConfirmThreshold": 10,
+    "requireReason": true,
+    "daysUntilArchive": 3,
+    "allowCascade": true,
+    "defaultChildStrategy": "block"
   }
 }

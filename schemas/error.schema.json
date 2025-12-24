@@ -82,6 +82,10 @@
             "E_INVALID_PARENT_TYPE",
             "E_CIRCULAR_REFERENCE",
             "E_ORPHAN_DETECTED",
+            "E_HAS_CHILDREN",
+            "E_TASK_COMPLETED",
+            "E_CASCADE_FAILED",
+            "E_CANCEL_REASON_REQUIRED",
             "E_CHECKSUM_MISMATCH",
             "E_CONCURRENT_MODIFICATION",
             "E_ID_COLLISION"
