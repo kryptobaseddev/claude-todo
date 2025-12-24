@@ -362,6 +362,14 @@ preextract_schema_patterns() {
         PATTERN_ERROR_LIB \
         <<< "$patterns" || true
 
+    # Unescape TSV-escaped backslashes (jq @tsv escapes \ as \\)
+    PATTERN_DEV_LIB_SOURCE="${PATTERN_DEV_LIB_SOURCE//\\\\/\\}"
+    PATTERN_DUAL_PATH="${PATTERN_DUAL_PATH//\\\\/\\}"
+    PATTERN_EXIT_CONSTANTS="${PATTERN_EXIT_CONSTANTS//\\\\/\\}"
+    PATTERN_EXIT_LIB="${PATTERN_EXIT_LIB//\\\\/\\}"
+    PATTERN_ERROR_LIB="${PATTERN_ERROR_LIB//\\\\/\\}"
+    PATTERN_DRY_RUN="${PATTERN_DRY_RUN//\\\\/\\}"
+
     # Export for use in sourced check scripts
     export PATTERN_DEV_LIB_SOURCE PATTERN_DUAL_PATH PATTERN_COMMAND_NAME PATTERN_VERSION_CENTRAL
     export PATTERN_FORMAT_FLAG PATTERN_QUIET_FLAG PATTERN_JSON_SHORTCUT PATTERN_HUMAN_SHORTCUT

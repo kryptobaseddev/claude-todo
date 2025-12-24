@@ -100,8 +100,21 @@ Libraries MUST be organized into four strict layers where dependencies flow **do
 
 Libraries MUST NOT:
 - Source libraries from a higher layer
-- Source libraries from the same layer (extract common code to lower layer)
+- Source libraries from the same layer (extract common code to lower layer), except Foundation Utilities (see Section 1.4)
 - Create circular dependency chains
+
+### 1.4 Foundation Utilities Exception
+
+Certain Layer 2 files provide essential infrastructure that other Layer 2 files MAY source despite the same-layer rule in Section 1.3. These "Foundation Utilities" are explicitly exempt:
+
+| File | Purpose | May Be Sourced By |
+|------|---------|-------------------|
+| `file-ops.sh` | Atomic file operations, JSON helpers | All Layer 2 files |
+| `logging.sh` | Audit logging, timestamp utilities | All Layer 2 files |
+
+**Rationale**: These utilities provide fundamental I/O primitives that cannot be reasonably refactored to a lower layer without creating Layer 1 bloat or duplicating code across all Layer 2 consumers.
+
+**Compliance**: The compliance checker (`dev/check-lib-compliance.sh`) implements this exception via the `FOUNDATION_UTILITIES` allowlist.
 
 ---
 

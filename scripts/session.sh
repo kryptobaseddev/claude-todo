@@ -6,7 +6,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_TODO_HOME="${CLAUDE_TODO_HOME:-$HOME/.claude-todo}"
 
-# Source version
+# Source version - use central VERSION file
+VERSION=$(cat "$CLAUDE_TODO_HOME/VERSION" 2>/dev/null || cat "$SCRIPT_DIR/../VERSION" 2>/dev/null || echo "0.36.0")
+
 # Source version library for proper version management
 if [[ -f "$CLAUDE_TODO_HOME/lib/version.sh" ]]; then
   source "$CLAUDE_TODO_HOME/lib/version.sh"
@@ -115,6 +117,7 @@ FORMAT=""
 QUIET=false
 
 COMMAND_NAME="session"
+DRY_RUN=false
 
 usage() {
   cat << EOF
@@ -134,6 +137,7 @@ Options:
   --human           Force text output (human-readable)
   --json            Force JSON output (machine-readable)
   -q, --quiet       Suppress informational messages
+  --dry-run         Show what would be changed without modifying files
   -h, --help        Show this help
 
 Format Auto-Detection:
@@ -153,21 +157,22 @@ Examples:
   claude-todo session status                   # Check current session
   claude-todo session info --json              # Detailed info as JSON
   claude-todo session status --format json     # Machine-readable status
+  claude-todo session start --dry-run          # Preview session start
 EOF
-  exit 0
+  exit "$EXIT_SUCCESS"
 }
 
 # Check dependencies
 if ! command -v jq &> /dev/null; then
-  log_error "jq is required but not installed" "E_DEPENDENCY_MISSING" 1 "Install jq: brew install jq (macOS) or apt install jq (Linux)"
-  exit 1
+  log_error "jq is required but not installed" "E_DEPENDENCY_MISSING" "$EXIT_DEPENDENCY_ERROR" "Install jq: brew install jq (macOS) or apt install jq (Linux)"
+  exit "$EXIT_DEPENDENCY_ERROR"
 fi
 
 # Check todo.json exists
 check_todo_exists() {
   if [[ ! -f "$TODO_FILE" ]]; then
-    log_error "Todo file not found: $TODO_FILE. Run 'claude-todo init' first" "E_NOT_INITIALIZED" 1 "Run 'claude-todo init' to initialize"
-    exit 1
+    log_error "Todo file not found: $TODO_FILE. Run 'claude-todo init' first" "E_NOT_INITIALIZED" "$EXIT_NOT_FOUND" "Run 'claude-todo init' to initialize"
+    exit "$EXIT_NOT_FOUND"
   fi
 }
 
@@ -245,8 +250,8 @@ cmd_start() {
   current_session=$(get_current_session)
 
   if [[ -n "$current_session" ]]; then
-    log_error "Session already active: $current_session" "E_SESSION_ACTIVE" 1 "Use 'claude-todo session end' first, or continue with current session"
-    exit 1
+    log_error "Session already active: $current_session" "E_SESSION_ACTIVE" "$EXIT_ALREADY_EXISTS" "Use 'claude-todo session end' first, or continue with current session"
+    exit "$EXIT_ALREADY_EXISTS"
   fi
 
   # Check session.warnOnNoFocus config setting
@@ -266,6 +271,35 @@ cmd_start() {
   local timestamp
   timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
+  # Handle --dry-run mode
+  if [[ "$DRY_RUN" == "true" ]]; then
+    if [[ "$FORMAT" == "json" ]]; then
+      jq -n \
+        --arg sid "$session_id" \
+        --arg ts "$timestamp" \
+        --arg version "${CLAUDE_TODO_VERSION:-$(get_version)}" \
+        '{
+          "$schema": "https://claude-todo.dev/schemas/v1/output.schema.json",
+          "_meta": {
+            "format": "json",
+            "command": "session start",
+            "timestamp": $ts,
+            "version": $version
+          },
+          "success": true,
+          "dryRun": true,
+          "wouldStart": {
+            "sessionId": $sid,
+            "timestamp": $ts
+          },
+          "message": "Would start new session (dry-run mode)"
+        }'
+    else
+      log_info "[DRY-RUN] Would start session: $session_id"
+    fi
+    exit "$EXIT_SUCCESS"
+  fi
+
   # Update todo.json with new session
   local updated_todo
   updated_todo=$(jq --arg sid "$session_id" --arg ts "$timestamp" '
@@ -273,8 +307,8 @@ cmd_start() {
     ._meta.lastModified = $ts
   ' "$TODO_FILE")
   save_json "$TODO_FILE" "$updated_todo" || {
-    log_error "Failed to start session" "E_FILE_WRITE_ERROR" 1 "Check file permissions on $TODO_FILE"
-    exit 1
+    log_error "Failed to start session" "E_FILE_WRITE_ERROR" "$EXIT_FILE_ERROR" "Check file permissions on $TODO_FILE"
+    exit "$EXIT_FILE_ERROR"
   }
 
   # Log session start
@@ -375,15 +409,15 @@ cmd_end() {
 
   if [[ -z "$current_session" ]]; then
     log_warn "No active session to end"
-    exit 0
+    exit "$EXIT_NO_CHANGE"
   fi
 
   # Check session.requireSessionNote config setting
   local require_note
   require_note=$(get_config_value "session.requireSessionNote" "false")
   if [[ "$require_note" == "true" ]] && [[ -z "$note" ]]; then
-    log_error "Session note required by configuration" "E_SESSION_NOTE_REQUIRED" 1 "Use --note 'Your session summary' to end the session"
-    exit 1
+    log_error "Session note required by configuration" "E_SESSION_NOTE_REQUIRED" "$EXIT_INVALID_INPUT" "Use --note 'Your session summary' to end the session"
+    exit "$EXIT_INVALID_INPUT"
   fi
 
   # Check session.sessionTimeoutHours for warning
@@ -428,6 +462,38 @@ cmd_end() {
   local timestamp
   timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
+  # Handle --dry-run mode
+  if [[ "$DRY_RUN" == "true" ]]; then
+    if [[ "$FORMAT" == "json" ]]; then
+      jq -n \
+        --arg sid "$current_session" \
+        --arg ts "$timestamp" \
+        --arg version "${CLAUDE_TODO_VERSION:-$(get_version)}" \
+        --arg note "$note" \
+        '{
+          "$schema": "https://claude-todo.dev/schemas/v1/output.schema.json",
+          "_meta": {
+            "format": "json",
+            "command": "session end",
+            "timestamp": $ts,
+            "version": $version
+          },
+          "success": true,
+          "dryRun": true,
+          "wouldEnd": {
+            "sessionId": $sid,
+            "timestamp": $ts,
+            "note": (if $note == "" then null else $note end)
+          },
+          "message": "Would end session (dry-run mode)"
+        }'
+    else
+      log_info "[DRY-RUN] Would end session: $current_session"
+      [[ -n "$note" ]] && log_info "[DRY-RUN] Would save note: $note"
+    fi
+    exit "$EXIT_SUCCESS"
+  fi
+
   # Build update JSON
   local update_expr='
     ._meta.activeSession = null |
@@ -449,8 +515,8 @@ cmd_end() {
     ' "$TODO_FILE")
   fi
   save_json "$TODO_FILE" "$updated_todo" || {
-    log_error "Failed to end session" "E_FILE_WRITE_ERROR" 1 "Check file permissions on $TODO_FILE"
-    exit 1
+    log_error "Failed to end session" "E_FILE_WRITE_ERROR" "$EXIT_FILE_ERROR" "Check file permissions on $TODO_FILE"
+    exit "$EXIT_FILE_ERROR"
   }
 
   # Log session end
@@ -660,6 +726,22 @@ cmd_info() {
   fi
 }
 
+# Parse global options before command
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --dry-run) DRY_RUN=true; shift ;;
+    -f|--format) FORMAT="$2"; shift 2 ;;
+    --json) FORMAT="json"; shift ;;
+    --human) FORMAT="text"; shift ;;
+    -q|--quiet) QUIET=true; shift ;;
+    -*) break ;;  # Unknown option, let subcommand handle
+    *) break ;;   # First non-option is command
+  esac
+done
+
+# Resolve format with TTY-aware detection
+FORMAT=$(resolve_format "$FORMAT")
+
 # Main command dispatch
 COMMAND="${1:-help}"
 shift || true
@@ -671,7 +753,7 @@ case "$COMMAND" in
   info)   cmd_info "$@" ;;
   -h|--help|help) usage ;;
   *)
-    log_error "Unknown command: $COMMAND" "E_INPUT_INVALID" 1 "Run 'claude-todo session --help' for usage"
-    exit 1
+    log_error "Unknown command: $COMMAND" "E_INPUT_INVALID" "$EXIT_INVALID_INPUT" "Run 'claude-todo session --help' for usage"
+    exit "$EXIT_INVALID_INPUT"
     ;;
 esac

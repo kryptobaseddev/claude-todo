@@ -6,43 +6,80 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LIB_DIR="$(dirname "$SCRIPT_DIR")/lib"
+CLAUDE_TODO_HOME="${CLAUDE_TODO_HOME:-$HOME/.claude-todo}"
+LIB_DIR="${SCRIPT_DIR}/../lib"
 
-# Source libraries
-source "$LIB_DIR/platform-compat.sh"
-source "$LIB_DIR/file-ops.sh"
-source "$LIB_DIR/phase-tracking.sh"
-source "$LIB_DIR/logging.sh"
-
-# Source output formatting libraries (LLM-Agent-First)
-if [[ -f "$LIB_DIR/output-format.sh" ]]; then
-    source "$LIB_DIR/output-format.sh"
-fi
-if [[ -f "$LIB_DIR/exit-codes.sh" ]]; then
+# Source libraries with dual-path fallback (Layer 0: Foundation)
+# shellcheck source=../lib/exit-codes.sh
+if [[ -f "$CLAUDE_TODO_HOME/lib/exit-codes.sh" ]]; then
+    source "$CLAUDE_TODO_HOME/lib/exit-codes.sh"
+elif [[ -f "$LIB_DIR/exit-codes.sh" ]]; then
     source "$LIB_DIR/exit-codes.sh"
 fi
-if [[ -f "$LIB_DIR/error-json.sh" ]]; then
+
+if [[ -f "$CLAUDE_TODO_HOME/lib/platform-compat.sh" ]]; then
+    source "$CLAUDE_TODO_HOME/lib/platform-compat.sh"
+elif [[ -f "$LIB_DIR/platform-compat.sh" ]]; then
+    source "$LIB_DIR/platform-compat.sh"
+fi
+
+# Source libraries (Layer 1: Core Infrastructure)
+if [[ -f "$CLAUDE_TODO_HOME/lib/error-json.sh" ]]; then
+    source "$CLAUDE_TODO_HOME/lib/error-json.sh"
+elif [[ -f "$LIB_DIR/error-json.sh" ]]; then
     source "$LIB_DIR/error-json.sh"
 fi
 
-# Source config library for unified config access (v0.24.0)
-if [[ -f "$LIB_DIR/config.sh" ]]; then
-    # shellcheck source=../lib/config.sh
+if [[ -f "$CLAUDE_TODO_HOME/lib/output-format.sh" ]]; then
+    source "$CLAUDE_TODO_HOME/lib/output-format.sh"
+elif [[ -f "$LIB_DIR/output-format.sh" ]]; then
+    source "$LIB_DIR/output-format.sh"
+fi
+
+# Source libraries (Layer 2: Core Services)
+if [[ -f "$CLAUDE_TODO_HOME/lib/validation.sh" ]]; then
+    source "$CLAUDE_TODO_HOME/lib/validation.sh"
+elif [[ -f "$LIB_DIR/validation.sh" ]]; then
+    source "$LIB_DIR/validation.sh"
+fi
+
+if [[ -f "$CLAUDE_TODO_HOME/lib/file-ops.sh" ]]; then
+    source "$CLAUDE_TODO_HOME/lib/file-ops.sh"
+elif [[ -f "$LIB_DIR/file-ops.sh" ]]; then
+    source "$LIB_DIR/file-ops.sh"
+fi
+
+if [[ -f "$CLAUDE_TODO_HOME/lib/phase-tracking.sh" ]]; then
+    source "$CLAUDE_TODO_HOME/lib/phase-tracking.sh"
+elif [[ -f "$LIB_DIR/phase-tracking.sh" ]]; then
+    source "$LIB_DIR/phase-tracking.sh"
+fi
+
+if [[ -f "$CLAUDE_TODO_HOME/lib/logging.sh" ]]; then
+    source "$CLAUDE_TODO_HOME/lib/logging.sh"
+elif [[ -f "$LIB_DIR/logging.sh" ]]; then
+    source "$LIB_DIR/logging.sh"
+fi
+
+if [[ -f "$CLAUDE_TODO_HOME/lib/config.sh" ]]; then
+    source "$CLAUDE_TODO_HOME/lib/config.sh"
+elif [[ -f "$LIB_DIR/config.sh" ]]; then
     source "$LIB_DIR/config.sh"
+fi
+
+# Source version library for proper version management
+if [[ -f "$CLAUDE_TODO_HOME/lib/version.sh" ]]; then
+    source "$CLAUDE_TODO_HOME/lib/version.sh"
+elif [[ -f "$LIB_DIR/version.sh" ]]; then
+    source "$LIB_DIR/version.sh"
 fi
 
 # Globals
 TODO_FILE="${CLAUDE_TODO_DIR:-.claude}/todo.json"
 FORMAT=""
 COMMAND_NAME="phase"
-
-# Source version
-# Source version library for proper version management
-LIB_DIR="${SCRIPT_DIR}/../lib"
-if [[ -f "$LIB_DIR/version.sh" ]]; then
-  # shellcheck source=../lib/version.sh
-  source "$LIB_DIR/version.sh"
-fi
+readonly COMMAND_NAME
+DRY_RUN=false
 QUIET=false
 
 # SUBCOMMANDS
@@ -76,7 +113,7 @@ cmd_show() {
         else
             echo "No current phase set"
         fi
-        return "${EXIT_NOT_FOUND:-4}"
+        return "$EXIT_NOT_FOUND"
     fi
 
     local phase_info
@@ -135,7 +172,7 @@ cmd_set() {
                     shift
                 else
                     output_error "$E_INPUT_INVALID" "Unexpected argument: $1"
-                    return "${EXIT_INVALID_INPUT:-2}"
+                    return "$EXIT_INVALID_INPUT"
                 fi
                 ;;
         esac
@@ -143,7 +180,7 @@ cmd_set() {
 
     if [[ -z "$slug" ]]; then
         output_error "$E_INPUT_MISSING" "Phase slug required"
-        return "${EXIT_INVALID_INPUT:-2}"
+        return "$EXIT_INVALID_INPUT"
     fi
 
     local old_phase
@@ -172,7 +209,7 @@ cmd_set() {
         else
             output_error "$E_PHASE_NOT_FOUND" "Phase '$slug' does not exist"
         fi
-        return "${EXIT_NOT_FOUND:-4}"
+        return "$EXIT_NOT_FOUND"
     fi
 
     # Detect rollback by comparing phase orders
@@ -215,7 +252,7 @@ cmd_set() {
                 else
                     output_error "$E_PHASE_INVALID" "Rolling back from '$old_name' (order $old_order) to '$new_name' (order $new_order) requires --rollback flag"
                 fi
-                return "${EXIT_VALIDATION_ERROR:-6}"
+                return "$EXIT_VALIDATION_ERROR"
             fi
 
             # Confirmation prompt unless --force
@@ -238,14 +275,14 @@ cmd_set() {
                                 "message": "Rollback requires --force flag in JSON mode (non-interactive)"
                             }
                         }'
-                    return "${EXIT_VALIDATION_ERROR:-6}"
+                    return "$EXIT_VALIDATION_ERROR"
                 else
                     echo "WARNING: This will rollback from '$old_name' (order $old_order) to '$new_name' (order $new_order)." >&2
                     read -p "Continue? [y/N] " -n 1 -r
                     echo
                     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
                         echo "Rollback cancelled"
-                        return 0
+                        return "$EXIT_SUCCESS"
                     fi
                 fi
             fi
@@ -269,6 +306,34 @@ cmd_set() {
                 echo "WARNING: Skipping $skipped_count intermediate phase(s) from '$old_phase' (order $old_order) to '$slug' (order $new_order)." >&2
             fi
         fi
+    fi
+
+    # Handle dry-run mode
+    if [[ "$DRY_RUN" == "true" ]]; then
+        if [[ "$FORMAT" == "json" ]]; then
+            local timestamp
+            timestamp=$(get_iso_timestamp)
+            jq -n \
+                --arg ts "$timestamp" \
+                --arg prev "${old_phase:-null}" \
+                --arg curr "$slug" \
+                '{
+                    "$schema": "https://claude-todo.dev/schemas/v1/output.schema.json",
+                    "_meta": {
+                        "command": "phase set",
+                        "timestamp": $ts
+                    },
+                    "success": true,
+                    "dryRun": true,
+                    "wouldSet": {
+                        "previousPhase": (if $prev == "null" or $prev == "" then null else $prev end),
+                        "newPhase": $curr
+                    }
+                }'
+        else
+            echo "[DRY-RUN] Would set phase to: $slug (from ${old_phase:-none})"
+        fi
+        return "$EXIT_SUCCESS"
     fi
 
     if set_current_phase "$slug" "$TODO_FILE" 2>/dev/null; then
@@ -357,7 +422,7 @@ cmd_set() {
                     }
                 }'
         fi
-        return "${EXIT_GENERAL_ERROR:-1}"
+        return "$EXIT_GENERAL_ERROR"
     fi
 }
 
@@ -388,7 +453,7 @@ cmd_start() {
         else
             output_error "$E_PHASE_NOT_FOUND" "Phase '$slug' does not exist"
         fi
-        return "${EXIT_NOT_FOUND:-4}"
+        return "$EXIT_NOT_FOUND"
     fi
 
     # Check phase status
@@ -417,7 +482,7 @@ cmd_start() {
         else
             output_error "$E_PHASE_INVALID" "Can only start pending phases (current: $current_status)"
         fi
-        return "${EXIT_INVALID_INPUT:-2}"
+        return "$EXIT_INVALID_INPUT"
     fi
 
     if start_phase "$slug" "$TODO_FILE" 2>/dev/null; then
@@ -463,7 +528,7 @@ cmd_start() {
                     }
                 }'
         fi
-        return "${EXIT_GENERAL_ERROR:-1}"
+        return "$EXIT_GENERAL_ERROR"
     fi
 }
 
@@ -495,7 +560,7 @@ cmd_complete() {
         else
             output_error "$E_PHASE_NOT_FOUND" "Phase '$slug' does not exist"
         fi
-        return "${EXIT_NOT_FOUND:-4}"
+        return "$EXIT_NOT_FOUND"
     fi
 
     # Check phase status
@@ -524,7 +589,7 @@ cmd_complete() {
         else
             output_error "$E_PHASE_INVALID" "Can only complete active phases (current: $current_status)"
         fi
-        return "${EXIT_INVALID_INPUT:-2}"
+        return "$EXIT_INVALID_INPUT"
     fi
 
     # Check for incomplete tasks
@@ -557,7 +622,7 @@ cmd_complete() {
         else
             output_error "$E_VALIDATION_REQUIRED" "Cannot complete phase '$slug' - $incomplete_count incomplete task(s) pending"
         fi
-        return "${EXIT_VALIDATION_ERROR:-6}"
+        return "$EXIT_VALIDATION_ERROR"
     fi
 
     started_at=$(jq -r --arg slug "$slug" '.project.phases[$slug].startedAt // null' "$TODO_FILE")
@@ -607,7 +672,7 @@ cmd_complete() {
                     }
                 }'
         fi
-        return "${EXIT_GENERAL_ERROR:-1}"
+        return "$EXIT_GENERAL_ERROR"
     fi
 }
 
@@ -646,7 +711,7 @@ cmd_advance() {
                 else
                     output_error "$E_INPUT_INVALID" "Unknown argument: $1"
                 fi
-                return "${EXIT_INVALID_INPUT:-2}"
+                return "$EXIT_INVALID_INPUT"
                 ;;
         esac
     done
@@ -675,7 +740,7 @@ cmd_advance() {
         else
             output_error "$E_PHASE_NOT_FOUND" "No current phase set"
         fi
-        return "${EXIT_NOT_FOUND:-4}"
+        return "$EXIT_NOT_FOUND"
     fi
 
     current_started=$(jq -r --arg slug "$current" '.project.phases[$slug].startedAt // null' "$TODO_FILE")
@@ -713,7 +778,7 @@ cmd_advance() {
         else
             echo "INFO: No more phases after '$current'" >&2
         fi
-        return "${EXIT_NO_DATA:-100}"
+        return "$EXIT_NO_DATA"
     fi
 
     # Check for incomplete tasks in current phase
@@ -771,7 +836,7 @@ cmd_advance() {
             else
                 output_error "$E_VALIDATION_REQUIRED" "Cannot advance - $critical_count critical task(s) remain in phase '$current'" "" "" "Complete critical tasks or set validation.phaseValidation.blockOnCriticalTasks to false"
             fi
-            return "${EXIT_VALIDATION_ERROR:-6}"
+            return "$EXIT_VALIDATION_ERROR"
         fi
 
         # Calculate completion percentage
@@ -816,7 +881,7 @@ cmd_advance() {
             else
                 output_error "$E_VALIDATION_REQUIRED" "Cannot advance - $incomplete_count incomplete task(s) in phase '$current' (Completion: $completion_percent%, threshold: $phase_threshold%)" "" "" "Use 'phase advance --force' to override"
             fi
-            return "${EXIT_VALIDATION_ERROR:-6}"
+            return "$EXIT_VALIDATION_ERROR"
         fi
 
         # If we get here, either force flag is set or threshold is met
@@ -842,8 +907,27 @@ cmd_advance() {
             read -r -p "Continue advancing to '$next_phase'? [y/N] " response
 
             if [[ ! "$response" =~ ^[Yy]$ ]]; then
-                echo "Advance cancelled" >&2
-                return "${EXIT_NO_CHANGE:-102}"
+                if [[ "$FORMAT" == "json" ]]; then
+                    local timestamp
+                    timestamp=$(get_iso_timestamp)
+                    jq -n \
+                        --arg ts "$timestamp" \
+                        --arg current "$current" \
+                        '{
+                            "$schema": "https://claude-todo.dev/schemas/v1/output.schema.json",
+                            "_meta": {
+                                "command": "phase advance",
+                                "timestamp": $ts
+                            },
+                            "success": true,
+                            "noChange": true,
+                            "reason": "User cancelled advance operation",
+                            "currentPhase": $current
+                        }'
+                else
+                    echo "Advance cancelled" >&2
+                fi
+                return "$EXIT_NO_CHANGE"
             fi
         elif [[ "$force_advance" == "true" ]]; then
             # Show warning for forced advance
@@ -912,7 +996,7 @@ cmd_advance() {
                     }
                 }'
         fi
-        return "${EXIT_GENERAL_ERROR:-1}"
+        return "$EXIT_GENERAL_ERROR"
     fi
 }
 
@@ -998,7 +1082,7 @@ cmd_rename() {
         else
             output_error "$E_PHASE_NOT_FOUND" "Phase '$old_name' does not exist"
         fi
-        return "${EXIT_NOT_FOUND:-4}"
+        return "$EXIT_NOT_FOUND"
     fi
 
     # Validate new name doesn't already exist
@@ -1024,7 +1108,7 @@ cmd_rename() {
         else
             output_error "$E_PHASE_INVALID" "Phase '$new_name' already exists"
         fi
-        return "${EXIT_INVALID_INPUT:-2}"
+        return "$EXIT_INVALID_INPUT"
     fi
 
     # Validate new name format (lowercase, alphanumeric, hyphens only)
@@ -1050,7 +1134,7 @@ cmd_rename() {
         else
             output_error "$E_INPUT_INVALID" "Invalid phase name '$new_name'" "" "" "Phase names must be lowercase alphanumeric with hyphens, not starting/ending with hyphen"
         fi
-        return "${EXIT_INVALID_INPUT:-2}"
+        return "$EXIT_INVALID_INPUT"
     fi
 
     # Warn if renaming the current project phase (for consistency with delete protection)
@@ -1086,7 +1170,7 @@ cmd_rename() {
         else
             output_error "$E_FILE_WRITE_ERROR" "Failed to create backup"
         fi
-        return "${EXIT_GENERAL_ERROR:-1}"
+        return "$EXIT_GENERAL_ERROR"
     fi
 
     # Perform atomic operation
@@ -1150,7 +1234,7 @@ cmd_rename() {
         fi
         rm -f "$temp_file"
         restore_backup "$TODO_FILE"
-        return "${EXIT_GENERAL_ERROR:-1}"
+        return "$EXIT_GENERAL_ERROR"
     fi
 
     # Validate temp file is valid JSON
@@ -1177,7 +1261,7 @@ cmd_rename() {
         fi
         rm -f "$temp_file"
         restore_backup "$TODO_FILE"
-        return "${EXIT_VALIDATION_ERROR:-6}"
+        return "$EXIT_VALIDATION_ERROR"
     fi
 
     # Count updated tasks
@@ -1210,7 +1294,7 @@ cmd_rename() {
         fi
         rm -f "$temp_file"
         restore_backup "$TODO_FILE"
-        return "${EXIT_GENERAL_ERROR:-1}"
+        return "$EXIT_GENERAL_ERROR"
     fi
 
     # Log the rename operation
@@ -1254,7 +1338,7 @@ cmd_rename() {
         echo "Phase renamed successfully"
     fi
 
-    return 0
+    return "$EXIT_SUCCESS"
 }
 
 # ============================================================================
@@ -1289,7 +1373,7 @@ cmd_delete() {
         else
             output_error "$E_PHASE_NOT_FOUND" "Phase '$slug' does not exist"
         fi
-        return "${EXIT_NOT_FOUND:-4}"
+        return "$EXIT_NOT_FOUND"
     fi
 
     # Check if phase is current project phase
@@ -1317,7 +1401,7 @@ cmd_delete() {
         else
             output_error "$E_PHASE_INVALID" "Cannot delete current project phase '$slug'" "" "" "Use 'claude-todo phase set <other-phase>' to change the current phase first"
         fi
-        return "${EXIT_VALIDATION_ERROR:-6}"
+        return "$EXIT_VALIDATION_ERROR"
     fi
 
     # Count tasks with this phase
@@ -1368,7 +1452,7 @@ cmd_delete() {
         else
             output_error "$E_VALIDATION_REQUIRED" "Cannot delete '$slug': $task_count tasks would be orphaned (pending: $pending_count, active: $active_count, blocked: $blocked_count, done: $done_count)" "" "" "Use: claude-todo phase delete $slug --reassign-to <phase>"
         fi
-        return "${EXIT_VALIDATION_ERROR:-6}"
+        return "$EXIT_VALIDATION_ERROR"
     fi
 
     # If tasks exist and reassignment specified, validate target phase
@@ -1395,7 +1479,7 @@ cmd_delete() {
             else
                 output_error "$E_PHASE_NOT_FOUND" "Reassignment target phase '$reassign_to' does not exist"
             fi
-            return "${EXIT_NOT_FOUND:-4}"
+            return "$EXIT_NOT_FOUND"
         fi
     fi
 
@@ -1426,7 +1510,7 @@ cmd_delete() {
                 output_error "$E_INPUT_MISSING" "Phase deletion requires --force flag for safety" "" "" "Use: claude-todo phase delete $slug --force"
             fi
         fi
-        return "${EXIT_INVALID_INPUT:-2}"
+        return "$EXIT_INVALID_INPUT"
     fi
 
     # Create backup before any changes
@@ -1452,7 +1536,7 @@ cmd_delete() {
         else
             output_error "$E_FILE_WRITE_ERROR" "Failed to create backup before phase deletion"
         fi
-        return "${EXIT_FILE_ERROR:-3}"
+        return "$EXIT_FILE_ERROR"
     fi
 
     # Build jq operation atomically
@@ -1512,7 +1596,7 @@ cmd_delete() {
         else
             output_error "$E_FILE_WRITE_ERROR" "Failed to write changes"
         fi
-        return "${EXIT_FILE_ERROR:-3}"
+        return "$EXIT_FILE_ERROR"
     fi
     rm -f "$temp_file"
 
@@ -1564,6 +1648,7 @@ Options:
   --json                Shorthand for --format json
   --human               Shorthand for --format text
   -q, --quiet           Suppress informational messages
+  --dry-run             Preview changes without modifying files
   -h, --help            Show this help message
 
 Subcommands:
@@ -1599,6 +1684,12 @@ EOF
 # MAIN
 
 main() {
+    # Defensive check for output_error function
+    if ! declare -f output_error >/dev/null 2>&1; then
+        echo "ERROR: output_error function not available. Ensure error-json.sh is sourced." >&2
+        exit "${EXIT_DEPENDENCY_ERROR:-5}"
+    fi
+
     # Parse global flags before subcommand
     while [[ $# -gt 0 ]]; do
         case "$1" in
@@ -1618,9 +1709,13 @@ main() {
                 QUIET=true
                 shift
                 ;;
+            --dry-run)
+                DRY_RUN=true
+                shift
+                ;;
             -h|--help|help)
                 usage
-                exit 0
+                exit "$EXIT_SUCCESS"
                 ;;
             *)
                 break
@@ -1644,7 +1739,7 @@ main() {
 
     if [[ $# -lt 1 ]]; then
         usage
-        exit "${EXIT_INVALID_INPUT:-2}"
+        exit "$EXIT_INVALID_INPUT"
     fi
 
     local subcommand="$1"
@@ -1670,13 +1765,13 @@ main() {
                             "success": false,
                             "error": {
                                 "code": "E_INPUT_MISSING",
-                                "message": "Phase slug required"
+                                "message": "Phase slug required. Usage: claude-todo phase set <slug>"
                             }
                         }'
                 else
-                    output_error "$E_INPUT_MISSING" "Phase slug required"
+                    output_error "$E_INPUT_MISSING" "Phase slug required. Usage: claude-todo phase set <slug>"
                 fi
-                exit "${EXIT_INVALID_INPUT:-2}"
+                exit "$EXIT_INVALID_INPUT"
             fi
             cmd_set "$@"
             ;;
@@ -1696,13 +1791,13 @@ main() {
                             "success": false,
                             "error": {
                                 "code": "E_INPUT_MISSING",
-                                "message": "Phase slug required"
+                                "message": "Phase slug required. Usage: claude-todo phase start <slug>"
                             }
                         }'
                 else
-                    output_error "$E_INPUT_MISSING" "Phase slug required"
+                    output_error "$E_INPUT_MISSING" "Phase slug required. Usage: claude-todo phase start <slug>"
                 fi
-                exit "${EXIT_INVALID_INPUT:-2}"
+                exit "$EXIT_INVALID_INPUT"
             fi
             cmd_start "$1"
             ;;
@@ -1722,13 +1817,13 @@ main() {
                             "success": false,
                             "error": {
                                 "code": "E_INPUT_MISSING",
-                                "message": "Phase slug required"
+                                "message": "Phase slug required. Usage: claude-todo phase complete <slug>"
                             }
                         }'
                 else
-                    output_error "$E_INPUT_MISSING" "Phase slug required"
+                    output_error "$E_INPUT_MISSING" "Phase slug required. Usage: claude-todo phase complete <slug>"
                 fi
-                exit "${EXIT_INVALID_INPUT:-2}"
+                exit "$EXIT_INVALID_INPUT"
             fi
             cmd_complete "$1"
             ;;
@@ -1754,14 +1849,13 @@ main() {
                             "success": false,
                             "error": {
                                 "code": "E_INPUT_MISSING",
-                                "message": "Phase slug required"
+                                "message": "Phase slug required. Usage: claude-todo phase delete <slug> --reassign-to <phase> --force"
                             }
                         }'
                 else
-                    output_error "$E_INPUT_MISSING" "Phase slug required"
-                    echo "Usage: phase delete <slug> --reassign-to <phase> --force" >&2
+                    output_error "$E_INPUT_MISSING" "Phase slug required. Usage: claude-todo phase delete <slug> --reassign-to <phase> --force"
                 fi
-                exit "${EXIT_INVALID_INPUT:-2}"
+                exit "$EXIT_INVALID_INPUT"
             fi
 
             # Parse delete flags
@@ -1796,13 +1890,13 @@ main() {
                                     "success": false,
                                     "error": {
                                         "code": "E_INPUT_INVALID",
-                                        "message": ("Unknown flag: " + $flag)
+                                        "message": ("Unknown flag: " + $flag + ". Valid flags: --reassign-to, --force")
                                     }
                                 }'
                         else
-                            output_error "$E_INPUT_INVALID" "Unknown flag: $1"
+                            output_error "$E_INPUT_INVALID" "Unknown flag: $1. Valid flags: --reassign-to, --force"
                         fi
-                        exit "${EXIT_INVALID_INPUT:-2}"
+                        exit "$EXIT_INVALID_INPUT"
                         ;;
                 esac
             done
@@ -1825,13 +1919,13 @@ main() {
                             "success": false,
                             "error": {
                                 "code": "E_INPUT_MISSING",
-                                "message": "Both old and new phase names required"
+                                "message": "Both old and new phase names required. Usage: claude-todo phase rename <old> <new>"
                             }
                         }'
                 else
-                    output_error "$E_INPUT_MISSING" "Both old and new phase names required"
+                    output_error "$E_INPUT_MISSING" "Both old and new phase names required. Usage: claude-todo phase rename <old> <new>"
                 fi
-                exit "${EXIT_INVALID_INPUT:-2}"
+                exit "$EXIT_INVALID_INPUT"
             fi
             cmd_rename "$1" "$2"
             ;;
@@ -1851,14 +1945,14 @@ main() {
                         "success": false,
                         "error": {
                             "code": "E_INPUT_INVALID",
-                            "message": ("Unknown subcommand: " + $cmd)
+                            "message": ("Unknown subcommand: " + $cmd + ". Valid subcommands: show, set, start, complete, advance, list, rename, delete")
                         }
                     }'
             else
-                output_error "$E_INPUT_INVALID" "Unknown subcommand: $subcommand"
+                output_error "$E_INPUT_INVALID" "Unknown subcommand: $subcommand. Valid subcommands: show, set, start, complete, advance, list, rename, delete"
                 usage
             fi
-            exit "${EXIT_INVALID_INPUT:-2}"
+            exit "$EXIT_INVALID_INPUT"
             ;;
     esac
 }

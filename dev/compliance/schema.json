@@ -10,6 +10,7 @@
       "libraries": {
         "required": ["exit-codes.sh", "error-json.sh", "output-format.sh"],
         "patterns": {
+          "dev_lib_source": "source.*\\$LIB_DIR|source.*CLAUDE_TODO_HOME",
           "dual_path": "source.*\\$LIB_DIR.*\\.sh|source.*CLAUDE_TODO_HOME.*\\.sh"
         }
       },
@@ -35,7 +36,8 @@
           "format_flag": "-f[|]--format|--format[)]",
           "quiet_flag": "-q[|]--quiet|--quiet[)]",
           "json_shortcut": "--json[)]",
-          "human_shortcut": "--human[)]"
+          "human_shortcut": "--human[)]",
+          "dry_run_flag": "--dry-run\\)"
         }
       },
       "write_commands": {
@@ -67,6 +69,8 @@
     "exit_codes": {
       "required_constants": true,
       "pattern": "exit.*\\$EXIT_|exit.*EXIT_",
+      "exit_lib_pattern": "exit-codes\\.sh",
+      "exit_lib_name": "exit-codes.sh",
       "forbidden": "exit [0-9](?!\\})"
     },
 

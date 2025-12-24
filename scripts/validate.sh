@@ -82,6 +82,14 @@ if [[ -f "$LIB_DIR/version.sh" ]]; then
   # shellcheck source=../lib/version.sh
   source "$LIB_DIR/version.sh"
 fi
+# VERSION from central location (compliant pattern)
+if [[ -f "$CLAUDE_TODO_HOME/VERSION" ]]; then
+  VERSION="$(cat "$CLAUDE_TODO_HOME/VERSION" 2>/dev/null | tr -d '[:space:]')"
+elif [[ -f "$SCRIPT_DIR/../VERSION" ]]; then
+  VERSION="$(cat "$SCRIPT_DIR/../VERSION" 2>/dev/null | tr -d '[:space:]')"
+else
+  VERSION="${CLAUDE_TODO_VERSION:-unknown}"
+fi
 
 # Defaults
 STRICT=""  # Empty means use config, explicit true/false overrides
@@ -137,7 +145,7 @@ Validations:
   - focus.currentTask matches active task
   - Checksum integrity
 EOF
-  exit 0
+  exit "${EXIT_SUCCESS:-0}"
 }
 
 log_error() {
@@ -150,14 +158,16 @@ log_error() {
   ERRORS=$((ERRORS + 1))
 }
 
-# output_fatal - For critical errors that exit immediately
+# output_fatal - For critical errors that should stop execution immediately
 # Uses output_error from error-json.sh for format-aware error output
+# Callers must pass EXIT_* constant as third parameter for compliance
 output_fatal() {
   local error_code="${1:-$E_UNKNOWN}"
   local message="$2"
-  local exit_code="${3:-1}"
-  output_error "$error_code" "$message"
-  exit "$exit_code"
+  local exit_with="${3:-${EXIT_GENERAL_ERROR:-1}}"
+  # Use || true to prevent set -e from exiting before our explicit exit
+  output_error "$error_code" "$message" || true
+  exit "$exit_with"
 }
 
 log_warn() {
@@ -246,7 +256,7 @@ safe_json_write() {
 # Check dependencies
 check_deps() {
   if ! command -v jq &> /dev/null; then
-    output_fatal "$E_DEPENDENCY_MISSING" "jq is required but not installed" 1
+    output_fatal "$E_DEPENDENCY_MISSING" "jq is required but not installed" "${EXIT_DEPENDENCY_ERROR:-5}"
   fi
 }
 
@@ -262,22 +272,22 @@ while [[ $# -gt 0 ]]; do
     --fix-orphans) 
       FIX_ORPHANS="${2:-unlink}"
       if [[ "$FIX_ORPHANS" != "unlink" && "$FIX_ORPHANS" != "delete" ]]; then
-        output_fatal "$E_INPUT_INVALID" "--fix-orphans must be 'unlink' or 'delete', got: $FIX_ORPHANS" 1
+        output_fatal "$E_INPUT_INVALID" "--fix-orphans must be 'unlink' or 'delete', got: $FIX_ORPHANS" "${EXIT_INVALID_INPUT:-2}"
       fi
       shift 2
       ;;
     --json) JSON_OUTPUT=true; FORMAT="json"; shift ;;
     --human) JSON_OUTPUT=false; FORMAT="text"; shift ;;
-    --format|-f)
+    -f|--format)
       FORMAT="$2"
       if [[ "$FORMAT" == "json" ]]; then
         JSON_OUTPUT=true
       fi
       shift 2
       ;;
-    --quiet|-q) QUIET=true; shift ;;
+    -q|--quiet) QUIET=true; shift ;;
     -h|--help) usage ;;
-    -*) output_fatal "$E_INPUT_INVALID" "Unknown option: $1" 1 ;;
+    -*) output_fatal "$E_INPUT_INVALID" "Unknown option: $1" "${EXIT_INVALID_INPUT:-2}" ;;
     *) shift ;;
   esac
 done
@@ -302,12 +312,12 @@ check_deps
 
 # Check file exists
 if [[ ! -f "$TODO_FILE" ]]; then
-  output_fatal "$E_FILE_NOT_FOUND" "File not found: $TODO_FILE" 1
+  output_fatal "$E_FILE_NOT_FOUND" "File not found: $TODO_FILE" "${EXIT_NOT_FOUND:-4}"
 fi
 
 # 1. JSON syntax
 if ! jq empty "$TODO_FILE" 2>/dev/null; then
-  output_fatal "$E_VALIDATION_SCHEMA" "Invalid JSON syntax" 1
+  output_fatal "$E_VALIDATION_SCHEMA" "Invalid JSON syntax" "${EXIT_VALIDATION_ERROR:-6}"
 fi
 log_info "JSON syntax valid" "json_syntax"
 
@@ -978,21 +988,21 @@ if [[ "$FORMAT" == "json" ]]; then
 
   # Exit with appropriate code
   if [[ "$ERRORS" -eq 0 ]]; then
-    exit 0
+    exit "${EXIT_SUCCESS:-0}"
   else
-    exit 1
+    exit "${EXIT_VALIDATION_ERROR:-6}"
   fi
 else
   # Add blank line before text summary
   echo ""
   if [[ "$ERRORS" -eq 0 ]]; then
     echo -e "${GREEN}Validation passed${NC} ($WARNINGS warnings)"
-    exit 0
+    exit "${EXIT_SUCCESS:-0}"
   else
     echo -e "${RED}Validation failed${NC} ($ERRORS errors, $WARNINGS warnings)"
     if [[ "$STRICT" == true ]] && [[ "$WARNINGS" -gt 0 ]]; then
-      exit 1
+      exit "${EXIT_VALIDATION_ERROR:-6}"
     fi
-    exit 1
+    exit "${EXIT_VALIDATION_ERROR:-6}"
   fi
 fi

@@ -19,22 +19,58 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIB_DIR="$(dirname "$SCRIPT_DIR")/lib"
+COMMAND_NAME="sync"
+CLAUDE_TODO_HOME="${CLAUDE_TODO_HOME:-$HOME/.claude-todo}"
+
+# Load VERSION from central location
+if [[ -f "${SCRIPT_DIR}/../VERSION" ]]; then
+    VERSION=$(cat "${SCRIPT_DIR}/../VERSION")
+elif [[ -f "${CLAUDE_TODO_HOME}/VERSION" ]]; then
+    VERSION=$(cat "${CLAUDE_TODO_HOME}/VERSION")
+else
+    VERSION="0.36.0"
+fi
+
+# ============================================================================
+# LIBRARY LOADING
+# ============================================================================
+
+# Source exit codes library (Layer 0 - Foundation)
+if [[ -f "$LIB_DIR/exit-codes.sh" ]]; then
+    # shellcheck source=../lib/exit-codes.sh
+    source "$LIB_DIR/exit-codes.sh"
+fi
 
 # Source output formatting library
 if [[ -f "$LIB_DIR/output-format.sh" ]]; then
-  # shellcheck source=../lib/output-format.sh
-  source "$LIB_DIR/output-format.sh"
+    # shellcheck source=../lib/output-format.sh
+    source "$LIB_DIR/output-format.sh"
 fi
 
-# Source error JSON library (includes exit-codes.sh)
+# Source error JSON library
 if [[ -f "$LIB_DIR/error-json.sh" ]]; then
-  # shellcheck source=../lib/error-json.sh
-  source "$LIB_DIR/error-json.sh"
-elif [[ -f "$LIB_DIR/exit-codes.sh" ]]; then
-  # Fallback: source exit codes directly if error-json.sh not available
-  # shellcheck source=../lib/exit-codes.sh
-  source "$LIB_DIR/exit-codes.sh"
+    # shellcheck source=../lib/error-json.sh
+    source "$LIB_DIR/error-json.sh"
 fi
+
+# Source validation library for input validation
+if [[ -f "$LIB_DIR/validation.sh" ]]; then
+    # shellcheck source=../lib/validation.sh
+    source "$LIB_DIR/validation.sh"
+fi
+
+# Fallback exit codes if library not loaded
+: "${EXIT_SUCCESS:=0}"
+: "${EXIT_GENERAL_ERROR:=1}"
+: "${EXIT_INVALID_INPUT:=2}"
+: "${EXIT_FILE_ERROR:=3}"
+: "${EXIT_NOT_FOUND:=4}"
+: "${EXIT_NO_CHANGE:=102}"
+
+# Fallback error codes
+: "${E_INPUT_MISSING:=E_INPUT_MISSING}"
+: "${E_INPUT_INVALID:=E_INPUT_INVALID}"
+: "${E_FILE:=E_FILE}"
 
 # =============================================================================
 # Colors and Logging
@@ -57,11 +93,11 @@ log_info() { [[ "${QUIET:-false}" != "true" ]] && echo -e "${GREEN}[INFO]${NC} $
 # =============================================================================
 SYNC_DIR=".claude/sync"
 STATE_FILE="${SYNC_DIR}/todowrite-session.json"
-COMMAND_NAME="sync"
 
 # Output options
 FORMAT=""
 QUIET=false
+DRY_RUN=false
 
 # Subcommand
 SUBCOMMAND=""
@@ -126,7 +162,7 @@ EXAMPLES
     claude-todo sync --clear
 
 EOF
-    exit 0
+    exit "$EXIT_SUCCESS"
 }
 
 # =============================================================================
@@ -172,7 +208,7 @@ handle_status() {
             echo ""
             echo "State file: $STATE_FILE (not found)"
         fi
-        exit 0
+        exit "$EXIT_SUCCESS"
     fi
 
     local session_id=$(jq -r '.session_id // "unknown"' "$STATE_FILE")
@@ -245,15 +281,97 @@ handle_status() {
 
 handle_clear() {
     if [[ ! -f "$STATE_FILE" ]]; then
-        log_info "No sync state to clear"
-        exit 0
+        if [[ "$FORMAT" == "json" ]]; then
+            local timestamp version
+            timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+            version=$(cat "${SCRIPT_DIR}/../VERSION" 2>/dev/null || echo "0.15.0")
+            jq -n \
+                --arg version "$version" \
+                --arg timestamp "$timestamp" \
+                '{
+                    "$schema": "https://claude-todo.dev/schemas/v1/output.schema.json",
+                    "_meta": {
+                        "format": "json",
+                        "version": $version,
+                        "command": "sync",
+                        "subcommand": "clear",
+                        "timestamp": $timestamp
+                    },
+                    "success": true,
+                    "noChange": true,
+                    "message": "No sync state to clear"
+                }'
+        else
+            log_info "No sync state to clear"
+        fi
+        exit "$EXIT_NO_CHANGE"
+    fi
+
+    if [[ "$DRY_RUN" == true ]]; then
+        if [[ "$FORMAT" == "json" ]]; then
+            local timestamp version
+            timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+            version=$(cat "${SCRIPT_DIR}/../VERSION" 2>/dev/null || echo "0.15.0")
+            jq -n \
+                --arg version "$version" \
+                --arg timestamp "$timestamp" \
+                --arg state_file "$STATE_FILE" \
+                '{
+                    "$schema": "https://claude-todo.dev/schemas/v1/output.schema.json",
+                    "_meta": {
+                        "format": "json",
+                        "version": $version,
+                        "command": "sync",
+                        "subcommand": "clear",
+                        "timestamp": $timestamp
+                    },
+                    "success": true,
+                    "dryRun": true,
+                    "wouldDelete": {
+                        "stateFile": $state_file,
+                        "syncDirectory": ".claude/sync"
+                    },
+                    "message": "Would clear sync state"
+                }'
+        else
+            log_info "[DRY-RUN] Would clear sync state: $STATE_FILE"
+        fi
+        exit "$EXIT_SUCCESS"
     fi
 
     rm -f "$STATE_FILE"
-    log_info "Sync state cleared"
+
+    if [[ "$FORMAT" == "json" ]]; then
+        local timestamp version
+        timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+        version=$(cat "${SCRIPT_DIR}/../VERSION" 2>/dev/null || echo "0.15.0")
+        jq -n \
+            --arg version "$version" \
+            --arg timestamp "$timestamp" \
+            --arg state_file "$STATE_FILE" \
+            '{
+                "$schema": "https://claude-todo.dev/schemas/v1/output.schema.json",
+                "_meta": {
+                    "format": "json",
+                    "version": $version,
+                    "command": "sync",
+                    "subcommand": "clear",
+                    "timestamp": $timestamp
+                },
+                "success": true,
+                "cleared": {
+                    "stateFile": $state_file
+                },
+                "message": "Sync state cleared"
+            }'
+    else
+        log_info "Sync state cleared"
+    fi
 
     # Also clean up sync directory if empty
     rmdir "$SYNC_DIR" 2>/dev/null || true
+
+    exit "$EXIT_SUCCESS"
 }
 
 # =============================================================================
@@ -285,6 +403,10 @@ main() {
                 QUIET=true
                 shift
                 ;;
+            --dry-run)
+                DRY_RUN=true
+                shift
+                ;;
             *)
                 args+=("$1")
                 shift
@@ -293,10 +415,14 @@ main() {
     done
 
     # Restore positional arguments
-    set -- "${args[@]}"
+    set -- "${args[@]+"${args[@]}"}"
 
     # Resolve format (TTY-aware auto-detection)
-    FORMAT=$(resolve_format "${FORMAT:-}")
+    if declare -f resolve_format >/dev/null 2>&1; then
+        FORMAT=$(resolve_format "${FORMAT:-}" true "text,json")
+    else
+        FORMAT="${FORMAT:-json}"
+    fi
 
     # Need at least one argument after parsing global options
     if [[ $# -eq 0 ]]; then
@@ -306,10 +432,20 @@ main() {
     # Parse subcommand
     case "$1" in
         --inject|-i)
-            handle_inject "$@"
+            # Pass --dry-run to inject subcommand if set
+            if [[ "$DRY_RUN" == true ]]; then
+                handle_inject "$@" --dry-run
+            else
+                handle_inject "$@"
+            fi
             ;;
         --extract|-e)
-            handle_extract "$@"
+            # Pass --dry-run to extract subcommand if set
+            if [[ "$DRY_RUN" == true ]]; then
+                handle_extract "$@" --dry-run
+            else
+                handle_extract "$@"
+            fi
             ;;
         --status|-s)
             handle_status
@@ -322,13 +458,14 @@ main() {
             ;;
         *)
             if [[ "$FORMAT" == "json" ]] && declare -f output_error >/dev/null 2>&1; then
-                output_error "E_INPUT_INVALID" "Unknown subcommand: $1" 1 true "Use 'claude-todo sync --help' for usage"
+                output_error "$E_INPUT_INVALID" "Unknown subcommand '$1'. Valid subcommands: --inject, --extract, --status, --clear" "$EXIT_INVALID_INPUT" true "Use 'claude-todo sync --help' for usage information"
             else
                 log_error "Unknown subcommand: $1"
-                echo ""
-                echo "Use 'claude-todo sync --help' for usage"
+                echo "" >&2
+                echo "Valid subcommands: --inject, --extract, --status, --clear" >&2
+                echo "Use 'claude-todo sync --help' for usage" >&2
             fi
-            exit 1
+            exit "$EXIT_INVALID_INPUT"
             ;;
     esac
 }
