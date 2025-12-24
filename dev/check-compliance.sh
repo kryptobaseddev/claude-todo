@@ -1246,9 +1246,10 @@ main() {
     failed_cmds=$(printf '%s\n' "${all_results[@]}" | jq -s '[.[] | select(.score < 80)] | length')
 
     # Build final results
+    # NOTE: Use stdin piping for commands array to avoid "Argument list too long" error
+    # when all_results contains many command check results (jq --argjson has ARG_MAX limit)
     local final_results
-    final_results=$(jq -n \
-        --argjson commands "$(printf '%s\n' "${all_results[@]}" | jq -s '.')" \
+    final_results=$(printf '%s\n' "${all_results[@]}" | jq -s \
         --argjson totalCommands "$cmd_count" \
         --argjson passed "$passed_cmds" \
         --argjson partial "$partial_cmds" \
@@ -1262,7 +1263,7 @@ main() {
                 failed: $failed,
                 overallScore: ($overallScore | tonumber)
             },
-            commands: $commands
+            commands: .
         }')
 
     # Save cache

@@ -5,7 +5,7 @@
 # DEPENDENCIES: none
 # PROVIDES: get_task_field, get_tasks_by_status, get_task_by_id, array_to_json,
 #           count_tasks_by_status, has_children, get_focus_task, get_task_count,
-#           get_current_phase
+#           get_current_phase, get_all_task_ids, get_phase_tasks
 
 #=== SOURCE GUARD ================================================
 [[ -n "${_JQ_HELPERS_LOADED:-}" ]] && return 0
@@ -276,6 +276,63 @@ get_current_phase() {
     jq -r '.project.currentPhase // empty' "$todo_file"
 }
 
+#######################################
+# Get all task IDs from todo file.
+# Arguments:
+#   $1 - Path to todo.json file
+# Outputs:
+#   Writes task IDs to stdout (one per line)
+# Returns:
+#   0 on success, 1 on invalid args, 2 on file not found
+#######################################
+get_all_task_ids() {
+    local todo_file="$1"
+
+    if [[ -z "$todo_file" ]]; then
+        echo "Error: todo_file required" >&2
+        return 1
+    fi
+
+    if [[ ! -f "$todo_file" ]]; then
+        echo "Error: File not found: $todo_file" >&2
+        return 2
+    fi
+
+    jq -r '.tasks[].id' "$todo_file"
+}
+
+#######################################
+# Get tasks filtered by phase.
+# Arguments:
+#   $1 - Phase slug (e.g., "core", "testing", "polish")
+#   $2 - Path to todo.json file
+# Outputs:
+#   Writes JSON array of matching tasks to stdout
+# Returns:
+#   0 on success, 1 on invalid args, 2 on file not found
+#######################################
+get_phase_tasks() {
+    local phase="$1"
+    local todo_file="$2"
+
+    if [[ -z "$phase" ]]; then
+        echo "Error: phase required" >&2
+        return 1
+    fi
+
+    if [[ -z "$todo_file" ]]; then
+        echo "Error: todo_file required" >&2
+        return 1
+    fi
+
+    if [[ ! -f "$todo_file" ]]; then
+        echo "Error: File not found: $todo_file" >&2
+        return 2
+    fi
+
+    jq --arg p "$phase" '[.tasks[] | select(.phase == $p)]' "$todo_file"
+}
+
 # ============================================================================
 # EXPORTS
 # ============================================================================
@@ -289,3 +346,5 @@ export -f has_children
 export -f get_focus_task
 export -f get_task_count
 export -f get_current_phase
+export -f get_all_task_ids
+export -f get_phase_tasks

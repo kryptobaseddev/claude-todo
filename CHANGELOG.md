@@ -5,6 +5,19 @@ All notable changes to the claude-todo system will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.34.2] - 2025-12-24
+
+### Added
+- **Complete Library Architecture Compliance Validator** (T806 Phase 5: T828-T831)
+  - `check_source_guards()`: Validates `[[ -n "${_*_LOADED:-}" ]] && return 0` pattern
+  - `check_layer_headers()`: Validates LAYER/DEPENDENCIES/PROVIDES headers with layer inventory
+  - `check_circular_deps()`: DFS-based cycle detection and layer violation detection
+  - `check_dependency_count()`: Per-file and total dependency limit validation
+  - Full LLM-Agent-First compliance: JSON envelope, TTY-aware output, DEV_EXIT_* codes
+
+### Changed
+- **Documentation**: Updated `docs/development/COMPLIANCE-CHECKING.md` with Library Architecture section
+
 ## [0.34.1] - 2025-12-24
 
 ### Changed

@@ -551,9 +551,52 @@ Each check contributes points toward the total score.
 
 ---
 
+## Library Architecture Compliance
+
+In addition to LLM-Agent-First compliance for scripts, there is a separate compliance checker for library architecture.
+
+### Library Architecture Checker
+
+The `check-lib-compliance.sh` script validates `lib/*.sh` files against the [Library Architecture Specification](../specs/LIBRARY-ARCHITECTURE-SPEC.md).
+
+```bash
+# Full library architecture check
+./dev/check-lib-compliance.sh
+
+# Check specific aspect
+./dev/check-lib-compliance.sh --check guard      # Source guards
+./dev/check-lib-compliance.sh --check header     # Layer headers
+./dev/check-lib-compliance.sh --check circular   # Circular dependencies
+./dev/check-lib-compliance.sh --check count      # Dependency counts
+
+# JSON output
+./dev/check-lib-compliance.sh --json
+```
+
+### Library Checks
+
+| Check | Validates | Purpose |
+|-------|-----------|---------|
+| **Source Guards** | `[[ -n "${_*_LOADED:-}" ]] && return 0` | Prevents double-sourcing |
+| **Layer Headers** | `# LAYER:`, `# DEPENDENCIES:`, `# PROVIDES:` | Documents architecture |
+| **Circular Deps** | No same-layer or upward sourcing | Maintains layer hierarchy |
+| **Dependency Count** | ≤3 deps per file, ≤25 total | Controls complexity |
+
+### Layer Limits
+
+| Layer | Max Dependencies | Can Source |
+|-------|------------------|------------|
+| 0 (Foundation) | 0 | None |
+| 1 (Core) | 2 | Layer 0 only |
+| 2 (Services) | 3 | Layers 0-1 |
+| 3 (Application) | 3 | Layers 0-2 |
+
+---
+
 ## Related Documentation
 
 - [LLM-Agent-First Specification](../specs/LLM-AGENT-FIRST-SPEC.md) - Authoritative design spec
+- [Library Architecture Specification](../specs/LIBRARY-ARCHITECTURE-SPEC.md) - Library layer design
 - [DEV-SCRIPTS-OVERVIEW.md](DEV-SCRIPTS-OVERVIEW.md) - Dev tooling documentation
 - [DEV-WORKFLOW.md](../../dev/DEV-WORKFLOW.md) - Development workflow and commit strategy
 - [Architecture](../architecture/ARCHITECTURE.md) - System architecture overview
