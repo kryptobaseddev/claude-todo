@@ -5,7 +5,8 @@
 # DEPENDENCIES: none
 # PROVIDES: get_task_field, get_tasks_by_status, get_task_by_id, array_to_json,
 #           count_tasks_by_status, has_children, get_focus_task, get_task_count,
-#           get_current_phase, get_all_task_ids, get_phase_tasks
+#           get_current_phase, get_all_task_ids, get_phase_tasks, task_exists,
+#           get_task_with_field, filter_tasks_multi
 
 #=== SOURCE GUARD ================================================
 [[ -n "${_JQ_HELPERS_LOADED:-}" ]] && return 0
@@ -333,6 +334,131 @@ get_phase_tasks() {
     jq --arg p "$phase" '[.tasks[] | select(.phase == $p)]' "$todo_file"
 }
 
+#######################################
+# Check if a task exists by ID.
+# Arguments:
+#   $1 - Task ID to check
+#   $2 - Path to todo.json file
+# Returns:
+#   0 if task exists, 1 if not found or invalid args, 2 if file not found
+#######################################
+task_exists() {
+    local task_id="$1"
+    local todo_file="$2"
+
+    if [[ -z "$task_id" ]]; then
+        return 1
+    fi
+
+    if [[ -z "$todo_file" ]]; then
+        return 1
+    fi
+
+    if [[ ! -f "$todo_file" ]]; then
+        return 2
+    fi
+
+    jq -e --arg id "$task_id" '.tasks[] | select(.id == $id)' "$todo_file" > /dev/null 2>&1
+}
+
+#######################################
+# Get tasks where a specific field matches a value.
+# Arguments:
+#   $1 - Field name (e.g., "status", "priority", "phase", "type")
+#   $2 - Field value to match
+#   $3 - Path to todo.json file
+# Outputs:
+#   Writes JSON array of matching tasks to stdout
+# Returns:
+#   0 on success, 1 on invalid args, 2 on file not found
+#######################################
+get_task_with_field() {
+    local field="$1"
+    local value="$2"
+    local todo_file="$3"
+
+    if [[ -z "$field" ]]; then
+        echo "Error: field required" >&2
+        return 1
+    fi
+
+    if [[ -z "$value" ]]; then
+        echo "Error: value required" >&2
+        return 1
+    fi
+
+    if [[ -z "$todo_file" ]]; then
+        echo "Error: todo_file required" >&2
+        return 1
+    fi
+
+    if [[ ! -f "$todo_file" ]]; then
+        echo "Error: File not found: $todo_file" >&2
+        return 2
+    fi
+
+    jq --arg f "$field" --arg v "$value" '[.tasks[] | select(.[$f] == $v)]' "$todo_file"
+}
+
+#######################################
+# Filter tasks by multiple field conditions (AND logic).
+# Arguments:
+#   $1 - Path to todo.json file
+#   $2+ - Field=value pairs (e.g., "status=pending" "priority=high")
+# Outputs:
+#   Writes JSON array of matching tasks to stdout
+# Returns:
+#   0 on success, 1 on invalid args, 2 on file not found
+# Example:
+#   filter_tasks_multi "$TODO_FILE" "status=pending" "priority=high"
+#   filter_tasks_multi "$TODO_FILE" "phase=core" "type=epic"
+#######################################
+filter_tasks_multi() {
+    local todo_file="$1"
+    shift
+
+    if [[ -z "$todo_file" ]]; then
+        echo "Error: todo_file required" >&2
+        return 1
+    fi
+
+    if [[ ! -f "$todo_file" ]]; then
+        echo "Error: File not found: $todo_file" >&2
+        return 2
+    fi
+
+    if [[ $# -eq 0 ]]; then
+        echo "Error: At least one field=value pair required" >&2
+        return 1
+    fi
+
+    # Build jq filter dynamically
+    local conditions=""
+    local jq_args=()
+    local i=0
+
+    for pair in "$@"; do
+        local field="${pair%%=*}"
+        local value="${pair#*=}"
+
+        if [[ "$field" == "$pair" ]]; then
+            echo "Error: Invalid pair format '$pair', expected 'field=value'" >&2
+            return 1
+        fi
+
+        local var="v$i"
+        jq_args+=(--arg "f$i" "$field" --arg "$var" "$value")
+
+        if [[ -n "$conditions" ]]; then
+            conditions="$conditions and "
+        fi
+        conditions="${conditions}.[\$f$i] == \$$var"
+        ((i++))
+    done
+
+    jq "${jq_args[@]}" "[.tasks[] | select($conditions)]" "$todo_file"
+}
+
 # ============================================================================
 # EXPORTS
 # ============================================================================
@@ -348,3 +474,6 @@ export -f get_task_count
 export -f get_current_phase
 export -f get_all_task_ids
 export -f get_phase_tasks
+export -f task_exists
+export -f get_task_with_field
+export -f filter_tasks_multi
