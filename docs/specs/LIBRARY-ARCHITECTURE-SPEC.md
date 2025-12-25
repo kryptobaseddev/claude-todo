@@ -530,21 +530,21 @@ Libraries with side effects MUST document them in function headers:
 
 | Library | Purpose | Dependencies |
 |---------|---------|--------------|
-| `file-ops.sh` | Atomic file operations | platform-compat, config |
-| `validation.sh` | Schema and semantic validation | exit-codes, config |
-| `logging.sh` | Audit logging | platform-compat, file-ops |
-| `backup.sh` | Backup operations | platform-compat, file-ops, logging |
-| `hierarchy.sh` | Task hierarchy validation | exit-codes, config |
-| `migrate.sh` | Schema migrations | file-ops, logging |
+| `file-ops.sh` | Atomic file operations | atomic-write, config |
+| `validation.sh` | Schema and semantic validation | platform-compat, config |
+| `logging.sh` | Audit logging | atomic-write |
+| `backup.sh` | Backup operations | file-ops, logging |
+| `hierarchy.sh` | Task hierarchy validation | config |
+| `migrate.sh` | Schema migrations | logging |
 
 ### 11.4 Layer 3: Domain Logic
 
 | Library | Purpose | Dependencies |
 |---------|---------|--------------|
 | `analysis.sh` | Task analysis algorithms | file-ops, validation |
-| `cancel-ops.sh` | Cancellation operations | validation, hierarchy, backup |
-| `deletion-strategy.sh` | Deletion logic | cancel-ops, hierarchy, config |
-| `phase-tracking.sh` | Phase management | platform-compat, file-ops |
+| `cancel-ops.sh` | Cancellation operations | validation, backup |
+| `deletion-strategy.sh` | Deletion logic | hierarchy, file-ops |
+| `phase-tracking.sh` | Phase management | file-ops |
 
 ---
 
