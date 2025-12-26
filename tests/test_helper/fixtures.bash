@@ -4,9 +4,34 @@
 # =============================================================================
 # DRY: Parameterized fixture generators avoid duplication in test files.
 # All fixtures use consistent JSON structure matching claude-todo schema.
+#
+# NOTES:
+# - _update_fixture_checksum() MUST use sha256sum to match production code
+# - STANDARD_PHASES_TEMPLATE provides reusable 5-phase structure
+# - _create_base_structure() generates consistent base structures dynamically
+# =============================================================================
+
+# =============================================================================
+# Constants & Templates for Phase Deduplication
+# =============================================================================
+
+# Standard 5-phase template (setup -> core -> testing -> polish -> maintenance)
+# Phases are defined without timestamps - they are added dynamically when needed
+# This reduces duplication across 25+ fixture definitions
+readonly STANDARD_PHASES_TEMPLATE='{
+  "setup": {"order": 1, "name": "Setup", "description": "Initial setup", "status": "pending", "startedAt": null, "completedAt": null},
+  "core": {"order": 2, "name": "Core", "description": "Core features", "status": "pending", "startedAt": null, "completedAt": null},
+  "testing": {"order": 3, "name": "Testing", "description": "Testing and validation", "status": "pending", "startedAt": null, "completedAt": null},
+  "polish": {"order": 4, "name": "Polish", "description": "Polish and optimization", "status": "pending", "startedAt": null, "completedAt": null},
+  "maintenance": {"order": 5, "name": "Maintenance", "description": "Bug fixes and support", "status": "pending", "startedAt": null, "completedAt": null}
+}'
+
+# =============================================================================
+# Helper Functions
 # =============================================================================
 
 # Compute and update checksum for a fixture file (matches validate.sh logic)
+# MUST use sha256sum to match production code checksum computation
 # Usage: _update_fixture_checksum "$TODO_FILE"
 _update_fixture_checksum() {
     local file="${1:-$TODO_FILE}"
@@ -17,6 +42,32 @@ _update_fixture_checksum() {
 
     jq --arg cs "$checksum" '._meta.checksum = $cs' "$file" > "${file}.tmp" && \
         mv "${file}.tmp" "$file"
+}
+
+# Create base todo.json structure dynamically
+# Usage: _create_base_structure [current_phase] [project_name]
+# Returns: JSON structure to stdout (pipe to file or use with jq)
+_create_base_structure() {
+    local current_phase="${1:-setup}"
+    local project_name="${2:-test-project}"
+
+    jq -n \
+        --arg phase "$current_phase" \
+        --arg project "$project_name" \
+        --argjson phases "$STANDARD_PHASES_TEMPLATE" \
+        '{
+            version: "2.3.0",
+            project: {
+                name: $project,
+                currentPhase: $phase,
+                phases: ($phases | .[$phase].status = "active" | if $phase != "setup" then .setup.status = "completed" else . end)
+            },
+            tasks: [],
+            focus: {currentPhase: $phase},
+            labels: {},
+            _meta: {version: "2.3.0", checksum: "placeholder"},
+            lastUpdated: "2025-12-01T12:00:00Z"
+        }'
 }
 
 # Base meta block used in all todo.json fixtures

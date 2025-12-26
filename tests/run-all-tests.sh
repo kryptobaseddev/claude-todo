@@ -12,6 +12,9 @@
 #   --unit             Run only unit tests
 #   --integration      Run only integration tests
 #   --filter PATTERN   Run tests matching pattern
+#   --parallel, -p     Enable parallel execution (default: auto-detect)
+#   --no-parallel      Disable parallel execution
+#   --jobs N, -j N     Number of parallel jobs (default: min(cores, 8))
 #   --help, -h         Show this help message
 # =============================================================================
 
@@ -41,6 +44,20 @@ RUN_UNIT=true
 RUN_INTEGRATION=true
 FILTER=""
 
+# Parallel execution settings
+# Detect CPU cores (portable: Linux nproc, macOS sysctl, fallback to 4)
+detect_cpu_cores() {
+    local cores
+    cores=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
+    echo "$cores"
+}
+
+CPU_CORES=$(detect_cpu_cores)
+# Default to min(cores, 8) for parallel jobs
+DEFAULT_JOBS=$((CPU_CORES > 8 ? 8 : CPU_CORES))
+PARALLEL_JOBS="${JOBS:-$DEFAULT_JOBS}"
+PARALLEL_ENABLED="auto"  # auto, true, false
+
 # Parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -62,6 +79,19 @@ while [[ $# -gt 0 ]]; do
             FILTER="$2"
             shift 2
             ;;
+        --parallel|-p)
+            PARALLEL_ENABLED="true"
+            shift
+            ;;
+        --no-parallel)
+            PARALLEL_ENABLED="false"
+            shift
+            ;;
+        --jobs|-j)
+            PARALLEL_JOBS="$2"
+            PARALLEL_ENABLED="true"
+            shift 2
+            ;;
         --help|-h)
             echo "Claude-Todo Test Suite Runner"
             echo ""
@@ -72,7 +102,14 @@ while [[ $# -gt 0 ]]; do
             echo "  --unit             Run only unit tests"
             echo "  --integration      Run only integration tests"
             echo "  --filter PATTERN   Run tests matching pattern"
+            echo "  --parallel, -p     Enable parallel execution (default: auto-detect)"
+            echo "  --no-parallel      Disable parallel execution"
+            echo "  --jobs N, -j N     Number of parallel jobs (default: min(cores, 8) = $DEFAULT_JOBS)"
             echo "  --help, -h         Show this help message"
+            echo ""
+            echo "Environment Variables:"
+            echo "  JOBS=N             Set number of parallel jobs"
+            echo "  NO_COLOR=1         Disable colored output"
             exit 0
             ;;
         *)
@@ -103,10 +140,31 @@ if ! command -v jq &> /dev/null; then
     echo -e "${YELLOW}Warning: jq is not installed. Some tests may fail.${NC}"
 fi
 
+# Check for GNU parallel (required for BATS --jobs)
+HAS_PARALLEL=false
+if command -v parallel &> /dev/null; then
+    HAS_PARALLEL=true
+fi
+
 echo ""
 echo -e "${BLUE}============================================${NC}"
 echo -e "${BLUE}      Claude-Todo Test Suite${NC}"
 echo -e "${BLUE}============================================${NC}"
+echo ""
+
+# Show parallel execution status
+if [[ "$PARALLEL_ENABLED" == "false" ]]; then
+    echo -e "Mode: ${YELLOW}Sequential${NC}"
+elif ! bats --help 2>&1 | grep -q -- '--jobs'; then
+    echo -e "Mode: ${YELLOW}Sequential${NC} (BATS version does not support --jobs)"
+elif [[ "$HAS_PARALLEL" == "false" ]]; then
+    echo -e "Mode: ${YELLOW}Sequential${NC} (GNU parallel not installed)"
+    echo -e "  Install with: ${BLUE}sudo dnf install parallel${NC} (Fedora)"
+    echo -e "              ${BLUE}sudo apt install parallel${NC} (Debian/Ubuntu)"
+    echo -e "              ${BLUE}brew install parallel${NC} (macOS)"
+else
+    echo -e "Mode: ${GREEN}Parallel${NC} (${PARALLEL_JOBS} jobs, ${CPU_CORES} cores detected)"
+fi
 echo ""
 
 TOTAL_PASSED=0
@@ -140,6 +198,15 @@ run_test_suite() {
 
     if [[ -n "$FILTER" ]]; then
         bats_args+=(--filter "$FILTER")
+    fi
+
+    # Add parallel execution flags
+    # Auto mode: enable if more than 1 core available, BATS supports it, and GNU parallel installed
+    if [[ "$PARALLEL_ENABLED" == "true" ]] || { [[ "$PARALLEL_ENABLED" == "auto" ]] && [[ "$CPU_CORES" -gt 1 ]]; }; then
+        # Check if BATS supports --jobs (BATS 1.5.0+) AND GNU parallel is installed
+        if bats --help 2>&1 | grep -q -- '--jobs' && [[ "$HAS_PARALLEL" == "true" ]]; then
+            bats_args+=(--jobs "$PARALLEL_JOBS")
+        fi
     fi
 
     # Run bats and capture output

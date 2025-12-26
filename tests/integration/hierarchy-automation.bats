@@ -2,18 +2,28 @@
 # hierarchy-automation.bats - Integration tests for Hierarchy Phase 2
 # Tests: T340 (auto-complete), T341 (orphan detection), T342 (tree command)
 
+# Load test helpers
+setup_file() {
+    load '../test_helper/common_setup'
+    common_setup_file
+}
+
 setup() {
     load '../test_helper/common_setup'
     load '../test_helper/fixtures'
     load '../test_helper/assertions'
-    common_setup
-    
+    common_setup_per_test
+
     # Create empty todo.json file for the tests
     create_empty_todo
 }
 
 teardown() {
-    common_teardown
+    common_teardown_per_test
+}
+
+teardown_file() {
+    common_teardown_file
 }
 
 # =============================================================================

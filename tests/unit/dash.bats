@@ -6,18 +6,27 @@
 # and configuration options.
 # =============================================================================
 
+setup_file() {
+    load '../test_helper/common_setup'
+    common_setup_file
+}
+
 setup() {
     load '../test_helper/common_setup'
     load '../test_helper/assertions'
     load '../test_helper/fixtures'
-    common_setup
+    common_setup_per_test
 
     # Set DASH_SCRIPT path
     export DASH_SCRIPT="${SCRIPTS_DIR}/dash.sh"
 }
 
 teardown() {
-    common_teardown
+    common_teardown_per_test
+}
+
+teardown_file() {
+    common_teardown_file
 }
 
 # =============================================================================

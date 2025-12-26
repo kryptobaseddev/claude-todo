@@ -15,9 +15,17 @@ EXPECTED_DIR="$GOLDEN_DIR/expected"
 # Test fixture
 GOLDEN_TODO_FILE="$FIXTURES_DIR/todo.json"
 
+setup_file() {
+    load '../test_helper/common_setup'
+    common_setup_file
+}
+
 setup() {
-    # Create temporary test directory
-    TEST_DIR="$(mktemp -d)"
+    load '../test_helper/common_setup'
+    common_setup_per_test
+
+    # Use BATS-managed temp directory (auto-cleaned)
+    TEST_DIR="${BATS_TEST_TMPDIR}"
     mkdir -p "$TEST_DIR/.claude"
 
     # Copy fixture
@@ -44,7 +52,11 @@ EOF
 }
 
 teardown() {
-    rm -rf "$TEST_DIR"
+    common_teardown_per_test
+}
+
+teardown_file() {
+    common_teardown_file
 }
 
 # =============================================================================

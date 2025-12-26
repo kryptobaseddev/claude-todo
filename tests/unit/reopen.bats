@@ -6,16 +6,24 @@
 # Part of: Task Hierarchy Enhancement (reopen auto-completed epics)
 # =============================================================================
 
+setup_file() {
+    load '../test_helper/common_setup'
+    common_setup_file
+}
+
 setup() {
     load '../test_helper/common_setup'
     load '../test_helper/assertions'
-    common_setup
-
+    common_setup_per_test
     export REOPEN_SCRIPT="${SCRIPTS_DIR}/reopen.sh"
 }
 
 teardown() {
-    common_teardown
+    common_teardown_per_test
+}
+
+teardown_file() {
+    common_teardown_file
 }
 
 # =============================================================================

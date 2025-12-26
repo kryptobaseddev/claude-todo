@@ -10,10 +10,21 @@
 # - Format resolution
 # =============================================================================
 
-setup() {
+# =============================================================================
+# File-Level Setup (runs once per test file)
+# =============================================================================
+setup_file() {
     load '../test_helper/common_setup'
     load '../test_helper/assertions'
-    common_setup
+    common_setup_file
+}
+
+# =============================================================================
+# Per-Test Setup (runs before each test)
+# =============================================================================
+setup() {
+    load '../test_helper/common_setup'
+    common_setup_per_test
 
     # Source the library under test
     source "$PROJECT_ROOT/lib/output-format.sh"
@@ -41,7 +52,11 @@ teardown() {
     [[ -n "$SAVED_COLUMNS" ]] && export COLUMNS="$SAVED_COLUMNS" || unset COLUMNS
     [[ -n "$SAVED_CLAUDE_TODO_FORMAT" ]] && export CLAUDE_TODO_FORMAT="$SAVED_CLAUDE_TODO_FORMAT" || unset CLAUDE_TODO_FORMAT
 
-    common_teardown
+    common_teardown_per_test
+}
+
+teardown_file() {
+    common_teardown_file
 }
 
 # =============================================================================

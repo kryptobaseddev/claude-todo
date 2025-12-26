@@ -9,37 +9,29 @@
 # Part of: Task Deletion System (T700 EPIC), Task T709
 # =============================================================================
 
+setup_file() {
+    load '../test_helper/common_setup'
+    common_setup_file
+}
+
 setup() {
-    # Determine project root from test file location
-    TEST_FILE_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")" && pwd)"
-    PROJECT_ROOT="$(cd "$TEST_FILE_DIR/../.." && pwd)"
+    load '../test_helper/common_setup'
+    load '../test_helper/assertions'
+    load '../test_helper/fixtures'
+    common_setup_per_test
 
-    # Create isolated test directory
-    TEST_DIR=$(mktemp -d)
-    CLAUDE_TODO_DIR="$TEST_DIR/.claude"
-    mkdir -p "$CLAUDE_TODO_DIR"
-
-    # Set paths
-    TODO_FILE="$CLAUDE_TODO_DIR/todo.json"
-
-    # Set environment
-    export TODO_FILE
-    export CLAUDE_TODO_VERSION="0.31.2"
-
-    # Change to test directory
-    cd "$TEST_DIR"
-
-    # Source required libraries
+    # Source required libraries for delete-preview
     source "$PROJECT_ROOT/lib/exit-codes.sh"
     source "$PROJECT_ROOT/lib/hierarchy.sh"
     source "$PROJECT_ROOT/lib/delete-preview.sh"
 }
 
 teardown() {
-    # Clean up test directory
-    if [[ -d "$TEST_DIR" ]]; then
-        rm -rf "$TEST_DIR"
-    fi
+    common_teardown_per_test
+}
+
+teardown_file() {
+    common_teardown_file
 }
 
 # Helper to create test todo.json

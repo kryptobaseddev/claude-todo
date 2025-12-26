@@ -4,11 +4,42 @@
 # =============================================================================
 # Single source of truth for test configuration and environment setup.
 # All test files should load this for consistent behavior.
+#
+# Two usage patterns are supported:
+#
+# PATTERN 1: Legacy (per-test setup) - backward compatible
+#   setup() {
+#       load '../test_helper/common_setup'
+#       load '../test_helper/fixtures'
+#       common_setup
+#   }
+#
+# PATTERN 2: Optimized (file-level setup) - reduces library loading overhead
+#   setup_file() {
+#       load '../test_helper/common_setup'
+#       load '../test_helper/fixtures'
+#       common_setup_file
+#   }
+#   setup() {
+#       common_setup_per_test
+#   }
+#   teardown() {
+#       common_teardown_per_test
+#   }
+#   teardown_file() {
+#       common_teardown_file
+#   }
 # =============================================================================
 
 # Load external BATS libraries
 _load_libs() {
-    local lib_dir="${BATS_TEST_DIRNAME}/../libs"
+    # Handle both tests/foo.bats and tests/unit/foo.bats paths
+    local lib_dir
+    if [[ -d "${BATS_TEST_DIRNAME}/libs" ]]; then
+        lib_dir="${BATS_TEST_DIRNAME}/libs"
+    else
+        lib_dir="${BATS_TEST_DIRNAME}/../libs"
+    fi
 
     # bats-support must be loaded first (provides common functions)
     load "${lib_dir}/bats-support/load"
@@ -18,10 +49,19 @@ _load_libs() {
 
 # Project paths - single source of truth
 _setup_paths() {
-    export PROJECT_ROOT="${BATS_TEST_DIRNAME}/../.."
+    # Handle both tests/foo.bats and tests/unit/foo.bats paths
+    if [[ -d "${BATS_TEST_DIRNAME}/libs" ]]; then
+        # Test file is directly in tests/
+        export PROJECT_ROOT="${BATS_TEST_DIRNAME}/.."
+        export FIXTURES_DIR="${BATS_TEST_DIRNAME}/fixtures"
+    else
+        # Test file is in a subdirectory like tests/unit/
+        export PROJECT_ROOT="${BATS_TEST_DIRNAME}/../.."
+        export FIXTURES_DIR="${BATS_TEST_DIRNAME}/../fixtures"
+    fi
+
     export SCRIPTS_DIR="${PROJECT_ROOT}/scripts"
     export LIB_DIR="${PROJECT_ROOT}/lib"
-    export FIXTURES_DIR="${BATS_TEST_DIRNAME}/../fixtures"
 
     # Use BATS auto-cleaned temp directories
     export TEST_TEMP_DIR="${BATS_TEST_TMPDIR}"
@@ -112,10 +152,36 @@ common_teardown() {
     cd "${PROJECT_ROOT}" 2>/dev/null || true
 }
 
+# =============================================================================
+# File-Level Setup Functions (setup_file pattern)
+# =============================================================================
+# Use these for tests that can share common setup across all tests in a file.
+# Library loading and script paths only need to happen once per file.
+# =============================================================================
+
 # File-level setup (runs once per test file)
+# Call this in setup_file() to load libs and set up paths once per file
 common_setup_file() {
+    _load_libs
     _setup_paths
     _setup_scripts
+}
+
+# Per-test setup when using setup_file pattern
+# Call this in setup() after common_setup_file() has run in setup_file()
+common_setup_per_test() {
+    # Load libs again for per-test scope (assertions need to be available)
+    _load_libs
+    # Re-setup paths for per-test scope (BATS_TEST_TMPDIR changes per test)
+    _setup_paths
+    _setup_scripts
+    _create_test_project
+    export CLAUDE_TODO_FORMAT="text"
+}
+
+# Per-test teardown
+common_teardown_per_test() {
+    cd "${PROJECT_ROOT}" 2>/dev/null || true
 }
 
 # File-level teardown

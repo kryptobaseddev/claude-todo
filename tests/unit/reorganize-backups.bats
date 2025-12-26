@@ -2,18 +2,27 @@
 # Tests for reorganize-backups.sh
 # Validates legacy backup migration to new taxonomy
 
+setup_file() {
+    load '../test_helper/common_setup'
+    common_setup_file
+}
+
 setup() {
     load '../test_helper/common_setup'
     load '../test_helper/assertions'
     load '../test_helper/fixtures'
-    common_setup
+    common_setup_per_test
 
     # Set script path
     export MIGRATE_BACKUPS_SCRIPT="${SCRIPTS_DIR}/reorganize-backups.sh"
 }
 
 teardown() {
-    common_teardown
+    common_teardown_per_test
+}
+
+teardown_file() {
+    common_teardown_file
 }
 
 @test "reorganize-backups: shows help" {

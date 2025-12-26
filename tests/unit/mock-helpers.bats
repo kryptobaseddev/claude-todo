@@ -5,16 +5,30 @@
 # Validates that mock helpers work correctly for testing isolation.
 # =============================================================================
 
-load '../test_helper/common_setup'
-load '../test_helper/mock-helpers'
+# =============================================================================
+# File-Level Setup (runs once per test file)
+# =============================================================================
+setup_file() {
+    load '../test_helper/common_setup'
+    common_setup_file
+}
 
+# =============================================================================
+# Per-Test Setup (runs before each test)
+# =============================================================================
 setup() {
-    common_setup
+    load '../test_helper/common_setup'
+    load '../test_helper/mock-helpers'
+    common_setup_per_test
 }
 
 teardown() {
     reset_mocks
-    common_teardown
+    common_teardown_per_test
+}
+
+teardown_file() {
+    common_teardown_file
 }
 
 # =============================================================================

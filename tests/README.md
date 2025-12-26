@@ -99,9 +99,36 @@ bats tests/integration/*.bats
 bats tests/unit/add-task.bats --filter "add task with --priority"
 ```
 
+## Running Tests in Parallel
+
+The test suite supports parallel execution for faster test runs on multi-core systems.
+
+### Parallel Execution
+
+```bash
+# Auto-detect parallelism (enabled if cores > 1)
+./tests/run-all-tests.sh
+
+# Explicitly enable parallel
+./tests/run-all-tests.sh --parallel
+
+# Set specific job count
+./tests/run-all-tests.sh --jobs 4
+
+# Disable parallel (sequential mode)
+./tests/run-all-tests.sh --no-parallel
+```
+
+**Requirements for parallel execution:**
+- BATS 1.5.0+ (supports `--jobs` flag)
+- GNU parallel (optional, for enhanced parallelism)
+- Test isolation via `BATS_TEST_TMPDIR` (already implemented)
+
 ## Writing New Tests
 
-### Basic Test Structure
+### Basic Test Structure (Optimized)
+
+All test files should use the `setup_file()` pattern for optimal performance:
 
 ```bash
 #!/usr/bin/env bats
@@ -111,15 +138,28 @@ bats tests/unit/add-task.bats --filter "add task with --priority"
 # Description of what this test file covers.
 # =============================================================================
 
+# File-level setup (runs once per file)
+setup_file() {
+    load '../test_helper/common_setup'
+    common_setup_file
+}
+
+# Per-test setup (runs before each test)
 setup() {
     load '../test_helper/common_setup'
     load '../test_helper/assertions'
     load '../test_helper/fixtures'
-    common_setup
+    common_setup_per_test
 }
 
+# Per-test teardown (runs after each test)
 teardown() {
-    common_teardown
+    common_teardown_per_test
+}
+
+# File-level teardown (runs once per file)
+teardown_file() {
+    common_teardown_file
 }
 
 # =============================================================================
@@ -140,8 +180,12 @@ teardown() {
 
 | Function | Description |
 |----------|-------------|
-| `common_setup` | Initialize test environment, paths, temp directory |
-| `common_teardown` | Clean up temp directory |
+| `common_setup_file` | File-level initialization (runs once per .bats file) |
+| `common_setup_per_test` | Per-test setup (isolated temp directory) |
+| `common_teardown_per_test` | Per-test cleanup |
+| `common_teardown_file` | File-level cleanup (runs once per .bats file) |
+| `common_setup` | Legacy: Combined setup (deprecated, use per_test) |
+| `common_teardown` | Legacy: Combined teardown (deprecated, use per_test) |
 | `$PROJECT_ROOT` | Path to claude-todo project root |
 | `$TODO_FILE` | Path to test todo.json |
 | `$CONFIG_FILE` | Path to test config.json |

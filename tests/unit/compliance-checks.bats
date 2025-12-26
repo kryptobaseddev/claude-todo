@@ -4,10 +4,16 @@
 # Part of EPIC T481: LLM-Agent-First Spec v3.0 Compliance
 # =============================================================================
 
+setup_file() {
+    load '../test_helper/common_setup'
+    common_setup_file
+}
+
 setup() {
     load '../test_helper/common_setup'
     load '../test_helper/assertions'
-    common_setup
+    load '../test_helper/fixtures'
+    common_setup_per_test
 
     # Setup compliance check paths (in addition to common_setup paths)
     COMPLIANCE_DIR="${PROJECT_ROOT}/dev/compliance/checks"
@@ -15,7 +21,11 @@ setup() {
 }
 
 teardown() {
-    common_teardown
+    common_teardown_per_test
+}
+
+teardown_file() {
+    common_teardown_file
 }
 
 # ============================================================================

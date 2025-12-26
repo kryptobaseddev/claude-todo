@@ -6,17 +6,27 @@
 # Part of: Delete Command Implementation (T708)
 # =============================================================================
 
+setup_file() {
+    load '../test_helper/common_setup'
+    common_setup_file
+}
+
 setup() {
     load '../test_helper/common_setup'
     load '../test_helper/assertions'
-    common_setup
-    
+    load '../test_helper/fixtures'
+    common_setup_per_test
+
     # Source the cancel-ops library
     source "$LIB_DIR/cancel-ops.sh"
 }
 
 teardown() {
-    common_teardown
+    common_teardown_per_test
+}
+
+teardown_file() {
+    common_teardown_file
 }
 
 # =============================================================================

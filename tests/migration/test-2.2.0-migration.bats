@@ -6,17 +6,27 @@
 # string to object with phases structure.
 # =============================================================================
 
+setup_file() {
+    load '../test_helper/common_setup'
+    load '../test_helper/assertions'
+    common_setup_file
+}
+
 setup() {
     load '../test_helper/common_setup'
     load '../test_helper/assertions'
-    common_setup
+    common_setup_per_test
 
     # Source migration library
     source "$LIB_DIR/migrate.sh"
 }
 
 teardown() {
-    common_teardown
+    common_teardown_per_test
+}
+
+teardown_file() {
+    common_teardown_file
 }
 
 # =============================================================================

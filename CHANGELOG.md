@@ -5,6 +5,36 @@ All notable changes to the claude-todo system will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.36.5] - 2025-12-26
+
+### Changed
+- **BATS Optimization Phase 2** - Test infrastructure improvements (T884 Epic)
+  - Migrated 11 test files to `setup_file()` pattern for better parallel execution
+    - `backup.bats`, `find.bats`, `focus.bats`, `hierarchy.bats`
+    - `jq-helpers.bats`, `labels-full.bats`, `list-tasks.bats`, `reopen.bats`
+    - `golden.bats`, `phase-edge-cases.bats`, `test-2.2.0-migration.bats`
+  - 50/50 unit tests now use optimized `setup_file()` pattern
+  - 12/12 integration tests use optimized pattern
+  - Updated `tests/README.md` with BATS optimization standards and parallel execution docs
+
+### Verified
+- **Parallel execution ready** (T890) - All prerequisites met:
+  - GNU parallel 20251122 installed
+  - BATS 1.13.0 with `--jobs` flag support
+  - Test isolation via `BATS_TEST_TMPDIR` verified
+  - `run-all-tests.sh` already supports `--parallel`, `--jobs N`
+
+### Assessed (No Changes Needed)
+- **Static fixtures** (T886) - Current dynamic checksum computation is appropriate
+  - 22/24 fixtures use `_update_fixture_checksum()` consistently
+  - 19 static fixtures could theoretically pre-compute, but no performance issue identified
+- **jq batching** (T887) - Identified 42 optimization opportunities (15-25% reduction possible)
+  - Lower priority - no architectural changes needed, pure test refactoring
+  - Assessment saved to `/tmp/t887-jq-assessment.json`
+
+### Removed
+- `tests/REVIEW-tests/` directory - Obsolete debug/test scripts cleaned up (T888)
+
 ## [0.36.4] - 2025-12-25
 
 ### Fixed

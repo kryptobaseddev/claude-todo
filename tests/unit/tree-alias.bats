@@ -16,11 +16,16 @@
 # Reference: T648 implementation plan, T647 decision
 # =============================================================================
 
+setup_file() {
+    load '../test_helper/common_setup'
+    common_setup_file
+}
+
 setup() {
     load '../test_helper/common_setup'
     load '../test_helper/assertions'
     load '../test_helper/fixtures'
-    common_setup
+    common_setup_per_test
 
     # Use the installed claude-todo command for alias tests
     # Fall back to ct if claude-todo not in PATH
@@ -31,6 +36,14 @@ setup() {
     else
         skip "claude-todo not installed - run ./install.sh first"
     fi
+}
+
+teardown() {
+    common_teardown_per_test
+}
+
+teardown_file() {
+    common_teardown_file
 }
 
 # =============================================================================
@@ -287,7 +300,7 @@ setup() {
 
     run $CLAUDE_TODO_CMD tree --human
     assert_success
-    # Should have ├── for non-last children and └── for last child
+    # Should have characters for non-last children and last child
     assert_output --partial "├──"
     assert_output --partial "└──"
 }
@@ -301,7 +314,7 @@ setup() {
 
     run $CLAUDE_TODO_CMD tree --human
     assert_success
-    # Nested items should show │ continuation line
+    # Nested items should show continuation line
     # The exact output depends on sibling order
     assert_output --partial "├──"
     assert_output --partial "Subtask A1"
@@ -317,7 +330,7 @@ setup() {
     run env COLUMNS=50 bash "$LIST_SCRIPT" --tree --human
     assert_success
     # Should show truncation indicator (ellipsis)
-    [[ "$output" == *"…"* ]] || [[ "$output" == *"..."* ]]
+    [[ "$output" == *"..."* ]] || [[ "$output" == *"..."* ]]
 
     # With --wide, full title should be shown
     run bash "$LIST_SCRIPT" --tree --human --wide
@@ -426,8 +439,8 @@ setup() {
     # Force narrow terminal - use env to properly pass COLUMNS to subprocess
     run env COLUMNS=50 bash "$LIST_SCRIPT" --tree --human
     assert_success
-    # Should contain ellipsis character (Unicode: …)
-    assert_output --partial "…"
+    # Should contain ellipsis character (Unicode: ...)
+    assert_output --partial "..."
     # Should NOT contain the full title (it's truncated)
     [[ "$output" != *"$long_title"* ]]
 }
@@ -441,14 +454,14 @@ setup() {
     # Short title should appear in full
     assert_output --partial "Short Title"
     # No ellipsis needed
-    [[ "$output" != *"…"* ]] || [[ "$output" == *"Short Title"* ]]
+    [[ "$output" != *"..."* ]] || [[ "$output" == *"Short Title"* ]]
 }
 
 # =============================================================================
 # RENDERING TESTS - Tree Connectors (T674)
 # =============================================================================
 
-@test "tree uses └── connector for last child" {
+@test "tree uses last child connector for last child" {
     create_empty_todo
     bash "$ADD_SCRIPT" "Epic" --type epic > /dev/null
     bash "$ADD_SCRIPT" "Task A" --parent T001 > /dev/null
@@ -456,11 +469,11 @@ setup() {
 
     run $CLAUDE_TODO_CMD tree --human
     assert_success
-    # Last child (T003) should use └──
+    # Last child (T003) should use last child connector
     assert_output --partial "└──"
 }
 
-@test "tree uses ├── connector for non-last children" {
+@test "tree uses non-last connector for non-last children" {
     create_empty_todo
     bash "$ADD_SCRIPT" "Epic" --type epic > /dev/null
     bash "$ADD_SCRIPT" "Task A" --parent T001 > /dev/null
@@ -468,11 +481,11 @@ setup() {
 
     run $CLAUDE_TODO_CMD tree --human
     assert_success
-    # Non-last child (T002) should use ├──
+    # Non-last child (T002) should use non-last connector
     assert_output --partial "├──"
 }
 
-@test "tree uses │ continuation for nested children under non-last parent" {
+@test "tree uses continuation for nested children under non-last parent" {
     create_empty_todo
     bash "$ADD_SCRIPT" "Epic" --type epic > /dev/null
     bash "$ADD_SCRIPT" "Task A" --parent T001 > /dev/null
@@ -481,6 +494,6 @@ setup() {
 
     run $CLAUDE_TODO_CMD tree --human
     assert_success
-    # Should show │ continuation line for nested structure
+    # Should show continuation line for nested structure
     assert_output --partial "│"
 }

@@ -1,15 +1,24 @@
 #!/usr/bin/env bats
 
+setup_file() {
+    load '../test_helper/common_setup'
+    common_setup_file
+}
+
 setup() {
     load '../test_helper/common_setup'
     load '../test_helper/assertions'
     load '../test_helper/fixtures'
-    common_setup
+    common_setup_per_test
     PROMOTE_SCRIPT="${SCRIPTS_DIR}/promote.sh"
 }
 
 teardown() {
-    common_teardown
+    common_teardown_per_test
+}
+
+teardown_file() {
+    common_teardown_file
 }
 
 @test "promote removes parent from task" {

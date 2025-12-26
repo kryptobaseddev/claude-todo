@@ -5,18 +5,27 @@
 # Tests statistics generation, period analysis, and output formats.
 # =============================================================================
 
+setup_file() {
+    load '../test_helper/common_setup'
+    common_setup_file
+}
+
 setup() {
     load '../test_helper/common_setup'
     load '../test_helper/assertions'
     load '../test_helper/fixtures'
-    common_setup
+    common_setup_per_test
 
     # Set STATS_SCRIPT path
     export STATS_SCRIPT="${SCRIPTS_DIR}/stats.sh"
 }
 
 teardown() {
-    common_teardown
+    common_teardown_per_test
+}
+
+teardown_file() {
+    common_teardown_file
 }
 
 # Helper to create log with activity

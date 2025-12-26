@@ -14,17 +14,23 @@ PROJECT_ROOT="$(cd "$SCHEMA_DIR/../.." && pwd)"
 FIXTURES_DIR="$SCHEMA_DIR/fixtures/schema"
 SCHEMA_FILE="$PROJECT_ROOT/schemas/todo.schema.json"
 
-setup() {
-    # Create temporary test directory
-    TEST_DIR="$(mktemp -d)"
-
-    # Ensure fixtures directory exists
+# =============================================================================
+# File-Level Setup (runs once per test file)
+# =============================================================================
+setup_file() {
+    # Ensure fixtures directory exists (only once per file)
     mkdir -p "$FIXTURES_DIR"
 }
 
-teardown() {
-    rm -rf "$TEST_DIR"
+# =============================================================================
+# Per-Test Setup (runs before each test)
+# =============================================================================
+setup() {
+    # Use BATS-managed temp directory (auto-cleaned)
+    TEST_DIR="${BATS_TEST_TMPDIR}"
 }
+
+# No teardown needed - BATS auto-cleans BATS_TEST_TMPDIR
 
 # =============================================================================
 # Helper Functions

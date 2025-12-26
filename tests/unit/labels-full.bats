@@ -6,18 +6,27 @@
 # Expands on basic label functionality with edge cases and validation.
 # =============================================================================
 
+setup_file() {
+    load '../test_helper/common_setup'
+    common_setup_file
+}
+
 setup() {
     load '../test_helper/common_setup'
     load '../test_helper/assertions'
     load '../test_helper/fixtures'
-    common_setup
+    common_setup_per_test
 
     # Set LABELS_SCRIPT path
     export LABELS_SCRIPT="${SCRIPTS_DIR}/labels.sh"
 }
 
 teardown() {
-    common_teardown
+    common_teardown_per_test
+}
+
+teardown_file() {
+    common_teardown_file
 }
 
 # Helper to create tasks with labels

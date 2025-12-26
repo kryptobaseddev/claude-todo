@@ -6,13 +6,25 @@
 # and auto-focus integration for intelligent task prioritization.
 # =============================================================================
 
-load 'test_helper/fixtures.bash'
+# =============================================================================
+# File-Level Setup (runs once per test file)
+# =============================================================================
+setup_file() {
+    load 'test_helper/common_setup'
+    load 'test_helper/fixtures'
+    common_setup_file
+}
 
-# Test setup and teardown
+# =============================================================================
+# Per-Test Setup (runs before each test)
+# =============================================================================
 setup() {
-    # Create temp directory for test isolation
-    TEST_TEMP_DIR="$(mktemp -d)"
-    export CLAUDE_TODO_DIR="${TEST_TEMP_DIR}/.claude"
+    # Re-load helpers for per-test scope
+    load 'test_helper/common_setup'
+    load 'test_helper/fixtures'
+
+    # Use BATS-managed temp directory (auto-cleaned)
+    export CLAUDE_TODO_DIR="${BATS_TEST_TMPDIR}/.claude"
     mkdir -p "$CLAUDE_TODO_DIR"
 
     # Set file paths
@@ -24,9 +36,7 @@ setup() {
     create_empty_archive "$ARCHIVE_FILE"
 }
 
-teardown() {
-    rm -rf "$TEST_TEMP_DIR"
-}
+# No teardown needed - BATS auto-cleans BATS_TEST_TMPDIR
 
 # =============================================================================
 # Fixture Generator for Analysis Testing
@@ -132,10 +142,8 @@ EOF
     create_analysis_fixture
     run claude-todo analyze --json
     [ "$status" -eq 0 ]
-    # Validate JSON structure
-    echo "$output" | jq -e '.leverage' > /dev/null
-    echo "$output" | jq -e '.bottlenecks' > /dev/null
-    echo "$output" | jq -e '.tiers' > /dev/null
+    # Validate JSON structure (batched jq assertion)
+    echo "$output" | jq -e 'has("leverage") and has("bottlenecks") and has("tiers")' > /dev/null
 }
 
 @test "analyze: fails gracefully on uninitialized project" {
@@ -314,13 +322,12 @@ EOF
     run claude-todo analyze --json
     [ "$status" -eq 0 ]
 
-    tier1_count=$(echo "$output" | jq '.tiers.tier1 | length')
-    tier2_count=$(echo "$output" | jq '.tiers.tier2 | length')
-    tier3_count=$(echo "$output" | jq '.tiers.tier3 | length')
-
-    [ "$tier1_count" -eq 0 ]
-    [ "$tier2_count" -eq 0 ]
-    [ "$tier3_count" -eq 0 ]
+    # Batched jq assertion for all tier counts
+    echo "$output" | jq -e '
+        (.tiers.tier1 | length) == 0 and
+        (.tiers.tier2 | length) == 0 and
+        (.tiers.tier3 | length) == 0
+    ' > /dev/null
 }
 
 # =============================================================================
@@ -351,10 +358,8 @@ EOF
     run claude-todo analyze --json
     [ "$status" -eq 0 ]
 
-    echo "$output" | jq -e '.leverage' > /dev/null
-    echo "$output" | jq -e '.bottlenecks' > /dev/null
-    echo "$output" | jq -e '.tiers' > /dev/null
-    echo "$output" | jq -e '.recommendation' > /dev/null
+    # Batched jq assertion for all required keys
+    echo "$output" | jq -e 'has("leverage") and has("bottlenecks") and has("tiers") and has("recommendation")' > /dev/null
 }
 
 @test "analyze: full mode includes all sections" {
@@ -448,9 +453,8 @@ EOF
     run claude-todo analyze --auto-focus
     [ "$status" -eq 0 ]
 
-    # Verify focus.json structure
-    jq -e '.taskId' "$FOCUS_FILE" > /dev/null
-    jq -e '.startedAt' "$FOCUS_FILE" > /dev/null
+    # Batched jq assertion for focus.json structure
+    jq -e 'has("taskId") and has("startedAt")' "$FOCUS_FILE" > /dev/null
 }
 
 @test "analyze: --auto-focus with empty project does not create focus" {

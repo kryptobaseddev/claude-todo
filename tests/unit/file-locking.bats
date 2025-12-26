@@ -2,11 +2,20 @@
 # file-locking.bats - Test file locking mechanisms
 # Tests concurrent access scenarios to prevent race conditions
 
-setup() {
+# =============================================================================
+# File-Level Setup (runs once per test file)
+# =============================================================================
+setup_file() {
     # Determine project root from test file location
     TEST_FILE_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")" && pwd)"
     PROJECT_ROOT="$(cd "$TEST_FILE_DIR/../.." && pwd)"
+    export PROJECT_ROOT
+}
 
+# =============================================================================
+# Per-Test Setup (runs before each test)
+# =============================================================================
+setup() {
     # Source required libraries
     source "$PROJECT_ROOT/lib/exit-codes.sh"
     source "$PROJECT_ROOT/lib/file-ops.sh"
@@ -22,6 +31,10 @@ setup() {
 teardown() {
     # Clean up test directory and lock files
     rm -rf "$TEST_DIR" 2>/dev/null || true
+}
+
+teardown_file() {
+    :  # Nothing to clean up at file level
 }
 
 #######################################

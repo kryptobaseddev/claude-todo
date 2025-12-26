@@ -8,7 +8,15 @@
 # Per BACKUP-SYSTEM-SPEC.md Part 2.2
 # =============================================================================
 
+setup_file() {
+    load '../test_helper/common_setup'
+    common_setup_file
+}
+
 setup() {
+    load '../test_helper/common_setup'
+    common_setup_per_test
+
     # Determine project root from test file location
     TEST_FILE_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")" && pwd)"
     PROJECT_ROOT="$(cd "$TEST_FILE_DIR/../.." && pwd)"
@@ -17,8 +25,8 @@ setup() {
     source "$PROJECT_ROOT/lib/exit-codes.sh"
     source "$PROJECT_ROOT/lib/platform-compat.sh"
 
-    # Create isolated test directory
-    TEST_DIR=$(mktemp -d)
+    # Use BATS-managed temp directory (auto-cleaned)
+    TEST_DIR="${BATS_TEST_TMPDIR}"
     CLAUDE_TODO_DIR="$TEST_DIR/.claude"
     mkdir -p "$CLAUDE_TODO_DIR"
 
@@ -60,10 +68,14 @@ EOF
 }
 
 teardown() {
+    common_teardown_per_test
     # Return to project root before cleanup
     cd "$PROJECT_ROOT" 2>/dev/null || true
-    # Clean up test directory
-    rm -rf "$TEST_DIR" 2>/dev/null || true
+    # BATS auto-cleans BATS_TEST_TMPDIR
+}
+
+teardown_file() {
+    common_teardown_file
 }
 
 # =============================================================================

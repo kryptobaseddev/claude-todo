@@ -6,18 +6,27 @@
 # advance, and list subcommands with v2.2.0 project.phases structure.
 # =============================================================================
 
+setup_file() {
+    load '../test_helper/common_setup'
+    common_setup_file
+}
+
 setup() {
     load '../test_helper/common_setup'
     load '../test_helper/assertions'
     load '../test_helper/fixtures'
-    common_setup
+    common_setup_per_test
 
     # Set PHASE_SCRIPT path
     export PHASE_SCRIPT="${SCRIPTS_DIR}/phase.sh"
 }
 
 teardown() {
-    common_teardown
+    common_teardown_per_test
+}
+
+teardown_file() {
+    common_teardown_file
 }
 
 # =============================================================================
@@ -28,6 +37,16 @@ teardown() {
 create_phase_fixture() {
     local current_phase="${1:-setup}"
     local setup_status="${2:-active}"
+
+    local started_at='null'
+    local completed_at='null'
+
+    if [[ "$setup_status" != "pending" ]]; then
+        started_at='"2025-12-01T10:00:00Z"'
+    fi
+    if [[ "$setup_status" == "completed" ]]; then
+        completed_at='"2025-12-10T12:00:00Z"'
+    fi
 
     cat > "$TODO_FILE" << EOF
 {
@@ -41,8 +60,8 @@ create_phase_fixture() {
         "name": "Setup & Foundation",
         "description": "Initial project setup",
         "status": "$setup_status",
-        "startedAt": $(if [[ "$setup_status" != "pending" ]]; then echo '"2025-12-01T10:00:00Z"'; else echo 'null'; fi),
-        "completedAt": $(if [[ "$setup_status" == "completed" ]]; then echo '"2025-12-10T12:00:00Z"'; else echo 'null'; fi)
+        "startedAt": $started_at,
+        "completedAt": $completed_at
       },
       "core": {
         "order": 2,

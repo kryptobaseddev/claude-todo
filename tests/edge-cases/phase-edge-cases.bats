@@ -17,11 +17,18 @@
 #   - Phase rollback scenarios
 # =============================================================================
 
+setup_file() {
+    load '../test_helper/common_setup'
+    load '../test_helper/assertions'
+    load '../test_helper/fixtures'
+    common_setup_file
+}
+
 setup() {
     load '../test_helper/common_setup'
     load '../test_helper/assertions'
     load '../test_helper/fixtures'
-    common_setup
+    common_setup_per_test
 
     export PHASE_SCRIPT="${SCRIPTS_DIR}/phase.sh"
     export ADD_SCRIPT="${SCRIPTS_DIR}/add-task.sh"
@@ -30,7 +37,11 @@ setup() {
 }
 
 teardown() {
-    common_teardown
+    common_teardown_per_test
+}
+
+teardown_file() {
+    common_teardown_file
 }
 
 # =============================================================================

@@ -25,8 +25,8 @@ setup() {
     export PROJECT_ROOT="$(cd "$TEST_FILE_DIR/../../.." && pwd)"
     export LIB_DIR="$PROJECT_ROOT/lib"
 
-    # Create isolated test environment
-    TEST_DIR=$(mktemp -d)
+    # Use BATS-managed temp directory (auto-cleaned)
+    TEST_DIR="${BATS_TEST_TMPDIR}"
     export CLAUDE_TODO_DIR="$TEST_DIR/.claude"
     mkdir -p "$CLAUDE_TODO_DIR"
 
@@ -40,9 +40,7 @@ setup() {
     export TODO_FILE="$CLAUDE_TODO_DIR/todo.json"
 }
 
-teardown() {
-    rm -rf "$TEST_DIR" 2>/dev/null || true
-}
+# No teardown needed - BATS auto-cleans BATS_TEST_TMPDIR
 
 # =============================================================================
 # LAYER 0 TESTS - Foundation (Zero Dependencies)

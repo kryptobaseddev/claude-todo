@@ -8,11 +8,16 @@
 # - T097: Notes stored in task array with [COMPLETED timestamp] prefix
 # =============================================================================
 
+setup_file() {
+    load '../test_helper/common_setup'
+    common_setup_file
+}
+
 setup() {
     load '../test_helper/common_setup'
     load '../test_helper/assertions'
     load '../test_helper/fixtures'
-    common_setup
+    common_setup_per_test
 
     # Create test todo.json with tasks for completion testing
     cat > "$TODO_FILE" << 'EOF'
@@ -56,7 +61,11 @@ EOF
 }
 
 teardown() {
-    common_teardown
+    common_teardown_per_test
+}
+
+teardown_file() {
+    common_teardown_file
 }
 
 # =============================================================================

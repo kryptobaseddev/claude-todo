@@ -6,16 +6,25 @@
 # Part of: Delete Command Implementation (T710)
 # =============================================================================
 
+setup_file() {
+    load '../test_helper/common_setup'
+    common_setup_file
+}
+
 setup() {
     load '../test_helper/common_setup'
     load '../test_helper/assertions'
-    common_setup
+    common_setup_per_test
 
     export UNCANCEL_SCRIPT="${SCRIPTS_DIR}/uncancel.sh"
 }
 
 teardown() {
-    common_teardown
+    common_teardown_per_test
+}
+
+teardown_file() {
+    common_teardown_file
 }
 
 # =============================================================================
