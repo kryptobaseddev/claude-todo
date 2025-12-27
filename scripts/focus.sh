@@ -70,7 +70,25 @@ elif [[ -f "$LIB_DIR/hierarchy.sh" ]]; then
   source "$LIB_DIR/hierarchy.sh"
 fi
 
+# Source sessions library for multi-session support (v0.38.0+)
+if [[ -f "$CLEO_HOME/lib/sessions.sh" ]]; then
+  source "$CLEO_HOME/lib/sessions.sh"
+elif [[ -f "$LIB_DIR/sessions.sh" ]]; then
+  source "$LIB_DIR/sessions.sh"
+fi
+
+# Source config library for multi-session check
+if [[ -f "$CLEO_HOME/lib/config.sh" ]]; then
+  source "$CLEO_HOME/lib/config.sh"
+elif [[ -f "$LIB_DIR/config.sh" ]]; then
+  source "$LIB_DIR/config.sh"
+fi
+
 TODO_FILE="${TODO_FILE:-.cleo/todo.json}"
+CONFIG_FILE="${CONFIG_FILE:-.cleo/config.json}"
+
+# Multi-session context
+SESSION_ID=""
 # Note: LOG_FILE is set by lib/logging.sh (readonly) - don't reassign here
 # If library wasn't sourced, set a fallback
 if [[ -z "${LOG_FILE:-}" ]]; then
@@ -116,7 +134,14 @@ Options:
   --human           Force text output (human-readable)
   --json            Force JSON output (machine-readable)
   -q, --quiet       Suppress informational messages
+  --session ID      Session context (multi-session mode)
+  --dry-run         Preview changes without modifying files
   -h, --help        Show this help
+
+Multi-Session Mode:
+  When multiSession.enabled=true, focus is per-session.
+  Use --session or set CLEO_SESSION to specify session context.
+  The focus task must be within the session's scope.
 
 Format Auto-Detection:
   When no format is specified, output format is automatically detected:
@@ -129,7 +154,7 @@ Examples:
   cleo focus next "Write unit tests for auth module"
   cleo focus clear
   cleo focus show --json
-  cleo focus show --format json
+  cleo focus set T005 --session session_20251227_abc123
 EOF
   exit "$EXIT_SUCCESS"
 }
@@ -211,6 +236,153 @@ log_focus_change() {
   save_json "$LOG_FILE" "$updated_log" || log_warn "Failed to write log entry"
 }
 
+# Set focus to a task (multi-session aware)
+# Updates session focus in sessions.json when multi-session is enabled
+set_session_focus() {
+  local session_id="$1"
+  local task_id="$2"
+
+  local sessions_file todo_file
+  sessions_file=$(get_sessions_file)
+  todo_file="$TODO_FILE"
+
+  # Lock both files
+  local sessions_fd todo_fd
+  if ! lock_file "$sessions_file" sessions_fd 30; then
+    log_error "Failed to acquire lock on sessions.json"
+    return 1
+  fi
+
+  if ! lock_file "$todo_file" todo_fd 30; then
+    unlock_file "$sessions_fd"
+    log_error "Failed to acquire lock on todo.json"
+    return 1
+  fi
+
+  trap "unlock_file $todo_fd; unlock_file $sessions_fd" EXIT ERR
+
+  local sessions_content todo_content
+  sessions_content=$(cat "$sessions_file")
+  todo_content=$(cat "$todo_file")
+
+  # Get session info
+  local session_info
+  session_info=$(echo "$sessions_content" | jq -c --arg id "$session_id" '.sessions[] | select(.id == $id)')
+
+  if [[ -z "$session_info" ]]; then
+    unlock_file "$todo_fd"
+    unlock_file "$sessions_fd"
+    trap - EXIT ERR
+    log_error "Session not found: $session_id"
+    return 1
+  fi
+
+  # Verify task is in session scope
+  local in_scope
+  in_scope=$(echo "$session_info" | jq --arg taskId "$task_id" '.scope.computedTaskIds | index($taskId)')
+
+  if [[ "$in_scope" == "null" ]]; then
+    unlock_file "$todo_fd"
+    unlock_file "$sessions_fd"
+    trap - EXIT ERR
+    log_error "Task $task_id is not in session scope"
+    return 1
+  fi
+
+  # Verify no other session has this task focused
+  local claimed_by
+  claimed_by=$(echo "$sessions_content" | jq -r --arg taskId "$task_id" --arg sessId "$session_id" '
+    .sessions[] | select(.id != $sessId and .focus.currentTask == $taskId) | .id
+  ')
+
+  if [[ -n "$claimed_by" ]]; then
+    unlock_file "$todo_fd"
+    unlock_file "$sessions_fd"
+    trap - EXIT ERR
+    log_error "Task $task_id already focused by session $claimed_by"
+    return 1
+  fi
+
+  local timestamp old_focus
+  timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+  old_focus=$(echo "$session_info" | jq -r '.focus.currentTask // ""')
+
+  # Update session focus
+  local updated_sessions
+  updated_sessions=$(echo "$sessions_content" | jq \
+    --arg sessId "$session_id" \
+    --arg taskId "$task_id" \
+    --arg ts "$timestamp" \
+    --arg oldFocus "$old_focus" \
+    '
+    .sessions = [.sessions[] |
+      if .id == $sessId then
+        .focus.previousTask = (if $oldFocus == "" then null else $oldFocus end) |
+        .focus.currentTask = $taskId |
+        .focus.focusHistory += [{
+          taskId: $taskId,
+          timestamp: $ts,
+          action: "focused"
+        }] |
+        .lastActivity = $ts |
+        .stats.focusChanges += 1
+      else . end
+    ] |
+    ._meta.lastModified = $ts
+    ')
+
+  # Update task status in todo.json
+  local scope_ids
+  scope_ids=$(echo "$session_info" | jq -c '.scope.computedTaskIds')
+
+  local updated_todo
+  updated_todo=$(echo "$todo_content" | jq \
+    --arg taskId "$task_id" \
+    --arg ts "$timestamp" \
+    --argjson scopeIds "$scope_ids" \
+    '
+    # Reset other active tasks in scope to pending
+    .tasks = [.tasks[] |
+      if (.id as $id | $scopeIds | index($id)) and .status == "active" and .id != $taskId then
+        .status = "pending" | .updatedAt = $ts
+      else . end
+    ] |
+    # Set focus task to active
+    .tasks = [.tasks[] |
+      if .id == $taskId then
+        .status = "active" | .updatedAt = $ts
+      else . end
+    ] |
+    ._meta.lastModified = $ts
+    ')
+
+  # Save both files
+  if ! echo "$updated_sessions" | jq '.' > "$sessions_file.tmp"; then
+    unlock_file "$todo_fd"
+    unlock_file "$sessions_fd"
+    trap - EXIT ERR
+    rm -f "$sessions_file.tmp"
+    return 1
+  fi
+  mv "$sessions_file.tmp" "$sessions_file"
+
+  if ! echo "$updated_todo" | jq '.' > "$todo_file.tmp"; then
+    unlock_file "$todo_fd"
+    unlock_file "$sessions_fd"
+    trap - EXIT ERR
+    rm -f "$todo_file.tmp"
+    return 1
+  fi
+  mv "$todo_file.tmp" "$todo_file"
+
+  unlock_file "$todo_fd"
+  unlock_file "$sessions_fd"
+  trap - EXIT ERR
+
+  echo "$old_focus"
+  return 0
+}
+
 # Set focus to a task
 cmd_set() {
   local task_id="${1:-}"
@@ -226,6 +398,77 @@ cmd_set() {
   fi
 
   check_todo_exists
+
+  # Check for multi-session mode
+  local multi_session_enabled=false
+  if declare -f is_multi_session_enabled >/dev/null 2>&1; then
+    if is_multi_session_enabled "$CONFIG_FILE"; then
+      multi_session_enabled=true
+    fi
+  fi
+
+  # Handle multi-session focus
+  if [[ "$multi_session_enabled" == "true" ]]; then
+    # Get session ID from flag, env var, or .current-session file
+    local session_id="$SESSION_ID"
+    if [[ -z "$session_id" ]] && declare -f get_current_session_id >/dev/null 2>&1; then
+      session_id=$(get_current_session_id 2>/dev/null || true)
+    fi
+
+    if [[ -z "$session_id" ]]; then
+      log_error "Multi-session mode requires --session ID or CLEO_SESSION"
+      log_error "Use 'cleo session list' to see active sessions"
+      exit "${EXIT_INVALID_INPUT:-64}"
+    fi
+
+    if [[ "$DRY_RUN" == "true" ]]; then
+      log_info "[DRY-RUN] Would set focus to $task_id in session $session_id"
+      exit "$EXIT_SUCCESS"
+    fi
+
+    local old_focus
+    if ! old_focus=$(set_session_focus "$session_id" "$task_id"); then
+      exit "${EXIT_FILE_ERROR:-4}"
+    fi
+
+    local task_title
+    task_title=$(jq -r --arg id "$task_id" '.tasks[] | select(.id == $id) | .title // "Unknown"' "$TODO_FILE")
+
+    if [[ "$FORMAT" == "json" ]]; then
+      local current_timestamp
+      current_timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+      jq -n \
+        --arg timestamp "$current_timestamp" \
+        --arg version "${CLEO_VERSION:-$(get_version)}" \
+        --arg task_id "$task_id" \
+        --arg session_id "$session_id" \
+        --arg old_focus "$old_focus" \
+        '{
+          "$schema": "https://cleo-dev.com/schemas/v1/output.schema.json",
+          "_meta": {
+            "command": "focus set",
+            "timestamp": $timestamp,
+            "version": $version,
+            "format": "json"
+          },
+          "success": true,
+          "taskId": $task_id,
+          "sessionId": $session_id,
+          "previousFocus": (if $old_focus == "" then null else $old_focus end),
+          "multiSession": true
+        }'
+    else
+      log_step "Focus set: $task_title"
+      log_info "Task ID: $task_id"
+      log_info "Session: $session_id"
+    fi
+
+    # Log the focus change
+    log_focus_change "$old_focus" "$task_id" "session_focus_changed"
+    return
+  fi
+
+  # Single-session mode (original behavior)
 
   # Verify task exists
   local task_exists
@@ -766,6 +1009,7 @@ while [[ $# -gt 0 ]]; do
     --json) FORMAT="json"; shift ;;
     -q|--quiet) QUIET=true; shift ;;
     --dry-run) DRY_RUN=true; shift ;;
+    --session) SESSION_ID="$2"; shift 2 ;;
     -h|--help|help)
       if [[ -z "$COMMAND" ]]; then
         usage

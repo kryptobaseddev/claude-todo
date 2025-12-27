@@ -813,9 +813,9 @@ create_snapshot_backup() {
     backup_path="$BACKUP_DIR/$BACKUP_TYPE_SNAPSHOT/$backup_id"
     ensure_directory "$backup_path" || return 1
 
-    # Backup all system files
+    # Backup all system files (including sessions.json for multi-session support)
     local source_dir="${CLEO_DIR:-.cleo}"
-    local files=("todo.json" "todo-archive.json" "config.json" "todo-log.json")
+    local files=("todo.json" "todo-archive.json" "config.json" "todo-log.json" "sessions.json")
     local file
 
     for file in "${files[@]}"; do
@@ -1163,9 +1163,9 @@ create_migration_backup() {
     backup_path="$BACKUP_DIR/$BACKUP_TYPE_MIGRATION/$backup_id"
     ensure_directory "$backup_path" || return 1
 
-    # Backup all system files
+    # Backup all system files (including sessions.json for multi-session support)
     local source_dir="${CLEO_DIR:-.cleo}"
-    local files=("todo.json" "todo-archive.json" "config.json" "todo-log.json")
+    local files=("todo.json" "todo-archive.json" "config.json" "todo-log.json" "sessions.json")
     local file
 
     for file in "${files[@]}"; do
