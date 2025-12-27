@@ -3,9 +3,9 @@
   "version": "2.1.0",
   "project": "claude-todo",
   "_meta": {
-    "totalEntries": 2113,
+    "totalEntries": 2134,
     "firstEntry": "2025-12-13T07:14:38Z",
-    "lastEntry": "2025-12-26T20:35:30Z",
+    "lastEntry": "2025-12-27T03:41:53Z",
     "entriesPruned": 0
   },
   "entries": [
@@ -50596,6 +50596,556 @@
       },
       "details": {
         "operation": "update"
+      }
+    },
+    {
+      "id": "log_cbb53b9d8488",
+      "timestamp": "2025-12-27T03:33:42Z",
+      "sessionId": "session_20251224_221622_f92f8a",
+      "action": "focus_changed",
+      "actor": "claude",
+      "taskId": null,
+      "before": {
+        "currentTask": "T755"
+      },
+      "after": {
+        "currentTask": "T900"
+      },
+      "details": null
+    },
+    {
+      "id": "log-1766806571-c886a8",
+      "timestamp": "2025-12-27T03:36:11Z",
+      "action": "task_created",
+      "taskId": "T901",
+      "actor": "system",
+      "details": {
+        "title": "Fix 3 remaining legacy common_setup calls",
+        "status": "pending",
+        "priority": "high"
+      },
+      "before": null,
+      "after": {
+        "title": "Fix 3 remaining legacy common_setup calls",
+        "status": "pending",
+        "priority": "high"
+      }
+    },
+    {
+      "id": "log_e9fad1840640",
+      "timestamp": "2025-12-27T03:36:25Z",
+      "sessionId": "session_20251224_221622_f92f8a",
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T901",
+      "before": {
+        "title": "Fix 3 remaining legacy common_setup calls",
+        "status": "pending",
+        "priority": "high",
+        "description": "3 test files still use legacy common_setup: edge-cases.bats, file-locking.bats, schema-validation.bats",
+        "phase": "testing",
+        "labels": [
+          "bats",
+          "migration"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "after": {
+        "title": "Fix 3 remaining legacy common_setup calls",
+        "status": "pending",
+        "priority": "high",
+        "description": "3 test files still use legacy common_setup: edge-cases.bats, file-locking.bats, schema-validation.bats",
+        "phase": "testing",
+        "labels": [
+          "bats",
+          "migration"
+        ],
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log-1766806587-8b9d0a",
+      "timestamp": "2025-12-27T03:36:27Z",
+      "action": "task_created",
+      "taskId": "T902",
+      "actor": "system",
+      "details": {
+        "title": "Create static fixtures directory (optional)",
+        "status": "pending",
+        "priority": "low"
+      },
+      "before": null,
+      "after": {
+        "title": "Create static fixtures directory (optional)",
+        "status": "pending",
+        "priority": "low"
+      }
+    },
+    {
+      "id": "log-1766806589-8c3fa6",
+      "timestamp": "2025-12-27T03:36:29Z",
+      "action": "task_created",
+      "taskId": "T903",
+      "actor": "system",
+      "details": {
+        "title": "Implement jq batching per T887 assessment",
+        "status": "pending",
+        "priority": "low"
+      },
+      "before": null,
+      "after": {
+        "title": "Implement jq batching per T887 assessment",
+        "status": "pending",
+        "priority": "low"
+      }
+    },
+    {
+      "id": "log_a9bb6cf30fad",
+      "timestamp": "2025-12-27T03:36:43Z",
+      "sessionId": "session_20251224_221622_f92f8a",
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T884",
+      "before": {
+        "title": "BATS Optimization Phase 2: Full Compliance",
+        "status": "pending",
+        "priority": "high",
+        "description": "Complete all remaining BATS test suite optimizations per BATS-OPTIMIZATION-SPEC.md. Ensure 100% compliance with setup_file() pattern, static fixtures, jq batching, and test organization.",
+        "phase": "core",
+        "labels": null,
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "after": {
+        "title": "BATS Optimization Phase 2: Full Compliance",
+        "status": "pending",
+        "priority": "high",
+        "description": "Complete all remaining BATS test suite optimizations per BATS-OPTIMIZATION-SPEC.md. Ensure 100% compliance with setup_file() pattern, static fixtures, jq batching, and test organization.",
+        "phase": "core",
+        "labels": null,
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_a846fd89b43f",
+      "timestamp": "2025-12-27T03:37:02Z",
+      "sessionId": "session_20251224_221622_f92f8a",
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T885",
+      "before": {
+        "title": "Migrate all 55 remaining test files to setup_file() pattern",
+        "status": "pending",
+        "priority": "high",
+        "description": "Migrate remaining unit/, integration/, golden/, edge-cases/, migration/ test files to use setup_file()/common_setup_file() pattern. NO legacy setup() with library loading. Target: 69/69 files compliant.",
+        "phase": "core",
+        "labels": null,
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "after": {
+        "title": "Migrate all 55 remaining test files to setup_file() pattern",
+        "status": "pending",
+        "priority": "high",
+        "description": "Migrate remaining unit/, integration/, golden/, edge-cases/, migration/ test files to use setup_file()/common_setup_file() pattern. NO legacy setup() with library loading. Target: 69/69 files compliant.",
+        "phase": "core",
+        "labels": null,
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_8c4f9798712a",
+      "timestamp": "2025-12-27T03:37:05Z",
+      "sessionId": "session_20251224_221622_f92f8a",
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T886",
+      "before": {
+        "title": "Create static fixture files with pre-computed checksums",
+        "status": "pending",
+        "priority": "high",
+        "description": "Create tests/fixtures/static/ directory with pre-computed JSON fixtures: empty-todo.json, independent-tasks.json, linear-chain.json, hierarchy-basic.json. Each with valid checksums. Document usage in tests/README.md.",
+        "phase": "core",
+        "labels": null,
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "after": {
+        "title": "Create static fixture files with pre-computed checksums",
+        "status": "pending",
+        "priority": "high",
+        "description": "Create tests/fixtures/static/ directory with pre-computed JSON fixtures: empty-todo.json, independent-tasks.json, linear-chain.json, hierarchy-basic.json. Each with valid checksums. Document usage in tests/README.md.",
+        "phase": "core",
+        "labels": null,
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_7ec64f81b696",
+      "timestamp": "2025-12-27T03:37:07Z",
+      "sessionId": "session_20251224_221622_f92f8a",
+      "action": "task_updated",
+      "actor": "system",
+      "taskId": "T887",
+      "before": {
+        "title": "Implement jq assertion batching across all test files",
+        "status": "pending",
+        "priority": "medium",
+        "description": "Batch sequential jq calls into single expressions per BATS-OPTIMIZATION-SPEC.md Section 2.2. Priority files: cache-hierarchy.bats, delete.bats, schema-validation.bats. Document pattern in tests/README.md.",
+        "phase": "core",
+        "labels": null,
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "after": {
+        "title": "Implement jq assertion batching across all test files",
+        "status": "pending",
+        "priority": "medium",
+        "description": "Batch sequential jq calls into single expressions per BATS-OPTIMIZATION-SPEC.md Section 2.2. Priority files: cache-hierarchy.bats, delete.bats, schema-validation.bats. Document pattern in tests/README.md.",
+        "phase": "core",
+        "labels": null,
+        "files": null,
+        "acceptance": null,
+        "depends": null,
+        "blockedBy": null
+      },
+      "details": {
+        "operation": "update"
+      }
+    },
+    {
+      "id": "log_b31d3cf039b0",
+      "timestamp": "2025-12-27T03:37:43Z",
+      "sessionId": "session_20251224_221622_f92f8a",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T888",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-27T03:37:43Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_ba13a0c68b8c",
+      "timestamp": "2025-12-27T03:37:45Z",
+      "sessionId": "session_20251224_221622_f92f8a",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T889",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-27T03:37:45Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_87f49a15a7db",
+      "timestamp": "2025-12-27T03:37:48Z",
+      "sessionId": "session_20251224_221622_f92f8a",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T890",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-27T03:37:48Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_516a1be1869f",
+      "timestamp": "2025-12-27T03:41:33Z",
+      "sessionId": "session_20251224_221622_f92f8a",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T891",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-27T03:41:33Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_052e0d042592",
+      "timestamp": "2025-12-27T03:41:34Z",
+      "sessionId": "session_20251224_221622_f92f8a",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T892",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-27T03:41:34Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_3ce54f08b37d",
+      "timestamp": "2025-12-27T03:41:35Z",
+      "sessionId": "session_20251224_221622_f92f8a",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T893",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-27T03:41:35Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_d3d229315cf4",
+      "timestamp": "2025-12-27T03:41:36Z",
+      "sessionId": "session_20251224_221622_f92f8a",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T894",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-27T03:41:36Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_d92ad7250f1c",
+      "timestamp": "2025-12-27T03:41:37Z",
+      "sessionId": "session_20251224_221622_f92f8a",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T885",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-27T03:41:36Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "auto_complete"
+      }
+    },
+    {
+      "id": "log_8d0846ea0981",
+      "timestamp": "2025-12-27T03:41:38Z",
+      "sessionId": "session_20251224_221622_f92f8a",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T895",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-27T03:41:38Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_1103db200d3c",
+      "timestamp": "2025-12-27T03:41:39Z",
+      "sessionId": "session_20251224_221622_f92f8a",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T896",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-27T03:41:38Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_090277ebd5bb",
+      "timestamp": "2025-12-27T03:41:40Z",
+      "sessionId": "session_20251224_221622_f92f8a",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T897",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-27T03:41:39Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_b5b3b533d1d9",
+      "timestamp": "2025-12-27T03:41:41Z",
+      "sessionId": "session_20251224_221622_f92f8a",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T898",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-27T03:41:40Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_e82e074760fa",
+      "timestamp": "2025-12-27T03:41:51Z",
+      "sessionId": "session_20251224_221622_f92f8a",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T886",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-27T03:41:50Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_677c4c79cd47",
+      "timestamp": "2025-12-27T03:41:52Z",
+      "sessionId": "session_20251224_221622_f92f8a",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T887",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-27T03:41:51Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "complete"
+      }
+    },
+    {
+      "id": "log_0f0bec163e8e",
+      "timestamp": "2025-12-27T03:41:53Z",
+      "sessionId": "session_20251224_221622_f92f8a",
+      "action": "status_changed",
+      "actor": "system",
+      "taskId": "T884",
+      "before": {
+        "status": "pending",
+        "completedAt": null
+      },
+      "after": {
+        "status": "done",
+        "completedAt": "2025-12-27T03:41:51Z"
+      },
+      "details": {
+        "field": "status",
+        "operation": "auto_complete"
       }
     }
   ]

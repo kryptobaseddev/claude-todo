@@ -18,6 +18,8 @@ SCHEMA_FILE="$PROJECT_ROOT/schemas/todo.schema.json"
 # File-Level Setup (runs once per test file)
 # =============================================================================
 setup_file() {
+    load '../test_helper/common_setup'
+    common_setup_file
     # Ensure fixtures directory exists (only once per file)
     mkdir -p "$FIXTURES_DIR"
 }
@@ -26,11 +28,19 @@ setup_file() {
 # Per-Test Setup (runs before each test)
 # =============================================================================
 setup() {
+    load '../test_helper/common_setup'
+    common_setup_per_test
     # Use BATS-managed temp directory (auto-cleaned)
     TEST_DIR="${BATS_TEST_TMPDIR}"
 }
 
-# No teardown needed - BATS auto-cleans BATS_TEST_TMPDIR
+teardown() {
+    common_teardown_per_test
+}
+
+teardown_file() {
+    common_teardown_file
+}
 
 # =============================================================================
 # Helper Functions

@@ -22,6 +22,7 @@ setup() {
     # Re-load helpers for per-test scope
     load 'test_helper/common_setup'
     load 'test_helper/fixtures'
+    common_setup_per_test
 
     # Use BATS-managed temp directory (auto-cleaned)
     export CLAUDE_TODO_DIR="${BATS_TEST_TMPDIR}/.claude"
@@ -36,7 +37,13 @@ setup() {
     create_empty_archive "$ARCHIVE_FILE"
 }
 
-# No teardown needed - BATS auto-cleans BATS_TEST_TMPDIR
+teardown() {
+    common_teardown_per_test
+}
+
+teardown_file() {
+    common_teardown_file
+}
 
 # =============================================================================
 # Fixture Generator for Analysis Testing

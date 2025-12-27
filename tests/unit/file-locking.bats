@@ -6,22 +6,23 @@
 # File-Level Setup (runs once per test file)
 # =============================================================================
 setup_file() {
-    # Determine project root from test file location
-    TEST_FILE_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")" && pwd)"
-    PROJECT_ROOT="$(cd "$TEST_FILE_DIR/../.." && pwd)"
-    export PROJECT_ROOT
+    load '../test_helper/common_setup'
+    common_setup_file
 }
 
 # =============================================================================
 # Per-Test Setup (runs before each test)
 # =============================================================================
 setup() {
-    # Source required libraries
+    load '../test_helper/common_setup'
+    common_setup_per_test
+
+    # Source required libraries for file-locking specific tests
     source "$PROJECT_ROOT/lib/exit-codes.sh"
     source "$PROJECT_ROOT/lib/file-ops.sh"
 
-    # Create test directory
-    TEST_DIR="/tmp/claude-todo-test-$$"
+    # Create test directory (use BATS temp for isolation)
+    TEST_DIR="${BATS_TEST_TMPDIR}/claude-todo-test"
     mkdir -p "$TEST_DIR"
 
     TEST_FILE="$TEST_DIR/test-lock.json"
@@ -29,12 +30,11 @@ setup() {
 }
 
 teardown() {
-    # Clean up test directory and lock files
-    rm -rf "$TEST_DIR" 2>/dev/null || true
+    common_teardown_per_test
 }
 
 teardown_file() {
-    :  # Nothing to clean up at file level
+    common_teardown_file
 }
 
 #######################################

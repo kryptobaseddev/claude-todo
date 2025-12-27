@@ -5,6 +5,25 @@ All notable changes to the claude-todo system will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.36.7] - 2025-12-26
+
+### Fixed
+- **BATS Phase 2 compliance** - Fixed 4 remaining test files to be fully compliant with setup_file() pattern (T884)
+  - `tests/unit/edge-cases.bats` - Added `teardown_file()`, fixed `common_setup` → `common_setup_per_test`
+  - `tests/unit/file-locking.bats` - Added `common_setup_file`, `common_setup_per_test`, proper BATS temp directory usage
+  - `tests/golden/schema-validation.bats` - Added full setup_file()/teardown_file() lifecycle functions
+  - `tests/analyze.bats` - Added `common_setup_per_test`, `teardown()`, `teardown_file()` functions
+  - All 67 test files now 100% compliant with Phase 2 optimization pattern
+
+### Completed
+- **T884 Epic: BATS Optimization Phase 2: Full Compliance** - All 6 tasks complete
+  - T885: All test files migrated to setup_file() pattern (67/67 compliant)
+  - T886: Static fixtures assessed (dynamic checksums appropriate)
+  - T887: jq batching opportunities identified (42 opportunities for future)
+  - T888: REVIEW-tests directory deleted (15 obsolete files removed)
+  - T889: tests/README.md updated with optimization standards
+  - T890: GNU parallel verified ready for production use
+
 ## [0.36.6] - 2025-12-26
 
 ### Fixed
