@@ -364,14 +364,112 @@ teardown_file() {
 }
 
 # =============================================================================
-# UNIMPLEMENTED MODES (T917-T918)
+# PROJECT MIGRATION MODE (T917)
 # =============================================================================
 
-@test "claude-migrate --project shows not implemented" {
+@test "claude-migrate --project exits 1 when no legacy found" {
+    cd "$TEST_TEMP_DIR"
+    rm -rf ".claude" 2>/dev/null || true
+
     run "$SCRIPTS_DIR/claude-migrate.sh" --project
-    assert_failure
-    assert_output --partial "not yet implemented"
+    assert_failure 1
+    assert_output --partial "No legacy project directory"
 }
+
+@test "claude-migrate --project migrates .claude to .cleo" {
+    cd "$TEST_TEMP_DIR"
+    mkdir -p ".claude"
+    echo '{"tasks":[]}' > ".claude/todo.json"
+    echo '{}' > ".claude/todo-config.json"
+
+    run "$SCRIPTS_DIR/claude-migrate.sh" --project --format text
+    assert_success
+
+    # Verify migration
+    [[ -d ".cleo" ]]
+    [[ -f ".cleo/todo.json" ]]
+    [[ ! -d ".claude" ]]
+}
+
+@test "claude-migrate --project renames config files" {
+    cd "$TEST_TEMP_DIR"
+    mkdir -p ".claude"
+    echo '{}' > ".claude/todo.json"
+    echo '{}' > ".claude/todo-config.json"
+    echo '[]' > ".claude/todo-log.json"
+
+    run "$SCRIPTS_DIR/claude-migrate.sh" --project --format text
+    assert_success
+
+    # Verify renamed files
+    [[ -f ".cleo/cleo-config.json" ]]
+    [[ -f ".cleo/cleo-log.json" ]]
+    [[ ! -f ".cleo/todo-config.json" ]]
+    [[ ! -f ".cleo/todo-log.json" ]]
+}
+
+@test "claude-migrate --project updates .gitignore" {
+    cd "$TEST_TEMP_DIR"
+    mkdir -p ".claude"
+    echo '{}' > ".claude/todo.json"
+    echo -e ".claude/\n.claude/*.json" > ".gitignore"
+
+    run "$SCRIPTS_DIR/claude-migrate.sh" --project --format text
+    assert_success
+
+    # Verify .gitignore updated
+    grep -q "\.cleo/" ".gitignore"
+    grep -q "\.cleo/\*.json" ".gitignore"
+    ! grep -q "\.claude/" ".gitignore"
+}
+
+@test "claude-migrate --project returns JSON on success" {
+    cd "$TEST_TEMP_DIR"
+    mkdir -p ".claude"
+    echo '{"tasks":[]}' > ".claude/todo.json"
+    echo '{}' > ".claude/todo-config.json"
+
+    run "$SCRIPTS_DIR/claude-migrate.sh" --project --format json
+    assert_success
+
+    local json_output="$output"
+    jq -e '.success == true' <<< "$json_output"
+    jq -e '.migration.type == "project"' <<< "$json_output"
+    jq -e '.migration.configsRenamed >= 1' <<< "$json_output"
+}
+
+@test "claude-migrate --project fails if target already has data" {
+    cd "$TEST_TEMP_DIR"
+    mkdir -p ".claude"
+    echo '{}' > ".claude/todo.json"
+    mkdir -p ".cleo"
+    echo '{}' > ".cleo/existing.json"
+
+    run "$SCRIPTS_DIR/claude-migrate.sh" --project --format text
+    assert_failure 4
+    assert_output --partial "already exists"
+}
+
+@test "claude-migrate --project preserves all files" {
+    cd "$TEST_TEMP_DIR"
+    mkdir -p ".claude/subdir"
+    echo 'todo' > ".claude/todo.json"
+    echo 'archive' > ".claude/todo-archive.json"
+    echo 'nested' > ".claude/subdir/data.json"
+
+    run "$SCRIPTS_DIR/claude-migrate.sh" --project
+    assert_success
+
+    # Verify all files preserved
+    [[ -f ".cleo/todo.json" ]]
+    [[ -f ".cleo/todo-archive.json" ]]
+    [[ -f ".cleo/subdir/data.json" ]]
+    [[ "$(cat ".cleo/todo.json")" == "todo" ]]
+}
+
+# =============================================================================
+# UNIMPLEMENTED MODES (T918)
+# =============================================================================
 
 @test "claude-migrate --all shows not implemented" {
     run "$SCRIPTS_DIR/claude-migrate.sh" --all

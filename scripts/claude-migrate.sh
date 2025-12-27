@@ -529,6 +529,286 @@ EOF
 }
 
 # =============================================================================
+# PROJECT MIGRATION MODE (T917)
+# =============================================================================
+
+# Create backup of project directory
+# Args: $1 = source path
+# Note: Backup is created in /tmp first
+create_project_backup() {
+    local source_path="$1"
+    local timestamp
+    timestamp=$(date +%Y%m%d_%H%M%S)
+    local temp_backup="/tmp/cleo_project_backup_${timestamp}.tar.gz"
+
+    if [[ "$VERBOSE" == "true" ]]; then
+        echo "Creating backup: $temp_backup"
+    fi
+
+    # Create backup using tar to temp location
+    if tar -czf "$temp_backup" "$source_path" 2>/dev/null; then
+        echo "$temp_backup"
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Rename legacy config files to CLEO naming
+# Args: $1 = target directory
+rename_project_configs() {
+    local target_dir="$1"
+    local renamed=0
+
+    # Rename todo-config.json → cleo-config.json
+    if [[ -f "$target_dir/todo-config.json" ]]; then
+        mv "$target_dir/todo-config.json" "$target_dir/cleo-config.json"
+        ((renamed++))
+    fi
+
+    # Rename todo-log.json → cleo-log.json
+    if [[ -f "$target_dir/todo-log.json" ]]; then
+        mv "$target_dir/todo-log.json" "$target_dir/cleo-log.json"
+        ((renamed++))
+    fi
+
+    echo "$renamed"
+}
+
+# Update .gitignore entries from .claude to .cleo
+update_gitignore() {
+    local gitignore_file=".gitignore"
+
+    if [[ ! -f "$gitignore_file" ]]; then
+        return 0
+    fi
+
+    # Check if .claude entries exist
+    if grep -q "\.claude" "$gitignore_file" 2>/dev/null; then
+        # Create backup
+        cp "$gitignore_file" "${gitignore_file}.bak"
+
+        # Update entries
+        sed -i.tmp 's/\.claude/\.cleo/g' "$gitignore_file"
+        rm -f "${gitignore_file}.tmp"
+
+        return 0
+    fi
+
+    return 1
+}
+
+# Update CLAUDE-TODO injection markers in CLAUDE.md
+update_injection_markers() {
+    local claude_md="CLAUDE.md"
+
+    if [[ ! -f "$claude_md" ]]; then
+        return 0
+    fi
+
+    # Check if old markers exist
+    if grep -q "CLAUDE-TODO:" "$claude_md" 2>/dev/null; then
+        # Create backup
+        cp "$claude_md" "${claude_md}.bak"
+
+        # Update markers
+        sed -i.tmp 's/CLAUDE-TODO:/CLEO:/g' "$claude_md"
+        rm -f "${claude_md}.tmp"
+
+        return 0
+    fi
+
+    return 1
+}
+
+# Migrate project directory: .claude → .cleo
+run_project_migration() {
+    local legacy_path
+    local target_path
+    local backup_path
+
+    legacy_path=$(get_legacy_project_dir)
+    target_path=$(get_cleo_dir)
+
+    # Check if legacy exists
+    if ! has_legacy_project_dir; then
+        if is_json_output "$FORMAT"; then
+            printf '{"success":false,"error":"No legacy project directory found","code":%d}\n' "$MIGRATE_NO_LEGACY"
+        else
+            echo "No legacy project directory found at $legacy_path"
+            echo "Nothing to migrate."
+        fi
+        return $MIGRATE_NO_LEGACY
+    fi
+
+    # Check if target already exists
+    if [[ -d "$target_path" ]]; then
+        local file_count
+        file_count=$(find "$target_path" -type f 2>/dev/null | wc -l | tr -d ' ')
+        if [[ "$file_count" -gt 0 ]]; then
+            if is_json_output "$FORMAT"; then
+                printf '{"success":false,"error":"Target path already exists with data","path":"%s","code":%d}\n' \
+                    "$target_path" "$MIGRATE_VALIDATION_FAILED"
+            else
+                echo "Error: Target path $target_path already exists with $file_count files."
+                echo "Please remove or backup existing installation first."
+            fi
+            return $MIGRATE_VALIDATION_FAILED
+        fi
+    fi
+
+    # Create backup first
+    if is_json_output "$FORMAT"; then
+        : # JSON output will be at the end
+    else
+        echo ""
+        echo "CLEO Project Migration"
+        echo "======================"
+        echo ""
+        echo "Source: $legacy_path"
+        echo "Target: $target_path"
+        echo ""
+        echo "Step 1/5: Creating backup..."
+    fi
+
+    backup_path=$(create_project_backup "$legacy_path")
+    if [[ $? -ne 0 ]] || [[ -z "$backup_path" ]]; then
+        if is_json_output "$FORMAT"; then
+            printf '{"success":false,"error":"Backup creation failed","code":%d}\n' "$MIGRATE_BACKUP_FAILED"
+        else
+            echo "Error: Failed to create backup of $legacy_path"
+        fi
+        return $MIGRATE_BACKUP_FAILED
+    fi
+
+    if ! is_json_output "$FORMAT"; then
+        echo "  ✓ Backup created: $backup_path"
+        echo ""
+        echo "Step 2/5: Moving files..."
+    fi
+
+    # Move the directory
+    if ! mv "$legacy_path" "$target_path" 2>/dev/null; then
+        if is_json_output "$FORMAT"; then
+            printf '{"success":false,"error":"Move operation failed","source":"%s","target":"%s","code":%d}\n' \
+                "$legacy_path" "$target_path" "$MIGRATE_RENAME_FAILED"
+        else
+            echo "Error: Failed to move $legacy_path → $target_path"
+            echo "Backup available at: $backup_path"
+        fi
+        return $MIGRATE_RENAME_FAILED
+    fi
+
+    if ! is_json_output "$FORMAT"; then
+        echo "  ✓ Moved: $legacy_path → $target_path"
+        echo ""
+        echo "Step 3/5: Renaming config files..."
+    fi
+
+    # Rename config files
+    local configs_renamed
+    configs_renamed=$(rename_project_configs "$target_path")
+
+    if ! is_json_output "$FORMAT"; then
+        echo "  ✓ Renamed $configs_renamed config files"
+        echo ""
+        echo "Step 4/5: Updating .gitignore..."
+    fi
+
+    # Update .gitignore
+    local gitignore_updated=false
+    if update_gitignore; then
+        gitignore_updated=true
+    fi
+
+    if ! is_json_output "$FORMAT"; then
+        if [[ "$gitignore_updated" == "true" ]]; then
+            echo "  ✓ Updated .gitignore"
+        else
+            echo "  - No .gitignore changes needed"
+        fi
+        echo ""
+        echo "Step 5/5: Updating injection markers..."
+    fi
+
+    # Update CLAUDE.md markers
+    local markers_updated=false
+    if update_injection_markers; then
+        markers_updated=true
+    fi
+
+    if ! is_json_output "$FORMAT"; then
+        if [[ "$markers_updated" == "true" ]]; then
+            echo "  ✓ Updated CLAUDE.md markers"
+        else
+            echo "  - No marker changes needed"
+        fi
+        echo ""
+    fi
+
+    # Move backup to final location
+    local final_backup
+    final_backup=$(finalize_backup "$backup_path" "$target_path")
+    backup_path="$final_backup"
+
+    # Count files in new location
+    local migrated_count
+    migrated_count=$(find "$target_path" -type f 2>/dev/null | wc -l | tr -d ' ')
+
+    # Verify key files
+    local has_todo=false
+    if [[ -f "$target_path/todo.json" ]]; then
+        has_todo=true
+    fi
+
+    # Build success output
+    local timestamp
+    timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+    if is_json_output "$FORMAT"; then
+        cat <<EOF
+{
+  "\$schema": "https://claude-todo.dev/schemas/v1/output.schema.json",
+  "_meta": {
+    "command": "claude-migrate --project",
+    "timestamp": "${timestamp}",
+    "version": "1.0.0"
+  },
+  "success": true,
+  "migration": {
+    "type": "project",
+    "source": "${legacy_path}",
+    "target": "${target_path}",
+    "fileCount": ${migrated_count},
+    "configsRenamed": ${configs_renamed},
+    "gitignoreUpdated": ${gitignore_updated},
+    "markersUpdated": ${markers_updated},
+    "backup": "${backup_path}"
+  }
+}
+EOF
+    else
+        echo "Migration Complete!"
+        echo ""
+        echo "Summary:"
+        echo "  Source: $legacy_path (removed)"
+        echo "  Target: $target_path"
+        echo "  Files:  $migrated_count"
+        echo "  Config files renamed: $configs_renamed"
+        echo "  .gitignore updated: $gitignore_updated"
+        echo "  Markers updated: $markers_updated"
+        echo "  Backup: $backup_path"
+        echo ""
+        echo "To restore if needed:"
+        echo "  rm -rf $target_path"
+        echo "  tar -xzf $backup_path"
+        echo ""
+    fi
+
+    return $MIGRATE_SUCCESS
+}
+
+# =============================================================================
 # OUTPUT FORMAT DETECTION
 # =============================================================================
 
@@ -622,8 +902,7 @@ main() {
             run_global_migration
             ;;
         project)
-            echo "Error: --project mode not yet implemented (T917)" >&2
-            exit 2
+            run_project_migration
             ;;
         all)
             echo "Error: --all mode not yet implemented (T918)" >&2
