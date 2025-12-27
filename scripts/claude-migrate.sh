@@ -70,6 +70,7 @@ readonly CHECK_ERROR=2
 FORMAT=""
 MODE=""
 VERBOSE=false
+FORCE=false
 
 # =============================================================================
 # USAGE
@@ -89,6 +90,7 @@ Modes:
 
 Options:
   --format FORMAT    Output format: text, json (default: auto-detect)
+  --force            Merge into existing target (backs up target first)
   --verbose, -v      Show detailed output
   --help, -h         Show this help message
 
@@ -109,6 +111,7 @@ Examples:
   cleo claude-migrate --check --format json
   cleo claude-migrate --global
   cleo claude-migrate --project
+  cleo claude-migrate --project --force   # Merge if .cleo exists
   cleo claude-migrate --all
 EOF
 }
@@ -402,18 +405,39 @@ run_global_migration() {
     fi
 
     # Check if target already exists
+    local target_backup_path=""
     if [[ -d "$target_path" ]]; then
         local file_count
         file_count=$(find "$target_path" -type f 2>/dev/null | wc -l | tr -d ' ')
         if [[ "$file_count" -gt 0 ]]; then
-            if is_json_output "$FORMAT"; then
-                printf '{"success":false,"error":"Target path already exists with data","path":"%s","code":%d}\n' \
-                    "$target_path" "$MIGRATE_VALIDATION_FAILED"
+            if [[ "$FORCE" != "true" ]]; then
+                if is_json_output "$FORMAT"; then
+                    printf '{"success":false,"error":"Target path already exists with data","path":"%s","code":%d,"suggestion":"Use --force to merge"}\n' \
+                        "$target_path" "$MIGRATE_VALIDATION_FAILED"
+                else
+                    echo "Error: Target path $target_path already exists with $file_count files."
+                    echo "Use --force to backup existing target and merge legacy data."
+                fi
+                return $MIGRATE_VALIDATION_FAILED
             else
-                echo "Error: Target path $target_path already exists with $file_count files."
-                echo "Please remove or backup existing installation first."
+                # Force mode: backup existing target first
+                if ! is_json_output "$FORMAT"; then
+                    echo "Target exists with $file_count files. Backing up existing target..."
+                fi
+                target_backup_path="${target_path}.backup.$(date +%Y%m%d_%H%M%S)"
+                if ! cp -r "$target_path" "$target_backup_path" 2>/dev/null; then
+                    if is_json_output "$FORMAT"; then
+                        printf '{"success":false,"error":"Failed to backup existing target","path":"%s","code":%d}\n' \
+                            "$target_path" "$MIGRATE_BACKUP_FAILED"
+                    else
+                        echo "Error: Failed to backup existing target to $target_backup_path"
+                    fi
+                    return $MIGRATE_BACKUP_FAILED
+                fi
+                if ! is_json_output "$FORMAT"; then
+                    echo "  ✓ Existing target backed up to: $target_backup_path"
+                fi
             fi
-            return $MIGRATE_VALIDATION_FAILED
         fi
     fi
 
@@ -444,23 +468,49 @@ run_global_migration() {
     if ! is_json_output "$FORMAT"; then
         echo "  ✓ Backup created: $backup_path"
         echo ""
-        echo "Step 2/4: Moving files..."
+        if [[ -n "$target_backup_path" ]]; then
+            echo "Step 2/4: Merging files (force mode)..."
+        else
+            echo "Step 2/4: Moving files..."
+        fi
     fi
 
-    # Move the directory
-    if ! mv "$legacy_path" "$target_path" 2>/dev/null; then
-        if is_json_output "$FORMAT"; then
-            printf '{"success":false,"error":"Move operation failed","source":"%s","target":"%s","code":%d}\n' \
-                "$legacy_path" "$target_path" "$MIGRATE_RENAME_FAILED"
-        else
-            echo "Error: Failed to move $legacy_path → $target_path"
-            echo "Backup available at: $backup_path"
+    # Move or merge the directory
+    if [[ -n "$target_backup_path" ]]; then
+        # Force mode: merge legacy files into existing target
+        if ! cp -r "$legacy_path"/* "$target_path"/ 2>/dev/null; then
+            if is_json_output "$FORMAT"; then
+                printf '{"success":false,"error":"Merge operation failed","source":"%s","target":"%s","code":%d}\n' \
+                    "$legacy_path" "$target_path" "$MIGRATE_RENAME_FAILED"
+            else
+                echo "Error: Failed to merge $legacy_path → $target_path"
+                echo "Backup available at: $backup_path"
+                echo "Target backup at: $target_backup_path"
+            fi
+            return $MIGRATE_RENAME_FAILED
         fi
-        return $MIGRATE_RENAME_FAILED
+        # Remove legacy directory after successful merge
+        rm -rf "$legacy_path" 2>/dev/null || true
+    else
+        # Normal mode: move the directory
+        if ! mv "$legacy_path" "$target_path" 2>/dev/null; then
+            if is_json_output "$FORMAT"; then
+                printf '{"success":false,"error":"Move operation failed","source":"%s","target":"%s","code":%d}\n' \
+                    "$legacy_path" "$target_path" "$MIGRATE_RENAME_FAILED"
+            else
+                echo "Error: Failed to move $legacy_path → $target_path"
+                echo "Backup available at: $backup_path"
+            fi
+            return $MIGRATE_RENAME_FAILED
+        fi
     fi
 
     if ! is_json_output "$FORMAT"; then
-        echo "  ✓ Moved: $legacy_path → $target_path"
+        if [[ -n "$target_backup_path" ]]; then
+            echo "  ✓ Merged: $legacy_path → $target_path"
+        else
+            echo "  ✓ Moved: $legacy_path → $target_path"
+        fi
         echo ""
         echo "Step 3/4: Renaming config files..."
     fi
@@ -652,18 +702,39 @@ run_project_migration() {
     fi
 
     # Check if target already exists
+    local target_backup_path=""
     if [[ -d "$target_path" ]]; then
         local file_count
         file_count=$(find "$target_path" -type f 2>/dev/null | wc -l | tr -d ' ')
         if [[ "$file_count" -gt 0 ]]; then
-            if is_json_output "$FORMAT"; then
-                printf '{"success":false,"error":"Target path already exists with data","path":"%s","code":%d}\n' \
-                    "$target_path" "$MIGRATE_VALIDATION_FAILED"
+            if [[ "$FORCE" != "true" ]]; then
+                if is_json_output "$FORMAT"; then
+                    printf '{"success":false,"error":"Target path already exists with data","path":"%s","code":%d,"suggestion":"Use --force to merge"}\n' \
+                        "$target_path" "$MIGRATE_VALIDATION_FAILED"
+                else
+                    echo "Error: Target path $target_path already exists with $file_count files."
+                    echo "Use --force to backup existing target and merge legacy data."
+                fi
+                return $MIGRATE_VALIDATION_FAILED
             else
-                echo "Error: Target path $target_path already exists with $file_count files."
-                echo "Please remove or backup existing installation first."
+                # Force mode: backup existing target first
+                if ! is_json_output "$FORMAT"; then
+                    echo "Target exists with $file_count files. Backing up existing target..."
+                fi
+                target_backup_path="${target_path}.backup.$(date +%Y%m%d_%H%M%S)"
+                if ! cp -r "$target_path" "$target_backup_path" 2>/dev/null; then
+                    if is_json_output "$FORMAT"; then
+                        printf '{"success":false,"error":"Failed to backup existing target","path":"%s","code":%d}\n' \
+                            "$target_path" "$MIGRATE_BACKUP_FAILED"
+                    else
+                        echo "Error: Failed to backup existing target to $target_backup_path"
+                    fi
+                    return $MIGRATE_BACKUP_FAILED
+                fi
+                if ! is_json_output "$FORMAT"; then
+                    echo "  ✓ Existing target backed up to: $target_backup_path"
+                fi
             fi
-            return $MIGRATE_VALIDATION_FAILED
         fi
     fi
 
@@ -694,23 +765,49 @@ run_project_migration() {
     if ! is_json_output "$FORMAT"; then
         echo "  ✓ Backup created: $backup_path"
         echo ""
-        echo "Step 2/5: Moving files..."
+        if [[ -n "$target_backup_path" ]]; then
+            echo "Step 2/5: Merging files (force mode)..."
+        else
+            echo "Step 2/5: Moving files..."
+        fi
     fi
 
-    # Move the directory
-    if ! mv "$legacy_path" "$target_path" 2>/dev/null; then
-        if is_json_output "$FORMAT"; then
-            printf '{"success":false,"error":"Move operation failed","source":"%s","target":"%s","code":%d}\n' \
-                "$legacy_path" "$target_path" "$MIGRATE_RENAME_FAILED"
-        else
-            echo "Error: Failed to move $legacy_path → $target_path"
-            echo "Backup available at: $backup_path"
+    # Move or merge the directory
+    if [[ -n "$target_backup_path" ]]; then
+        # Force mode: merge legacy files into existing target
+        if ! cp -r "$legacy_path"/* "$target_path"/ 2>/dev/null; then
+            if is_json_output "$FORMAT"; then
+                printf '{"success":false,"error":"Merge operation failed","source":"%s","target":"%s","code":%d}\n' \
+                    "$legacy_path" "$target_path" "$MIGRATE_RENAME_FAILED"
+            else
+                echo "Error: Failed to merge $legacy_path → $target_path"
+                echo "Backup available at: $backup_path"
+                echo "Target backup at: $target_backup_path"
+            fi
+            return $MIGRATE_RENAME_FAILED
         fi
-        return $MIGRATE_RENAME_FAILED
+        # Remove legacy directory after successful merge
+        rm -rf "$legacy_path" 2>/dev/null || true
+    else
+        # Normal mode: move the directory
+        if ! mv "$legacy_path" "$target_path" 2>/dev/null; then
+            if is_json_output "$FORMAT"; then
+                printf '{"success":false,"error":"Move operation failed","source":"%s","target":"%s","code":%d}\n' \
+                    "$legacy_path" "$target_path" "$MIGRATE_RENAME_FAILED"
+            else
+                echo "Error: Failed to move $legacy_path → $target_path"
+                echo "Backup available at: $backup_path"
+            fi
+            return $MIGRATE_RENAME_FAILED
+        fi
     fi
 
     if ! is_json_output "$FORMAT"; then
-        echo "  ✓ Moved: $legacy_path → $target_path"
+        if [[ -n "$target_backup_path" ]]; then
+            echo "  ✓ Merged: $legacy_path → $target_path"
+        else
+            echo "  ✓ Moved: $legacy_path → $target_path"
+        fi
         echo ""
         echo "Step 3/5: Renaming config files..."
     fi
@@ -1048,6 +1145,10 @@ parse_args() {
                 ;;
             --verbose|-v)
                 VERBOSE=true
+                shift
+                ;;
+            --force|-f)
+                FORCE=true
                 shift
                 ;;
             --help|-h)
