@@ -5,6 +5,40 @@ All notable changes to the claude-todo system will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.37.1] - 2025-12-27
+
+### Added
+- **Multi-Session Implementation** - Full concurrent agent support (Phases 2-5 of MULTI-SESSION-SPEC.md)
+  - `lib/sessions.sh` - Core session management library (1,009 lines)
+    - Session lifecycle: start, suspend, resume, end
+    - Scope computation for 6 types: task, taskGroup, subtree, epicPhase, epic, custom
+    - Conflict detection: HARD, IDENTICAL, NESTED, PARTIAL, NONE
+    - Per-scope focus validation with task claiming
+  - `lib/file-ops.sh` - Multi-file locking functions
+    - `lock_multi_file()` - Ordered lock acquisition (prevents deadlock)
+    - `unlock_multi_file()` - Safe release
+    - `with_multi_lock()` - Transactional patterns
+  - `scripts/session.sh` - New multi-session commands
+    - `cleo session start --scope TYPE:ID --focus ID` or `--auto-focus`
+    - `cleo session suspend/resume/list/show/switch`
+    - Session context via `--session` flag, `CLEO_SESSION` env, or `.current-session` file
+  - `scripts/focus.sh` - Session-aware focus management
+    - `--session ID` flag for multi-session context
+    - Per-scope task validation in multi-session mode
+
+- **Migration --force flag** - Handle pre-existing target directories
+  - `cleo claude-migrate --project --force` - Merge when `.cleo/` already exists
+  - Backs up existing target to `.cleo.backup.YYYYMMDD_HHMMSS`
+  - Merges legacy files into target, removes legacy after success
+  - Fixes issue when `cleo init` was run before migration
+
+### Changed
+- `lib/backup.sh` - Added `sessions.json` to snapshot and migration backups
+
+### Fixed
+- `lib/paths.sh` - Fixed legacy project warning (was showing `.cleo` instead of `.claude`)
+- `scripts/migrate.sh` - Fixed `.claude` → `.cleo` directory references
+
 ## [0.37.0] - 2025-12-27 (CLEO v1.0.0 Rebrand)
 
 ### Major Changes
