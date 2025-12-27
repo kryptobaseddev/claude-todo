@@ -218,21 +218,47 @@ When setting focus within a session:
 
 ### 4.2 Session Start
 
+A session MUST have a focused task to start. This ensures every session has a clear purpose and trackable work context.
+
 ```bash
-cleo session start --scope epic:T001 --name "Auth impl"
+# Explicit focus (REQUIRED: one of these)
+cleo session start --scope epic:T001 --focus T005 --name "Auth impl"
+
+# Auto-focus: picks highest priority pending task in scope
+cleo session start --scope epic:T001 --auto-focus --name "Auth impl"
+
+# ERROR: No focus specified
+cleo session start --scope epic:T001
+# → ERROR (E_FOCUS_REQUIRED): Session requires --focus <task-id> or --auto-focus
 ```
+
+**Focus Requirement Rationale**:
+- Sessions track "what is being worked on" - a session without focus has no purpose
+- Enables session-to-task attribution in logs and audit trails
+- Prevents orphaned sessions that consume scope but do nothing
+- Allows resumption with clear context ("pick up where you left off")
+
+**Auto-Focus Selection** (when `--auto-focus` specified):
+1. Filter tasks in scope with status = "pending"
+2. Sort by: priority (critical > high > medium > low), then createdAt (oldest first)
+3. Select first task
+4. If no pending tasks in scope: ERROR (E_SCOPE_EMPTY)
 
 Operations:
 1. Lock sessions.json
 2. Validate scope (no conflicts)
 3. Compute `computedTaskIds`
-4. Generate session ID
-5. Create session entry with status="active"
-6. Update `_meta.totalSessionsCreated`
-7. Save sessions.json
-8. Update todo.json `_meta.activeSessionCount`
-9. Log `session_start` with scope context
-10. Unlock
+4. **Validate focus task exists and is in scope**
+5. **If `--auto-focus`: select focus task per algorithm above**
+6. Generate session ID
+7. Create session entry with status="active" and `focus.currentTask` set
+8. Update `_meta.totalSessionsCreated`
+9. Lock todo.json
+10. **Set focused task status = "active"**
+11. Save both files
+12. Update todo.json `_meta.activeSessionCount`
+13. Log `session_start` with scope and focus context
+14. Unlock both
 
 ### 4.3 Session Suspend
 
