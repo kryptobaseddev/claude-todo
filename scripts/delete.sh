@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# CLAUDE-TODO Delete Task Script (Cancel/Delete)
+# CLEO Delete Task Script (Cancel/Delete)
 # Cancel and archive tasks with configurable child handling strategies
 #
 # This script implements the task deletion/cancellation system per

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# CLAUDE-TODO Log Script
+# CLEO Log Script
 # Add entries to todo-log.json
 set -euo pipefail
 

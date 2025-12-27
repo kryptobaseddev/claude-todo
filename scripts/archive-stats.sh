@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# CLAUDE-TODO Archive Statistics/Analytics
+# CLEO Archive Statistics/Analytics
 # Generate reports and insights from archived tasks
 #
 # Provides detailed analytics including:

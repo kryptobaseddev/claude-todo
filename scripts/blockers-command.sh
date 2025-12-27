@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# CLAUDE-TODO Blockers Command Script
+# CLEO Blockers Command Script
 # Analyze blocked tasks and their dependency chains
 set -euo pipefail
 

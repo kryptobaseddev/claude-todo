@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# CLAUDE-TODO Restore Script
+# CLEO Restore Script
 # Restore todo system files from backup
 set -euo pipefail
 

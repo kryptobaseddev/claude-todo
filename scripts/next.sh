@@ -335,7 +335,7 @@ filter_ready_tasks() {
 # Calculate hierarchy scores for tasks
 apply_hierarchy_scoring() {
   local tasks_json="$1"
-  
+
   # Get current focus epic for hierarchy scoring
   local focus_epic=""
   if [[ -f "$TODO_FILE" ]]; then
@@ -344,12 +344,16 @@ apply_hierarchy_scoring() {
       focus_epic=$(get_task_epic "$focus_task" "$TODO_FILE")
     fi
   fi
-  
+
   # Get the current tasks data for leaf checking
-  local tasks_data=$(jq -c '.tasks' "$TODO_FILE")
-  
-  echo "$tasks_json" | jq --arg focus_epic "$focus_epic" --argjson tasks_data "$tasks_data" '
-    map(. as $task | 
+  # Use slurpfile to avoid jq warnings on large projects (fixes argument size limit)
+  local tmp_tasks
+  tmp_tasks=$(mktemp)
+  jq -c '.tasks' "$TODO_FILE" > "$tmp_tasks"
+
+  echo "$tasks_json" | jq --arg focus_epic "$focus_epic" --slurpfile tasks_data "$tmp_tasks" '
+    ($tasks_data[0] // []) as $all_tasks |
+    map(. as $task |
       . + {
         hierarchyScore: (
           # Same epic bonus (+30)
@@ -359,13 +363,14 @@ apply_hierarchy_scoring() {
             else 0 end)
           else 0 end) +
           # Leaf task bonus (+10) - tasks with no children
-          (if ([$tasks_data[] | select(.parentId == $task.id)] | length) == 0 then
+          (if ([$all_tasks[] | select(.parentId == $task.id)] | length) == 0 then
             10
           else 0 end)
         )
       }
     )
   '
+  rm -f "$tmp_tasks"
 }
 
 # Sort tasks by score (priority + phase bonus + hierarchy) and creation date

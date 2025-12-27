@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# CLAUDE-TODO Find Command
+# CLEO Find Command
 # Fuzzy task search for LLM agents with minimal context output
 #
 # Provides efficient task discovery with:

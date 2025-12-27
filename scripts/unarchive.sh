@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# CLAUDE-TODO Unarchive Script
+# CLEO Unarchive Script
 # Restore archived tasks back to todo.json
 set -euo pipefail
 

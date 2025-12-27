@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# logging.sh - Change log functions for CLAUDE-TODO system
+# logging.sh - Change log functions for CLEO system
 #
 # LAYER: 2 (Data Layer)
 # DEPENDENCIES: atomic-write.sh

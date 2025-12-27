@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# CLAUDE-TODO Exists Command
+# CLEO Exists Command
 # Check if a task ID exists without listing all tasks
 # Provides clean exit codes for scripting and CI/CD integration
 set -euo pipefail

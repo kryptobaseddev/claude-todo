@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# CLAUDE-TODO Archive Script
+# CLEO Archive Script
 # Archive completed tasks based on config rules
 set -euo pipefail
 

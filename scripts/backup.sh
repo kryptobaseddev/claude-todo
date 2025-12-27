@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# CLAUDE-TODO Backup Script
+# CLEO Backup Script
 # Create backups of all todo system files
 set -euo pipefail
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# CLAUDE-TODO Validate Script
+# CLEO Validate Script
 # Validate todo.json against schema and business rules
 set -euo pipefail
 # Note: Not using -e because we track errors manually

@@ -5,6 +5,23 @@ All notable changes to the claude-todo system will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.38.0] - 2025-12-27
+
+### Added
+- **populate-hierarchy command** - Registered in CLI dispatcher for direct invocation
+  - Populates parentId field based on naming conventions (T001.1 → parentId: T001)
+  - Can also infer from epic dependencies
+
+### Fixed
+- **next.sh jq performance** - Fixed "Argument list too long" error on large projects
+  - Changed `--argjson tasks_data` to `--slurpfile` approach
+  - Avoids shell argument size limits when computing hierarchy scores
+
+### Changed
+- **Script headers rebrand** - Updated 16 script headers from "CLAUDE-TODO" to "CLEO"
+  - Consistent branding across all user-facing scripts
+  - No functional changes, cosmetic consistency only
+
 ## [0.37.1] - 2025-12-27
 
 ### Added

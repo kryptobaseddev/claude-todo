@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# CLAUDE-TODO Reopen Script (Restore from Done)
+# CLEO Reopen Script (Restore from Done)
 # Restore completed tasks back to pending status
 #
 # This script implements the restore-from-done functionality.

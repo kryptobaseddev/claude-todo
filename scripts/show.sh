@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# CLAUDE-TODO Show Command
+# CLEO Show Command
 # Display detailed view of a single task with all fields
 # Includes dependencies, notes, and related information
 set -euo pipefail

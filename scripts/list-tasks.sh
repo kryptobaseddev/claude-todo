@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# CLAUDE-TODO List Tasks Script
+# CLEO List Tasks Script
 # Display tasks with flexible filtering and formatting
 set -euo pipefail
 

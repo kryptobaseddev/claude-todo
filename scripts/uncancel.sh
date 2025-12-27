@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# CLAUDE-TODO Uncancel Script (Restore from Cancelled)
+# CLEO Uncancel Script (Restore from Cancelled)
 # Restore cancelled tasks back to pending status
 #
 # This script implements the restore-from-cancelled functionality.
