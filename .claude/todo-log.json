@@ -3,9 +3,9 @@
   "version": "2.1.0",
   "project": "claude-todo",
   "_meta": {
-    "totalEntries": 2213,
+    "totalEntries": 2232,
     "firstEntry": "2025-12-13T07:14:38Z",
-    "lastEntry": "2025-12-27T08:11:08Z",
+    "lastEntry": "2025-12-27T08:11:30Z",
     "entriesPruned": 0
   },
   "entries": [
@@ -53216,6 +53216,19 @@
       "details": {
         "field": "status",
         "operation": "complete"
+      }
+    },
+    {
+      "id": "log_f15b5dfdc518",
+      "timestamp": "2025-12-27T08:11:30Z",
+      "sessionId": "session_20251226_234029_22628e",
+      "action": "session_end",
+      "actor": "system",
+      "taskId": null,
+      "before": null,
+      "after": null,
+      "details": {
+        "note": "CLEO v1.0.0 migration: T908-T910 complete (paths.sh), T914 complete (install.sh). T911-T913 blocked pending migration command (T915-T918). Next: create claude-migrate command."
       }
     }
   ]
