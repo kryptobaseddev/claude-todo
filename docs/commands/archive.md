@@ -98,7 +98,7 @@ Configure archive behavior in `.claude/todo-config.json`:
     "preserveRecentCount": 3,
     "archiveOnSessionEnd": true,
     "autoArchiveOnComplete": false,
-    "exemptLabels": ["epic-type", "pinned"],
+    "exemptLabels": ["pinned", "keep"],
     "labelPolicies": {
       "security": { "daysUntilArchive": 30 },
       "temp": { "daysUntilArchive": 1 },
@@ -131,7 +131,7 @@ Configure archive behavior in `.claude/todo-config.json`:
 | `preserveRecentCount` | Recent completions to always keep | `3` |
 | `archiveOnSessionEnd` | Check archive eligibility at session end | `true` |
 | `autoArchiveOnComplete` | Auto-run archive on each task completion | `false` |
-| `exemptLabels` | Labels that prevent archiving | `["epic-type", "pinned"]` |
+| `exemptLabels` | Labels that prevent archiving (opt-in protection) | `["pinned", "keep"]` |
 
 ### Label Policies
 

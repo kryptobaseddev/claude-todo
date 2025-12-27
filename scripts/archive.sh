@@ -353,19 +353,19 @@ if declare -f get_config_value >/dev/null 2>&1; then
   DAYS_UNTIL_ARCHIVE=$(get_config_value "archive.daysUntilArchive" "7")
   MAX_COMPLETED=$(get_config_value "archive.maxCompletedTasks" "15")
   PRESERVE_COUNT=$(get_config_value "archive.preserveRecentCount" "3")
-  EXEMPT_LABELS=$(get_config_value "archive.exemptLabels" '["epic-type", "pinned"]')
+  EXEMPT_LABELS=$(get_config_value "archive.exemptLabels" '["pinned", "keep"]')
 else
   # Fallback to direct jq if config.sh not available
   DAYS_UNTIL_ARCHIVE=$(jq -r '.archive.daysUntilArchive // 7' "$CONFIG_FILE")
   MAX_COMPLETED=$(jq -r '.archive.maxCompletedTasks // 15' "$CONFIG_FILE")
   PRESERVE_COUNT=$(jq -r '.archive.preserveRecentCount // 3' "$CONFIG_FILE")
-  EXEMPT_LABELS=$(jq -r '.archive.exemptLabels // ["epic-type", "pinned"]' "$CONFIG_FILE")
+  EXEMPT_LABELS=$(jq -r '.archive.exemptLabels // ["pinned", "keep"]' "$CONFIG_FILE")
 fi
 
 # Validate EXEMPT_LABELS is valid JSON array, fallback to default if not
 if ! echo "$EXEMPT_LABELS" | jq -e 'type == "array"' >/dev/null 2>&1; then
   [[ "$QUIET" != true && "$FORMAT" != "json" ]] && log_warn "Invalid exemptLabels config, using default"
-  EXEMPT_LABELS='["epic-type", "pinned"]'
+  EXEMPT_LABELS='["pinned", "keep"]'
 fi
 
 

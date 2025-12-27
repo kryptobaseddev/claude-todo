@@ -5,6 +5,27 @@ All notable changes to the claude-todo system will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.36.8] - 2025-12-27
+
+### Fixed
+- **Archive exempt labels design flaw** - Fixed `epic-type` blocking ALL epics from archiving
+  - Changed default `exemptLabels` from `["epic-type", "pinned"]` to `["pinned", "keep"]`
+  - `epic-type` is now purely a type indicator, not an archive blocker
+  - Users can opt-in to archive protection by adding `pinned` or `keep` labels
+  - Updated `schemas/config.schema.json`, `scripts/archive.sh`, `docs/commands/archive.md`
+
+### Changed
+- **T445 scope revised** - Updated for multi-agent/multi-user future
+  - Added `archivedBy` fields for actor type, identity, and git user tracking
+  - Added `archivedFromBranch` and `archivedFromCommit` for git context
+  - Supports future multi-agent session tracking and multi-user collaboration
+
+### Resolved via Consensus
+- **T429 children disposition** - Multi-agent consensus (5 workers per CONSENSUS-FRAMEWORK-SPEC)
+  - T430: Cancelled - exemptLabels fully implemented with minor design divergence
+  - T444: Cancelled - Schema evolved to superior `phaseTriggers` + `relationshipSafety` design
+  - T445: Reopened & revised - Multi-agent/multi-user attribution for future-proofing
+
 ## [0.36.7] - 2025-12-26
 
 ### Fixed

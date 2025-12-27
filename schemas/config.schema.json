@@ -66,8 +66,8 @@
             "type": "string",
             "minLength": 1
           },
-          "default": ["epic-type", "pinned"],
-          "description": "Labels that exempt tasks from automatic archiving."
+          "default": ["pinned", "keep"],
+          "description": "Labels that exempt tasks from automatic archiving. Add these labels to any task/epic you want to protect from auto-archive."
         },
         "labelPolicies": {
           "type": "object",
