@@ -159,6 +159,29 @@
           "description": "Deprecated APIs, incompatible syntax, style violations to avoid"
         }
       }
+    },
+    "commands": {
+      "type": "object",
+      "description": "Developer workflow command overrides for lint, typecheck, audit, and security scan.",
+      "additionalProperties": false,
+      "properties": {
+        "lint": {
+          "type": "string",
+          "description": "Command to run static analysis / lint checks"
+        },
+        "typecheck": {
+          "type": "string",
+          "description": "Command to run type checking"
+        },
+        "audit": {
+          "type": "string",
+          "description": "Command to run dependency/module audit checks"
+        },
+        "securityScan": {
+          "type": "string",
+          "description": "Command to run security vulnerability scanning"
+        }
+      }
     }
   }
 }

@@ -91,6 +91,17 @@ export interface ProjectContext {
     commonPatterns?: string[];
     avoidPatterns?: string[];
   };
+  /** Override commands for developer workflow steps (lint, typecheck, audit, security scan). */
+  commands?: {
+    /** Command to run static analysis / lint checks. */
+    lint?: string;
+    /** Command to run type checking. */
+    typecheck?: string;
+    /** Command to run dependency/module audit checks. */
+    audit?: string;
+    /** Command to run security vulnerability scanning. */
+    securityScan?: string;
+  };
 }
 
 /**

@@ -490,6 +490,34 @@ describe('Group 7: Schema compliance', () => {
     const result = detectProjectType(dir);
     expect(result.projectTypes.length).toBeGreaterThanOrEqual(1);
   });
+
+  it('commands field with lint/typecheck/audit/securityScan is schema-valid (T12026 regression)', () => {
+    dir = scaffold({ 'package.json': '{"name":"app"}' });
+    const result = detectProjectType(dir);
+    result.commands = {
+      lint: 'pnpm biome check --write .',
+      typecheck: 'pnpm run typecheck',
+      audit: 'pnpm audit',
+      securityScan: 'pnpm run security-scan',
+    };
+    assertSchemaValid(result, 'commands overrides');
+    expect(result.commands.lint).toBe('pnpm biome check --write .');
+    expect(result.commands.typecheck).toBe('pnpm run typecheck');
+    expect(result.commands.audit).toBe('pnpm audit');
+    expect(result.commands.securityScan).toBe('pnpm run security-scan');
+  });
+
+  it('commands field survives JSON roundtrip (T12026 regression)', () => {
+    dir = scaffold({ 'package.json': '{"name":"app"}' });
+    const result = detectProjectType(dir);
+    result.commands = {
+      lint: 'pnpm biome check --write .',
+      typecheck: 'pnpm run typecheck',
+    };
+    const roundtripped = JSON.parse(JSON.stringify(result));
+    assertSchemaValid(roundtripped, 'commands roundtrip');
+    expect(roundtripped.commands).toEqual(result.commands);
+  });
 });
 
 // ─── Group 8: Build detection ─────────────────────────────────────────────────
