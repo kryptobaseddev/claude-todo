@@ -160,24 +160,45 @@
         }
       }
     },
-    "commands": {
+    "lint": {
       "type": "object",
-      "description": "Developer workflow command overrides for lint, typecheck, audit, and security scan.",
+      "description": "Lint command override (T12026).",
       "additionalProperties": false,
       "properties": {
-        "lint": {
+        "command": {
           "type": "string",
           "description": "Command to run static analysis / lint checks"
-        },
-        "typecheck": {
+        }
+      }
+    },
+    "typecheck": {
+      "type": "object",
+      "description": "Type-check command override (T12026).",
+      "additionalProperties": false,
+      "properties": {
+        "command": {
           "type": "string",
           "description": "Command to run type checking"
-        },
-        "audit": {
+        }
+      }
+    },
+    "audit": {
+      "type": "object",
+      "description": "Audit command override (T12026).",
+      "additionalProperties": false,
+      "properties": {
+        "command": {
           "type": "string",
           "description": "Command to run dependency/module audit checks"
-        },
-        "securityScan": {
+        }
+      }
+    },
+    "security-scan": {
+      "type": "object",
+      "description": "Security-scan command override (T12026).",
+      "additionalProperties": false,
+      "properties": {
+        "command": {
           "type": "string",
           "description": "Command to run security vulnerability scanning"
         }

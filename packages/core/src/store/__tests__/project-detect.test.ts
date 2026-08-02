@@ -491,32 +491,32 @@ describe('Group 7: Schema compliance', () => {
     expect(result.projectTypes.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('commands field with lint/typecheck/audit/securityScan is schema-valid (T12026 regression)', () => {
+  it('top-level lint/typecheck/audit/security-scan command objects are schema-valid (T12026 regression)', () => {
     dir = scaffold({ 'package.json': '{"name":"app"}' });
     const result = detectProjectType(dir);
-    result.commands = {
-      lint: 'pnpm biome check --write .',
-      typecheck: 'pnpm run typecheck',
-      audit: 'pnpm audit',
-      securityScan: 'pnpm run security-scan',
-    };
-    assertSchemaValid(result, 'commands overrides');
-    expect(result.commands.lint).toBe('pnpm biome check --write .');
-    expect(result.commands.typecheck).toBe('pnpm run typecheck');
-    expect(result.commands.audit).toBe('pnpm audit');
-    expect(result.commands.securityScan).toBe('pnpm run security-scan');
+    result.lint = { command: 'pnpm biome check --write .' };
+    result.typecheck = { command: 'pnpm run typecheck' };
+    result.audit = { command: 'pnpm audit' };
+    // eslint-disable-next-line dot-notation
+    result['security-scan'] = { command: 'pnpm run security-scan' };
+    assertSchemaValid(result, 'top-level command overrides');
+    expect(result.lint?.command).toBe('pnpm biome check --write .');
+    expect(result.typecheck?.command).toBe('pnpm run typecheck');
+    expect(result.audit?.command).toBe('pnpm audit');
+    // eslint-disable-next-line dot-notation
+    expect(result['security-scan']?.command).toBe('pnpm run security-scan');
   });
 
-  it('commands field survives JSON roundtrip (T12026 regression)', () => {
+  it('top-level command objects survive JSON roundtrip (T12026 regression)', () => {
     dir = scaffold({ 'package.json': '{"name":"app"}' });
     const result = detectProjectType(dir);
-    result.commands = {
-      lint: 'pnpm biome check --write .',
-      typecheck: 'pnpm run typecheck',
-    };
+    result.lint = { command: 'pnpm biome check --write .' };
+    result.typecheck = { command: 'pnpm run typecheck' };
     const roundtripped = JSON.parse(JSON.stringify(result));
-    assertSchemaValid(roundtripped, 'commands roundtrip');
-    expect(roundtripped.commands).toEqual(result.commands);
+    assertSchemaValid(roundtripped, 'top-level command roundtrip');
+    expect(roundtripped.lint).toEqual({ command: 'pnpm biome check --write .' });
+    expect(roundtripped.typecheck).toEqual({ command: 'pnpm run typecheck' });
+    expect(roundtripped['security-scan']).toBeUndefined();
   });
 });
 
