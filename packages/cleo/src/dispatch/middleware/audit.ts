@@ -13,7 +13,12 @@
  * @task T4844
  */
 
-import { getLogger, getProjectInfoSync, resolveSessionIdFromEnv } from '@cleocode/core/internal';
+import {
+  getLogger,
+  getProjectInfoSync,
+  resolveCurrentSession,
+  resolveSessionIdFromEnv,
+} from '@cleocode/core/internal';
 import { getConfig } from '../lib/config.js';
 import type { DispatchNext, DispatchRequest, DispatchResponse, Middleware } from '../types.js';
 
@@ -40,11 +45,28 @@ import type { AuditEntry } from '@cleocode/core/internal';
 /**
  * Check if the current context is a grade session.
  *
- * Now simplified: session-resolver middleware (T4959) populates request.sessionId
- * before audit runs, so we only need to check grade mode flags.
+ * Consults the durable session `gradeMode` state in addition to the env var,
+ * so fresh CLI subprocesses that lack `CLEO_SESSION_GRADE` still audit queries.
+ *
+ * Precedence:
+ *   1. `CLEO_SESSION_GRADE` env (set by session-start, inherited by children).
+ *   2. Durable `gradeMode` column on the caller's session row (cross-process).
+ *
+ * Fail-open: a DB lookup failure defaults to `false` so audit lookup never
+ * blocks the pipeline and normal sessions never accidentally log queries.
+ *
+ * @task T12031
  */
-function isGradeMode(): boolean {
-  return process.env.CLEO_SESSION_GRADE === 'true';
+async function isGradeMode(): Promise<boolean> {
+  if (process.env.CLEO_SESSION_GRADE === 'true') return true;
+
+  try {
+    const session = await resolveCurrentSession();
+    if (session?.gradeMode) return true;
+  } catch {
+    // fail-open — DB unreachable defaults to no grade mode
+  }
+  return false;
 }
 
 /**
@@ -148,7 +170,7 @@ export function createAudit(): Middleware {
     // audit runs. Fall back to legacy lookup only if resolver missed it.
     const currentSessionId: string | null =
       req.sessionId ?? (await getActiveSessionInfo())?.id ?? null;
-    const isGradeSession = isGradeMode();
+    const isGradeSession = await isGradeMode();
 
     const response = await next();
 

@@ -6,26 +6,36 @@
  *   2. SQLite audit_log table
  *
  * @task T4844
+ * @task T12031 — cross-process durable gradeMode tests
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DispatchRequest, DispatchResponse } from '../../types.js';
 
 // Hoist mock functions so vi.mock factories can reference them
-const { mockLogInfo, mockLogWarn, mockLogError, mockInsertRun, mockInsertValues, mockInsert } =
-  vi.hoisted(() => {
-    const mockInsertRun = vi.fn().mockResolvedValue(undefined);
-    const mockInsertValues = vi.fn(() => ({ run: mockInsertRun }));
-    const mockInsert = vi.fn(() => ({ values: mockInsertValues }));
-    return {
-      mockLogInfo: vi.fn(),
-      mockLogWarn: vi.fn(),
-      mockLogError: vi.fn(),
-      mockInsertRun,
-      mockInsertValues,
-      mockInsert,
-    };
-  });
+const {
+  mockLogInfo,
+  mockLogWarn,
+  mockLogError,
+  mockInsertRun,
+  mockInsertValues,
+  mockInsert,
+  mockResolveCurrentSession,
+} = vi.hoisted(() => {
+  const mockInsertRun = vi.fn().mockResolvedValue(undefined);
+  const mockInsertValues = vi.fn(() => ({ run: mockInsertRun }));
+  const mockInsert = vi.fn(() => ({ values: mockInsertValues }));
+  const mockResolveCurrentSession = vi.fn().mockResolvedValue(null);
+  return {
+    mockLogInfo: vi.fn(),
+    mockLogWarn: vi.fn(),
+    mockLogError: vi.fn(),
+    mockInsertRun,
+    mockInsertValues,
+    mockInsert,
+    mockResolveCurrentSession,
+  };
+});
 
 // Mock Pino logger
 vi.mock('../../../../../core/src/logger.js', () => ({
@@ -64,6 +74,14 @@ vi.mock('../../../../../core/src/store/sqlite.js', () => ({
 // audit test does not have to spin up a real brain.db handle.
 vi.mock('../../../../../core/src/store/memory-sqlite.js', () => ({
   getBrainNativeDb: vi.fn().mockReturnValue(null),
+}));
+
+// Mock session-store for T12031 cross-process gradeMode resolution
+vi.mock('../../../../../core/src/store/session-store.js', () => ({
+  createSession: vi.fn(),
+  getActiveSession: vi.fn().mockResolvedValue(null),
+  resolveCurrentSession: (...args: unknown[]) => mockResolveCurrentSession(...args),
+  resolveCurrentSessionId: vi.fn().mockResolvedValue(null),
 }));
 
 vi.mock('../../../../../core/src/store/tasks-schema.js', async (importOriginal) => {
@@ -250,5 +268,104 @@ describe('createAudit middleware', () => {
     const insertedValues = (mockInsertValues.mock.calls as any)[0]![0];
     expect(insertedValues.errorMessage).toBe('Task not found');
     expect(insertedValues.success).toBe(0);
+  });
+
+  // ── T12031: cross-process durable gradeMode ──
+
+  describe('grade-mode query auditing (T12031)', () => {
+    it('should audit queries when env CLEO_SESSION_GRADE is set', async () => {
+      process.env.CLEO_SESSION_GRADE = 'true';
+      const middleware = createAudit();
+      const response = makeResponse({ meta: { ...makeResponse().meta, gateway: 'query' } });
+      const next = vi.fn(() => Promise.resolve(response));
+      const request = makeRequest({ gateway: 'query' });
+
+      await middleware(request, next);
+
+      // Wait for fire-and-forget promises
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(mockLogInfo).toHaveBeenCalledOnce();
+      expect(mockInsert).toHaveBeenCalled();
+    });
+
+    it('should audit queries from durable gradeMode when env is NOT set', async () => {
+      // Simulate a fresh subprocess: no CLEO_SESSION_GRADE env, but
+      // the session row has gradeMode = true from a prior session-start.
+      delete process.env.CLEO_SESSION_GRADE;
+      mockResolveCurrentSession.mockResolvedValue({ id: 'sess-grade', gradeMode: true });
+
+      const middleware = createAudit();
+      const response = makeResponse({ meta: { ...makeResponse().meta, gateway: 'query' } });
+      const next = vi.fn(() => Promise.resolve(response));
+      const request = makeRequest({ gateway: 'query' });
+
+      await middleware(request, next);
+
+      // Wait for fire-and-forget promises
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(mockLogInfo).toHaveBeenCalledOnce();
+      expect(mockInsert).toHaveBeenCalled();
+    });
+
+    it('should NOT audit queries when durable gradeMode is false', async () => {
+      delete process.env.CLEO_SESSION_GRADE;
+      mockResolveCurrentSession.mockResolvedValue({ id: 'sess-normal', gradeMode: false });
+
+      const middleware = createAudit();
+      const response = makeResponse({ meta: { ...makeResponse().meta, gateway: 'query' } });
+      const next = vi.fn(() => Promise.resolve(response));
+      const request = makeRequest({ gateway: 'query' });
+
+      await middleware(request, next);
+
+      // Wait for fire-and-forget promises
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(mockLogInfo).not.toHaveBeenCalled();
+      expect(mockInsert).not.toHaveBeenCalled();
+    });
+
+    it('should fail-open: DB lookup failure does not crash pipeline', async () => {
+      delete process.env.CLEO_SESSION_GRADE;
+      mockResolveCurrentSession.mockRejectedValueOnce(new Error('DB unavailable'));
+
+      const middleware = createAudit();
+      const response = makeResponse();
+      const next = vi.fn(() => Promise.resolve(response));
+      const request = makeRequest();
+
+      // Must not throw
+      const result = await middleware(request, next);
+
+      // Wait for fire-and-forget promises
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(result).toBe(response);
+      // Mutations still logged even after failed grade-mode lookup
+      expect(mockLogInfo).toHaveBeenCalled();
+    });
+
+    it('should fail-open for query: DB failure → no audit (not a crash)', async () => {
+      delete process.env.CLEO_SESSION_GRADE;
+      mockResolveCurrentSession.mockRejectedValueOnce(new Error('DB unavailable'));
+
+      const middleware = createAudit();
+      const response = makeResponse({ meta: { ...makeResponse().meta, gateway: 'query' } });
+      const next = vi.fn(() => Promise.resolve(response));
+      const request = makeRequest({ gateway: 'query' });
+
+      // Must not throw
+      const result = await middleware(request, next);
+
+      // Wait for fire-and-forget promises
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(result).toBe(response);
+      // Queries not audited when grade-mode lookup fails open
+      expect(mockLogInfo).not.toHaveBeenCalled();
+      expect(mockInsert).not.toHaveBeenCalled();
+    });
   });
 });
