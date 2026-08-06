@@ -96,6 +96,33 @@ export async function runNexusAnalysis(params: NexusAnalysisParams): Promise<Nex
     } catch {
       // table may be empty — ignore
     }
+    // T12074: clear the FTS shadow explicitly.
+    //
+    // `nexus_symbols_fts` is kept in sync by AFTER INSERT/DELETE/UPDATE
+    // triggers on `nexus_nodes`, keyed on `rowid`. When the shadow drifts —
+    // rows whose base row vanished by a path that did not fire the delete
+    // trigger — those orphaned rowids survive the clear above and then COLLIDE
+    // with the rebuild's `INSERT INTO nexus_symbols_fts(rowid, …)`, because
+    // the insert supplies an explicit rowid.
+    //
+    // The failure mode is severe and silent about its cause: the reindex has
+    // already emptied `nexus_nodes`/`nexus_relations`, so the collision leaves
+    // the project with a DESTROYED index and an `E_PIPELINE_FAILED` whose
+    // message is a bare "Failed query: insert into nexus_nodes" plus 8,500
+    // bound parameters. Observed on this repo 2026-08-06: a graph of 24,482
+    // nodes / 39,163 relations reduced to 500 / 0 by a single `cleo nexus
+    // analyze`, with 70 orphaned shadow rows as the only cause.
+    //
+    // That matters doubly because `analyze` is the repair command the agent
+    // protocol — and the stale-index error added in T12068 — tell agents to
+    // run. A repair path that can destroy the thing it repairs is worse than
+    // no repair path.
+    try {
+      const { sql } = await import('drizzle-orm');
+      db.run(sql`DELETE FROM nexus_symbols_fts`);
+    } catch {
+      // FTS shadow is optional (older schemas lack it) — ignore
+    }
   }
 
   const result = await runPipeline(repoPath, projectId, db, tables, onProgress, {
