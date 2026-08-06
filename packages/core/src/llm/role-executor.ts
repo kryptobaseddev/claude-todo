@@ -238,7 +238,11 @@ export async function executeForRole(
       expiresAt: null,
       refreshToken: null,
       extraHeaders: {},
-      baseUrl: wire.baseUrl,
+      // T12081: the credential's OWN endpoint wins. Using `wire.baseUrl`
+      // unconditionally rewrote every custom endpoint (Ollama, LM Studio,
+      // vLLM, OpenRouter, Azure) to the provider's public API, which then
+      // rejected the local key with 401.
+      baseUrl: llm.credential?.baseUrl ?? wire.baseUrl,
       awsProfile: null,
     };
     const transport = ModelRunner.buildTransportFromCredential(

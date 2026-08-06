@@ -533,9 +533,52 @@ Extract durable knowledge from these observations. Return empty array if nothing
 async function resolveDreamLlm(
   projectRoot: string,
 ): Promise<{ client: Pick<Anthropic, 'messages'>; model: string } | null> {
-  const llm = await resolveAnthropicForRole('consolidation', { projectRoot });
-  if (!llm) return null;
-  return { client: llm.client, model: llm.model };
+  // Preferred: a real Anthropic client, which supports the structured-output
+  // `messages.parse` path.
+  const anthropic = await resolveAnthropicForRole('consolidation', { projectRoot });
+  if (anthropic) return { client: anthropic.client, model: anthropic.model };
+
+  // T12081: fall back to ANY resolvable provider via `executeForRole`.
+  //
+  // `resolveAnthropicForRole` returns null for every non-anthropic provider, so
+  // a project whose `consolidation` role resolves to openai, gemini or a local
+  // Ollama endpoint could not run the dream cycle at all — it reported "no
+  // usable Anthropic client" and skipped. A provider-specific chokepoint inside
+  // an otherwise provider-agnostic system, and the reason the dream cycle was
+  // dead on a machine that had working LOCAL inference available the whole time.
+  //
+  // `executeForRole` is the existing provider-agnostic path (resolve → unseal →
+  // ModelRunner.buildTransportFromCredential → complete). Wrapping it in the
+  // `messages.create` shape lets the plain-call extractor run unchanged: it
+  // already asks for `{content: [{type:'text', text}]}`, which is what this
+  // returns.
+  try {
+    const { executeForRole } = await import('../llm/role-executor.js');
+    const probe = await executeForRole('consolidation', 'ping', 'ping', { projectRoot });
+    if (!probe) return null;
+
+    const client = {
+      messages: {
+        create: async (body: {
+          system?: string;
+          messages: Array<{ role: string; content: string }>;
+        }) => {
+          const userContent = body.messages
+            .filter((m) => m.role === 'user')
+            .map((m) => m.content)
+            .join('\n\n');
+          const result = await executeForRole('consolidation', body.system ?? '', userContent, {
+            projectRoot,
+          });
+          return { content: [{ type: 'text', text: result?.content ?? '' }] };
+        },
+      },
+    } as unknown as Pick<Anthropic, 'messages'>;
+
+    return { client, model: probe.model };
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -628,7 +671,12 @@ async function synthesiseCluster(
 
   try {
     const format = await buildZodFormat(DreamSynthesisResponseSchema);
-    if (format) {
+    // T12081: the provider-agnostic shim implements `create` only. Guard on
+    // `parse` rather than letting an undefined call throw into the catch-all,
+    // which would silently yield zero memories for every non-anthropic provider.
+    const hasParse =
+      typeof (client.messages as unknown as { parse?: unknown }).parse === 'function';
+    if (format && hasParse) {
       const messages = client.messages as unknown as {
         parse: (body: Record<string, unknown>) => Promise<{
           parsed_output?: { memories?: DreamExtractedMemory[] };

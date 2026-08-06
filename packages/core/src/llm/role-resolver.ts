@@ -505,6 +505,8 @@ async function resolveCredentialForRole(
           apiKey: stored.accessToken,
           source: 'cred-file',
           authType: wireAuthType,
+          // T12081: preserve the stored endpoint (Ollama/LM Studio/vLLM/…).
+          baseUrl: stored.baseUrl ?? null,
         },
         usedLabel: stored.label,
       };
@@ -529,6 +531,8 @@ async function resolveCredentialForRole(
           apiKey: picked.accessToken,
           source: 'cred-file',
           authType: wireAuthType,
+          // T12081: preserve the stored endpoint (Ollama/LM Studio/vLLM/…).
+          baseUrl: picked.baseUrl ?? null,
         },
         usedLabel: picked.label,
       };
@@ -670,6 +674,11 @@ export async function resolveLLMForRole(
       provider: credential.provider,
       source: credential.source,
       authType: wireAuthType,
+      // T12081: carry the credential's OWN endpoint. Without it a consumer
+      // building a transport cannot tell that this credential targets a local
+      // or proxied host, and falls back to the provider's public API — which
+      // rejected every Ollama / LM Studio / vLLM / OpenRouter credential 401.
+      baseUrl: credential.baseUrl ?? null,
     };
     sealedCredential = makeSealedCredential({
       provider: credential.provider,
