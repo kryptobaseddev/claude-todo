@@ -63,7 +63,13 @@ export type CredentialSource =
   | 'cred-file'
   | 'claude-creds'
   | 'global-config'
-  | 'project-config';
+  | 'project-config'
+  /**
+   * Synthesised for a keyless local inference daemon that answered a liveness
+   * probe (T12082). No stored secret exists or is needed — the placeholder
+   * token satisfies the transport contract, not the endpoint.
+   */
+  | 'local-daemon';
 
 /**
  * Authentication scheme used to send the credential to the provider.

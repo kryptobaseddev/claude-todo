@@ -83,6 +83,18 @@ export const DREAM_CLUSTER_MIN_SIZE = 5;
 export const DREAM_MAX_CLUSTERS = 10;
 
 /**
+ * Upper bound on the provider-liveness probe issued while resolving a dream
+ * client (T12082).
+ *
+ * A provider with a dead credential does not fail fast — the transport retries
+ * with backoff, so an unbounded probe blocks the entire consolidation pass
+ * behind a chain that will never succeed. Background work must degrade, not
+ * hang: a provider that cannot answer a 16-token ping in this window is not
+ * usable for consolidation regardless of what it eventually returns.
+ */
+export const DREAM_PROBE_TIMEOUT_MS = 20_000;
+
+/**
  * Jaccard similarity threshold above which two observations are placed in
  * the same cluster. Value in [0, 1]. Higher = tighter clusters.
  */
@@ -554,28 +566,114 @@ async function resolveDreamLlm(
   // returns.
   try {
     const { executeForRole } = await import('../llm/role-executor.js');
-    const probe = await executeForRole('consolidation', 'ping', 'ping', { projectRoot });
-    if (!probe) return null;
+    // Bounded: a provider whose credential is dead answers with retries, not
+    // with an error. Left unbounded this probe stalls the whole consolidation
+    // pass behind a chain that is never going to succeed — observed here as a
+    // dream cycle that ran for over ten minutes without reaching step one.
+    // A ping that cannot answer in DREAM_PROBE_TIMEOUT_MS is not a usable
+    // provider for background work, whatever it eventually returns.
+    const probe = await executeForRole('consolidation', 'ping', 'ping', {
+      projectRoot,
+      maxTokens: 16,
+      signal: AbortSignal.timeout(DREAM_PROBE_TIMEOUT_MS),
+    });
+    // A null probe means the resolved provider has no usable credential. Do NOT
+    // return here — the local tier below is the whole point of having one.
+    if (probe) {
+      const client = {
+        messages: {
+          create: async (body: {
+            system?: string;
+            messages: Array<{ role: string; content: string }>;
+          }) => {
+            const userContent = body.messages
+              .filter((m) => m.role === 'user')
+              .map((m) => m.content)
+              .join('\n\n');
+            const result = await executeForRole('consolidation', body.system ?? '', userContent, {
+              projectRoot,
+            });
+            return { content: [{ type: 'text', text: result?.content ?? '' }] };
+          },
+        },
+      } as unknown as Pick<Anthropic, 'messages'>;
+
+      return { client, model: probe.model };
+    }
+  } catch {
+    // fall through to the local tier
+  }
+
+  // T12082: last tier — a reachable LOCAL inference server.
+  //
+  // The auxiliary fallback chain exists so background work does not fail
+  // silently when the primary provider is unavailable, but its default chain
+  // (anthropic → openrouter → groq) is entirely cloud. When every cloud
+  // credential is unusable the chain is exhausted and consolidation simply
+  // stops — which is what happened here while an Ollama server sat running with
+  // models loaded, one HTTP request away.
+  //
+  // A consolidation pass is exactly the workload that should degrade to a small
+  // local model rather than stop: not latency-critical, not user-facing, and a
+  // shallow synthesis is worth more than none. Detection is a 300 ms loopback
+  // probe, so this costs nothing when no server is present.
+  try {
+    const { detectLocalInference } = await import('../llm/local-inference-probe.js');
+    const local = await detectLocalInference();
+    const model = local?.models[0];
+    if (!local || model === undefined) return null;
+
+    const { ModelRunner } = await import('../llm/model-runner.js');
+    const transport = ModelRunner.buildTransportFromCredential(
+      'openai',
+      {
+        provider: 'openai',
+        label: `${local.name}-autodetected`,
+        // Local servers accept any bearer value; the field is required by the
+        // transport contract, not by the endpoint.
+        token: 'local',
+        authType: 'api_key',
+        expiresAt: null,
+        refreshToken: null,
+        extraHeaders: {},
+        // The compat form: this shim speaks `chat_completions`.
+        baseUrl: local.openAiBaseUrl,
+        awsProfile: null,
+      },
+      'chat_completions',
+    );
 
     const client = {
       messages: {
         create: async (body: {
+          max_tokens: number;
           system?: string;
           messages: Array<{ role: string; content: string }>;
         }) => {
-          const userContent = body.messages
-            .filter((m) => m.role === 'user')
-            .map((m) => m.content)
-            .join('\n\n');
-          const result = await executeForRole('consolidation', body.system ?? '', userContent, {
-            projectRoot,
+          const response = await transport.complete({
+            model,
+            maxTokens: body.max_tokens,
+            ...(body.system !== undefined ? { system: body.system } : {}),
+            messages: body.messages.map((m) => ({
+              role: m.role as 'user' | 'assistant',
+              content: m.content,
+            })),
           });
-          return { content: [{ type: 'text', text: result?.content ?? '' }] };
+          return {
+            content: [
+              {
+                type: 'text',
+                text: Array.isArray(response.content)
+                  ? response.content.map((c: { text?: string }) => c.text ?? '').join('')
+                  : String(response.content ?? ''),
+              },
+            ],
+          };
         },
       },
     } as unknown as Pick<Anthropic, 'messages'>;
 
-    return { client, model: probe.model };
+    return { client, model };
   } catch {
     return null;
   }

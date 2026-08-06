@@ -164,7 +164,9 @@ export type CredentialSourceWire =
   | 'cred-file'
   | 'claude-creds'
   | 'global-config'
-  | 'project-config';
+  | 'project-config'
+  /** Keyless local inference daemon detected at runtime (T12082). */
+  | 'local-daemon';
 
 /**
  * Authentication scheme used when sending the credential to the provider.
@@ -381,6 +383,19 @@ export interface ResolveLLMForRoleOptions {
    * @task T11759
    */
   profileOverride?: string;
+  /**
+   * Providers to skip during this resolution (T12082).
+   *
+   * Set by the caller after a provider has already failed for this call, so
+   * the retry lands somewhere else. Applies to EVERY tier including config
+   * pins: a pinned provider that just returned a terminal error is not a
+   * better answer for having been pinned.
+   *
+   * Empty/absent leaves resolution completely unchanged.
+   *
+   * @task T12082
+   */
+  excludeProviders?: readonly string[];
 }
 
 // ============================================================================
