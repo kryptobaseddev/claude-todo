@@ -326,6 +326,28 @@ export async function reVerifyWorkerReport(
  * a {@link WorkerMismatch} describing the missing/extra paths.
  */
 function compareFileSets(claimed: string[], actual: string[]): WorkerMismatch | null {
+  // T12080: an EMPTY claim means "no claim was made", not "the worker claimed
+  // it touched nothing".
+  //
+  // The spawn contract gives a worker exactly one return channel — an exit code
+  // — so `runTick` has no way to learn which files it touched and passes
+  // `touchedFiles: []`. Comparing that against `git status --porcelain` then
+  // mismatched on size (0 vs N) on EVERY run: after `cleo init` the working
+  // tree is never clean, because CLEO's own scaffolding (`.cleo/`, `AGENTS.md`,
+  // `.worktreeinclude`, …) is untracked. `runTick` was therefore structurally
+  // incapable of returning `success` — every correct worker was rejected,
+  // three rejections marked the task stuck, and five stuck tasks self-paused
+  // the loop.
+  //
+  // Worse, it inverted the intent: a worker that follows CLEO's own evidence
+  // protocol COMMITS its work (ADR-051 wants a `commit:<sha>` atom), which
+  // leaves those paths out of `git status` entirely. The check punished exactly
+  // the behaviour the protocol requires.
+  //
+  // Callers that DO supply a claim still get the full comparison, so the
+  // anti-fabrication control is preserved wherever it can actually work.
+  if (claimed.length === 0) return null;
+
   const claimedSet = new Set(claimed.map(normalizePath));
   const actualSet = new Set(actual.map(normalizePath));
   if (claimedSet.size !== actualSet.size) {
