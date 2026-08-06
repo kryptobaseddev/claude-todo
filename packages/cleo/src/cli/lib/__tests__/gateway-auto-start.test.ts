@@ -311,7 +311,16 @@ describe('resolveCliEntryPath (T12009 regression)', () => {
   }
 
   beforeAll(() => {
-    tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'cleo-entry-test-'));
+    // T12067: realpath the sandbox root.
+    //
+    // On macOS `os.tmpdir()` returns `/var/folders/…`, which is a SYMLINK to
+    // `/private/var/folders/…`. `resolveCliEntryPath` resolves symlinks (it
+    // must — the global-bin entry it resolves from is itself a symlink), so it
+    // returns the `/private/var` form while a expectation built from the
+    // un-resolved `tmpRoot` says `/var`. Same string, two spellings, and the
+    // test fails on macOS only. Linux tmpdir is not symlinked, which is why
+    // this only showed up once these tests began running at all.
+    tmpRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'cleo-entry-test-')));
   });
 
   afterEach(() => {
