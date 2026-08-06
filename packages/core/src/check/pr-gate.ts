@@ -192,6 +192,16 @@ export const PR_GATES: readonly PrGateDef[] = [
     tier: 'full',
     description: 'Zero crates.io publishes (CI: Crate Publish Guard)',
   },
+  {
+    id: 'lint-injection-commands',
+    label: 'Injection Command Existence',
+    command: 'node',
+    args: ['scripts/lint-injection-commands.mjs'],
+    heavy: false,
+    tier: 'full',
+    description:
+      'Every cleo command named in CLEO-INJECTION.md exists (CI: Injection Command Existence)',
+  },
 ] as const;
 
 /** Outcome of a single gate. */

@@ -13,7 +13,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { renderOutputMode } from '../../renderers/output-mode.js';
+import { renderOutputMode, renderSummary } from '../../renderers/output-mode.js';
 
 describe('renderOutputMode — id', () => {
   it('extracts id from a single-task envelope ({task: {id}})', () => {
@@ -223,5 +223,71 @@ describe('renderOutputMode — envelope', () => {
     } catch (err) {
       expect((err as { code?: string }).code).toBe('E_RENDERER_UNSUPPORTED');
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// T12067 — `results`-shaped envelopes (`cleo find`)
+// ---------------------------------------------------------------------------
+
+describe('renderOutputMode — {results: [...]} envelopes (T12067)', () => {
+  /**
+   * The exact shape `tasks.find` emits: a `results` array beside a
+   * pre-pagination `total`. Before T12067 only `total` was recognised, so
+   * `--output count` reported a non-zero number while `id`/`table`/`summary`
+   * all reported empty against the SAME payload.
+   */
+  const findEnvelope = {
+    results: [
+      { id: 'T9911', title: 'cleo saga tree <id> recursive hierarchy', status: 'pending' },
+      { id: 'T9849', title: 'Feature gh-404: cleo saga tree <id>', status: 'done' },
+    ],
+    total: 2,
+  };
+
+  it('extracts ids from a find envelope', () => {
+    expect(renderOutputMode('id', findEnvelope).text).toBe('T9911\nT9849');
+  });
+
+  it('renders a find envelope as a table', () => {
+    const out = renderOutputMode('table', findEnvelope).text ?? '';
+    expect(out).toContain('T9911');
+    expect(out).toContain('T9849');
+    expect(out).not.toBe('No rows.');
+  });
+
+  it('renders a find envelope as a summary', () => {
+    const out = renderSummary(findEnvelope).text ?? '';
+    expect(out).toContain('T9911 [pending]');
+    expect(out).toContain('T9849 [done]');
+  });
+
+  it('counts a find envelope from its explicit total', () => {
+    expect(renderOutputMode('count', findEnvelope).text).toBe('2');
+  });
+
+  it('never disagrees across modes — count>0 implies id/table/summary non-empty', () => {
+    const count = Number(renderOutputMode('count', findEnvelope).text);
+    expect(count).toBeGreaterThan(0);
+    for (const mode of ['id', 'table'] as const) {
+      const out = renderOutputMode(mode, findEnvelope);
+      expect(out.emptyReason, `${mode} must not be empty when count=${count}`).toBeUndefined();
+    }
+    expect(renderSummary(findEnvelope).emptyReason).toBeUndefined();
+  });
+
+  it('falls back to the results length when no total is present', () => {
+    expect(renderOutputMode('count', { results: [{ id: 'A' }, { id: 'B' }] }).text).toBe('2');
+  });
+
+  it('reports empty for a genuinely empty result set', () => {
+    const out = renderOutputMode('id', { results: [], total: 0 });
+    expect(out.text).toBe('No ids.');
+    expect(out.emptyReason).toBe('no-renderable-ids');
+  });
+
+  it('prefers tasks over results when an envelope carries both', () => {
+    const out = renderOutputMode('id', { tasks: [{ id: 'T1' }], results: [{ id: 'R1' }] });
+    expect(out.text).toBe('T1');
   });
 });

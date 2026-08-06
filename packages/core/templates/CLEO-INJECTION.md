@@ -151,29 +151,44 @@ Memory context: `cleo memory digest --brief` gives a live project memory summary
 <!-- CLEO-INJECTION:section=nexus -->
 ## Nexus — when to use which scope
 
-`cleo nexus` is the code-intelligence surface. It has **5 scopes**. Pick by intent, not name.
+`cleo nexus` is the code-intelligence surface over THIS repo's symbol graph.
+Pick by intent. Every command below is verified to exist — see the gate note.
 
-| Intent                                      | Scope          | First-reach command                     |
-|---------------------------------------------|----------------|-----------------------------------------|
-| Edit/refactor *this* repo safely            | `project`      | `cleo nexus impact <symbol>`            |
-| Explore *this* repo by concept or symbol    | `project`      | `cleo nexus query` / `context`          |
-| One-shot machine-readable repo snapshot     | `project`      | `cleo nexus report` (LAFS JSON)         |
-| Recall what the agent knows across sessions | `living-brain` | `cleo nexus brain find "<q>"`           |
-| Compare or share patterns across repos      | `cross-project`| `cleo nexus compare` / `shared`         |
-| Blend code + memory + cross-repo            | `hybrid`       | `cleo nexus synthesize <topic>`         |
-| Index health / reindex / purge              | `global-infra` | `cleo nexus admin <status|analyze|clean>` |
+| Intent                                    | Command                          |
+|-------------------------------------------|----------------------------------|
+| **Check the index before trusting it**    | `cleo nexus status`              |
+| Blast radius before editing a symbol      | `cleo nexus impact <symbol>`     |
+| Callers / callees / community of a symbol | `cleo nexus context <symbol>`    |
+| Everything about one symbol in one call   | `cleo nexus full-context <symbol>` |
+| Find a symbol by code text                | `cleo nexus search-code "<text>"` |
+| Symbols touched by a task                 | `cleo nexus task-symbols <taskId>` |
+| Why does this symbol exist / who needs it | `cleo nexus why <symbol>`        |
+| Detected communities / execution flows    | `cleo nexus clusters` / `flows`  |
+| Rebuild the index                         | `cleo nexus analyze`             |
 
-**Project resolution** (project + hybrid scopes only):
-`--project-id` > `--path` > `cwd`. Default ID = `base64url(path).slice(0,32)`.
+**FIRST CALL IS `cleo nexus status`.** It returns `nodeCount`, `lastIndexedAt`
+and `staleFileCount`. The index is NOT auto-refreshed — a symbol added after
+the last `analyze` run is simply absent, and a lookup for it returns
+`E_NOT_FOUND` that reads identically to "no such symbol". If `staleFileCount`
+is a large fraction of `fileCount`, run `cleo nexus analyze` or treat
+`git grep` as the ground truth and SAY SO in your response.
 
-**Every nexus envelope returns**:
-- `meta.scope` — confirms which scope answered
-- `meta.projectId` — confirms which project (if applicable)
-- `meta.suggestedNext: string[]` — chained-reasoning hints (use these before re-discovering)
+`E_NOT_FOUND` from `impact`/`context` now reports the index size, its median
+entry age, and the repair command. Read it — do not infer that nexus is broken.
 
-**Rule**: BEFORE editing any symbol, run `cleo nexus impact <symbol>`. HIGH/CRITICAL = stop and warn.
+**Project resolution**: `--project-id` > `--path` > `cwd`.
+Default ID = `base64url(path).slice(0,32)`.
 
-**Skip the help dump**: `cleo nexus report` answers most agent project-questions in one call.
+**Rule**: BEFORE editing any symbol, run `cleo nexus impact <symbol>`.
+HIGH/CRITICAL = stop and warn. If the index is stale, say that instead of
+silently substituting `git grep`.
+
+> Commands named here are asserted against the live CLI by
+> `scripts/lint-injection-commands.mjs` (T12069). Five commands previously
+> listed in this section — `nexus report`, `nexus brain find`, `nexus compare`,
+> `nexus shared`, `nexus synthesize`, plus `nexus admin` — never existed; the
+> gate exists so a protocol that every agent is told to follow can no longer
+> drift from the binary.
 <!-- /CLEO-INJECTION:section=nexus -->
 
 <!-- CLEO-INJECTION:section=orchestration -->
@@ -372,7 +387,7 @@ Every spawn prompt contains these required sections — orchestrators can progra
 ## Rules
 
 - No time estimates — use `small`, `medium`, `large` sizing
-- Token budget: avoid `cleo list` without `--parent`, avoid `cleo help --tier 2` before tier 0
+- Token budget: avoid `cleo list` without `--parent`; get usage from `cleo <command> --help` (there is no top-level help command)
 - Do not read full task details for tasks you won't work on
 <!-- /CLEO-INJECTION:section=rules -->
 

@@ -23,14 +23,52 @@ import { truncateString } from '@cleocode/core';
 import type { OutputMode } from '../output-context.js';
 
 /**
+ * Envelope keys that carry a list of records, in resolution order.
+ *
+ * SSoT for every renderer in this module. Before T12067 each renderer
+ * carried its own inlined key list, and `results` — the collection key
+ * `tasks.find` has always emitted — was absent from all of them. The
+ * consequence was a self-contradicting CLI: `cleo find <q> --output count`
+ * reported 1626 (read off the sibling `total` field) while `--output id`,
+ * `--output table` and `--summary` all reported empty, because none of them
+ * recognised the array sitting next to that total.
+ *
+ * `cleo find` is the surface the agent protocol mandates for all task
+ * discovery ("use `cleo find` for discovery, NEVER `cleo list` for
+ * browsing"), so an agent scripting the documented ID-pipeline idiom
+ * (`cleo find … --output id | while read id`) silently processed zero rows
+ * against a non-empty result set. Keeping the key list in one place is what
+ * stops the next collection key from regressing the same way.
+ *
+ * @task T12067
+ */
+const COLLECTION_KEYS = ['tasks', 'items', 'results'] as const;
+
+/**
+ * Resolve the first list-shaped collection on an envelope `data` payload.
+ *
+ * @param rec - the envelope `data` object.
+ * @returns the matching array, or `undefined` when the payload carries none.
+ *
+ * @task T12067
+ */
+function pickCollection(rec: Record<string, unknown>): unknown[] | undefined {
+  for (const key of COLLECTION_KEYS) {
+    const value = rec[key];
+    if (Array.isArray(value)) return value;
+  }
+  return undefined;
+}
+
+/**
  * Heuristic id extraction across the family of envelope shapes the
  * dispatch surface produces.
  *
  * Walked in order:
  *   1. `data.task.id` — single-task mutate ops (`add`, `update`, ...).
- *   2. `data.tasks[].id` — list / find responses.
- *   3. `data.items[].id` — generic ListResponse from the SDK.
- *   4. `data.id` — bare id payloads (e.g. `cleo session start`).
+ *   2. `data.{tasks,items,results}[].id` — list / find responses
+ *      ({@link COLLECTION_KEYS}).
+ *   3. `data.id` — bare id payloads (e.g. `cleo session start`).
  *
  * @returns id strings in the same order they appeared in the envelope.
  *          Empty array when no id can be located.
@@ -46,23 +84,15 @@ function extractIds(data: unknown): string[] {
     if (typeof id === 'string') return [id];
   }
 
-  // 2. List of tasks ({tasks: [...]})
-  const tasks = rec['tasks'];
-  if (Array.isArray(tasks)) {
-    return tasks
+  // 2. List payloads — {tasks}, {items} (SDK ListResponse), {results} (find).
+  const collection = pickCollection(rec);
+  if (collection) {
+    return collection
       .map((t) => (t && typeof t === 'object' ? (t as Record<string, unknown>)['id'] : undefined))
       .filter((id): id is string => typeof id === 'string');
   }
 
-  // 3. Generic SDK ListResponse ({items: [...]})
-  const items = rec['items'];
-  if (Array.isArray(items)) {
-    return items
-      .map((t) => (t && typeof t === 'object' ? (t as Record<string, unknown>)['id'] : undefined))
-      .filter((id): id is string => typeof id === 'string');
-  }
-
-  // 4. Bare id
+  // 3. Bare id
   const id = rec['id'];
   if (typeof id === 'string') return [id];
 
@@ -111,11 +141,8 @@ function extractCount(data: unknown): number {
   const count = rec['count'];
   if (typeof count === 'number' && Number.isFinite(count)) return count;
 
-  const tasks = rec['tasks'];
-  if (Array.isArray(tasks)) return tasks.length;
-
-  const items = rec['items'];
-  if (Array.isArray(items)) return items.length;
+  const collection = pickCollection(rec);
+  if (collection) return collection.length;
 
   // Single-record envelopes (`{task: {...}}`) count as 1.
   if (rec['task'] && typeof rec['task'] === 'object') return 1;
@@ -253,14 +280,10 @@ export function renderSummary(data: unknown): OutputModeResult {
   }
   const rec = data as Record<string, unknown>;
 
-  // 1. List shapes — {tasks: [...]} or {items: [...]} from SDK ListResponse.
-  const tasks = rec['tasks'];
-  if (Array.isArray(tasks)) {
-    return renderSummaryList(tasks as unknown[]);
-  }
-  const items = rec['items'];
-  if (Array.isArray(items)) {
-    return renderSummaryList(items as unknown[]);
+  // 1. List shapes — {tasks}, {items} (SDK ListResponse), {results} (find).
+  const collection = pickCollection(rec);
+  if (collection) {
+    return renderSummaryList(collection);
   }
 
   // 2. Single nested task ({task: {id, status, title}}) — e.g. `cleo show`.
@@ -332,13 +355,9 @@ export function renderOutputMode(mode: OutputMode, data: unknown): OutputModeRes
     case 'table': {
       if (data && typeof data === 'object') {
         const rec = data as Record<string, unknown>;
-        const tasks = rec['tasks'];
-        if (Array.isArray(tasks)) {
-          return { text: renderTableList(tasks as Array<Record<string, unknown>>) };
-        }
-        const items = rec['items'];
-        if (Array.isArray(items)) {
-          return { text: renderTableList(items as Array<Record<string, unknown>>) };
+        const collection = pickCollection(rec);
+        if (collection) {
+          return { text: renderTableList(collection as Array<Record<string, unknown>>) };
         }
         return { text: renderTableGeneric(rec) };
       }

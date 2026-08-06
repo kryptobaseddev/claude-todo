@@ -11,6 +11,7 @@
 import { eq, notInArray } from 'drizzle-orm';
 import { type EngineResult, engineError, engineSuccess } from '../engine-result.js';
 import { getNexusDb, getNexusNativeDb, nexusSchema } from '../store/nexus-sqlite.js';
+import { buildSymbolMissError } from './symbol-miss.js';
 
 /** Risk level classification for an impacted symbol. */
 export type NexusRiskLevel = 'NONE' | 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
@@ -126,9 +127,8 @@ export async function getSymbolImpact(
   const matchingNodes = sortMatchingNodes(rawMatchingNodes, symbolName);
 
   if (matchingNodes.length === 0) {
-    const err = new Error(`No symbol found matching '${symbolName}' in project ${projectId}`);
-    (err as NodeJS.ErrnoException).code = 'E_NOT_FOUND';
-    throw err;
+    // T12068: distinguish "no such symbol" from "index predates the symbol".
+    throw buildSymbolMissError(symbolName, projectId, projectSymbolNodes);
   }
 
   // Fetch all relations (project-scoped DB — ADR-090 · T11648: no `project_id`

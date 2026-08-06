@@ -7,7 +7,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createTestDb, seedTasks, type TestDbEnv } from '../../store/__tests__/test-db-helper.js';
 import type { DataAccessor } from '../../store/data-accessor.js';
-import { findTasks, fuzzyScore } from '../find.js';
+import { findTasks, fuzzyScore, RELEVANCE_STRONG_MIN } from '../find.js';
 
 describe('fuzzyScore', () => {
   it('returns 100 for exact match', () => {
@@ -181,5 +181,48 @@ describe('findTasks', () => {
     const result = await findTasks({ query: 'task', status: 'pending' }, env.tempDir, accessor);
     expect(result.results).toHaveLength(1);
     expect(result.results[0]!.id).toBe('T002');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// T12067 — relevance tiers
+// ---------------------------------------------------------------------------
+
+describe('fuzzyScore relevance tiers (T12067)', () => {
+  it('scores a full-word cover as strong', () => {
+    expect(fuzzyScore('saga tree', 'tree view for a saga')).toBe(70);
+    expect(fuzzyScore('saga tree', 'tree view for a saga')).toBeGreaterThanOrEqual(
+      RELEVANCE_STRONG_MIN,
+    );
+  });
+
+  it('demotes a PARTIAL word cover below the strong floor', () => {
+    // Matches only "tree" of "saga tree". Before T12067 this scored 60 — a
+    // strong-tier score — which is why `find "saga tree"` returned 1818 of
+    // 4980 tasks.
+    const score = fuzzyScore('saga tree', 'Build WorkGraphView.svelte tree component');
+    expect(score).toBeGreaterThan(0);
+    expect(score).toBeLessThan(RELEVANCE_STRONG_MIN);
+  });
+
+  it('keeps a bare character-subsequence match in the weak tier', () => {
+    // 'deadline' is a subsequence of a great deal of ordinary English.
+    const score = fuzzyScore('deadline', 'Detect and evaluate a decoupled inline engine');
+    if (score > 0) expect(score).toBeLessThan(RELEVANCE_STRONG_MIN);
+  });
+
+  it('still ranks an exact substring above every weaker tier', () => {
+    const exact = fuzzyScore('saga tree', 'cleo saga tree <id> recursive hierarchy');
+    const allWords = fuzzyScore('saga tree', 'tree view for a saga');
+    const partial = fuzzyScore('saga tree', 'Build WorkGraphView.svelte tree component');
+    expect(exact).toBe(80);
+    expect(exact).toBeGreaterThan(allWords);
+    expect(allWords).toBeGreaterThan(partial);
+  });
+
+  it('preserves single-word behaviour as a strong match', () => {
+    expect(fuzzyScore('auth', 'implement authentication')).toBeGreaterThanOrEqual(
+      RELEVANCE_STRONG_MIN,
+    );
   });
 });

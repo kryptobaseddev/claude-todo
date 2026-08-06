@@ -1,0 +1,121 @@
+/**
+ * Guard: every vitest project must actually resolve test files.
+ *
+ * ## The regression this locks (T12067)
+ *
+ * Vitest resolves a project's `include` globs against that project's root,
+ * which defaults to the directory holding its config. `@cleocode/cleo`
+ * declared root-relative globs (`packages/cleo/src/**`) without declaring a
+ * `root`, so they expanded to `packages/cleo/packages/cleo/src/**` and matched
+ * NOTHING.
+ *
+ * The failure is silent and total: the project still loads, still appears in
+ * `vitest list`, still counts as a member of the run, and contributes zero
+ * tests. **281 test files never executed** under `pnpm test`, `pnpm test:pkg`,
+ * or the sharded CI job — while CI reported green.
+ *
+ * Third occurrence of the class:
+ *
+ *   - T10177 — `scripts/__tests__/*.test.mjs` "silently stopped running in CI shards"
+ *   - T11414 — `@cleocode/utils` "silently did not run in CI shards"
+ *   - T12067 — `@cleocode/cleo`, 281 files
+ *
+ * The first two were a missing `projects:` entry, fixable by adding one. This
+ * one HAD the entry and still ran nothing — which is why the invariant worth
+ * asserting is not "the globs look right" but **"the globs match something"**.
+ * That single check catches all three shapes and any future one.
+ *
+ * @task T12067
+ */
+
+import { readFileSync } from 'node:fs';
+import { glob } from 'node:fs/promises';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { describe, expect, it } from 'vitest';
+
+const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+
+/**
+ * Extract the `projects: [...]` entries from the root vitest config.
+ *
+ * Parsed as text rather than imported: importing the config pulls in the whole
+ * vite/svelte plugin chain, which is slow and can fail for reasons unrelated
+ * to what this test asserts.
+ *
+ * @returns project config paths relative to the repo root.
+ */
+export function readProjectPaths() {
+  const source = readFileSync(join(repoRoot, 'vitest.config.ts'), 'utf-8');
+  const block = source.match(/projects:\s*\[([\s\S]*?)\]/);
+  if (!block) throw new Error('vitest.config.ts: no `projects: [...]` array found');
+  return [...block[1].matchAll(/['"]([^'"]+vitest\.config\.[cm]?[jt]s)['"]/g)].map((m) => m[1]);
+}
+
+/**
+ * Extract the string literals of a project config's `include: [...]` array.
+ *
+ * @param source - the project config source.
+ * @returns the glob strings, or `null` when the config declares no `include`.
+ */
+export function readIncludeGlobs(source) {
+  const block = source.match(/\n\s*include:\s*\[([\s\S]*?)\]/);
+  if (!block) return null;
+  return [...block[1].matchAll(/['"]([^'"]+)['"]/g)].map((m) => m[1]);
+}
+
+/**
+ * Resolve a project's EFFECTIVE root.
+ *
+ * A config may pin `root: resolve(import.meta.dirname, '../..')` to run from
+ * the monorepo root (`@cleocode/cleo` does, because its tests are written
+ * against that cwd). Otherwise the root is the config's own directory.
+ *
+ * @param source     - the project config source.
+ * @param projectDir - repo-relative directory holding the config.
+ * @returns absolute effective root.
+ */
+export function resolveEffectiveRoot(source, projectDir) {
+  const pinned = source.match(/\broot:\s*resolve\(\s*import\.meta\.dirname\s*,\s*'([^']+)'\s*\)/);
+  if (pinned) return resolve(repoRoot, projectDir, pinned[1]);
+  return join(repoRoot, projectDir);
+}
+
+describe('every vitest project resolves test files (T12067)', () => {
+  const projectPaths = readProjectPaths();
+
+  it('finds every attached project config', () => {
+    expect(projectPaths.length).toBeGreaterThan(15);
+  });
+
+  for (const configPath of projectPaths) {
+    it(`${configPath} matches at least one test file`, async () => {
+      const source = readFileSync(join(repoRoot, configPath), 'utf-8');
+      const globs = readIncludeGlobs(source);
+      if (globs === null) return; // inherits the root include — nothing to check
+
+      const projectDir = dirname(configPath);
+      const cwd = resolveEffectiveRoot(source, projectDir);
+
+      const matches = [];
+      for await (const entry of glob(globs, {
+        cwd,
+        exclude: (name) => name === 'node_modules' || name === 'dist',
+      })) {
+        matches.push(entry);
+      }
+
+      expect(
+        matches.length,
+        `${configPath} matches NO test files.\n` +
+          `  effective root: ${cwd}\n` +
+          `  include:        ${JSON.stringify(globs)}\n` +
+          "Vitest resolves include against the project root (the config's own\n" +
+          'directory unless `root:` is set), so root-relative globs in a config\n' +
+          'that does not pin `root` expand to <dir>/<dir>/… and match nothing.\n' +
+          'The project then reports as a passing member of the run while\n' +
+          'contributing zero tests — the T12067 failure mode.',
+      ).toBeGreaterThan(0);
+    });
+  }
+});

@@ -138,9 +138,52 @@ export function isUrgentTask(task: {
 }
 
 /**
+ * Lowest score that counts as a STRONG match (T12067).
+ *
+ * Scores split into two tiers:
+ *
+ *   - **Strong** (>= this floor) — exact title (100), full-query substring
+ *     (80), or every query word present somewhere in the text (70).
+ *   - **Weak** (< this floor) — a partial word match, or a bare character
+ *     *subsequence* match. `'deadline'` is a subsequence of a surprising
+ *     number of English sentences, so this tier is noise whenever anything
+ *     better exists.
+ *
+ * {@link findTasks} keeps the weak tier only when NO strong match was found,
+ * which preserves typo tolerance for genuinely obscure queries without
+ * letting the weak tier flood a normal search.
+ *
+ * @task T12067
+ */
+export const RELEVANCE_STRONG_MIN = 40;
+
+/**
  * Calculate fuzzy match score between query and text.
  * Higher score = better match. 0 = no match.
+ *
+ * Tiers, highest first — see {@link RELEVANCE_STRONG_MIN}:
+ *
+ * | Score  | Tier   | Condition                                       |
+ * |--------|--------|-------------------------------------------------|
+ * | 100    | strong | text equals query                               |
+ * | 80     | strong | text contains the whole query as a substring    |
+ * | 70     | strong | EVERY query word appears somewhere in the text  |
+ * | 10..30 | weak   | SOME query words appear (partial multi-word)    |
+ * | 10..30 | weak   | query is a character subsequence of the text    |
+ * | 0      | —      | no match                                        |
+ *
+ * Before T12067 a partial multi-word match scored `40 + share * 40`, so
+ * matching just one word of `"saga tree"` returned 60 — a strong-tier score
+ * for a weak-tier match. `cleo find "saga tree"` consequently reported 1818
+ * matches out of 4980 tasks (37%). Ranking was never the problem (the two
+ * genuine `saga tree` tasks already sorted first); the inflated tail was.
+ *
+ * @param query - the search string.
+ * @param text  - the text to score it against (task title or description).
+ * @returns a score in [0, 100].
+ *
  * @task T4460
+ * @task T12067
  *
  * @example
  * ```ts
@@ -151,6 +194,14 @@ export function isUrgentTask(task: {
  * // Substring match returns a high score (80)
  * const contains = fuzzyScore('auth', 'authentication module');
  * console.assert(contains === 80, 'substring match → 80');
+ *
+ * // Every query word present, but not contiguously → strong tier (70)
+ * const allWords = fuzzyScore('saga tree', 'tree view for a saga');
+ * console.assert(allWords === 70, 'all words present → 70');
+ *
+ * // Only one of two query words present → WEAK tier, below the floor
+ * const someWords = fuzzyScore('saga tree', 'convert show/list/tree wrappers');
+ * console.assert(someWords < RELEVANCE_STRONG_MIN, 'partial words → weak');
  *
  * // No match at all returns 0
  * const none = fuzzyScore('xyz', 'authentication');
@@ -181,7 +232,11 @@ export function fuzzyScore(query: string, text: string): number {
     }
   }
   if (wordMatchCount > 0) {
-    return 40 + (wordMatchCount / queryWords.length) * 40;
+    // T12067: only a COMPLETE word cover is a strong match. A partial cover
+    // shares the weak tier with subsequence matches, so it surfaces only when
+    // nothing stronger exists.
+    const share = wordMatchCount / queryWords.length;
+    return share === 1 ? 70 : 10 + share * 20;
   }
 
   // Character sequence match
@@ -484,7 +539,15 @@ export async function findTasks(
       }
     }
 
-    results = scored.sort((a, b) => b.score - a.score);
+    // T12067: two-tier relevance. When ANY strong match exists, discard the
+    // weak tier entirely — otherwise a common subsequence like `deadline`
+    // drags in a third of the project (1626 of 4977 tasks, measured) and
+    // makes `total` useless as a signal. When nothing matches strongly the
+    // weak tier is all there is, so keep it rather than return nothing.
+    const hasStrong = scored.some((r) => r.score >= RELEVANCE_STRONG_MIN);
+    const relevant = hasStrong ? scored.filter((r) => r.score >= RELEVANCE_STRONG_MIN) : scored;
+
+    results = relevant.sort((a, b) => b.score - a.score);
   }
 
   const total = results.length;

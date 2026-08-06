@@ -222,6 +222,37 @@ jobs:
       - name: Lint crate publish=false (zero crates.io)
         run: node scripts/lint-no-crate-publish.mjs
 
+  injection-command-existence:
+    # Gate 14 (AGENTS.md SSoT table) · T12069 · Saga T9831 SG-ARCH-SOLID
+    #
+    # packages/core/templates/CLEO-INJECTION.md is injected verbatim into the
+    # context of EVERY agent CLEO spawns, phrased as instruction ("FIRST CALL
+    # IS ...", "BEFORE editing any symbol, run ..."). An agent cannot tell a
+    # documented-but-nonexistent command from one it invoked wrongly.
+    #
+    # Measured 2026-08-06, the mandated Nexus section named seven "first-reach"
+    # commands and FIVE did not exist (nexus report / brain find / compare /
+    # shared / synthesize, plus nexus admin). The cost is not the wasted turn:
+    # an agent that watches the protocol fail, with no signal separating
+    # "command gone" from "subsystem broken", abandons the surface entirely and
+    # silently falls back to grep.
+    #
+    # Parses the generated command manifest + each referenced command module
+    # from SOURCE (never dist/, so a stale build cannot hide the drift), so
+    # this job needs no install and no build.
+    #
+    # Pure static analysis of checked-in source — no untrusted user input.
+    name: Injection Command Existence (T12069)
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Assert every cleo command in CLEO-INJECTION.md exists
+        run: node scripts/lint-injection-commands.mjs
+
   contract-literal-enums:
     # Gate 13 (T11483 · DHQ-035) · Epic T11480 SG-CORE-SELF-TOOLING
     #
@@ -433,6 +464,7 @@ jobs:
       - contracts-purity
       - tools-skills-boundary
       - crate-publish-guard
+      - injection-command-existence
       - contract-literal-enums
       - llm-chokepoint-guard
       - output-contract-coverage

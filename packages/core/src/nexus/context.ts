@@ -11,6 +11,7 @@ import path from 'node:path';
 import { notInArray } from 'drizzle-orm';
 import { type EngineResult, engineError, engineSuccess } from '../engine-result.js';
 import { getNexusDb, nexusSchema } from '../store/nexus-sqlite.js';
+import { buildSymbolMissError } from './symbol-miss.js';
 
 /** Source code content fetched via smartUnfold. */
 export interface NexusSourceContent {
@@ -153,9 +154,8 @@ export async function getSymbolContext(
   const matchingNodes = sortMatchingNodes(rawMatchingNodes, symbolName);
 
   if (matchingNodes.length === 0) {
-    const err = new Error(`No symbol found matching '${symbolName}' in project ${projectId}`);
-    (err as NodeJS.ErrnoException).code = 'E_NOT_FOUND';
-    throw err;
+    // T12068: distinguish "no such symbol" from "index predates the symbol".
+    throw buildSymbolMissError(symbolName, projectId, projectSymbolNodes);
   }
 
   // Fetch all relations for callers/callees/process edges (project-scoped DB).
