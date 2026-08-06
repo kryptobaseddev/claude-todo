@@ -358,6 +358,37 @@ function pruneStuckWindow(timestamps: readonly number[], now: number): number[] 
 }
 
 /**
+ * Canonical task-id shape. Mirrors `TASK_ID_PATTERN` in `tasks/id-generator.ts`.
+ *
+ * @task T12077
+ */
+const PICKABLE_TASK_ID = /^T\d{3,}$/;
+
+/**
+ * Reject candidates whose id is not a canonical task id.
+ *
+ * The sentient loop spawns a worker against whatever it picks, so a malformed
+ * id is not merely useless — it burns a tick, and if it sorts early it burns
+ * EVERY tick. This project's database contains exactly such a row: a task
+ * whose id is the absolute project root (`/mnt/projects/cleocode`), created
+ * 2026-05-28 by a caller that passed a projectRoot where a taskId was
+ * expected. Because it begins with `/` it sorts ahead of every `T####` id, so
+ * dependency-wave ordering placed it first in wave 0 and the picker would
+ * select it forever.
+ *
+ * Filtering here keeps the loop live even when the task table has a bad row —
+ * the loop should degrade to "skip that one", never to "spin on it".
+ *
+ * @param task - a candidate task.
+ * @returns true when the id is a canonical `T####`.
+ *
+ * @task T12077
+ */
+function isPickableTaskId(task: Task): boolean {
+  return typeof task.id === 'string' && PICKABLE_TASK_ID.test(task.id);
+}
+
+/**
  * Default SDK-backed task picker. Delegates to the orchestration domain via
  * the @cleocode/core/sdk facade.
  *
@@ -382,6 +413,7 @@ async function defaultPickTask(
   const { getReadyTasks } = await import('@cleocode/core/tasks');
   // graph-ops is an intra-package import (not part of the @cleocode/core/tasks barrel).
   const { computeDependencyWaves } = await import('../tasks/graph-ops.js');
+  const { collectionOf } = await import('../tasks/collection.js');
 
   const cleo = await Cleo.init(projectRoot);
 
@@ -412,11 +444,21 @@ async function defaultPickTask(
   // Use find() to get candidate tasks. We specifically avoid 'proposed' by
   // only filtering on pending/active/blocked. getReadyTasks() from the
   // dependency-check module is authoritative for "unblocked".
-  const pending = (await cleo.tasks.find({ status: 'pending', limit: 500 })) as {
-    success?: boolean;
-    data?: { tasks?: Task[] };
-  };
-  const allCandidates: Task[] = Array.isArray(pending?.data?.tasks) ? pending.data.tasks : [];
+  // T12077: read the collection through the shared resolver.
+  //
+  // This previously read `pending.data.tasks`, which is wrong TWICE over:
+  // `cleo.tasks.find()` returns the payload BARE (no `data` envelope), and its
+  // collection key is `results`, not `tasks`. `allCandidates` was therefore
+  // always `[]`, `defaultPickTask` always returned null, and `runTick` always
+  // returned `no-task`.
+  //
+  // The failure is silent by construction — an absent key is indistinguishable
+  // from an empty result set — so the sentient loop reported "no unblocked
+  // tasks available" on every tick it ever ran (24 ticks, 0 tasks picked, over
+  // three months) while 836 candidates were in fact ready. It read as "there
+  // is nothing to do", not as a defect, which is why it sat unnoticed.
+  const pending = await cleo.tasks.find({ status: 'pending', limit: 500 });
+  const allCandidates: Task[] = collectionOf<Task>(pending).filter(isPickableTaskId);
 
   // Apply scope filter when active.
   const candidates =

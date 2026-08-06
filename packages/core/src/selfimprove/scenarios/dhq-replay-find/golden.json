@@ -10,10 +10,17 @@
         "source": "rpc"
       },
       "data": {
-        "tasks": [
-          { "id": "T11889", "title": "Self-improvement loop foundation", "status": "active" }
+        "results": [
+          {
+            "id": "T11889",
+            "title": "E-SELF-IMPROVEMENT-LOOP: daemon-triggered Gondolin observe->optimize->propose dogfood/DHQ cycle",
+            "status": "done",
+            "priority": "medium",
+            "parentId": "T11243",
+            "type": "epic"
+          }
         ],
-        "count": 1
+        "total": 1
       }
     },
     {
@@ -25,7 +32,110 @@
         "source": "rpc"
       },
       "data": {
-        "task": { "id": "T11889", "title": "Self-improvement loop foundation", "status": "active" }
+        "task": {
+          "id": "T11889",
+          "title": "E-SELF-IMPROVEMENT-LOOP: daemon-triggered Gondolin observe->optimize->propose dogfood/DHQ cycle",
+          "status": "done",
+          "priority": "medium",
+          "type": "epic",
+          "parentId": "T11243",
+          "kind": "work",
+          "relationCounts": {
+            "depends": 0,
+            "blockedBy": 0,
+            "relates": 0,
+            "children": 5,
+            "docs": 1
+          }
+        },
+        "view": {
+          "id": "T11889",
+          "title": "E-SELF-IMPROVEMENT-LOOP: daemon-triggered Gondolin observe->optimize->propose dogfood/DHQ cycle",
+          "status": "done",
+          "pipelineStage": "contribution",
+          "lifecycleProgress": {
+            "stagesCompleted": [],
+            "stagesSkipped": [],
+            "currentStage": null
+          },
+          "childRollup": {
+            "total": 5,
+            "done": 5,
+            "blocked": 0,
+            "active": 0
+          },
+          "gatesStatus": {
+            "implemented": false,
+            "testsPassed": false,
+            "qaPassed": false
+          },
+          "readyToComplete": false,
+          "nextAction": "already-complete"
+        },
+        "attachments": [
+          {
+            "attachmentId": "93a24c4f-3530-438d-ad16-b9cc72f3576a",
+            "kind": "local-file",
+            "slug": "p5-self-improvement-architecture",
+            "type": "spec"
+          }
+        ],
+        "acRows": [
+          {
+            "id": "6fd2a986-beeb-5b12-b51a-73a0bc0260cf",
+            "alias": "AC1",
+            "ordinal": 1,
+            "text": "walking skeleton: cleo selfimprove run --scenario <n> boots ONE Gondolin VM, replays ONE canned dogfood scenario, diffs envelopes vs golden, emits ONE DHQ row to a dual-scope selfimprove_dhq table (Gate 3)"
+          },
+          {
+            "id": "4117b3dd-3a8a-5aff-9016-04d774b1864c",
+            "alias": "AC2",
+            "ordinal": 2,
+            "text": "on regression opens ONE DRAFT PR (ADR-065); NO autonomous fix-gen/auto-merge/end-user mode in v1"
+          },
+          {
+            "id": "14a7545d-e2b9-5777-b3b4-9c2e92bafc3e",
+            "alias": "AC3",
+            "ordinal": 3,
+            "text": "flag-gated default OFF; sandbox output is ONLY a draft PR \u2014 never a prod DB write or main push"
+          },
+          {
+            "id": "2c0348d0-b1c7-5a61-855a-70045dcfe69f",
+            "alias": "AC4",
+            "ordinal": 4,
+            "text": "circuit-breaker halts on gate-red/lease-denial; budget caps token/$/PRs/worktrees/MemoryMax=32G"
+          },
+          {
+            "id": "8510256a-6b51-5181-a57e-77f51870a3b9",
+            "alias": "AC5",
+            "ordinal": 5,
+            "text": "Complete child T11911: T11889-A: selfimprove_dhq dual-scope table + byte-identical migration + Gate-3 accessor"
+          },
+          {
+            "id": "68e351ae-7c7c-5e9f-a937-5bb15efe53ff",
+            "alias": "AC6",
+            "ordinal": 6,
+            "text": "Complete child T11912: T11889-B: scenario replay + envelope-diff + canned scenario/golden fixtures (pure)"
+          },
+          {
+            "id": "07d27d7a-117c-5617-9eca-ba148ae4c28e",
+            "alias": "AC7",
+            "ordinal": 7,
+            "text": "Complete child T11913: T11889-C: engine run-loop \u2014 DHQ adapter (lease) + draft-PR egress + budget/circuit-breaker"
+          },
+          {
+            "id": "6ad799cd-e73f-5892-a63c-cce039a2b778",
+            "alias": "AC8",
+            "ordinal": 8,
+            "text": "Complete child T11914: T11889-D: verb wiring \u2014 cleo selfimprove run --scenario <n> (op-registry + dispatch + thin handler)"
+          },
+          {
+            "id": "3738623b-31b7-5e5a-aa84-8804bd943184",
+            "alias": "AC9",
+            "ordinal": 9,
+            "text": "Complete child T11975: Self-improve loop v2: Pi-runner fix-generation stage \u2014 DHQ + regression-diff \u2192 LLM-generated patch \u2192 draft PR (the missing autonomous DHQ\u2192fix\u2192PR link)"
+          }
+        ]
       }
     }
   ]

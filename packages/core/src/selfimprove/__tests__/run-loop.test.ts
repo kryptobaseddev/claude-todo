@@ -25,7 +25,7 @@
  * @task T11913
  */
 
-import { mkdirSync, rmSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
@@ -60,15 +60,28 @@ const guard = createToolGuard({ mode: 'enforce' });
  * diff yields ZERO regressions; volatile meta fields are stamped fresh per call
  * and stripped by the diff normalizer.
  */
-const GOLDEN_DATA: Record<string, unknown> = {
-  find: {
-    tasks: [{ id: 'T11889', title: 'Self-improvement loop foundation', status: 'active' }],
-    count: 1,
-  },
-  show: {
-    task: { id: 'T11889', title: 'Self-improvement loop foundation', status: 'active' },
-  },
-};
+/**
+ * Golden payloads, READ FROM THE FIXTURE rather than duplicated here.
+ *
+ * T12077: this used to be a hand-copied literal declaring `{tasks, count}` for
+ * `tasks.find` — a shape that operation has never emitted (it returns
+ * `{results, total}`). Because the test asserted the same wrong shape the
+ * fixture did, the pair agreed with each other and disagreed with reality: the
+ * suite was green while `cleo selfimprove run` was permanently red and would,
+ * under `--execute`, have opened a DHQ and a draft PR on every run.
+ *
+ * Reading the fixture makes the test verify the ENGINE (does a golden-matching
+ * dispatch produce zero regressions?) instead of re-asserting a copy of the
+ * data. `scenario-contract.test.ts` separately asserts the fixture itself
+ * matches the real operation contract.
+ */
+const GOLDEN_DATA: Record<string, unknown> = (() => {
+  const goldenPath = join(import.meta.dirname, '..', 'scenarios', 'dhq-replay-find', 'golden.json');
+  const parsed = JSON.parse(readFileSync(goldenPath, 'utf-8')) as {
+    envelopes: Array<{ meta: { operation: string }; data: unknown }>;
+  };
+  return Object.fromEntries(parsed.envelopes.map((e) => [e.meta.operation, e.data]));
+})();
 
 /**
  * Build a dispatch port that returns the GOLDEN-matching envelopes for the

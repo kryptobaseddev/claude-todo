@@ -1,18 +1,18 @@
 {
   "name": "dhq-replay-find",
-  "description": "Canonical read-only dogfood discovery sequence: find then show. The golden is the known-good normalized envelope set; any structural deviation is a regression.",
+  "description": "Canonical read-only dogfood discovery sequence: find then show. The golden is the known-good normalized envelope set; any structural deviation is a regression. Both ops are pinned to a SINGLE known task id so the golden is deterministic — a free-text query would pin live task rows into the golden and the loop could never be green (T12077).",
   "ops": [
     {
       "gateway": "query",
       "domain": "tasks",
       "operation": "find",
-      "params": { "query": "selfimprove" }
+      "params": { "id": "T11889" }
     },
     {
       "gateway": "query",
       "domain": "tasks",
       "operation": "show",
-      "params": { "id": "T11889" }
+      "params": { "taskId": "T11889" }
     }
   ]
 }
