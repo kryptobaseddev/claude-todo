@@ -1223,7 +1223,14 @@ jobs:
     needs: [biome, changes]
     if: needs.changes.outputs.code == 'true'
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 35
+    # T12073: raised from 35. T12070 restored 199 previously-undiscovered
+    # @cleocode/cleo test files to the run (they had never executed — the
+    # project's include globs matched nothing), which grew the suite enough
+    # that macOS started hitting the ceiling: Ubuntu finishes a shard in ~17
+    # minutes, macOS runners are roughly 2x slower, and both macOS shards were
+    # cancelled at 35m21s / 35m27s — a timeout, not a failure. 55 leaves real
+    # headroom above the ~34-minute macOS baseline instead of sitting on it.
+    timeout-minutes: 55
     strategy:
       matrix:
         # Windows shards temporarily disabled pending T9182/T9181 follow-up — pre-existing
