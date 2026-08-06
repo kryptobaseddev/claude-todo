@@ -23,7 +23,7 @@
  */
 
 import { spawn } from 'node:child_process';
-import type { Task } from '@cleocode/contracts';
+import type { Task, TaskType } from '@cleocode/contracts';
 import { pushWarning } from '@cleocode/lafs';
 import {
   type ReVerifyOptions,
@@ -389,6 +389,39 @@ function isPickableTaskId(task: Task): boolean {
 }
 
 /**
+ * Task types the sentient loop may execute.
+ *
+ * T12079: `saga` and `epic` are CONTAINERS — they group work, they are not
+ * work. Spawning a worker against one asks an agent to "do" a grouping, which
+ * cannot succeed; the attempt burns a retry, and after three it marks the
+ * container stuck. Five stuck items in an hour trips `SELF_PAUSE_STUCK_THRESHOLD`
+ * and the whole loop pauses itself — so a handful of unfiltered containers can
+ * take the autonomous layer offline.
+ *
+ * The picker had NO type filter. It survived in this repo only by alphabetical
+ * luck (wave-0 ordering happened to surface `T1009`, a task). In a fresh
+ * project the root saga sorts first — `T001` — so the very first tick picks a
+ * container and fails, every time.
+ */
+const EXECUTABLE_TASK_TYPES: ReadonlySet<TaskType> = new Set<TaskType>(['task', 'subtask']);
+
+/**
+ * Whether a candidate is executable work rather than a container.
+ *
+ * An unset type is treated as executable: `tasks.add` infers `task` when the
+ * type is omitted, so a null here means "leaf" rather than "unknown".
+ *
+ * @param task - a candidate task.
+ * @returns true when the loop may spawn a worker for it.
+ *
+ * @task T12079
+ */
+function isExecutableType(task: Task): boolean {
+  if (task.type == null) return true;
+  return EXECUTABLE_TASK_TYPES.has(task.type);
+}
+
+/**
  * Default SDK-backed task picker. Delegates to the orchestration domain via
  * the @cleocode/core/sdk facade.
  *
@@ -458,7 +491,9 @@ async function defaultPickTask(
   // three months) while 836 candidates were in fact ready. It read as "there
   // is nothing to do", not as a defect, which is why it sat unnoticed.
   const pending = await cleo.tasks.find({ status: 'pending', limit: 500 });
-  const allCandidates: Task[] = collectionOf<Task>(pending).filter(isPickableTaskId);
+  const allCandidates: Task[] = collectionOf<Task>(pending)
+    .filter(isPickableTaskId)
+    .filter(isExecutableType);
 
   // Apply scope filter when active.
   const candidates =
