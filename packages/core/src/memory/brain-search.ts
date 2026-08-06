@@ -383,14 +383,15 @@ function searchWithFts5(
     observations: [],
   };
 
-  // Escape FTS5 special characters for safety
-  const safeQuery = escapeFts5Query(query);
+  // T12073: conjunctive-first. `fts5Queries.and` requires every term (high
+  // precision); the OR form is used only when AND matches nothing, preserving
+  // the recall the disjunctive builder was introduced for (T553).
+  const fts5Queries = buildFts5Queries(query);
 
   if (tables.includes('decisions')) {
     const { clause, params } = buildPeerClause('d', peerId, includeGlobal);
     try {
-      const rows = typedAll<BrainDecisionRow>(
-        nativeDb.prepare(`
+      const stmt = nativeDb.prepare(`
         SELECT d.*
         FROM brain_decisions_fts fts
         JOIN brain_decisions d ON d.rowid = fts.rowid
@@ -399,11 +400,11 @@ function searchWithFts5(
           ${clause}
         ORDER BY bm25(brain_decisions_fts)
         LIMIT ?
-      `),
-        safeQuery,
-        QUALITY_SCORE_THRESHOLD,
-        ...params,
-        limit,
+      `);
+      const rows = matchConjunctiveFirst<BrainDecisionRow>(
+        (matchExpr) =>
+          typedAll<BrainDecisionRow>(stmt, matchExpr, QUALITY_SCORE_THRESHOLD, ...params, limit),
+        fts5Queries,
       );
       result.decisions = rows;
     } catch {
@@ -415,8 +416,7 @@ function searchWithFts5(
   if (tables.includes('patterns')) {
     const { clause, params } = buildPeerClause('p', peerId, includeGlobal);
     try {
-      const rows = typedAll<BrainPatternRow>(
-        nativeDb.prepare(`
+      const stmt = nativeDb.prepare(`
         SELECT p.*
         FROM brain_patterns_fts fts
         JOIN brain_patterns p ON p.rowid = fts.rowid
@@ -425,11 +425,11 @@ function searchWithFts5(
           ${clause}
         ORDER BY bm25(brain_patterns_fts)
         LIMIT ?
-      `),
-        safeQuery,
-        QUALITY_SCORE_THRESHOLD,
-        ...params,
-        limit,
+      `);
+      const rows = matchConjunctiveFirst<BrainPatternRow>(
+        (matchExpr) =>
+          typedAll<BrainPatternRow>(stmt, matchExpr, QUALITY_SCORE_THRESHOLD, ...params, limit),
+        fts5Queries,
       );
       result.patterns = rows;
     } catch {
@@ -440,8 +440,7 @@ function searchWithFts5(
   if (tables.includes('learnings')) {
     const { clause, params } = buildPeerClause('l', peerId, includeGlobal);
     try {
-      const rows = typedAll<BrainLearningRow>(
-        nativeDb.prepare(`
+      const stmt = nativeDb.prepare(`
         SELECT l.*
         FROM brain_learnings_fts fts
         JOIN brain_learnings l ON l.rowid = fts.rowid
@@ -450,11 +449,11 @@ function searchWithFts5(
           ${clause}
         ORDER BY bm25(brain_learnings_fts)
         LIMIT ?
-      `),
-        safeQuery,
-        QUALITY_SCORE_THRESHOLD,
-        ...params,
-        limit,
+      `);
+      const rows = matchConjunctiveFirst<BrainLearningRow>(
+        (matchExpr) =>
+          typedAll<BrainLearningRow>(stmt, matchExpr, QUALITY_SCORE_THRESHOLD, ...params, limit),
+        fts5Queries,
       );
       result.learnings = rows;
     } catch {
@@ -465,8 +464,7 @@ function searchWithFts5(
   if (tables.includes('observations')) {
     const { clause, params } = buildPeerClause('o', peerId, includeGlobal);
     try {
-      const rows = typedAll<BrainObservationRow>(
-        nativeDb.prepare(`
+      const stmt = nativeDb.prepare(`
         SELECT o.*
         FROM brain_observations_fts fts
         JOIN brain_observations o ON o.rowid = fts.rowid
@@ -475,11 +473,11 @@ function searchWithFts5(
           ${clause}
         ORDER BY bm25(brain_observations_fts)
         LIMIT ?
-      `),
-        safeQuery,
-        QUALITY_SCORE_THRESHOLD,
-        ...params,
-        limit,
+      `);
+      const rows = matchConjunctiveFirst<BrainObservationRow>(
+        (matchExpr) =>
+          typedAll<BrainObservationRow>(stmt, matchExpr, QUALITY_SCORE_THRESHOLD, ...params, limit),
+        fts5Queries,
       );
       result.observations = rows;
     } catch {
@@ -651,14 +649,72 @@ function likeSearchObservations(
  * ("EPIC:"), because FTS5's default tokenizer cannot index them and the
  * AND semantics then guaranteed zero matches for the whole query. (T553 bug fix)
  */
-function escapeFts5Query(query: string): string {
-  const rawTokens = query.trim().split(/\s+/).filter(Boolean);
-  if (rawTokens.length === 0) return '""';
+export function escapeFts5Query(query: string): string {
+  return buildFts5Queries(query).or;
+}
 
-  // Keep tokens that have at least one alphanumeric character and are not
-  // pure stop-words (length ≥ 2 after stripping leading/trailing punctuation).
+/**
+ * The two MATCH expressions used by the conjunctive-first retrieval strategy.
+ *
+ * @task T12073
+ */
+export interface Fts5QueryPair {
+  /** All terms required — high precision, may return nothing. */
+  readonly and: string;
+  /** Any term matches — high recall, used only as a fallback. */
+  readonly or: string;
+  /** Number of usable terms extracted from the query. */
+  readonly termCount: number;
+}
+
+/**
+ * Build the AND and OR MATCH expressions for a natural-language query.
+ *
+ * ## Why both, and why prefixes (T12073)
+ *
+ * The previous builder emitted `"tok1" OR "tok2"` — quoted terms joined by OR.
+ * Measured against the live 6,985-observation corpus, that has two failure
+ * modes that together make recall useless for anything but an exact rare token:
+ *
+ * **Quoted terms are exact, so morphological variants are invisible.** A search
+ * for `orphan` matched 113 documents; `orphan*` matched 189. Seventy-six
+ * documents saying "orphaned" or "orphans" could not be found by searching for
+ * "orphan". SQLite FTS5 has no stemmer on the `unicode61` tokenizer, so a
+ * prefix wildcard is the available substitute — and it is a good one, because
+ * it costs nothing on a prefix-indexed b-tree.
+ *
+ * **Pure OR plus BM25 ranks by term rarity, not by term coverage.** A short
+ * document matching ONE query term outranks a long one matching ALL of them,
+ * because BM25 normalises for length. On this corpus that is catastrophic:
+ * 30% of observations are sub-60-character auto-capture stubs, so the
+ * shortest, emptiest records win. Searching `nexus_symbols_fts orphan` under
+ * the old builder returned *"Consolidated: change observations (5 entries)"*
+ * as the top hit — a record with no content at all — while the conjunctive
+ * form returns only documents about orphans in nexus.
+ *
+ * So: require all terms first, and fall back to ANY only when the conjunction
+ * finds nothing. That preserves the recall the OR form was introduced for
+ * (T553: non-word tokens like em dashes zeroing out an implicit-AND query)
+ * without letting it dominate the common case.
+ *
+ * @param query - the raw user query.
+ * @returns AND/OR MATCH expressions and the usable term count.
+ *
+ * @example
+ * ```ts
+ * const q = buildFts5Queries('nexus_symbols_fts orphan');
+ * // q.and === 'nexus_symbols_fts* AND orphan*'
+ * // q.or  === 'nexus_symbols_fts* OR orphan*'
+ * ```
+ *
+ * @task T553
+ * @task T12073
+ */
+export function buildFts5Queries(query: string): Fts5QueryPair {
+  const rawTokens = query.trim().split(/\s+/).filter(Boolean);
   const seen = new Set<string>();
-  const tokens: string[] = [];
+  const terms: string[] = [];
+
   for (const t of rawTokens) {
     // Strip leading/trailing non-word characters (e.g. "EPIC:" → "EPIC", "—" → "")
     const stripped = t.replace(/^\W+|\W+$/g, '');
@@ -667,13 +723,35 @@ function escapeFts5Query(query: string): string {
     const lower = stripped.toLowerCase();
     if (seen.has(lower)) continue; // deduplicate
     seen.add(lower);
-    tokens.push(`"${stripped.replace(/"/g, '""')}"`);
+
+    // Quote to neutralise FTS5 syntax characters, then append the prefix
+    // operator OUTSIDE the quotes — `"foo"*` is the documented way to combine
+    // a quoted string with a prefix match.
+    terms.push(`"${stripped.replace(/"/g, '""')}"*`);
   }
 
-  if (tokens.length === 0) return '""';
+  if (terms.length === 0) return { and: '""', or: '""', termCount: 0 };
+  return { and: terms.join(' AND '), or: terms.join(' OR '), termCount: terms.length };
+}
 
-  // OR semantics: any matching token returns the row, ranked by BM25 relevance.
-  return tokens.join(' OR ');
+/**
+ * Run an FTS5-backed query conjunctively, falling back to disjunctive.
+ *
+ * Single-term queries skip the fallback entirely (AND and OR are identical).
+ *
+ * @param run - executes one MATCH expression and returns its rows.
+ * @param queries - the pair from {@link buildFts5Queries}.
+ * @returns conjunctive rows when non-empty, else disjunctive rows.
+ *
+ * @task T12073
+ */
+export function matchConjunctiveFirst<T>(
+  run: (matchExpr: string) => T[],
+  queries: Fts5QueryPair,
+): T[] {
+  const conjunctive = run(queries.and);
+  if (conjunctive.length > 0 || queries.termCount < 2) return conjunctive;
+  return run(queries.or);
 }
 
 /**
@@ -704,6 +782,36 @@ export interface RrfHit {
   type: string;
   title: string;
   text: string;
+}
+
+/**
+ * Round-robin interleave several independently-ranked lists.
+ *
+ * Takes rank 1 from every list, then rank 2 from every list, and so on, so a
+ * downstream consumer that scores by array position does not systematically
+ * favour whichever list happened to be concatenated first.
+ *
+ * @param lists - per-source lists, each already ordered best-first.
+ * @returns a single list preserving each source's internal order.
+ *
+ * @example
+ * ```ts
+ * interleaveRanked([['a1', 'a2'], ['b1'], ['c1', 'c2', 'c3']]);
+ * // ['a1', 'b1', 'c1', 'a2', 'c2', 'c3']
+ * ```
+ *
+ * @task T12073
+ */
+export function interleaveRanked<T>(lists: ReadonlyArray<readonly T[]>): T[] {
+  const out: T[] = [];
+  const longest = lists.reduce((max, l) => Math.max(max, l.length), 0);
+  for (let i = 0; i < longest; i++) {
+    for (const list of lists) {
+      const item = list[i];
+      if (item !== undefined) out.push(item);
+    }
+  }
+  return out;
 }
 
 /** Fused result produced by reciprocalRankFusion. */
@@ -922,34 +1030,49 @@ export async function hybridSearch(
   }>;
 
   // --- 2. Project FTS results into ranked RrfHit list ---
-  const ftsHits: RrfHit[] = [];
-  for (const d of ftsResults.decisions) {
-    ftsHits.push({
+  //
+  // T12073: INTERLEAVE the four tables instead of concatenating them.
+  //
+  // RRF scores a hit by its POSITION in this array. Concatenating
+  // decisions → patterns → learnings → observations therefore encoded a fixed
+  // precedence that has nothing to do with relevance: every decision outranked
+  // every observation, always. With 128 decisions and 6,985 observations, the
+  // largest and most recent store was structurally the least reachable —
+  // `cleo memory find "caamp marker"` returned unrelated learnings while the
+  // ONE observation matching both terms (verified by direct MATCH) never
+  // placed.
+  //
+  // Each table is already BM25-ordered internally. Round-robin interleaving
+  // preserves that intra-table ordering while removing the inter-table bias,
+  // and avoids comparing BM25 scores across separate indexes — which is not
+  // meaningful, since each has its own corpus statistics.
+  const ftsRanked: RrfHit[][] = [
+    ftsResults.decisions.map((d) => ({
       id: d.id,
-      type: 'decision',
+      type: 'decision' as const,
       title: d.decision,
       text: `${d.decision} — ${d.rationale}`,
-    });
-  }
-  for (const p of ftsResults.patterns) {
-    ftsHits.push({
+    })),
+    ftsResults.patterns.map((p) => ({
       id: p.id,
-      type: 'pattern',
+      type: 'pattern' as const,
       title: p.pattern,
       text: `${p.pattern} — ${p.context}`,
-    });
-  }
-  for (const l of ftsResults.learnings) {
-    ftsHits.push({
+    })),
+    ftsResults.learnings.map((l) => ({
       id: l.id,
-      type: 'learning',
+      type: 'learning' as const,
       title: l.insight,
       text: `${l.insight} (source: ${l.source})`,
-    });
-  }
-  for (const o of ftsResults.observations) {
-    ftsHits.push({ id: o.id, type: 'observation', title: o.title, text: o.narrative ?? o.title });
-  }
+    })),
+    ftsResults.observations.map((o) => ({
+      id: o.id,
+      type: 'observation' as const,
+      title: o.title,
+      text: o.narrative ?? o.title,
+    })),
+  ];
+  const ftsHits: RrfHit[] = interleaveRanked(ftsRanked);
 
   // --- 3. Project vector results into ranked RrfHit list (ascending distance = descending quality) ---
   const vecHits: RrfHit[] = vecResults.map((r) => ({

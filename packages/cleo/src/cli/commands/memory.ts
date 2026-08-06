@@ -1167,6 +1167,43 @@ const reflectCommand = defineCommand({
 });
 
 /** cleo memory dedup-scan — scan brain.db for potential duplicate entries (T745) */
+/**
+ * `cleo memory prune-stubs` — remove content-free observation stubs (T12073).
+ *
+ * Dry-run by default; `--apply` is required to delete. See
+ * `packages/core/src/memory/brain-stub-prune.ts` for the rules and the
+ * measurements that motivate them.
+ */
+const pruneStubsCommand = defineCommand({
+  meta: {
+    name: 'prune-stubs',
+    description:
+      'Report (and with --apply, delete) content-free BRAIN observation stubs — ' +
+      'auto-hook task-start/complete records and the "status: undefined" artefact of T12071. ' +
+      'These are short enough that BM25 length-normalisation ranks them ABOVE substantive ' +
+      'memories, so they actively degrade recall. Dry-run by default.',
+  },
+  args: {
+    apply: {
+      type: 'boolean',
+      description: 'Actually delete the matched rows (default: report only)',
+    },
+  },
+  async run({ args }) {
+    const root = getProjectRoot();
+    await getBrainDb(root);
+    const { getBrainNativeDb } = await import('@cleocode/core/internal' as string);
+    const nativeDb = getBrainNativeDb();
+    if (!nativeDb) {
+      cliError('BRAIN database is not open');
+      return;
+    }
+    const { pruneObservationStubs } = await import('@cleocode/core/internal' as string);
+    const result = pruneObservationStubs(nativeDb, Boolean(args.apply));
+    cliOutput(result, { command: 'memory prune-stubs', operation: 'memory.prune-stubs' });
+  },
+});
+
 const dedupScanCommand = defineCommand({
   meta: {
     name: 'dedup-scan',
@@ -2191,6 +2228,7 @@ export const memoryCommand = defineCommand({
     dream: dreamCommand,
     reflect: reflectCommand,
     'dedup-scan': dedupScanCommand,
+    'prune-stubs': pruneStubsCommand,
     import: importCommand,
     doctor: doctorCommand,
     'llm-status': llmStatusCommand,

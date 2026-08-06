@@ -297,15 +297,52 @@ export async function memoryDecisionFind(
       const categoryClause = includeAgentDispatch
         ? ''
         : "AND (decision_category IS NULL OR decision_category != 'agent_dispatch')";
-      const rows = nativeDb
-        .prepare(
-          `SELECT * FROM brain_decisions
+      // T12073: search the FTS index, not a single LIKE over the whole query.
+      //
+      // `LIKE '%<entire query>%'` treats the query as ONE literal substring, so
+      // any multi-word question fails unless those exact words appear
+      // contiguously. `decision-find --query "index freshness median"` returned
+      // zero hits against a decision whose text contains all three words —
+      // while `brain_decisions_fts` matched it correctly. The decision store
+      // was effectively unsearchable by natural language, which is a large part
+      // of why nothing has been written to it since 2026-06-09.
+      //
+      // Conjunctive-first with a prefix on each term (see buildFts5Queries),
+      // then the original LIKE as a last resort so behaviour never regresses
+      // for a caller relying on literal-substring semantics.
+      const { buildFts5Queries, matchConjunctiveFirst } = await import('./brain-search.js');
+      const ftsQueries = buildFts5Queries(params.query);
+
+      let rows: unknown[] = [];
+      try {
+        const ftsStmt = nativeDb.prepare(
+          `SELECT d.* FROM brain_decisions_fts f
+        JOIN brain_decisions d ON d.rowid = f.rowid
+        WHERE brain_decisions_fts MATCH ?
+        ${categoryClause.replace(/\bdecision_category\b/g, 'd.decision_category')}
+        ORDER BY bm25(brain_decisions_fts)
+        LIMIT ?`,
+        );
+        rows = matchConjunctiveFirst<unknown>(
+          (matchExpr) => ftsStmt.all(matchExpr, limit),
+          ftsQueries,
+        );
+      } catch {
+        // FTS table absent or query rejected — fall through to LIKE.
+        rows = [];
+      }
+
+      if (rows.length === 0) {
+        rows = nativeDb
+          .prepare(
+            `SELECT * FROM brain_decisions
         WHERE (decision LIKE ? OR rationale LIKE ?)
         ${categoryClause}
         ORDER BY created_at DESC
         LIMIT ?`,
-        )
-        .all(likePattern, likePattern, limit);
+          )
+          .all(likePattern, likePattern, limit);
+      }
 
       return { success: true, data: { decisions: rows, total: rows.length } };
     }
@@ -388,6 +425,34 @@ export async function memoryDecisionStore(
       decidedBy: params.decidedBy,
     });
 
+    // T12073: close the REVERSE edge.
+    //
+    // Storing `supersedes` alone leaves the graph navigable in one direction
+    // only: the new decision knows what it replaced, but the replaced one has
+    // an empty `superseded_by` and an open `invalid_at`, so every "is this
+    // still current?" query — including `isLatest`, which gates the query
+    // paths — reports the OBSOLETE decision as valid. Two contradictory
+    // decisions then both read as live, which is precisely the case the
+    // supersession machinery exists to resolve.
+    if (params.supersedes) {
+      try {
+        const { getBrainNativeDb } = await import('../store/memory-sqlite.js');
+        const nativeDb = getBrainNativeDb(root);
+        nativeDb
+          ?.prepare(
+            `UPDATE brain_decisions
+             SET superseded_by = ?,
+                 invalid_at = COALESCE(invalid_at, CURRENT_TIMESTAMP),
+                 outcome = 'superseded'
+             WHERE id = ? AND (superseded_by IS NULL OR superseded_by = '')`,
+          )
+          .run(row.id, params.supersedes);
+      } catch {
+        // Back-link is best-effort: never fail the store because the
+        // superseded row could not be annotated.
+      }
+    }
+
     return {
       success: true,
       data: {
@@ -395,6 +460,7 @@ export async function memoryDecisionStore(
         type: row.type,
         decision: row.decision,
         createdAt: row.createdAt,
+        ...(params.supersedes ? { supersededId: params.supersedes } : {}),
       },
     };
   } catch (error) {

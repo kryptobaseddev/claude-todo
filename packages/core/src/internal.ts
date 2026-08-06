@@ -688,6 +688,13 @@ export type {
   StdpPlasticityResult,
 } from './memory/brain-stdp.js';
 export { applyStdpPlasticity, getPlasticityStats } from './memory/brain-stdp.js';
+// T12073: targeted content-free observation prune (dry-run by default).
+export {
+  MAX_STUB_NARRATIVE,
+  pruneObservationStubs,
+  STUB_PRUNE_RULES,
+  type StubPruneResult,
+} from './memory/brain-stub-prune.js';
 export { migrateClaudeMem } from './memory/claude-mem-migration.js';
 // Memory — dream cycle (T628 auto-consolidation)
 export type {
