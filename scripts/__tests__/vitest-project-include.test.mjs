@@ -45,7 +45,7 @@ const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
  *
  * @returns project config paths relative to the repo root.
  */
-export function readProjectPaths() {
+function readProjectPaths() {
   const source = readFileSync(join(repoRoot, 'vitest.config.ts'), 'utf-8');
   const block = source.match(/projects:\s*\[([\s\S]*?)\]/);
   if (!block) throw new Error('vitest.config.ts: no `projects: [...]` array found');
@@ -58,7 +58,7 @@ export function readProjectPaths() {
  * @param source - the project config source.
  * @returns the glob strings, or `null` when the config declares no `include`.
  */
-export function readIncludeGlobs(source) {
+function readIncludeGlobs(source) {
   const block = source.match(/\n\s*include:\s*\[([\s\S]*?)\]/);
   if (!block) return null;
   return [...block[1].matchAll(/['"]([^'"]+)['"]/g)].map((m) => m[1]);
@@ -75,7 +75,7 @@ export function readIncludeGlobs(source) {
  * @param projectDir - repo-relative directory holding the config.
  * @returns absolute effective root.
  */
-export function resolveEffectiveRoot(source, projectDir) {
+function resolveEffectiveRoot(source, projectDir) {
   const pinned = source.match(/\broot:\s*resolve\(\s*import\.meta\.dirname\s*,\s*'([^']+)'\s*\)/);
   if (pinned) return resolve(repoRoot, projectDir, pinned[1]);
   return join(repoRoot, projectDir);
