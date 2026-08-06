@@ -732,6 +732,43 @@ async function resolveDefaultVerifyAndStore(): Promise<
 // ---------------------------------------------------------------------------
 
 /**
+ * One-line explanation of why {@link resolveDreamLlm} produced no client.
+ *
+ * Distinguishes "the role resolved to a provider this path cannot use" from
+ * "no credential at all", because the remedies are different: the first needs
+ * a role/config change or a provider-agnostic runner, the second needs a
+ * login.
+ *
+ * Never throws — diagnostics must not break the caller's error path.
+ *
+ * @param projectRoot - project root used for resolution.
+ * @returns a human-readable reason, always non-empty.
+ *
+ * @task T12078
+ */
+async function describeDreamLlmResolution(projectRoot: string): Promise<string> {
+  try {
+    const { resolveLLMForRole } = await import('../llm/role-resolver.js');
+    const llm = await resolveLLMForRole('consolidation', { projectRoot });
+    if (llm.provider !== 'anthropic') {
+      return (
+        `The 'consolidation' role resolved to provider '${llm.provider}' (model ` +
+        `'${llm.model}'), but this path requires anthropic. Either configure ` +
+        `llm.roles.consolidation for anthropic, or restore an anthropic ` +
+        `credential (\`cleo login anthropic\`) so the cross-provider selector ` +
+        `stops excluding it.`
+      );
+    }
+    if (!llm.sealedCredential) {
+      return 'Resolved provider anthropic, but no usable credential — run `cleo login anthropic`.';
+    }
+    return 'Resolved provider anthropic with a credential, but no client was constructed.';
+  } catch (err) {
+    return `LLM resolution failed: ${err instanceof Error ? err.message : String(err)}`;
+  }
+}
+
+/**
  * Run one full dream cycle.
  *
  * Steps:
@@ -803,10 +840,30 @@ export async function runDreamCycle(options: DreamCycleOptions): Promise<DreamCy
   }
 
   if (!client) {
+    // T12078: report WHY, not a guess.
+    //
+    // This message used to assert "No LLM API key found (checked
+    // ANTHROPIC_API_KEY, ~/.claude/.credentials.json, ~/.cleo/config.json)".
+    // That was frequently false, and its falseness hid a real outage: on this
+    // machine a VALID Anthropic OAuth token sat in
+    // `~/.claude/.credentials.json` while the dream cycle reported no key at
+    // all. The actual chain was:
+    //
+    //   • CLEO's own credential store held two Anthropic OAuth entries, both
+    //     long expired (2026-05-18, 2026-07-12), whose refresh failed;
+    //   • `cross-provider-selector` therefore EXCLUDED anthropic and resolved
+    //     the `consolidation` role to openai/gpt-5.5-pro;
+    //   • `resolveAnthropicForRole` returns null for any non-anthropic
+    //     provider, so this path saw `client === null`.
+    //
+    // Three different causes — no credential, an expired one, or a role
+    // resolved to a provider this Anthropic-only path cannot use — all
+    // collapsed into one message that named only the first. Naming the
+    // resolved provider is what makes the difference visible.
+    const resolvedProvider = await describeDreamLlmResolution(projectRoot);
     return {
       kind: 'no-api-key',
-      detail:
-        'No LLM API key found (checked ANTHROPIC_API_KEY, ~/.claude/.credentials.json, ~/.cleo/config.json) — dream cycle skipped',
+      detail: `Dream cycle skipped — no usable Anthropic client. ${resolvedProvider}`,
     };
   }
 
