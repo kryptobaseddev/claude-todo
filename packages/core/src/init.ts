@@ -764,7 +764,23 @@ export async function initProject(opts: InitOptions = {}): Promise<InitResult> {
   const alreadyInitialized =
     existsSync(cleoDir) &&
     (existsSync(join(cleoDir, 'tasks.db')) || existsSync(join(cleoDir, 'config.json')));
-  if (alreadyInitialized && !opts.force) {
+
+  // T12077: `--map-codebase` is ADDITIVE — it analyses the tree and writes
+  // findings to BRAIN; it scaffolds nothing and wipes nothing. Blocking it
+  // behind this guard made the onboarding path self-contradictory: a fresh
+  // `cleo init` on a brownfield repo returns
+  //
+  //   nextSteps: [{ action: 'Anchor the existing codebase in BRAIN as baseline
+  //                 context', command: 'cleo init --map-codebase' }]
+  //
+  // and running that exact command then failed with "Project already
+  // initialized. DANGER ZONE: use --force to wipe and re-init." The only way
+  // to follow CLEO's own advice was to destroy the project it had just set up.
+  //
+  // Measured on a greenfield sandbox: `cleo init` succeeded, and the very
+  // first recommended follow-up was impossible.
+  const additiveMapOnly = opts.mapCodebase === true;
+  if (alreadyInitialized && !opts.force && !additiveMapOnly) {
     throw new CleoError(
       ExitCode.GENERAL_ERROR,
       'Project already initialized. DANGER ZONE: use --force to wipe and re-init.',

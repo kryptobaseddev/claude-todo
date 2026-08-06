@@ -180,6 +180,79 @@ export function extractRootSubCommands(source, verb) {
 }
 
 /**
+ * Required flags declared by a sub-command's citty `args` block.
+ *
+ * T12077: Gate 14 originally asserted only that a command EXISTS. That is not
+ * enough — the protocol table said
+ *
+ *   | Start session | `cleo session start --scope global` |
+ *
+ * and `session start` declares BOTH `scope` and `name` as `required: true`, so
+ * following the protocol literally produced
+ * `E_VALIDATION: Missing required argument: --name`. This is the first command
+ * an agent runs when dropped into a new project, so the documented onboarding
+ * path failed at step one.
+ *
+ * Existence and invocability are different properties; a protocol that is
+ * phrased as instruction has to satisfy both.
+ *
+ * @param source - the command module source.
+ * @param sub    - the sub-command key (e.g. `start`).
+ * @returns set of required flag names, or an empty set when none/unparseable.
+ */
+export function extractRequiredArgs(source, sub) {
+  // Locate `meta: { name: '<sub>' ... }` then the sibling `args: {` block.
+  const metaRe = new RegExp(`meta:\\s*\\{[^}]*name:\\s*'${sub}'`);
+  const metaAt = source.search(metaRe);
+  if (metaAt === -1) return new Set();
+
+  const argsAt = source.indexOf('args: {', metaAt);
+  if (argsAt === -1) return new Set();
+  // Bail if another defineCommand starts before the args block — that means
+  // this command declares no args of its own.
+  const nextDefine = source.indexOf('defineCommand(', metaAt + 1);
+  if (nextDefine !== -1 && nextDefine < argsAt) return new Set();
+
+  const bodyStart = argsAt + 'args: {'.length;
+  let depth = 1;
+  let i = bodyStart;
+  for (; i < source.length && depth > 0; i++) {
+    if (source[i] === '{') depth++;
+    else if (source[i] === '}') depth--;
+  }
+  const body = source.slice(bodyStart, i - 1).replace(/\/\/[^\n]*/g, '');
+
+  const required = new Set();
+  // Each entry is `<flag>: { ... }` — capture the flag then test its block.
+  for (const m of body.matchAll(/(?:^|[,{])\s*'?([a-z][\w-]*)'?\s*:\s*\{/gm)) {
+    const start = m.index + m[0].length;
+    let d = 1;
+    let j = start;
+    for (; j < body.length && d > 0; j++) {
+      if (body[j] === '{') d++;
+      else if (body[j] === '}') d--;
+    }
+    const block = body.slice(start, j - 1);
+    // Positionals are supplied without a flag, so a doc line that passes them
+    // inline (`cleo memory find "<topic>"`) is correct and must not be
+    // reported. Only flag-style args can be 'missing' from an invocation.
+    if (/type:\s*'positional'/.test(block)) continue;
+    if (/required:\s*true/.test(block)) required.add(m[1]);
+  }
+  return required;
+}
+
+/**
+ * Flags present on a documented command invocation.
+ *
+ * @param invocation - the raw text of the documented command.
+ * @returns set of flag names (without leading dashes).
+ */
+export function flagsIn(invocation) {
+  return new Set([...invocation.matchAll(/--([a-z][\w-]*)/g)].map((m) => m[1]));
+}
+
+/**
  * Check the template against the registry.
  *
  * @param markdown - template text.
@@ -207,6 +280,54 @@ export function findViolations(markdown, registry) {
   return violations;
 }
 
+/**
+ * Report documented invocations that omit a REQUIRED flag.
+ *
+ * Only invocations that already carry at least one `--flag` are checked. A bare
+ * `cleo session start` in prose is a reference to the command; a partially
+ * flagged one is a worked example, and a worked example that cannot run is the
+ * defect. This keeps the rule quiet on prose while still catching the T12077
+ * case, where the table said `cleo session start --scope global` and `name` is
+ * equally required.
+ *
+ * @param markdown - the template text.
+ * @param sourceForVerb - resolves a verb to its command-module source.
+ * @returns violation records (empty when clean).
+ *
+ * @task T12077
+ */
+export function findRequiredArgViolations(markdown, sourceForVerb) {
+  const violations = [];
+  const seen = new Set();
+
+  for (const m of markdown.matchAll(/`cleo\s+([a-z][\w-]*)\s+([a-z][\w-]*)([^`]*)`/g)) {
+    const [, verb, sub, tail] = m;
+    const flags = flagsIn(tail);
+    if (flags.size === 0) continue; // prose reference, not a worked example
+
+    const source = sourceForVerb(verb);
+    if (!source) continue;
+
+    const required = extractRequiredArgs(source, sub);
+    if (required.size === 0) continue;
+
+    const missing = [...required].filter((f) => !flags.has(f));
+    if (missing.length === 0) continue;
+
+    const key = `${verb} ${sub}:${missing.join(',')}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    violations.push({
+      verb,
+      sub,
+      raw: `cleo ${verb} ${sub}${tail}`.trim(),
+      reason: `missing required flag(s): ${missing.map((f) => `--${f}`).join(' ')}`,
+    });
+  }
+  return violations;
+}
+
 const isMain = import.meta.url === `file://${process.argv[1]}`;
 if (isMain) {
   const asJson = process.argv.includes('--json');
@@ -218,6 +339,30 @@ if (isMain) {
   );
   const registry = loadRegistry(neededSubs);
   const violations = findViolations(markdown, registry);
+
+  // T12077: existence is not enough — a documented invocation must also be
+  // runnable. Resolve each verb's module source once and check required flags.
+  const manifestSrc = readFileSync(
+    join(REPO_ROOT, 'packages/cleo/src/cli/generated/command-manifest.ts'),
+    'utf-8',
+  );
+  const moduleByVerb = new Map(
+    [
+      ...manifestSrc.matchAll(
+        /name:\s*'([^']+)',[\s\S]{0,400}?import\('\.\.\/commands\/([^']+)\.js'\)/g,
+      ),
+    ].map((m) => [m[1], m[2]]),
+  );
+  const sourceForVerb = (verb) => {
+    const mod = moduleByVerb.get(verb);
+    if (!mod) return null;
+    try {
+      return readFileSync(join(REPO_ROOT, 'packages/cleo/src/cli/commands', `${mod}.ts`), 'utf-8');
+    } catch {
+      return null;
+    }
+  };
+  violations.push(...findRequiredArgViolations(markdown, sourceForVerb));
 
   if (asJson) {
     process.stdout.write(`${JSON.stringify({ violations }, null, 2)}\n`);

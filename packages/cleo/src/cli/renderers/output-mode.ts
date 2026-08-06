@@ -19,6 +19,7 @@
  * @epic T9855
  */
 
+import { COLLECTION_KEYS as CONTRACT_COLLECTION_KEYS } from '@cleocode/contracts';
 import { truncateString } from '@cleocode/core';
 import type { OutputMode } from '../output-context.js';
 
@@ -42,7 +43,11 @@ import type { OutputMode } from '../output-context.js';
  *
  * @task T12067
  */
-const COLLECTION_KEYS = ['tasks', 'items', 'results'] as const;
+// T12077: imported from contracts rather than re-declared. A LOCAL copy is how
+// `suggestions` (the key `tasks.next` emits) came to be missing here while the
+// SSoT already listed it — `cleo next --output id` reported "No ids." against
+// an envelope holding 836 candidates. One list, one place.
+const COLLECTION_KEYS = CONTRACT_COLLECTION_KEYS;
 
 /**
  * Resolve the first list-shaped collection on an envelope `data` payload.

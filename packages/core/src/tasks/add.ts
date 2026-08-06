@@ -713,6 +713,30 @@ export function findRecentDuplicate(
 }
 
 /**
+ * Whether the project contains no tasks at all.
+ *
+ * Used only on the containment-violation error path, so the cost of the query
+ * is paid solely when the caller has already made a mistake.
+ *
+ * @param cwd - project root.
+ * @param accessor - optional pre-resolved accessor.
+ * @returns true when the task table is empty (or unreadable — in which case the
+ *          generic message is the safer default).
+ *
+ * @task T12077
+ */
+async function hasNoTasks(cwd: string | undefined, accessor?: DataAccessor): Promise<boolean> {
+  try {
+    const acc =
+      accessor ?? (await (await import('../store/data-accessor.js')).getTaskAccessor(cwd));
+    const { tasks } = await acc.queryTasks({});
+    return tasks.length === 0;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Add a new task to the todo file.
  * @task T4460
  */
@@ -771,13 +795,25 @@ export async function addTask(
     !parentId &&
     effectiveRootType !== 'saga'
   ) {
+    // T12077: on a FRESH project this rule is unsatisfiable as worded. A new
+    // `.cleo/` has zero tasks, so there is no `T###` to pass to `--parent`, yet
+    // the fix said `cleo add "Task title" --parent T###`. The first thing a user
+    // or agent does in a new project — file a task — failed with an instruction
+    // that could not be followed. Only a saga may be a root, so on an empty
+    // project the honest next step is `cleo saga create`.
+    const isFirstTask = await hasNoTasks(cwd, accessor);
     issues.push({
       field: 'parentId',
-      message:
-        `A ${effectiveRootType} must attach to a parent — only a saga may be a root ` +
-        `(strict-spine containment, T11811). Use --parent <id> to file it under the ` +
-        `correct container (saga→epic, epic→task, task→subtask).`,
-      fix: 'cleo add "Task title" --parent T### --acceptance "AC1|AC2|AC3"',
+      message: isFirstTask
+        ? `This project has no tasks yet, and only a saga may be a root ` +
+          `(strict-spine containment, T11811). Create the root saga first, then ` +
+          `file epics under it and tasks under those.`
+        : `A ${effectiveRootType} must attach to a parent — only a saga may be a root ` +
+          `(strict-spine containment, T11811). Use --parent <id> to file it under the ` +
+          `correct container (saga→epic, epic→task, task→subtask).`,
+      fix: isFirstTask
+        ? 'cleo saga create --title "<theme>" --description "..." --acceptance "AC1|AC2|AC3|AC4|AC5"'
+        : 'cleo add "Task title" --parent T### --acceptance "AC1|AC2|AC3"',
     });
   }
 

@@ -127,7 +127,7 @@ CLEO has **three distinct relationship systems**. Do not conflate them.
 |------|---------|
 | Check session | `cleo session status` |
 | Resume context | `cleo briefing` |
-| Start session | `cleo session start --scope global` |
+| Start session | `cleo session start --scope global --name "<what you are doing>"` (both flags are REQUIRED) |
 | End session | `cleo session end --note "..."` |
 <!-- /CLEO-INJECTION:section=session-commands -->
 

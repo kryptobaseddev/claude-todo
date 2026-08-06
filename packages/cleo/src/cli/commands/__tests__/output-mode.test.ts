@@ -291,3 +291,44 @@ describe('renderOutputMode — {results: [...]} envelopes (T12067)', () => {
     expect(out.text).toBe('T1');
   });
 });
+
+// ---------------------------------------------------------------------------
+// T12077 — {suggestions: [...]} envelopes (`cleo next`)
+// ---------------------------------------------------------------------------
+
+describe('renderOutputMode — {suggestions: [...]} envelopes (T12077)', () => {
+  /**
+   * The exact shape `tasks.next` emits. `suggestions` was absent from the
+   * renderer's LOCAL key list even after T12067 added `results`, so
+   * `cleo next --output id` reported "No ids." against an envelope holding
+   * 836 candidates. The list now comes from the contracts SSoT.
+   */
+  const nextEnvelope = {
+    suggestions: [
+      { id: 'T12034', title: 'CI shard-2: eliminate BRAIN writer flakes', status: 'pending' },
+      { id: 'T1738', title: 'Design CleoOS harness architecture', status: 'pending' },
+    ],
+    totalCandidates: 836,
+  };
+
+  it('extracts ids from a next envelope', () => {
+    expect(renderOutputMode('id', nextEnvelope).text).toBe('T12034\nT1738');
+  });
+
+  it('renders a next envelope as a table', () => {
+    const out = renderOutputMode('table', nextEnvelope).text ?? '';
+    expect(out).toContain('T12034');
+    expect(out).not.toBe('No rows.');
+  });
+
+  it('renders a next envelope as a summary', () => {
+    expect(renderSummary(nextEnvelope).text ?? '').toContain('T12034 [pending]');
+  });
+
+  it('never disagrees across modes for a next envelope', () => {
+    for (const mode of ['id', 'table'] as const) {
+      expect(renderOutputMode(mode, nextEnvelope).emptyReason, mode).toBeUndefined();
+    }
+    expect(renderSummary(nextEnvelope).emptyReason).toBeUndefined();
+  });
+});
