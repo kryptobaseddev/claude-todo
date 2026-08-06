@@ -50,9 +50,21 @@ describe('S9 — Orphan-commit detection', () => {
         cwd: result.synth.tmpDir,
         timeout: 5_000,
       });
+      // T12067: `--author` sets only the AUTHOR; git still needs a COMMITTER
+      // identity. On a developer machine it silently inherits the global git
+      // config, but a CI runner has none and the commit aborts with
+      // "Committer identity unknown". Pass the identity per-invocation with
+      // `-c` so nothing is written to any config file — the vitest identity-
+      // pollution guard blocks `git config` writes outside the tmpdir, and
+      // relying on ambient global state is what made this test pass locally
+      // and fail in CI for as long as this project's tests never ran.
       execFileSync(
         'git',
         [
+          '-c',
+          'user.name=cleo-test',
+          '-c',
+          'user.email=cleo-test@example.com',
           'commit',
           '--quiet',
           '-m',

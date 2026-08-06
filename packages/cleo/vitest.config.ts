@@ -430,6 +430,16 @@ export default defineConfig({
         import.meta.url,
       ).pathname,
       '@cleocode/core': new URL('../../packages/core/src/index.ts', import.meta.url).pathname,
+      // T12067: `cli/animation-bridge.ts` imports @cleocode/animations, which
+      // ships no root `main`/`exports` entry — so without this alias vitest
+      // fails to resolve the package and TEN test files fail to LOAD (not to
+      // assert) on a fresh checkout where `packages/animations/dist` has not
+      // been built. Invisible until now only because this project's tests
+      // never ran; locally it resolves via a dist left over from a full build.
+      '@cleocode/animations': new URL(
+        '../../packages/animations/src/index.ts',
+        import.meta.url,
+      ).pathname,
       '@cleocode/lafs': new URL('../../packages/lafs/src/index.ts', import.meta.url).pathname,
       // T9965: js-yaml + @iarna/toml are deps of @cleocode/caamp; in worktrees
       // they resolve through caamp/node_modules rather than root node_modules.
