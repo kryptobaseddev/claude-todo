@@ -732,6 +732,54 @@ async function resolveDefaultVerifyAndStore(): Promise<
 // ---------------------------------------------------------------------------
 
 /**
+ * Why anthropic was excluded from provider selection, when it was.
+ *
+ * T12078: the interesting case is `skipped-consent`. CLEO deliberately will not
+ * import another tool's credential without opt-in, so the `claude-code` seeder
+ * refuses to read `~/.claude/.credentials.json` until
+ * `auth.claudeCodeConsentGiven` is set. That is correct security design — but
+ * it is invisible at the point of failure, and its symptom is identical to
+ * "you have no credentials": the stored anthropic entries simply age out (here:
+ * 2026-05-18 and 2026-07-12), refresh fails, the selector drops anthropic, and
+ * every LLM-dependent feature dies quietly while a perfectly valid token sits
+ * in a file CLEO has chosen not to read.
+ *
+ * Naming the consent flag turns a multi-hour investigation into one command.
+ *
+ * @returns a remedy sentence; never throws.
+ *
+ * @task T12078
+ */
+async function describeAnthropicExclusion(): Promise<string> {
+  try {
+    const { getCredentialPool } = await import('../llm/credential-pool.js');
+    const pool = getCredentialPool();
+    // Seeder status is populated by a seed pass; in a fresh process it is empty
+    // until one runs. A non-forced seed honours the 60s cache, so this is cheap
+    // and idempotent on the error path.
+    await pool.seed().catch(() => undefined);
+    const status = await pool.getSeederStatus();
+    const claudeCode = status.find((s) => s.sourceId === 'claude-code');
+    if (claudeCode?.lastResult === 'skipped-consent') {
+      return (
+        'Anthropic was excluded because its stored credentials are expired and the ' +
+        'claude-code seeder is gated on consent (lastResult=skipped-consent), so the ' +
+        'valid token in ~/.claude/.credentials.json is never imported. Fix with ' +
+        'EITHER `cleo config set auth.claudeCodeConsentGiven true` (authorise CLEO to ' +
+        'read Claude Code credentials) OR `cleo login anthropic`.'
+      );
+    }
+    return (
+      'Either configure llm.roles.consolidation for anthropic, or restore an ' +
+      'anthropic credential (`cleo login anthropic`) so the cross-provider ' +
+      'selector stops excluding it.'
+    );
+  } catch {
+    return 'Run `cleo login anthropic` to restore an anthropic credential.';
+  }
+}
+
+/**
  * One-line explanation of why {@link resolveDreamLlm} produced no client.
  *
  * Distinguishes "the role resolved to a provider this path cannot use" from
@@ -751,12 +799,10 @@ async function describeDreamLlmResolution(projectRoot: string): Promise<string> 
     const { resolveLLMForRole } = await import('../llm/role-resolver.js');
     const llm = await resolveLLMForRole('consolidation', { projectRoot });
     if (llm.provider !== 'anthropic') {
+      const why = await describeAnthropicExclusion();
       return (
         `The 'consolidation' role resolved to provider '${llm.provider}' (model ` +
-        `'${llm.model}'), but this path requires anthropic. Either configure ` +
-        `llm.roles.consolidation for anthropic, or restore an anthropic ` +
-        `credential (\`cleo login anthropic\`) so the cross-provider selector ` +
-        `stops excluding it.`
+        `'${llm.model}'), but this path requires anthropic. ${why}`
       );
     }
     if (!llm.sealedCredential) {
