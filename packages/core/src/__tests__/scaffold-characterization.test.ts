@@ -347,13 +347,13 @@ describe('characterization: ensureCleoGitRepo', () => {
     else delete process.env['CLEO_DIR'];
   });
 
-  it('creates .cleo/.git with action=created', async () => {
+  it('creates the checkpoint repo with action=created', async () => {
     const result = await ensureCleoGitRepo(tmpDir);
     expect(result.action).toBe('created');
-    expect(existsSync(join(tmpDir, '.cleo', '.git'))).toBe(true);
+    expect(existsSync(join(tmpDir, '.cleo', 'checkpoint.git'))).toBe(true);
   });
 
-  it('returns action=skipped when .cleo/.git already exists', async () => {
+  it('returns action=skipped when the checkpoint repo already exists', async () => {
     await ensureCleoGitRepo(tmpDir);
     const result2 = await ensureCleoGitRepo(tmpDir);
     expect(result2.action).toBe('skipped');

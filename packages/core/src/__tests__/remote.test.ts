@@ -1,5 +1,10 @@
 /**
- * Tests for remote module (.cleo/.git push/pull).
+ * Tests for remote module (.cleo/checkpoint.git push/pull).
+ *
+ * T12079: the checkpoint repo moved off `.cleo/.git` — that name made `.cleo/`
+ * a git repository boundary, which broke `git add -A` in every freshly
+ * initialised project. These fixtures build it via the SSoT helper so the name
+ * lives in exactly one place.
  * @task T4884
  */
 
@@ -16,6 +21,7 @@ import {
   push,
   removeRemote,
 } from '../remote/index.js';
+import { checkpointGitDir } from '../store/checkpoint-git-dir.js';
 
 describe('remote', () => {
   let tempDir: string;
@@ -31,12 +37,12 @@ describe('remote', () => {
     bareRemote = join(tempDir, 'remote.git');
     await mkdir(cleoDir, { recursive: true });
 
-    // Initialize .cleo/.git as isolated repo
+    // Initialize the isolated checkpoint repo (T12079: checkpoint.git, not .git)
     execFileSync('git', ['init'], {
       cwd: cleoDir,
       env: {
         ...process.env,
-        GIT_DIR: join(cleoDir, '.git'),
+        GIT_DIR: checkpointGitDir(cleoDir),
         GIT_WORK_TREE: cleoDir,
       },
     });
@@ -46,7 +52,7 @@ describe('remote', () => {
       cwd: cleoDir,
       env: {
         ...process.env,
-        GIT_DIR: join(cleoDir, '.git'),
+        GIT_DIR: checkpointGitDir(cleoDir),
         GIT_WORK_TREE: cleoDir,
       },
     });
@@ -54,7 +60,7 @@ describe('remote', () => {
       cwd: cleoDir,
       env: {
         ...process.env,
-        GIT_DIR: join(cleoDir, '.git'),
+        GIT_DIR: checkpointGitDir(cleoDir),
         GIT_WORK_TREE: cleoDir,
       },
     });
@@ -65,7 +71,7 @@ describe('remote', () => {
       cwd: cleoDir,
       env: {
         ...process.env,
-        GIT_DIR: join(cleoDir, '.git'),
+        GIT_DIR: checkpointGitDir(cleoDir),
         GIT_WORK_TREE: cleoDir,
       },
     });
@@ -73,7 +79,7 @@ describe('remote', () => {
       cwd: cleoDir,
       env: {
         ...process.env,
-        GIT_DIR: join(cleoDir, '.git'),
+        GIT_DIR: checkpointGitDir(cleoDir),
         GIT_WORK_TREE: cleoDir,
       },
     });
@@ -145,7 +151,7 @@ describe('remote', () => {
       await writeFile(join(cleoDir, 'config.json'), '{"version":"2.11.0"}');
       const gitEnv = {
         ...process.env,
-        GIT_DIR: join(cleoDir, '.git'),
+        GIT_DIR: checkpointGitDir(cleoDir),
         GIT_WORK_TREE: cleoDir,
       };
       execFileSync('git', ['add', 'config.json'], { cwd: cleoDir, env: gitEnv });

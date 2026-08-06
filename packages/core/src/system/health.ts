@@ -30,6 +30,7 @@ import {
   ensureGlobalScaffold,
 } from '../scaffold.js';
 import { checkGlobalSchemas, type CheckResult as SchemaCheckResult } from '../schema-management.js';
+import { checkpointGitDir } from '../store/checkpoint-git-dir.js';
 import { getTaskAccessor } from '../store/data-accessor.js';
 import {
   type CheckResult,
@@ -910,7 +911,7 @@ export async function coreDoctorReport(projectRoot: string): Promise<DoctorRepor
   checks.push(mapCheckResult(checkCanonicalRcasdPaths(projectRoot)));
 
   // 5b. Isolated .cleo/.git checkpoint repo check (T4872)
-  const cleoGitHeadExists = existsSync(join(cleoDir, '.git', 'HEAD'));
+  const cleoGitHeadExists = existsSync(join(checkpointGitDir(cleoDir), 'HEAD'));
   checks.push({
     check: 'cleo_git_repo',
     status: cleoGitHeadExists ? 'ok' : 'warning',

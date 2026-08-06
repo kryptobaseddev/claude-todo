@@ -8,6 +8,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { getSharingStatus, matchesPattern, syncGitignore } from '../nexus/sharing/index.js';
+import { checkpointGitDir } from '../store/checkpoint-git-dir.js';
 
 describe('sharing', () => {
   describe('matchesPattern', () => {
@@ -154,7 +155,7 @@ describe('sharing', () => {
       expect(status.ignored).toContain('tasks.db');
     });
 
-    it('returns safe defaults for git sync fields when .cleo/.git does not exist', async () => {
+    it('returns safe defaults for git sync fields when the checkpoint repo does not exist', async () => {
       const status = await getSharingStatus(tempDir);
 
       expect(status.hasGit).toBe(false);
@@ -163,11 +164,13 @@ describe('sharing', () => {
       expect(status.lastSync).toBeNull();
     });
 
-    it('reports hasGit=true when .cleo/.git/HEAD exists', async () => {
-      // Simulate an initialized .cleo/.git repo (HEAD file is the sentinel)
+    it('reports hasGit=true when the checkpoint repo HEAD exists', async () => {
+      // Simulate an initialized checkpoint repo (HEAD is the sentinel).
+      // T12079: it lives at .cleo/checkpoint.git — `.cleo/.git` made `.cleo/` a
+      // git repository boundary and broke `git add -A` in fresh projects.
       const cleoDir = join(tempDir, '.cleo');
-      await mkdir(join(cleoDir, '.git'), { recursive: true });
-      await writeFile(join(cleoDir, '.git', 'HEAD'), 'ref: refs/heads/main\n');
+      await mkdir(checkpointGitDir(cleoDir), { recursive: true });
+      await writeFile(join(checkpointGitDir(cleoDir), 'HEAD'), 'ref: refs/heads/main\n');
 
       const status = await getSharingStatus(tempDir);
 

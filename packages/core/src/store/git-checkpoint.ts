@@ -17,6 +17,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { promisify } from 'node:util';
 import { getCleoDir, getConfigPath } from '../paths.js';
+import { checkpointGitDir } from './checkpoint-git-dir.js';
 import { readJson } from './json.js';
 
 const execFileAsync = promisify(execFile);
@@ -31,7 +32,7 @@ export function makeCleoGitEnv(cleoDir: string): NodeJS.ProcessEnv {
   const abs = resolve(cleoDir);
   return {
     ...process.env,
-    GIT_DIR: join(abs, '.git'),
+    GIT_DIR: checkpointGitDir(abs),
     GIT_WORK_TREE: abs,
   };
 }
@@ -61,7 +62,7 @@ export async function cleoGitCommand(
  * @task T4872
  */
 export function isCleoGitInitialized(cleoDir: string): boolean {
-  return existsSync(join(cleoDir, '.git', 'HEAD'));
+  return existsSync(join(checkpointGitDir(cleoDir), 'HEAD'));
 }
 
 /**
@@ -187,7 +188,7 @@ async function isCleoGitRepo(cleoDir: string): Promise<boolean> {
  * @task T4872
  */
 function isMergeInProgress(cleoDir: string): boolean {
-  return existsSync(join(cleoDir, '.git', 'MERGE_HEAD'));
+  return existsSync(join(checkpointGitDir(cleoDir), 'MERGE_HEAD'));
 }
 
 /**
@@ -207,8 +208,8 @@ async function isDetachedHead(cleoDir: string): Promise<boolean> {
  */
 function isRebaseInProgress(cleoDir: string): boolean {
   return (
-    existsSync(join(cleoDir, '.git', 'rebase-merge')) ||
-    existsSync(join(cleoDir, '.git', 'rebase-apply'))
+    existsSync(join(checkpointGitDir(cleoDir), 'rebase-merge')) ||
+    existsSync(join(checkpointGitDir(cleoDir), 'rebase-apply'))
   );
 }
 

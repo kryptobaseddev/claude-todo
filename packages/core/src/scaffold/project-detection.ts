@@ -7,6 +7,7 @@ import { existsSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import type { CheckResult } from '@cleocode/contracts/scaffold-diagnostics';
 import { getConfigPath, resolveOrCwd } from '../paths.js';
+import { checkpointGitDir } from '../store/checkpoint-git-dir.js';
 import { getGitignoreContent, getWorktreeIncludeContent } from './ensure-config.js';
 import { REQUIRED_CLEO_SUBDIRS } from './ensure-dirs.js';
 
@@ -339,7 +340,7 @@ export function checkProjectContext(projectRoot: string, staleDays: number = 30)
  */
 export function checkCleoGitRepo(projectRoot: string): CheckResult {
   const cleoDir = join(projectRoot, '.cleo');
-  const cleoGitDir = join(cleoDir, '.git');
+  const cleoGitDir = checkpointGitDir(cleoDir);
 
   if (!existsSync(cleoGitDir)) {
     return {

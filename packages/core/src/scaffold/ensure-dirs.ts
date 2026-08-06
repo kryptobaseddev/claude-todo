@@ -10,6 +10,7 @@ import { join, resolve } from 'node:path';
 import { promisify } from 'node:util';
 import type { ScaffoldResult } from '@cleocode/contracts/scaffold-diagnostics';
 import { getCleoHome } from '../paths.js';
+import { checkpointGitDir, migrateCheckpointGitDir } from '../store/checkpoint-git-dir.js';
 import { resolveScaffoldCleoDir } from './ensure-config.js';
 import { hasGitIdentity } from './init.js';
 
@@ -71,10 +72,23 @@ export async function ensureCleoStructure(projectRoot: string): Promise<Scaffold
  */
 export async function ensureCleoGitRepo(projectRoot: string): Promise<ScaffoldResult> {
   const cleoDir = resolveScaffoldCleoDir(projectRoot);
-  const cleoGitDir = join(cleoDir, '.git');
+
+  // T12079: move a legacy `.cleo/.git` aside FIRST. While the checkpoint repo
+  // lives at `.cleo/.git`, git treats `.cleo/` as a repository boundary and
+  // refuses to index it when untracked — so `git add -A` fails outright in the
+  // host project. The rename is lossless (all objects/refs live inside the
+  // directory, and every access uses an explicit GIT_DIR), so existing
+  // checkpoint history survives.
+  const migration = migrateCheckpointGitDir(cleoDir);
+
+  const cleoGitDir = checkpointGitDir(cleoDir);
 
   if (existsSync(cleoGitDir)) {
-    return { action: 'skipped', path: cleoGitDir, details: 'Already initialized' };
+    return {
+      action: migration.migrated ? 'repaired' : 'skipped',
+      path: cleoGitDir,
+      details: migration.migrated ? migration.detail : 'Already initialized',
+    };
   }
 
   const gitEnv: NodeJS.ProcessEnv = {
