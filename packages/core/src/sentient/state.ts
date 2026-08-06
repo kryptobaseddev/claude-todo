@@ -13,7 +13,8 @@
  * @task T946
  */
 
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
+import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import type { Tier2Stats } from '@cleocode/contracts';
 
@@ -316,11 +317,28 @@ export async function writeSentientState(statePath: string, state: SentientState
   const dir = dirname(statePath);
   await mkdir(dir, { recursive: true });
 
-  const tmpPath = join(dir, `.sentient-state-${process.pid}.tmp`);
+  // T12075: the scratch name must be unique per WRITE, not per process.
+  //
+  // Keyed on `process.pid` alone, two overlapping writes inside one process
+  // share the same tmp path: A writes it, B overwrites it, A renames it away,
+  // and B's rename then fails with
+  //   ENOENT: rename '.cleo/.sentient-state-<pid>.tmp' -> '.cleo/sentient-state.json'
+  // The whole point of tmp-then-rename is atomicity, and a colliding scratch
+  // name destroys exactly that guarantee — intermittently, which is why it read
+  // as a flake. Surfaced by the `cleo setup` wizard, whose sentient section
+  // writes concurrently with the rest of the run.
+  const unique = `${process.pid}-${randomUUID()}`;
+  const tmpPath = join(dir, `.sentient-state-${unique}.tmp`);
   const json = JSON.stringify(state, null, 2);
 
   await writeFile(tmpPath, json, 'utf-8');
-  await rename(tmpPath, statePath);
+  try {
+    await rename(tmpPath, statePath);
+  } catch (err) {
+    // Never leave a scratch file behind if the rename fails.
+    await rm(tmpPath, { force: true }).catch(() => {});
+    throw err;
+  }
 }
 
 /**

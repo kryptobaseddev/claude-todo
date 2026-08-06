@@ -134,8 +134,13 @@ describe('@cleocode/cleo test quarantine (T12067)', () => {
     const source = readFileSync(join(repoRoot, 'packages/cleo/vitest.quarantine.ts'), 'utf-8');
     const arr = source.match(/CLEO_TEST_QUARANTINE:\s*readonly string\[\]\s*=\s*\[([\s\S]*?)\n\];/);
     const baseline = source.match(/CLEO_TEST_QUARANTINE_BASELINE\s*=\s*(\d+)/);
+    // Strip line comments before pairing quotes: an apostrophe inside a
+    // comment ("the section's tmp file") desynchronises the quote pairing and
+    // turns every subsequent entry into garbage — which reads as "all 74
+    // quarantined files are missing" rather than as a parse bug.
+    const body = arr ? arr[1].replace(/\/\/[^\n]*/g, '') : '';
     return {
-      files: arr ? [...arr[1].matchAll(/'([^']+)'/g)].map((m) => m[1]) : [],
+      files: [...body.matchAll(/'([^']+)'/g)].map((m) => m[1]),
       baseline: baseline ? Number(baseline[1]) : Number.NaN,
     };
   }

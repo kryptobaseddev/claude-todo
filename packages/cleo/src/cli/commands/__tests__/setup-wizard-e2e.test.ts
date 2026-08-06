@@ -30,6 +30,9 @@
  * @epic T11671 (E6-ONBOARDING-FRONT-DOOR)
  */
 
+import { mkdirSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import type { WizardIO } from '@cleocode/core/setup';
 import { StubWizardIO } from '@cleocode/core/setup';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -262,7 +265,29 @@ class CapturingIO implements WizardIO {
 // Setup / teardown
 // ---------------------------------------------------------------------------
 
+// T12067: `runSetup` has no cwd parameter — it resolves the project from
+// `process.cwd()`. Without the chdir below this suite drives the REAL setup
+// wizard against whatever directory vitest happens to be in, i.e. the repo
+// root, and the `sentient` section writes `.cleo/sentient-state.json` there.
+//
+// On a developer machine that silently mutates the checkout's live `.cleo/`
+// state; on a fresh CI runner `.cleo/` does not exist (it is gitignored) and
+// the section fails with
+//   ENOENT: rename '.cleo/.sentient-state-NNNN.tmp' -> '.cleo/sentient-state.json'
+// which is how this surfaced the moment the project's tests began running at
+// all. Same non-hermetic class as T12051's AGENTS_HOME pollution.
+let sandboxDir: string;
+let originalCwd: string;
+
 beforeEach(() => {
+  originalCwd = process.cwd();
+  sandboxDir = mkdtempSync(join(tmpdir(), 'cleo-setup-wizard-'));
+  // getProjectRoot() requires a .cleo directory WITH a sibling .git, else it
+  // throws E_INVALID_PROJECT_ROOT — hence both, not just .cleo.
+  mkdirSync(join(sandboxDir, '.cleo'), { recursive: true });
+  mkdirSync(join(sandboxDir, '.git'), { recursive: true });
+  process.chdir(sandboxDir);
+
   vi.clearAllMocks();
   mockLoadConfigCore.mockResolvedValue({
     identity: { name: 'test-agent' },
@@ -272,6 +297,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  process.chdir(originalCwd);
+  rmSync(sandboxDir, { recursive: true, force: true });
   vi.restoreAllMocks();
 });
 
