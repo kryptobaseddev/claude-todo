@@ -18,6 +18,15 @@ export type Provider = string;
  * CAAMP-compatible spawn options (inlined for zero-dep contracts).
  */
 export interface CAAMPSpawnOptions {
+  /**
+   * Capacity-aware routing hint — the id of the least-loaded registered agent
+   * (Wave 6-C/D). Declared explicitly because `spawn-ops.ts` both writes it
+   * and reads it back for the `SubagentStart`/`SubagentStop` payloads; under
+   * the bare index signature it resolved to `unknown`, so
+   * `options?.preferredAgent ?? \`worker-${taskId}\`` widened to `{}` and the
+   * agentId silently lost its type. @task T12071
+   */
+  preferredAgent?: string;
   [key: string]: unknown;
 }
 
@@ -78,6 +87,17 @@ export interface CLEOSpawnResult extends CAAMPSpawnResult {
     /** Duration in milliseconds */
     durationMs?: number;
   };
+
+  /**
+   * Terminal (or in-flight) state of the spawned agent.
+   *
+   * Declared explicitly because `spawn-ops.ts` reads `result.status` to build
+   * the `SubagentStop` hook payload. Inherited from `CAAMPSpawnResult`'s bare
+   * `[key: string]: unknown` it resolved to `unknown`, so the value flowed
+   * into a typed payload field unchecked — and it does not even share that
+   * field's vocabulary ('completed' here vs 'complete' there). @task T12071
+   */
+  status?: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
 
   /** Reference to manifest entry if output was captured */
   manifestEntryId?: string;

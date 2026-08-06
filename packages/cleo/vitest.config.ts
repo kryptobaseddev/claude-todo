@@ -16,6 +16,7 @@
 import { resolve } from 'node:path';
 import { defineConfig } from 'vitest/config';
 import { withWorkspaceSubpathAliases } from '../../vitest-workspace-resolver.js';
+import { CLEO_TEST_QUARANTINE } from './vitest.quarantine.js';
 
 export default defineConfig({
   test: {
@@ -72,6 +73,11 @@ export default defineConfig({
       '**/e2e/**',
       '**/*.integration.test.ts',
       '**/*-integration.test.ts',
+      // T12067: 73 files that were already failing when discovery was fixed —
+      // they had never run, so they had never gated a PR. Excluding them lets
+      // the other 199 files / 3428 tests start protecting the repo now.
+      // The list may only shrink; burn-down is T12072.
+      ...CLEO_TEST_QUARANTINE,
     ],
     // T11953 / DHQ-070: `withWorkspaceSubpathAliases` PREPENDS a generic
     // `@cleocode/<pkg>/<subpath>` → source resolver so cleo tests resolve any

@@ -238,7 +238,11 @@ export async function startSession(
       timestamp: new Date().toISOString(),
       sessionId: session.id,
       name: params.name ?? session.name,
-      scope,
+      // T12071: SessionStartPayload.scope is a STRING (and the Zod schema is
+      // z.string()); `scope` here is a SessionScope object. Both handlers
+      // ignore the field, so the object went unnoticed — but it would have
+      // failed runtime validation and stringifies to "[object Object]".
+      scope: scope.type,
       providerId: detectedProviderId ?? undefined,
     })
     .catch(() => {

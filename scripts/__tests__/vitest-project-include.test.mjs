@@ -28,7 +28,7 @@
  * @task T12067
  */
 
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { glob } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -118,4 +118,52 @@ describe('every vitest project resolves test files (T12067)', () => {
       ).toBeGreaterThan(0);
     });
   }
+});
+
+// ---------------------------------------------------------------------------
+// T12067 — quarantine integrity
+// ---------------------------------------------------------------------------
+
+describe('@cleocode/cleo test quarantine (T12067)', () => {
+  /**
+   * Load the quarantine list by parsing its source. Importing the `.ts` module
+   * from a `.mjs` test would need a transform step this project does not run
+   * for `scripts/`.
+   */
+  function readQuarantine() {
+    const source = readFileSync(join(repoRoot, 'packages/cleo/vitest.quarantine.ts'), 'utf-8');
+    const arr = source.match(/CLEO_TEST_QUARANTINE:\s*readonly string\[\]\s*=\s*\[([\s\S]*?)\n\];/);
+    const baseline = source.match(/CLEO_TEST_QUARANTINE_BASELINE\s*=\s*(\d+)/);
+    return {
+      files: arr ? [...arr[1].matchAll(/'([^']+)'/g)].map((m) => m[1]) : [],
+      baseline: baseline ? Number(baseline[1]) : Number.NaN,
+    };
+  }
+
+  it('every quarantined path still exists', () => {
+    const { files } = readQuarantine();
+    const missing = files.filter((f) => !existsSync(join(repoRoot, f)));
+    expect(
+      missing,
+      'A quarantined test file was deleted or moved without releasing its slot.\n' +
+        'Remove the entry (and decrement CLEO_TEST_QUARANTINE_BASELINE) instead of\n' +
+        'leaving a dead path that silently keeps the count up.',
+    ).toEqual([]);
+  });
+
+  it('never grows past the baseline recorded when discovery was fixed', () => {
+    const { files, baseline } = readQuarantine();
+    expect(
+      files.length,
+      'The quarantine is closed to additions — it bounds damage that already\n' +
+        'existed when the 281 never-run cleo tests were switched on (T12067).\n' +
+        'A newly-failing test must be fixed, not quarantined. If you repaired a\n' +
+        'file, remove it AND decrement CLEO_TEST_QUARANTINE_BASELINE.',
+    ).toBeLessThanOrEqual(baseline);
+  });
+
+  it('is referenced by the cleo vitest config', () => {
+    const config = readFileSync(join(repoRoot, 'packages/cleo/vitest.config.ts'), 'utf-8');
+    expect(config).toContain('CLEO_TEST_QUARANTINE');
+  });
 });

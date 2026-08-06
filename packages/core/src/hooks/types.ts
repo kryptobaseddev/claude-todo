@@ -524,3 +524,66 @@ export type CLEOLifecycleEvent = keyof typeof CLEO_TO_CAAMP_HOOK_MAP;
  * Type for autonomous CLEO lifecycle events.
  */
 export type CLEOAutonomousLifecycleEvent = keyof typeof CLEO_INTERNAL_HOOK_MAP;
+
+/**
+ * Compile-time map from hook event name to its declared payload interface.
+ *
+ * ## Why this exists (T12071)
+ *
+ * `HookRegistry.dispatch` was generic over `T extends HookPayload`, which
+ * infers `T` from the argument and therefore accepts ANY object carrying the
+ * base fields. The event name and the payload shape were never related to each
+ * other at the type level, so a call site could pass a field the handler does
+ * not read and TypeScript would agree.
+ *
+ * That is not hypothetical. `tasks/complete.ts` dispatched `PostToolUse` with
+ * `newStatus: 'done'` while `PostToolUsePayload` declares `status`.
+ * `handleToolComplete` read `payload.status`, got `undefined`, and wrote
+ * `"Task <id> completed with status: undefined"` into BRAIN on **every task
+ * completion** — 2,012 rows, 29% of the observation corpus, each one a
+ * content-free record that BM25 then ranked ABOVE substantive memories
+ * (short documents score higher under length normalisation). The visible
+ * symptom was "the brain never recalls anything useful"; the cause was one
+ * unenforced field name.
+ *
+ * `EVENT_SCHEMA_MAP` in `payload-schemas.ts` already encoded this relation for
+ * RUNTIME validation. This is the same relation at compile time, so the next
+ * drift is a build error rather than a silent corpus of junk.
+ *
+ * Events absent from this map fall back to {@link HookPayload}, matching the
+ * runtime schema map's `Partial` semantics.
+ *
+ * @task T12071
+ */
+export interface HookEventPayloadMap {
+  SessionStart: SessionStartPayload;
+  SessionEnd: SessionEndPayload;
+  PreToolUse: PreToolUsePayload;
+  PostToolUse: PostToolUsePayload;
+  Notification: NotificationPayload;
+  PostToolUseFailure: PostToolUseFailurePayload;
+  PromptSubmit: PromptSubmitPayload;
+  ResponseComplete: ResponseCompletePayload;
+  SubagentStart: SubagentStartPayload;
+  SubagentStop: SubagentStopPayload;
+  PreCompact: PreCompactPayload;
+  PostCompact: PostCompactPayload;
+  ConfigChange: ConfigChangePayload;
+  onWorkAvailable: OnWorkAvailablePayload;
+  onAgentSpawn: OnAgentSpawnPayload;
+  onAgentComplete: OnAgentCompletePayload;
+  onCascadeStart: OnCascadeStartPayload;
+  onPatrol: OnPatrolPayload;
+}
+
+/**
+ * The payload type required for a given hook event.
+ *
+ * Resolves through {@link HookEventPayloadMap}, falling back to the base
+ * {@link HookPayload} for events that declare no specific shape.
+ *
+ * @task T12071
+ */
+export type HookPayloadFor<E extends HookEvent> = E extends keyof HookEventPayloadMap
+  ? HookEventPayloadMap[E]
+  : HookPayload;

@@ -9,7 +9,13 @@
  */
 
 import { getLogger } from '../logger.js';
-import type { HookConfig, HookEvent, HookPayload, HookRegistration } from './types.js';
+import type {
+  HookConfig,
+  HookEvent,
+  HookPayload,
+  HookPayloadFor,
+  HookRegistration,
+} from './types.js';
 
 /** Map from old `on`-prefix event names to new canonical names. Used for backward compat. */
 const LEGACY_EVENT_MAP: Record<string, HookEvent> = {
@@ -159,10 +165,15 @@ export class HookRegistry {
    * });
    * ```
    */
-  async dispatch<T extends HookPayload>(
-    event: HookEvent,
+  // T12071: keyed on the EVENT so the payload shape is checked against
+  // `HookEventPayloadMap`. The previous `<T extends HookPayload>` form inferred
+  // T from the argument, relating the event and the payload not at all — which
+  // is how `PostToolUse` came to be dispatched with `newStatus` instead of
+  // `status` and filled 29% of BRAIN with "status: undefined".
+  async dispatch<E extends HookEvent>(
+    event: E,
     projectRoot: string,
-    payload: T,
+    payload: HookPayloadFor<E>,
   ): Promise<void> {
     // Check if hooks enabled globally
     if (!this.config.enabled) return;

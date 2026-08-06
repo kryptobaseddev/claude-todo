@@ -330,10 +330,13 @@ export async function restoreSession(
       timestamp: new Date().toISOString(),
       sessionId: restoredSession.id,
       name: restoredSession.name,
-      scope: restoredSession.scope,
+      // T12071: see sessions/index.ts — `scope` is declared as a string.
+      scope: restoredSession.scope.type,
       agent: restoredSession.agent,
-      restored: true,
-      snapshotCapturedAt: snapshot.capturedAt,
+      // `restored` / `snapshotCapturedAt` are not part of SessionStartPayload;
+      // carry them through the contract's `metadata` escape hatch instead of
+      // inventing undeclared top-level fields.
+      metadata: { restored: true, snapshotCapturedAt: snapshot.capturedAt },
     });
   } catch {
     // Hooks are best-effort

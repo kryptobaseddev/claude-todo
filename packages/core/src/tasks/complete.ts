@@ -1195,9 +1195,14 @@ export async function completeTask(
         timestamp: new Date().toISOString(),
         taskId: options.taskId,
         taskTitle: task.title,
-        previousStatus: before.status,
-        newStatus: 'done',
-        unblockedCount: unblockedTasks.length,
+        // T12071: the field is `status` per PostToolUsePayload. This site sent
+        // `newStatus` instead, so `handleToolComplete` read `payload.status`
+        // as undefined and wrote the literal string
+        // "Task <id> completed with status: undefined" into BRAIN — 2012 such
+        // rows, 29% of the entire observation corpus. `dispatch` is generic
+        // over `T extends HookPayload`, so the wrong shape type-checked.
+        status: 'done',
+        metadata: { previousStatus: before.status, unblockedCount: unblockedTasks.length },
       })
       .catch(() => {
         /* Hooks are best-effort — never block task completion */

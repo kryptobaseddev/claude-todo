@@ -65,6 +65,7 @@ import type {
   AgentSpawnCapability,
   CLEOSpawnAdapter,
   CLEOSpawnContext,
+  SpawnResult,
   WorktreeHook,
 } from '@cleocode/contracts';
 import { RESOURCE_DEFERRED_CODE } from '@cleocode/contracts';
@@ -258,6 +259,40 @@ export function detectPartialWorktree(
  * @returns Structured cleanup outcome (never throws).
  * @task T9545
  */
+/**
+ * Map a {@link SpawnResult} status onto the `SubagentStop` payload vocabulary.
+ *
+ * The two enums were never the same set: spawn reports
+ * `pending | running | completed | failed | cancelled`, while
+ * `SubagentStopPayload.status` admits `complete | partial | blocked | failed`.
+ * Passing the raw value therefore emitted a status outside the declared union
+ * on every spawn — invisible because `HookRegistry.dispatch` did not tie an
+ * event to its payload type until T12071.
+ *
+ * `pending`/`running` map to `partial` (the subagent was launched but has not
+ * reported a terminal state) and `cancelled` to `blocked` (terminal, but not a
+ * completion and not an error).
+ *
+ * @param status - the spawn adapter's status.
+ * @returns the equivalent SubagentStop status.
+ *
+ * @task T12071
+ */
+export function toSubagentStopStatus(
+  status: SpawnResult['status'] | undefined,
+): 'complete' | 'partial' | 'blocked' | 'failed' {
+  switch (status) {
+    case 'completed':
+      return 'complete';
+    case 'failed':
+      return 'failed';
+    case 'cancelled':
+      return 'blocked';
+    default:
+      return 'partial';
+  }
+}
+
 export async function runTimeoutCleanup(
   projectRoot: string,
   taskId: string,
@@ -993,8 +1028,14 @@ export async function orchestrateSpawnExecute(
           timestamp: new Date().toISOString(),
           taskId,
           agentId: cleoSpawnContext.options?.preferredAgent ?? `worker-${taskId}`,
-          status: result.status,
-          instanceId: result.instanceId,
+          // T12071: `SpawnResult.status` and `SubagentStopPayload.status` are
+          // DIFFERENT vocabularies — 'completed' vs 'complete', and spawn also
+          // emits 'pending'/'running'/'cancelled', none of which the payload
+          // union admits. Every value this site ever sent was therefore outside
+          // the declared type; nothing caught it because `dispatch` did not
+          // relate the event to its payload.
+          status: toSubagentStopStatus(result.status),
+          metadata: { instanceId: result.instanceId },
         })
         .catch(() => {
           /* Hooks are best-effort — never block spawn */
