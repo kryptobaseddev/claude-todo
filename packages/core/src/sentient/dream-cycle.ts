@@ -53,6 +53,12 @@ import type Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 import { IMPLICIT_FALLBACK_MODEL, resolveAnthropicForRole } from '../llm/role-resolver.js';
 import type { MemoryCandidate } from '../memory/extraction-gate.js';
+import {
+  adaptiveClusterMinSize,
+  nextWatermark,
+  resolveLookbackMs,
+  selectUnconsolidated,
+} from './dream-watermark.js';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -254,6 +260,15 @@ export interface DreamCycleOptions {
    * Kill-switch check. When omitted, reads `statePath` via `readSentientState`.
    */
   isKilled?: () => Promise<boolean>;
+  /**
+   * Test seam (T12088): pin the consolidation watermark instead of reading
+   * sentient state. `null` means "no watermark" (first run).
+   */
+  dreamWatermark?: string | null;
+  /**
+   * Test seam (T12088): observe the watermark write instead of persisting it.
+   */
+  onWatermarkWrite?: (watermark: string) => void;
   /**
    * Lookback window in ms. Defaults to {@link DREAM_LOOKBACK_MS} (24 h).
    */
@@ -981,6 +996,67 @@ async function describeDreamLlmResolution(projectRoot: string): Promise<string> 
  *
  * @task T1680
  */
+/**
+ * Read the consolidation watermark from sentient state (T12088).
+ *
+ * Never throws — an unreadable state file yields `null`, which means "no
+ * watermark", i.e. fall back to the nominal lookback. Degrading to the previous
+ * fixed-window behaviour is correct; refusing to consolidate would not be.
+ *
+ * @param statePath - path to the sentient state file.
+ * @param options - dream options (test seam: `dreamWatermark`).
+ * @returns ISO timestamp already consolidated, or `null`.
+ *
+ * @task T12088
+ */
+async function readDreamWatermark(
+  statePath: string,
+  options: DreamCycleOptions,
+): Promise<string | null> {
+  if (options.dreamWatermark !== undefined) return options.dreamWatermark;
+  try {
+    const { readSentientState } = await import('./state.js');
+    const state = (await readSentientState(statePath)) as { dreamWatermark?: string | null };
+    return state.dreamWatermark ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Persist the consolidation watermark into sentient state (T12088).
+ *
+ * A `null` watermark (empty batch) is a no-op: an empty pass must not advance
+ * progress past material it never read.
+ *
+ * Never throws — losing a watermark write costs one redundant pass, whereas
+ * throwing here would discard a completed consolidation.
+ *
+ * @param statePath - path to the sentient state file.
+ * @param watermark - newest processed `createdAt`, or `null`.
+ * @param options - dream options (test seam: `onWatermarkWrite`).
+ *
+ * @task T12088
+ */
+async function writeDreamWatermark(
+  statePath: string,
+  watermark: string | null,
+  options: DreamCycleOptions,
+): Promise<void> {
+  if (watermark === null) return;
+  if (options.onWatermarkWrite) {
+    options.onWatermarkWrite(watermark);
+    return;
+  }
+  try {
+    const { readSentientState, writeSentientState } = await import('./state.js');
+    const state = await readSentientState(statePath);
+    await writeSentientState(statePath, { ...state, dreamWatermark: watermark });
+  } catch {
+    // Non-fatal: the next pass simply re-reads this window.
+  }
+}
+
 export async function runDreamCycle(options: DreamCycleOptions): Promise<DreamCycleOutcome> {
   const { projectRoot, statePath } = options;
 
@@ -1061,19 +1137,37 @@ export async function runDreamCycle(options: DreamCycleOptions): Promise<DreamCy
     };
   }
 
-  // Step 3: collect observations.
-  const lookbackMs = options.lookbackMs ?? DREAM_LOOKBACK_MS;
+  // Step 3: collect observations — INCREMENTALLY (T12088).
+  //
+  // The window was previously a fixed `now - 24h` with no record of what had
+  // already been consolidated, so every run re-clustered and re-sent the same
+  // material (measured: 25 → 28 → 30 → 36 → 37 across consecutive runs), while
+  // anything that aged past 24 h was consolidated NEVER rather than later.
+  //
+  // The watermark WIDENS the window when the daemon has been off and never
+  // narrows it below the nominal lookback — clustering still needs context.
+  const nominalLookbackMs = options.lookbackMs ?? DREAM_LOOKBACK_MS;
+  const watermark = await readDreamWatermark(statePath, options);
+  const lookbackMs = resolveLookbackMs(watermark, nominalLookbackMs);
   const collect = options.collectObservations ?? defaultCollectObservations;
-  let observations: CollectedObservation[];
+  let collected: CollectedObservation[];
   try {
-    observations = await collect(projectRoot, lookbackMs);
+    collected = await collect(projectRoot, lookbackMs);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     digest.warnings.push(`collection error: ${message}`);
-    observations = [];
+    collected = [];
   }
 
+  // Synthesis targets only what is genuinely new; the wider set above still
+  // informed clustering context.
+  const observations = selectUnconsolidated(collected, watermark);
   digest.observationsCollected = observations.length;
+  if (collected.length !== observations.length) {
+    digest.warnings.push(
+      `incremental: ${collected.length - observations.length} observation(s) already consolidated (watermark ${watermark ?? 'none'})`,
+    );
+  }
 
   if (observations.length === 0) {
     return {
@@ -1095,7 +1189,11 @@ export async function runDreamCycle(options: DreamCycleOptions): Promise<DreamCy
   }
 
   // Step 5 + 6: synthesise eligible clusters, store memories.
-  const clusterMinSize = options.clusterMinSize ?? DREAM_CLUSTER_MIN_SIZE;
+  //
+  // T12088: the minimum scales with the corpus. A fixed 5 meant a freshly
+  // dropped-in CLEO — which never has 5 similar observations — completed with
+  // `memoriesStored: 0` indefinitely, i.e. it could not begin learning at all.
+  const clusterMinSize = options.clusterMinSize ?? adaptiveClusterMinSize(observations.length);
   const maxClusters = options.maxClusters ?? DREAM_MAX_CLUSTERS;
   const minImportance = options.minImportance ?? DREAM_MIN_IMPORTANCE;
 
@@ -1167,6 +1265,11 @@ export async function runDreamCycle(options: DreamCycleOptions): Promise<DreamCy
     const message = err instanceof Error ? err.message : String(err);
     digest.warnings.push(`digest observation write error: ${message}`);
   }
+
+  // T12088: advance the watermark so the NEXT pass starts where this one ended.
+  // Written only on the completed path — a pass that errored out must be able to
+  // re-read the same material rather than skip it.
+  await writeDreamWatermark(statePath, nextWatermark(observations), options);
 
   return {
     kind: 'completed',

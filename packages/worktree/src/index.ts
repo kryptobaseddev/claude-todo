@@ -76,6 +76,7 @@ export {
   listWorktreesByProjectRoot,
   resolveWorktreeRoot,
 } from './worktree-list.js';
+export * from './worktree-locate.js';
 export type { MigrateWorktreeResult } from './worktree-migrate.js';
 export {
   discoverParentProjectRoot,
@@ -90,5 +91,3 @@ export {
   ensureWorktreeBuildReady,
 } from './worktree-preflight.js';
 export { pruneWorktrees } from './worktree-prune.js';
-
-export * from './worktree-locate.js';

@@ -15,9 +15,9 @@ import type { DestroyWorktreeOptions, DestroyWorktreeResult } from '@cleocode/co
 import { getGitRoot, gitSilent, gitSync } from './git.js';
 import { destroyWorktree as napiDestroyWorktree } from './napi-binding.js';
 import { computeProjectHash, resolveTaskWorktreePath } from './paths.js';
-import { locateTaskWorktree } from './worktree-locate.js';
 import { appendWorktreeAuditLog, removeWorktreeFromSentinelIndex } from './worktree-audit.js';
 import { runWorktreeHooks } from './worktree-hooks.js';
+import { locateTaskWorktree } from './worktree-locate.js';
 
 /**
  * Destroy the git worktree for a task.

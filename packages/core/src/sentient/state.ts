@@ -94,6 +94,23 @@ export interface SentientState {
   /** Reason supplied when killSwitch was last set (diagnostic only). */
   killSwitchReason: string | null;
   /**
+   * Consolidation high-water mark — the newest observation `created_at` the
+   * dream cycle has already synthesised (T12088).
+   *
+   * `null`/absent on a fresh state means "nothing consolidated yet", and the
+   * cycle falls back to its nominal lookback window.
+   *
+   * Why this is persisted rather than recomputed: the cycle previously used a
+   * fixed `now - 24h` window with no record of its own progress, so each run
+   * re-clustered and re-sent material it had already consolidated, while
+   * anything that aged past the window was consolidated NEVER rather than
+   * later. The watermark makes intake incremental AND lets a pass widen its
+   * window to catch up after the daemon has been off.
+   *
+   * @task T12088
+   */
+  dreamWatermark?: string | null;
+  /**
    * T1074: true when the daemon was paused by `pauseAllTiers(...)` as part of
    * an owner-triggered revert. Separate from `killSwitch` because resume
    * requires owner attestation (not just `cleo sentient resume`).

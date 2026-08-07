@@ -96,9 +96,16 @@ export const MEMORY_SAFE_TEST_DEFAULTS = {
   isolate: true,
   maxWorkers: MEMORY_SAFE_MAX_WORKERS,
   minWorkers: 1,
-  poolOptions: {
-    forks: {
-      execArgv: [`--max-old-space-size=${FORK_HEAP_MB}`],
-    },
-  },
+  // TOP-LEVEL `execArgv`, not `poolOptions.forks.execArgv`.
+  //
+  // Vitest 4 REMOVED `test.poolOptions` ("All previous poolOptions are now
+  // top-level options") and ignores the old shape with only a deprecation
+  // warning on stderr. T11839 wrote the nested form, so from the Vitest 4
+  // upgrade onward the fork count was still bounded (`maxWorkers` is top-level)
+  // while the per-fork heap ceiling silently evaporated — which is why the
+  // machine kept freezing despite a fix that looked present in the config.
+  //
+  // A config option that is silently ignored is worse than one that errors: the
+  // guard reads as active in review and is absent at runtime.
+  execArgv: [`--max-old-space-size=${FORK_HEAP_MB}`],
 } as const;

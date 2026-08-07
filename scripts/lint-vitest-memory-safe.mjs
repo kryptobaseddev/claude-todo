@@ -35,8 +35,7 @@
  * @task T12087
  */
 
-import { existsSync, readFileSync } from 'node:fs';
-import { globSync } from 'node:fs';
+import { existsSync, globSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const REPO = process.cwd();
@@ -82,6 +81,19 @@ for (const rel of configs) {
     continue;
   }
 
+  // Vitest 4 REMOVED `test.poolOptions` and ignores it with only a stderr
+  // deprecation warning. T11839's heap cap was written in that shape, so it was
+  // dead from the Vitest 4 upgrade onward while still reading as present in the
+  // config — the machine kept freezing behind a fix that looked applied.
+  if (/\bpoolOptions\s*:/.test(src)) {
+    violations.push(
+      `${rel}: uses \`poolOptions\`, which Vitest 4 REMOVED and silently ignores. ` +
+        `Move the setting to its top-level equivalent (\`execArgv\`, \`isolate\`, ` +
+        `\`maxWorkers\`, \`vmMemoryLimit\`). A silently-ignored guard is worse than a ` +
+        `missing one: it passes review and is absent at runtime.`,
+    );
+  }
+
   const after = src.slice(spreadIdx);
   if (/\bmaxWorkers\s*:/.test(after)) {
     violations.push(
@@ -91,7 +103,7 @@ for (const rel of configs) {
   }
   if (/execArgv\s*:/.test(after)) {
     violations.push(
-      `${rel}: re-declares \`poolOptions.forks.execArgv\` AFTER the spread, dropping ` +
+      `${rel}: re-declares \`execArgv\` AFTER the spread, dropping ` +
         `\`--max-old-space-size\`. One leaky test then grows until the kernel intervenes.`,
     );
   }
@@ -115,6 +127,4 @@ if (violations.length > 0) {
   process.exit(1);
 }
 
-console.log(
-  `lint-vitest-memory-safe: OK — ${configs.length} vitest config(s) spread ${MARKER}.`,
-);
+console.log(`lint-vitest-memory-safe: OK — ${configs.length} vitest config(s) spread ${MARKER}.`);
