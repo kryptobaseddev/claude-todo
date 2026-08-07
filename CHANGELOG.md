@@ -1,5 +1,38 @@
 # Changelog
 
+## [2026.8.3] (2026-08-07)
+
+### Added
+
+
+
+### Changed
+
+
+
+### Fixed
+
+- the brain layer runs on ANY machine — provider-agnostic dream cycle, cross-provider failover, keyless local-daemon admission _(provenance: [T12081](https://github.com/kryptobaseddev/cleo/search?q=T12081&type=commits), [T12082](https://github.com/kryptobaseddev/cleo/search?q=T12082&type=commits))_
+- no task could EVER be completed in a project without TypeScript — gate rigour now scales to the project's real toolchain _(provenance: [T12083](https://github.com/kryptobaseddev/cleo/search?q=T12083&type=commits))_
+- selfimprove --execute reported the wrong reason, fix-gen had no failover, and failover asked every substitute for the first provider's model _(provenance: [T12084](https://github.com/kryptobaseddev/cleo/search?q=T12084&type=commits), [T12085](https://github.com/kryptobaseddev/cleo/search?q=T12085&type=commits))_
+- cleo worktree destroy reported worktreeRemoved/branchDeleted without acting — resolve path and branch from git, not by convention _(provenance: [T12086](https://github.com/kryptobaseddev/cleo/search?q=T12086&type=commits))_
+- the vitest OOM guard was both misplaced AND dead since Vitest 4 — bounds now live in one SSoT every config spreads, enforced by gate 8 _(provenance: [T12087](https://github.com/kryptobaseddev/cleo/search?q=T12087&type=commits))_
+- the dream cycle re-processed its own window every pass, lost anything older than 24h forever, and could never start learning on a new project _(provenance: [T12088](https://github.com/kryptobaseddev/cleo/search?q=T12088&type=commits))_
+
+### Deprecated
+
+
+
+### Removed
+
+
+
+### Security
+
+
+
+### BREAKING CHANGES
+
 ## [2026.8.2] (2026-08-05)
 
 ### Added
