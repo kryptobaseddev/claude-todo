@@ -64,7 +64,8 @@
     "gen:tier-snapshot:check": "pnpm --filter @cleocode/core run gen:tier-snapshot:check",
     "render:invariants": "pnpm --filter @cleocode/contracts run build:ts && node packages/contracts/scripts/render-invariants-docs.mjs",
     "render:invariants:check": "pnpm --filter @cleocode/contracts run build:ts && node packages/contracts/scripts/render-invariants-docs.mjs --check",
-    "hooks:install": "simple-git-hooks"
+    "hooks:install": "simple-git-hooks",
+    "lint:vitest-memory-safe": "node scripts/lint-vitest-memory-safe.mjs"
   },
   "simple-git-hooks": {
     "commit-msg": "node scripts/hooks/commit-msg-release-lint.mjs \"$1\"",

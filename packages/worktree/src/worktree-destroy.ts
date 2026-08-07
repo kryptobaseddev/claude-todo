@@ -15,6 +15,7 @@ import type { DestroyWorktreeOptions, DestroyWorktreeResult } from '@cleocode/co
 import { getGitRoot, gitSilent, gitSync } from './git.js';
 import { destroyWorktree as napiDestroyWorktree } from './napi-binding.js';
 import { computeProjectHash, resolveTaskWorktreePath } from './paths.js';
+import { locateTaskWorktree } from './worktree-locate.js';
 import { appendWorktreeAuditLog, removeWorktreeFromSentinelIndex } from './worktree-audit.js';
 import { runWorktreeHooks } from './worktree-hooks.js';
 
@@ -48,9 +49,16 @@ export async function destroyWorktree(
   const { taskId, deleteBranch = true, force = false, hooks = [] } = options;
 
   const gitRoot = getGitRoot(projectRoot);
+
+  // T12086: ask git where the worktree IS and which branch it holds, instead of
+  // recomputing both by convention. A worktree provisioned under an earlier
+  // project-hash scheme is not at the recomputed path, and real branches carry
+  // a slug (`task/T11248-cleo-exodus`, not `task/T11248`) — so both derivations
+  // missed, and the function reported success for work it never did.
+  const located = locateTaskWorktree(projectRoot, taskId);
   const projectHash = computeProjectHash(projectRoot);
-  const worktreePath = resolveTaskWorktreePath(projectHash, taskId);
-  const branch = `task/${taskId}`;
+  const worktreePath = located?.path ?? resolveTaskWorktreePath(projectHash, taskId);
+  const branch = located?.branch ?? `task/${taskId}`;
 
   let worktreeRemoved = false;
   let branchDeleted = false;
@@ -141,8 +149,13 @@ export async function destroyWorktree(
         }
       }
     }
+  } else if (located !== null) {
+    // Registered with git but absent from disk — a stale registration. Pruning
+    // it IS the removal; without this the entry lingers forever.
+    gitSilent(['worktree', 'prune'], gitRoot);
+    worktreeRemoved = true;
   } else {
-    worktreeRemoved = true; // already gone
+    worktreeRemoved = true; // genuinely absent: not on disk, not registered
   }
 
   // Step 4: Optionally delete the branch.
@@ -151,8 +164,16 @@ export async function destroyWorktree(
       const branchExists = gitSync(['branch', '--list', branch], gitRoot);
       if (branchExists) {
         gitSync(['branch', '-D', branch], gitRoot);
+        branchDeleted = true;
+      } else {
+        // T12086: previously returned `branchDeleted: true` here. Reporting a
+        // deletion that did not happen is worse than reporting the miss — it is
+        // how a branch survives every cleanup pass unnoticed.
+        branchDeleted = false;
+        if (!error) {
+          error = `Branch '${branch}' not found — nothing deleted. The worktree's own HEAD is the source of truth for its branch name; a task id alone is not.`;
+        }
       }
-      branchDeleted = true;
     } catch (err) {
       if (!error) {
         error = `Failed to delete branch: ${err instanceof Error ? err.message : String(err)}`;

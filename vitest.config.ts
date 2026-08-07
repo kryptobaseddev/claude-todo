@@ -1,6 +1,6 @@
-import { cpus, totalmem } from 'node:os';
 import { svelte, vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { defineConfig } from 'vitest/config';
+import { MEMORY_SAFE_TEST_DEFAULTS } from './vitest.memory-safe.js';
 import { withWorkspaceSubpathAliases } from './vitest-workspace-resolver.js';
 
 // ---------------------------------------------------------------------------
@@ -17,18 +17,8 @@ import { withWorkspaceSubpathAliases } from './vitest-workspace-resolver.js';
 // single leaky/heavy test OOMs only its OWN fork (failing that one test)
 // instead of freezing the machine.
 // ---------------------------------------------------------------------------
-const GB = 1024 ** 3;
-const RAM_BUDGET_PER_FORK_GB = 6;
-const MEMORY_SAFE_MAX_WORKERS = Math.max(
-  1,
-  Math.min(
-    Math.max(1, cpus().length - 1),
-    Math.floor(totalmem() / (RAM_BUDGET_PER_FORK_GB * GB)),
-    6,
-  ),
-);
-/** Per-fork V8 old-space cap (MB) — bounds a single runaway/leaky test fork. */
-const FORK_HEAP_MB = 4096;
+// Memory-safe fork settings now live in ./vitest.memory-safe.ts so a DIRECT
+// per-package run inherits them too (T12087).
 
 export default defineConfig({
   // ---------------------------------------------------------------------------
@@ -84,19 +74,12 @@ export default defineConfig({
     // @see T658 Phase 1: vitest fork isolation
     // @see T630/T633 root-cause: vi.mock pollution across shards
     // ---------------------------------------------------------------------------
-    pool: 'forks',
-    isolate: true,
-    // Memory-safe concurrency (T11839 · see MEMORY_SAFE_MAX_WORKERS above).
-    // Bound BOTH the number of parallel forks and each fork's heap so running
-    // the suite on a 24-core/62 GB box cannot OOM-freeze the machine. Inherited
-    // by every package config via `test.extends: true`.
-    maxWorkers: MEMORY_SAFE_MAX_WORKERS,
-    minWorkers: 1,
-    poolOptions: {
-      forks: {
-        execArgv: [`--max-old-space-size=${FORK_HEAP_MB}`],
-      },
-    },
+    // Memory-safe concurrency (T11839 · T12087). Spread from the SSoT rather
+    // than declared here, because `test.extends: true` does NOT reach a direct
+    // `vitest run --root packages/<pkg>` invocation — that package IS the root,
+    // so there is nothing to extend. Every package config spreads the same
+    // object; `scripts/lint-vitest-memory-safe.mjs` enforces it.
+    ...MEMORY_SAFE_TEST_DEFAULTS,
     // T753: Force-kill worker forks that fail to exit after teardown.
     // Without this, workers with open SQLite handles or process.once('SIGTERM')
     // handlers that call async code can block the runner indefinitely.

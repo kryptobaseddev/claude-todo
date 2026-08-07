@@ -462,6 +462,7 @@ const checkProvenanceCommand = defineCommand({
  *   Gate 5 (T9837e): lint-cli-package-boundary.mjs     — no helper > 30 LOC in CLI commands
  *   Gate 6 (T11640): lint-no-bare-get-active-session.mjs — no NEW bare getActiveSession() callsites
  *   Gate 7 (T12041): lint-no-domain-db-singleton.mjs    — no NEW per-domain DB singleton cache
+ *   Gate 8 (T12087): lint-vitest-memory-safe.mjs       — every vitest config bounds fork count + heap
  *
  * Each gate is run in --check mode (baseline tolerance). A gate whose script
  * does not yet exist on disk is reported as "skipped" (non-blocking) to allow
@@ -544,6 +545,15 @@ const checkArchCommand = defineCommand({
         script: 'scripts/lint-no-domain-db-singleton.mjs',
         description:
           'No NEW per-domain DB singleton cache (bind via the ProjectStore/GlobalStore ports)',
+      },
+      {
+        // T12087: zero-tolerance. An unbounded fork pool froze this machine
+        // twice, and it only ever bites locally — CI runners have 2-4 cores, so
+        // the unsafe default passes there and takes down the developer instead.
+        id: 'gate-8',
+        task: 'T12087',
+        script: 'scripts/lint-vitest-memory-safe.mjs',
+        description: 'Every vitest config spreads the memory-safe fork bounds (workers + heap cap)',
       },
     ] as const;
 

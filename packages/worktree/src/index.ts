@@ -90,3 +90,5 @@ export {
   ensureWorktreeBuildReady,
 } from './worktree-preflight.js';
 export { pruneWorktrees } from './worktree-prune.js';
+
+export * from './worktree-locate.js';
