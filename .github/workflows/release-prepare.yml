@@ -40,6 +40,10 @@ on:
         description: 'Epic task ID (e.g. T9999) used by `cleo release plan`'
         type: string
         required: false
+      tasks:
+        description: 'Comma-separated task IDs (e.g. T101,T102) used by `cleo release plan` when the release is task-scoped rather than epic-scoped'
+        type: string
+        required: false
       channel:
         description: 'Release channel'
         type: choice
@@ -310,11 +314,24 @@ jobs:
           PLAN_FILE=".cleo/release/${{ inputs.version }}.plan.json"
           if [ -z "${{ inputs.plan-blob-sha256 }}" ]; then
             echo "No plan-blob-sha256 input — generating fresh plan."
-            EPIC_ARGS=()
+            # T12089: `cleo release plan` REQUIRES a scope (--saga | --epic |
+            # --tasks). This branch previously passed none whenever `epic` was
+            # empty, so `plan` exited 2 and every release died here at
+            # "Prepare bump-PR" — after a full green preflight. Forward whichever
+            # scope the dispatcher supplied, and if none was, say so plainly
+            # instead of surfacing an argparse error from a nested command.
+            SCOPE_ARGS=()
             if [ -n "${{ inputs.epic }}" ]; then
-              EPIC_ARGS=(--epic "${{ inputs.epic }}")
+              SCOPE_ARGS+=(--epic "${{ inputs.epic }}")
             fi
-            cleo release plan "${{ inputs.version }}" "${EPIC_ARGS[@]}" --json > "$PLAN_FILE"
+            if [ -n "${{ inputs.tasks }}" ]; then
+              SCOPE_ARGS+=(--tasks "${{ inputs.tasks }}")
+            fi
+            if [ ${#SCOPE_ARGS[@]} -eq 0 ]; then
+              echo "::error::No release scope supplied. Dispatch with 'epic' or 'tasks' (cleo release plan requires --saga, --epic or --tasks), or pass plan-blob-sha256 with a committed plan file."
+              exit 1
+            fi
+            cleo release plan "${{ inputs.version }}" "${SCOPE_ARGS[@]}" --json > "$PLAN_FILE"
           else
             echo "Verifying pre-computed plan against sha256=${{ inputs.plan-blob-sha256 }}"
             if [ ! -f "$PLAN_FILE" ]; then

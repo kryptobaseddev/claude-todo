@@ -223,6 +223,70 @@ afterEach(async () => {
 });
 
 describe('releaseOpen — workflow input schema parity (T10105)', () => {
+  it('forwards the plan SCOPE, and both scope keys are declared in the YAML (T12089)', async () => {
+    // Why this case exists: `release open` used to dispatch ONLY `version`. The
+    // workflow then regenerated the plan, and `cleo release plan` requires
+    // `--saga | --epic | --tasks`, so it exited 2 at "Prepare bump-PR" — AFTER
+    // lint, typecheck, both test shards and build had all passed. Every release
+    // died there.
+    //
+    // The pre-existing parity case cannot catch this: it dispatches without a
+    // scope, so `epic`/`tasks` never appear among the passed keys and an
+    // undeclared input would sail through to a live HTTP 422.
+    const version = 'v2026.6.1';
+    writePlanFile(version);
+    writeStubWorkflow();
+    await seedReleaseRow(version);
+
+    const runner = makeStubRunner();
+    const result = await releaseOpen(
+      { version, projectRoot: testDir, epic: 'T9999', tasks: 'T101,T102' },
+      runner,
+    );
+    expect(result.success).toBe(true);
+
+    const dispatched = runner.calls.find((c) => c.args[0] === 'workflow' && c.args[1] === 'run');
+    expect(dispatched).toBeDefined();
+
+    const passed = new Map<string, string>();
+    const args = dispatched?.args ?? [];
+    for (let i = 0; i < args.length; i++) {
+      if (args[i] === '--field' && typeof args[i + 1] === 'string') {
+        const pair = args[i + 1] as string;
+        const eq = pair.indexOf('=');
+        if (eq > 0) passed.set(pair.slice(0, eq), pair.slice(eq + 1));
+      }
+    }
+
+    // The scope actually rides along...
+    expect(passed.get('epic')).toBe('T9999');
+    expect(passed.get('tasks')).toBe('T101,T102');
+
+    // ...and both keys are declared in the REAL workflow, so the GitHub Actions
+    // API cannot reject the dispatch with "Unexpected inputs provided".
+    const declared = readWorkflowInputKeys();
+    expect(declared).toContain('epic');
+    expect(declared).toContain('tasks');
+  });
+
+  it('omits the scope fields entirely when no scope was supplied', async () => {
+    // An empty `--field epic=` would be sent as a real (empty) input, and the
+    // workflow's `-n` guard would treat it as absent anyway — but passing empty
+    // values muddies the audit trail of what was actually dispatched.
+    const version = 'v2026.6.2';
+    writePlanFile(version);
+    writeStubWorkflow();
+    await seedReleaseRow(version);
+
+    const runner = makeStubRunner();
+    await releaseOpen({ version, projectRoot: testDir, epic: '', tasks: '' }, runner);
+
+    const dispatched = runner.calls.find((c) => c.args[0] === 'workflow' && c.args[1] === 'run');
+    const joined = (dispatched?.args ?? []).join(' ');
+    expect(joined).not.toContain('epic=');
+    expect(joined).not.toContain('tasks=');
+  });
+
   it('release-prepare.yml declares `version` as the only required input', () => {
     const requiredInputs = readRequiredWorkflowInputKeys();
     expect(requiredInputs.sort()).toEqual(['version']);

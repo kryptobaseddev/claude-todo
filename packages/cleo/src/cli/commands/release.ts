@@ -416,6 +416,17 @@ const openCommand = defineCommand({
       type: 'boolean',
       description: 'Commit the plan file to the active branch before dispatching',
     },
+    // T12089: the workflow regenerates the plan when no committed plan is
+    // supplied, and `cleo release plan` requires a scope — so one of these must
+    // ride along or the dispatched run dies at "Prepare bump-PR".
+    epic: {
+      type: 'string',
+      description: 'Epic task ID forwarded as the plan scope (e.g. T9999)',
+    },
+    tasks: {
+      type: 'string',
+      description: 'Comma-separated task IDs forwarded as the plan scope (task-scoped release)',
+    },
   },
   async run({ args }) {
     await dispatchFromCli(
@@ -427,6 +438,8 @@ const openCommand = defineCommand({
         workflow: args.workflow as string | undefined,
         watch: args.watch === true,
         commitPlan: args['commit-plan'] === true,
+        epic: args.epic as string | undefined,
+        tasks: args.tasks as string | undefined,
       },
       { command: 'release' },
     );

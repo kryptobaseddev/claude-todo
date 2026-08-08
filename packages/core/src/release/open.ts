@@ -92,6 +92,23 @@ export interface ReleaseOpenOptions {
    */
   commitPlan?: boolean;
   /**
+   * Epic task ID forwarded to the workflow's `epic` input (T12089).
+   *
+   * The workflow regenerates the plan when no `plan-blob-sha256` is supplied,
+   * and `cleo release plan` REQUIRES a scope — so without this (or
+   * {@link tasks}) the dispatched run dies at "Prepare bump-PR" after a full
+   * green preflight.
+   */
+  epic?: string;
+  /**
+   * Comma-separated task IDs forwarded to the workflow's `tasks` input (T12089).
+   *
+   * Use for a task-scoped release, where an epic would drag in sibling tasks
+   * that legitimately have no evidence yet and fail the plan with
+   * `E_EVIDENCE_INSUFFICIENT`.
+   */
+  tasks?: string;
+  /**
    * Project root override. Defaults to the canonical project root resolved
    * via {@link getProjectRoot} (walks up from `process.cwd()` for monorepo
    * subdir invocations; honours `CLEO_ROOT` / `CLEO_PROJECT_ROOT`).
@@ -539,18 +556,33 @@ export async function releaseOpen(
     }
   }
 
-  // ── R-060 / T10105: dispatch the workflow ─────────────────────────────
+  // ── R-060 / T10105 / T12089: dispatch the workflow ────────────────────
   // Canonical input schema for `release-prepare.yml workflow_dispatch.inputs`:
   //   - `version` (string, required) — CalVer release version with v-prefix
+  //   - `epic`  (string, optional)   — plan scope
+  //   - `tasks` (string, optional)   — plan scope (comma-separated)
   //
-  // The pre-T10105 implementation also passed `plan-blob-sha256` which is
-  // NOT declared in the workflow's `inputs:` block; `gh workflow run`
-  // tolerated it locally but the GitHub Actions API rejected it with
-  // HTTP 422 "Unexpected inputs provided" on at least one ship attempt.
-  // Keep this `--field` set in lockstep with the YAML inputs declaration
-  // and the `release-open-field-schema.test.ts` parity check.
+  // T12089: sending ONLY `version` made every release fail. With no
+  // `plan-blob-sha256` the workflow regenerates the plan, and `cleo release
+  // plan` requires `--saga | --epic | --tasks`, so it exited 2 at "Prepare
+  // bump-PR" — after lint, typecheck, both test shards and build had all
+  // passed. The scope must ride along.
+  //
+  // `plan-blob-sha256` is still NOT forwarded: the verify branch needs the plan
+  // FILE present in the workflow checkout, and `.cleo/` is gitignored, so the
+  // hash alone cannot be validated there. Use `--commit-plan` for that path.
+  //
+  // Keep this `--field` set in lockstep with the YAML inputs declaration and
+  // the `release-open-field-schema.test.ts` parity check.
+  const dispatchFields = ['--field', `version=${opts.version}`];
+  if (opts.epic !== undefined && opts.epic !== '') {
+    dispatchFields.push('--field', `epic=${opts.epic}`);
+  }
+  if (opts.tasks !== undefined && opts.tasks !== '') {
+    dispatchFields.push('--field', `tasks=${opts.tasks}`);
+  }
   try {
-    runner.runGh(['workflow', 'run', workflow, '--field', `version=${opts.version}`], projectRoot);
+    runner.runGh(['workflow', 'run', workflow, ...dispatchFields], projectRoot);
   } catch (err) {
     return engineError<ReleaseOpenResult>(
       E_GH_NOT_AUTHENTICATED,
