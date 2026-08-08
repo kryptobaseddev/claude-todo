@@ -402,6 +402,14 @@ export class ReleaseHandler implements DomainHandler {
             workflow: typeof params?.workflow === 'string' ? params.workflow : undefined,
             watch: typeof params?.watch === 'boolean' ? params.watch : false,
             commitPlan: typeof params?.commitPlan === 'boolean' ? params.commitPlan : false,
+            // T12089: forward the plan scope. This mapping is explicit, so a
+            // param the CLI accepts but this block omits is silently dropped —
+            // `--tasks` reached the CLI, never reached `releaseOpen`, and the
+            // dispatched workflow then had no scope to plan with. Adding an
+            // option in core + the CLI is not enough; the dispatch layer is a
+            // second chokepoint that must carry it too.
+            epic: typeof params?.epic === 'string' ? params.epic : undefined,
+            tasks: typeof params?.tasks === 'string' ? params.tasks : undefined,
             projectRoot: getProjectRoot(),
           };
           return wrapResult(await releaseOpen(typed), 'mutate', 'release', operation, startTime);
