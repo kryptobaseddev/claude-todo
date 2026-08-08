@@ -8392,6 +8392,28 @@ export const OPERATIONS: OperationDef[] = [
         required: false,
         description: 'Commit plan file before dispatching',
       },
+      // T12089: the plan SCOPE. The workflow regenerates the plan when no
+      // committed plan is supplied, and `cleo release plan` requires
+      // `--saga | --epic | --tasks` — so without one of these the dispatched
+      // run dies at "Prepare bump-PR" after a fully green preflight.
+      //
+      // A param absent from this registry is STRIPPED before the domain handler
+      // sees it, silently. `--tasks` was accepted by the CLI, forwarded by the
+      // handler and by `releaseOpen`, and still arrived empty at the workflow
+      // because this declaration was the fourth hop in the chain.
+      {
+        name: 'epic',
+        type: 'string',
+        required: false,
+        description: 'Epic task ID forwarded as the plan scope (e.g. T9999)',
+      },
+      {
+        name: 'tasks',
+        type: 'string',
+        required: false,
+        description:
+          'Comma-separated task IDs forwarded as the plan scope for a task-scoped release',
+      },
     ] satisfies ParamDef[],
   },
 

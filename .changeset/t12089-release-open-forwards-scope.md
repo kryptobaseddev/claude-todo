@@ -24,3 +24,5 @@ cleo release plan "$VERSION" "${EPIC_ARGS[@]}" --json > "$PLAN_FILE"
 
 **Follow-up (same task):** the dispatch layer was a THIRD chokepoint. `packages/cleo/src/dispatch/domains/release.ts` maps params to `ReleaseOpenOptions` explicitly, so `--tasks` reached the CLI, was accepted, and was then silently dropped before `releaseOpen` ever saw it — the dispatched workflow again had no scope. Verified by the new guard firing in CI with the exact message it was written to produce ("No release scope supplied") rather than a nested argparse error. Adding an option to core + the CLI is not sufficient; every explicit mapping between them must carry it.
 
+**Second follow-up — a FOURTH hop.** `operations-registry.ts` declares each operation's accepted params, and a param absent from that list is **stripped silently** before the domain handler runs. So `--tasks` was accepted by the CLI, forwarded by the dispatch handler, forwarded by `releaseOpen` — and still arrived empty at the workflow, because the registry never declared it. Four hops had to agree: CLI arg → registry declaration → domain handler mapping → `gh --field`. Each was a separate silent drop.
+
