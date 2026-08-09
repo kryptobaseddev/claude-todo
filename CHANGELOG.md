@@ -11,6 +11,7 @@
 - the vitest OOM guard was both misplaced AND dead since Vitest 4 — bounds now live in one SSoT every config spreads, enforced by gate 8 _(provenance: [T12087](https://github.com/kryptobaseddev/cleo/search?q=T12087&type=commits))_
 - the dream cycle re-processed its own window every pass, lost anything older than 24h forever, and could never start learning on a new project _(provenance: [T12088](https://github.com/kryptobaseddev/cleo/search?q=T12088&type=commits))_
 - cleo release open could not cut ANY release — it dispatched only `version`, so the workflow planned with no scope and exited 2 at Prepare bump-PR _(provenance: [T12089](https://github.com/kryptobaseddev/cleo/search?q=T12089&type=commits))_
+- two independently-bounded concurrency caps composed to 144 GiB of permitted heap on a 62 GiB machine — heavy tool budgets are now derived from RAM, not core count _(provenance: [T12091](https://github.com/kryptobaseddev/cleo/search?q=T12091&type=commits))_
 - changelog emitted empty sections; --commit-plan silently committed nothing; and the workflow cannot re-derive a plan because CI has no tasks.db _(provenance: [T12092](https://github.com/kryptobaseddev/cleo/search?q=T12092&type=commits))_
 - release-prepare invoked TWO commands that never existed (cleo version-bump, cleo release changelog) — every dispatch died at exit 127 after a full green preflight _(provenance: [T12093](https://github.com/kryptobaseddev/cleo/search?q=T12093&type=commits))_
 
