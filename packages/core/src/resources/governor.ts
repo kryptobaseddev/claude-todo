@@ -107,6 +107,15 @@ export interface BudgetOptions {
   readonly headroomMb?: number;
   /** Estimated RAM per agent session (incl. ~300 MB MCP suite), MiB. Default 4096. */
   readonly agentEstRamMb?: number;
+  /**
+   * Estimated worst-case RAM for ONE `test-run` / `scoped-build`, in MiB.
+   * Default 24576 (24 GiB) — a full `pnpm run test` is permitted 6 vitest forks
+   * × a 4 GiB heap cap by `vitest.memory-safe.ts`, and the governor has to
+   * admit against what a run may actually hold, not what it usually holds.
+   *
+   * @task T12091
+   */
+  readonly testRunEstRamMb?: number;
   /** `some avg10` (pp) at/above which test/build budgets halve. Default 10. */
   readonly holdSomeAvg10?: number;
   /** `some avg10` (pp) at/above which test/build budgets floor to 1. Default 25. */
@@ -131,8 +140,9 @@ function someAvg10(sample: ResourceSample): number {
  * - `interactive-cli` → `Infinity` (never gated).
  * - `full-build` → `1` machine-wide, pressure-independent.
  * - `agent-session` → `clamp(1, ⌊(MemAvailable − headroom)/estRamMb⌋, cpus−2)`.
- * - `test-run` / `scoped-build` → `max(1, ⌊cpus/4⌋)`, ×0.5 when `some>hold`,
- *   floored to 1 when `some>floor`.
+ * - `test-run` / `scoped-build` → `clamp(1, ⌊(MemAvailable − headroom)/estRamMb⌋,
+ *   ⌊cpus/4⌋)`, ×0.5 when `some>hold`, floored to 1 when `some>floor` (T12091:
+ *   was core-only, which authorised 144 GiB of heap on a 62 GiB box).
  * - `llm-call` → `max(1, cpus−2)` (primarily gated by the llm-queue elsewhere).
  * - `db-heavy` → `1`, deferred (→0) under `backoff`-level pressure.
  * - `background-autonomous` → `1` only when pressure is `ok`, else `0`.
@@ -169,7 +179,15 @@ export function computeClassBudget(
       return Math.max(1, cpus - 2);
     case 'test-run':
     case 'scoped-build': {
-      const base = Math.max(1, Math.floor(cpus / 4));
+      // T12091: this was core-only — `max(1, ⌊cpus/4⌋)` — which on a 24-core
+      // box admitted 6 concurrent runs. Each run is itself allowed 6 vitest
+      // forks × 4 GiB, so the governor was authorising 144 GiB of heap on a
+      // 62 GiB machine and the box froze without any single bound being
+      // violated. What limits a test run is MEMORY; cores say nothing about it.
+      // Mirrors the `agent-session` shape, which had this right all along.
+      const estRamBytes = (opts.testRunEstRamMb ?? 24576) * MB;
+      const byMem = Math.floor((availBytes - headroomBytes) / estRamBytes);
+      const base = clamp(1, byMem, Math.max(1, Math.floor(cpus / 4)));
       if (some > floor) return 1;
       if (some > hold) return Math.max(1, Math.floor(base / 2));
       return base;

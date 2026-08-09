@@ -71,12 +71,48 @@ afterEach(() => {
 });
 
 describe('defaultMaxConcurrent', () => {
-  it('returns max(1, cpus/4) for test/build', () => {
-    expect(defaultMaxConcurrent('test', 16)).toBe(4);
-    expect(defaultMaxConcurrent('build', 16)).toBe(4);
-    expect(defaultMaxConcurrent('test', 1)).toBe(1);
-    expect(defaultMaxConcurrent('test', 2)).toBe(1);
-    expect(defaultMaxConcurrent('test', 8)).toBe(2);
+  // T12091: heavy tools are bounded by RAM as well as cores. RAM is passed
+  // explicitly so these assertions do not depend on the host running them —
+  // the old core-only rule silently gave a 16 GiB VM the same 6 slots as a
+  // 256 GiB server.
+  const AMPLE_RAM_GIB = 1024;
+
+  it('returns max(1, cpus/4) for test/build when RAM is not the binding constraint', () => {
+    expect(defaultMaxConcurrent('test', 16, AMPLE_RAM_GIB)).toBe(4);
+    expect(defaultMaxConcurrent('build', 16, AMPLE_RAM_GIB)).toBe(4);
+    expect(defaultMaxConcurrent('test', 1, AMPLE_RAM_GIB)).toBe(1);
+    expect(defaultMaxConcurrent('test', 2, AMPLE_RAM_GIB)).toBe(1);
+    expect(defaultMaxConcurrent('test', 8, AMPLE_RAM_GIB)).toBe(2);
+  });
+
+  it('lets RAM bind BELOW the core budget for test/build', () => {
+    // The measured freeze: 24 cores / 62 GiB permitted 6 concurrent suites at
+    // 6 forks × 4 GiB each = 144 GiB of heap on a 62 GiB box.
+    expect(defaultMaxConcurrent('test', 24, 62)).toBe(2);
+    expect(defaultMaxConcurrent('build', 24, 62)).toBe(2);
+  });
+
+  it('floors to ONE slot when a single run exceeds total RAM', () => {
+    // A many-core, low-RAM VM is the worst case for the old rule: it got 6.
+    expect(defaultMaxConcurrent('test', 24, 16)).toBe(1);
+    expect(defaultMaxConcurrent('test', 64, 8)).toBe(1);
+  });
+
+  it('never returns below 1, whatever the inputs', () => {
+    for (const [cpus, ram] of [
+      [0, 0],
+      [1, 0.5],
+      [-4, -1],
+    ] as const) {
+      expect(defaultMaxConcurrent('test', cpus, ram)).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it('leaves light tools on the core-derived budget — RAM does not bind them', () => {
+    // lint/typecheck are single-process; bounding them by RAM would serialise
+    // cheap work for no reason.
+    expect(defaultMaxConcurrent('lint', 16, 8)).toBe(8);
+    expect(defaultMaxConcurrent('typecheck', 16, 8)).toBe(8);
   });
 
   it('returns max(2, cpus/2) for lint/typecheck/audit/security-scan', () => {
