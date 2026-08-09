@@ -70,13 +70,17 @@ afterEach(() => {
   restoreCleoHome();
 });
 
-describe('defaultMaxConcurrent', () => {
-  // T12091: heavy tools are bounded by RAM as well as cores. RAM is passed
-  // explicitly so these assertions do not depend on the host running them —
-  // the old core-only rule silently gave a 16 GiB VM the same 6 slots as a
-  // 256 GiB server.
-  const AMPLE_RAM_GIB = 1024;
+/**
+ * RAM figure large enough that the CORE budget is the binding constraint.
+ *
+ * T12091 made heavy-tool budgets RAM-derived, so every assertion about the
+ * core rule must pin RAM explicitly — otherwise the expected value depends on
+ * whichever host runs the suite (a 16 GiB CI runner and a 62 GiB workstation
+ * resolve different budgets from identical inputs).
+ */
+const AMPLE_RAM_GIB = 1024;
 
+describe('defaultMaxConcurrent', () => {
   it('returns max(1, cpus/4) for test/build when RAM is not the binding constraint', () => {
     expect(defaultMaxConcurrent('test', 16, AMPLE_RAM_GIB)).toBe(4);
     expect(defaultMaxConcurrent('build', 16, AMPLE_RAM_GIB)).toBe(4);
@@ -159,12 +163,24 @@ describe('resolveMaxConcurrent', () => {
   });
 
   it('falls back to defaultMaxConcurrent when env is unset', () => {
-    expect(resolveMaxConcurrent('test', 16)).toBe(4);
+    expect(resolveMaxConcurrent('test', 16, AMPLE_RAM_GIB)).toBe(4);
   });
 
   it('ignores non-numeric env values', () => {
     process.env.CLEO_TOOL_CONCURRENCY_TEST = 'abc';
-    expect(resolveMaxConcurrent('test', 16)).toBe(4);
+    expect(resolveMaxConcurrent('test', 16, AMPLE_RAM_GIB)).toBe(4);
+  });
+
+  it('lets RAM bind the fallback below the core budget (T12091)', () => {
+    // Without an env override, a low-RAM host must not be handed the core
+    // budget — this is the composition that froze the workstation.
+    expect(resolveMaxConcurrent('test', 24, 62)).toBe(2);
+    expect(resolveMaxConcurrent('test', 24, 16)).toBe(1);
+  });
+
+  it('an env override still bypasses the RAM bound — it is the one escape hatch', () => {
+    process.env.CLEO_TOOL_CONCURRENCY_TEST = '8';
+    expect(resolveMaxConcurrent('test', 24, 16)).toBe(8);
   });
 });
 
@@ -290,13 +306,18 @@ describe('acquireGlobalSlot pressure scaling (T12001)', () => {
   it('shrinks the acquirable window to 1 under backoff pressure, recovers on release', async () => {
     isolateCleoHome();
     const high = makeSample(30); // some>25 → effectiveMax = 1 for 'test'
-    const first = await acquireGlobalSlot('test', { pressureSample: high, cpuCount: 16 });
+    const first = await acquireGlobalSlot('test', {
+      pressureSample: high,
+      cpuCount: 16,
+      totalRamGib: AMPLE_RAM_GIB,
+    });
     try {
       // Only one slot is eligible under high pressure → second acquire times out.
       await expect(
         acquireGlobalSlot('test', {
           pressureSample: high,
           cpuCount: 16,
+          totalRamGib: AMPLE_RAM_GIB,
           pollMs: 10,
           timeoutMs: 100,
         }),
@@ -308,6 +329,7 @@ describe('acquireGlobalSlot pressure scaling (T12001)', () => {
     const again = await acquireGlobalSlot('test', {
       pressureSample: high,
       cpuCount: 16,
+      totalRamGib: AMPLE_RAM_GIB,
       timeoutMs: 200,
     });
     await again();
@@ -319,11 +341,13 @@ describe('acquireGlobalSlot pressure scaling (T12001)', () => {
     const a = await acquireGlobalSlot('test', {
       pressureSample: low,
       cpuCount: 16,
+      totalRamGib: AMPLE_RAM_GIB,
       timeoutMs: 500,
     });
     const b = await acquireGlobalSlot('test', {
       pressureSample: low,
       cpuCount: 16,
+      totalRamGib: AMPLE_RAM_GIB,
       timeoutMs: 500,
     });
     // Two concurrent grants coexist under low pressure.

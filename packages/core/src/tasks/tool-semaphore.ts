@@ -101,6 +101,17 @@ export interface AcquireSlotOptions {
    */
   cpuCount?: number;
   /**
+   * Override `os.totalmem()` (in GiB) for tests.
+   *
+   * T12091 made the heavy-tool budget RAM-derived, which would otherwise make
+   * the slot count depend on whatever host the suite runs on — a 16 GiB CI
+   * runner and a 62 GiB workstation resolve different budgets for identical
+   * inputs. Injecting it keeps semaphore behaviour deterministic.
+   *
+   * @internal
+   */
+  totalRamGib?: number;
+  /**
    * Memory-pressure sample used to scale the effective slot count for the
    * pressure-sensitive `test`/`build` tools (T12001, Epic T11992). When
    * omitted, a best-effort live sample is taken (fail-open to the static slot
@@ -206,7 +217,11 @@ export function defaultMaxConcurrent(
  *
  * @task T1534
  */
-export function resolveMaxConcurrent(canonical: CanonicalTool, cpuCount?: number): number {
+export function resolveMaxConcurrent(
+  canonical: CanonicalTool,
+  cpuCount?: number,
+  totalRamGib?: number,
+): number {
   const envKey = `CLEO_TOOL_CONCURRENCY_${canonical.toUpperCase().replace(/-/g, '_')}`;
   const raw = process.env[envKey];
   if (raw !== undefined && raw !== '') {
@@ -216,7 +231,11 @@ export function resolveMaxConcurrent(canonical: CanonicalTool, cpuCount?: number
       return parsed;
     }
   }
-  return defaultMaxConcurrent(canonical, cpuCount ?? availableParallelism());
+  return defaultMaxConcurrent(
+    canonical,
+    cpuCount ?? availableParallelism(),
+    totalRamGib ?? totalmem() / 1024 ** 3,
+  );
 }
 
 /**
@@ -344,7 +363,7 @@ export async function acquireGlobalSlot(
   canonical: CanonicalTool,
   opts: AcquireSlotOptions = {},
 ): Promise<ReleaseSlotFn> {
-  const max = resolveMaxConcurrent(canonical, opts.cpuCount);
+  const max = resolveMaxConcurrent(canonical, opts.cpuCount, opts.totalRamGib);
   if (!Number.isFinite(max) || max <= 0) {
     return NOOP_RELEASE;
   }
