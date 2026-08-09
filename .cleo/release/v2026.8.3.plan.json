@@ -7,7 +7,7 @@
   "channel": "latest",
   "epicId": "T11396",
   "releaseKind": "regular",
-  "createdAt": "2026-08-09T03:04:53.374Z",
+  "createdAt": "2026-08-09T05:03:28.146Z",
   "createdBy": "keatonhoskins",
   "previousVersion": "v2026.8.2",
   "previousTag": "v2026.8.2",
@@ -122,6 +122,18 @@
       ],
       "epicAncestor": "T11396",
       "ivtrPhaseAtPlan": "contribution"
+    },
+    {
+      "id": "T12093",
+      "kind": "fix",
+      "impact": "patch",
+      "userFacingSummary": "release-prepare invoked TWO commands that never existed — cleo version-bump + cleo release changelog (gate 15)",
+      "evidenceAtoms": [
+        "files:AGENTS.md,scripts/lint-workflow-cleo-commands.mjs",
+        "pr:1173"
+      ],
+      "epicAncestor": "T11396",
+      "ivtrPhaseAtPlan": "contribution"
     }
   ],
   "changelog": {
@@ -136,7 +148,8 @@
       "T12087",
       "T12088",
       "T12089",
-      "T12092"
+      "T12092",
+      "T12093"
     ],
     "chores": [],
     "breaking": []
@@ -146,7 +159,7 @@
       "name": "test",
       "atom": "tool:test",
       "status": "unresolved",
-      "lastVerifiedAt": "2026-08-09T03:04:53.374Z",
+      "lastVerifiedAt": "2026-08-09T05:03:28.146Z",
       "resolvedCommand": "pnpm run test",
       "resolvedSource": "project-context"
     },
@@ -154,7 +167,7 @@
       "name": "build",
       "atom": "tool:build",
       "status": "unresolved",
-      "lastVerifiedAt": "2026-08-09T03:04:53.374Z",
+      "lastVerifiedAt": "2026-08-09T05:03:28.146Z",
       "resolvedCommand": "pnpm run build",
       "resolvedSource": "project-context"
     },
@@ -162,7 +175,7 @@
       "name": "lint",
       "atom": "tool:lint",
       "status": "unresolved",
-      "lastVerifiedAt": "2026-08-09T03:04:53.374Z",
+      "lastVerifiedAt": "2026-08-09T05:03:28.146Z",
       "resolvedCommand": "npx biome check .",
       "resolvedSource": "language-default"
     },
@@ -170,7 +183,7 @@
       "name": "typecheck",
       "atom": "tool:typecheck",
       "status": "unresolved",
-      "lastVerifiedAt": "2026-08-09T03:04:53.374Z",
+      "lastVerifiedAt": "2026-08-09T05:03:28.146Z",
       "resolvedCommand": "npx tsc --noEmit",
       "resolvedSource": "language-default"
     },
@@ -178,7 +191,7 @@
       "name": "audit",
       "atom": "tool:audit",
       "status": "unresolved",
-      "lastVerifiedAt": "2026-08-09T03:04:53.374Z",
+      "lastVerifiedAt": "2026-08-09T05:03:28.146Z",
       "resolvedCommand": "npm audit",
       "resolvedSource": "language-default"
     },
@@ -186,7 +199,7 @@
       "name": "security-scan",
       "atom": "tool:security-scan",
       "status": "unresolved",
-      "lastVerifiedAt": "2026-08-09T03:04:53.374Z",
+      "lastVerifiedAt": "2026-08-09T05:03:28.146Z",
       "resolvedCommand": "npm audit",
       "resolvedSource": "language-default"
     }
@@ -214,8 +227,8 @@
   "meta": {
     "firstEverRelease": false,
     "archetype": "node",
-    "releaseNotes": "## v2026.8.3 — 2026-08-09\n\n### Fixed\n\n- the brain layer runs on ANY machine — provider-agnostic dream cycle, cross-provider failover, keyless local-daemon admission _(provenance: [T12081](https://github.com/kryptobaseddev/cleo/search?q=T12081&type=commits), [T12082](https://github.com/kryptobaseddev/cleo/search?q=T12082&type=commits))_\n- no task could EVER be completed in a project without TypeScript — gate rigour now scales to the project's real toolchain _(provenance: [T12083](https://github.com/kryptobaseddev/cleo/search?q=T12083&type=commits))_\n- selfimprove --execute reported the wrong reason, fix-gen had no failover, and failover asked every substitute for the first provider's model _(provenance: [T12084](https://github.com/kryptobaseddev/cleo/search?q=T12084&type=commits), [T12085](https://github.com/kryptobaseddev/cleo/search?q=T12085&type=commits))_\n- cleo worktree destroy reported worktreeRemoved/branchDeleted without acting — resolve path and branch from git, not by convention _(provenance: [T12086](https://github.com/kryptobaseddev/cleo/search?q=T12086&type=commits))_\n- the vitest OOM guard was both misplaced AND dead since Vitest 4 — bounds now live in one SSoT every config spreads, enforced by gate 8 _(provenance: [T12087](https://github.com/kryptobaseddev/cleo/search?q=T12087&type=commits))_\n- the dream cycle re-processed its own window every pass, lost anything older than 24h forever, and could never start learning on a new project _(provenance: [T12088](https://github.com/kryptobaseddev/cleo/search?q=T12088&type=commits))_\n- cleo release open could not cut ANY release — it dispatched only `version`, so the workflow planned with no scope and exited 2 at Prepare bump-PR _(provenance: [T12089](https://github.com/kryptobaseddev/cleo/search?q=T12089&type=commits))_\n- changelog emitted empty sections; --commit-plan silently committed nothing; and the workflow cannot re-derive a plan because CI has no tasks.db _(provenance: [T12092](https://github.com/kryptobaseddev/cleo/search?q=T12092&type=commits))_\n",
-    "changesetEntryCount": 8,
+    "releaseNotes": "## v2026.8.3 — 2026-08-09\n\n### Fixed\n\n- the brain layer runs on ANY machine — provider-agnostic dream cycle, cross-provider failover, keyless local-daemon admission _(provenance: [T12081](https://github.com/kryptobaseddev/cleo/search?q=T12081&type=commits), [T12082](https://github.com/kryptobaseddev/cleo/search?q=T12082&type=commits))_\n- no task could EVER be completed in a project without TypeScript — gate rigour now scales to the project's real toolchain _(provenance: [T12083](https://github.com/kryptobaseddev/cleo/search?q=T12083&type=commits))_\n- selfimprove --execute reported the wrong reason, fix-gen had no failover, and failover asked every substitute for the first provider's model _(provenance: [T12084](https://github.com/kryptobaseddev/cleo/search?q=T12084&type=commits), [T12085](https://github.com/kryptobaseddev/cleo/search?q=T12085&type=commits))_\n- cleo worktree destroy reported worktreeRemoved/branchDeleted without acting — resolve path and branch from git, not by convention _(provenance: [T12086](https://github.com/kryptobaseddev/cleo/search?q=T12086&type=commits))_\n- the vitest OOM guard was both misplaced AND dead since Vitest 4 — bounds now live in one SSoT every config spreads, enforced by gate 8 _(provenance: [T12087](https://github.com/kryptobaseddev/cleo/search?q=T12087&type=commits))_\n- the dream cycle re-processed its own window every pass, lost anything older than 24h forever, and could never start learning on a new project _(provenance: [T12088](https://github.com/kryptobaseddev/cleo/search?q=T12088&type=commits))_\n- cleo release open could not cut ANY release — it dispatched only `version`, so the workflow planned with no scope and exited 2 at Prepare bump-PR _(provenance: [T12089](https://github.com/kryptobaseddev/cleo/search?q=T12089&type=commits))_\n- changelog emitted empty sections; --commit-plan silently committed nothing; and the workflow cannot re-derive a plan because CI has no tasks.db _(provenance: [T12092](https://github.com/kryptobaseddev/cleo/search?q=T12092&type=commits))_\n- release-prepare invoked TWO commands that never existed (cleo version-bump, cleo release changelog) — every dispatch died at exit 127 after a full green preflight _(provenance: [T12093](https://github.com/kryptobaseddev/cleo/search?q=T12093&type=commits))_\n",
+    "changesetEntryCount": 9,
     "changesetIds": [
       "t12081-t12082-brain-layer-provider-agnostic",
       "t12083-tool-applicability",
@@ -224,7 +237,8 @@
       "t12087-vitest-memory-safe-ssot",
       "t12088-dream-cycle-incremental",
       "t12089-release-open-forwards-scope",
-      "t12092-changelog-and-committed-plan"
+      "t12092-changelog-and-committed-plan",
+      "t12093-workflow-command-existence"
     ],
     "taskIds": [
       "T12081",
@@ -236,7 +250,8 @@
       "T12087",
       "T12088",
       "T12089",
-      "T12092"
+      "T12092",
+      "T12093"
     ]
   }
 }
