@@ -645,11 +645,12 @@ const checkArchCommand = defineCommand({
       },
     };
 
-    if (jsonOnly) {
-      process.stdout.write(`${JSON.stringify(envelope)}\n`);
-    } else {
-      process.stdout.write(`${JSON.stringify(envelope)}\n`);
+    // ADR-086: exactly one LAFS envelope on stdout, always — the `jsonOnly`
+    // branch used to duplicate this identical write, differing only in whether
+    // the human summary followed on stderr.
+    process.stdout.write(`${JSON.stringify(envelope)}\n`); // stdout-write-allowed: the single ADR-086 envelope for `check arch` // stdout-discipline-allowed: raw JSON envelope, not rendered output
 
+    if (!jsonOnly) {
       // Human-readable summary to stderr so JSON envelope stays clean on stdout
       process.stderr.write(`\n`);
       process.stderr.write(`SG-ARCH-SOLID Architectural Boundary Check (T9837)\n`);
