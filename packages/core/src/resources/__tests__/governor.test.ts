@@ -54,10 +54,49 @@ describe('computeClassBudget (T11999)', () => {
   });
 
   it('test-run scales down under pressure: base → half (some>10) → 1 (some>25)', () => {
-    const base = computeClassBudget('test-run', makeSample({ someAvg10: 0 }), BUDGET_OPTS);
-    expect(base).toBe(4); // max(1, 16/4)
-    expect(computeClassBudget('test-run', makeSample({ someAvg10: 15 }), BUDGET_OPTS)).toBe(2); // halved
-    expect(computeClassBudget('test-run', makeSample({ someAvg10: 30 }), BUDGET_OPTS)).toBe(1); // floor
+    // T12091: base is now clamped by MemAvailable too, so this case needs enough
+    // free RAM for the core budget to be the binding constraint —
+    // ⌊(128−2)/24⌋ = 5, clamped to ⌊16/4⌋ = 4.
+    const ample = { memAvailableGb: 128 };
+    const base = computeClassBudget('test-run', makeSample({ ...ample }), BUDGET_OPTS);
+    expect(base).toBe(4);
+    expect(
+      computeClassBudget('test-run', makeSample({ ...ample, someAvg10: 15 }), BUDGET_OPTS),
+    ).toBe(2); // halved
+    expect(
+      computeClassBudget('test-run', makeSample({ ...ample, someAvg10: 30 }), BUDGET_OPTS),
+    ).toBe(1); // floor
+  });
+
+  it('test-run is bounded by MemAvailable, not just cores (T12091)', () => {
+    // The measured freeze: a core-only budget admitted ⌊24/4⌋ = 6 concurrent
+    // runs while each run is permitted 6 vitest forks × 4 GiB — 144 GiB of heap
+    // on a 62 GiB box, with no single bound violated.
+    const opts = { cpuCount: 24, totalMemBytes: 62 * GB } as const;
+    // 60 GiB available − 2 GiB headroom = 58; ⌊58/24⌋ = 2 (was 6).
+    expect(computeClassBudget('test-run', makeSample({ memAvailableGb: 60 }), opts)).toBe(2);
+    // 30 GiB available → ⌊28/24⌋ = 1.
+    expect(computeClassBudget('test-run', makeSample({ memAvailableGb: 30 }), opts)).toBe(1);
+    // Not even one run fits — still 1, never 0: the per-run vitest cap governs
+    // from there, and refusing outright would make tests unrunnable on a small
+    // machine rather than merely slow.
+    expect(computeClassBudget('test-run', makeSample({ memAvailableGb: 8 }), opts)).toBe(1);
+  });
+
+  it('scoped-build shares the test-run memory bound', () => {
+    const opts = { cpuCount: 24, totalMemBytes: 62 * GB } as const;
+    expect(computeClassBudget('scoped-build', makeSample({ memAvailableGb: 60 }), opts)).toBe(2);
+  });
+
+  it('honours an explicit testRunEstRamMb estimate', () => {
+    // A project whose suite is light should not be pinned by the monorepo's
+    // 24 GiB worst case: ⌊(60−2)/2⌋ = 29, clamped to ⌊16/4⌋ = 4.
+    expect(
+      computeClassBudget('test-run', makeSample({ memAvailableGb: 60 }), {
+        ...BUDGET_OPTS,
+        testRunEstRamMb: 2048,
+      }),
+    ).toBe(4);
   });
 
   it('agent-session clamps by MemAvailable and cpus-2', () => {

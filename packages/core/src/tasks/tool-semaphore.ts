@@ -18,23 +18,32 @@
  *
  * Defaults (configurable via env):
  *
- *   | Tool           | Default        | CPU profile                         |
- *   |----------------|----------------|-------------------------------------|
- *   | test, build    | max(1, cpus/4) | runs its own worker pool already    |
- *   | lint, typecheck| max(2, cpus/2) | usually single-threaded, lighter    |
- *   | audit          | max(2, cpus/2) | network-bound, small RAM            |
- *   | security-scan  | max(2, cpus/2) | network-bound, small RAM            |
+ *   | Tool           | Default                          | Binding constraint        |
+ *   |----------------|----------------------------------|---------------------------|
+ *   | test, build    | min(RAM/24GiB, cpus/4), min 1    | MEMORY (each run forks)   |
+ *   | lint, typecheck| max(2, cpus/2)                   | CPU (single-process)      |
+ *   | audit          | max(2, cpus/2)                   | network-bound, small RAM  |
+ *   | security-scan  | max(2, cpus/2)                   | network-bound, small RAM  |
+ *
+ * T12091: `test`/`build` were `max(1, cpus/4)` — 6 slots on a 24-core box. Since
+ * each `pnpm run test` is itself allowed 6 vitest forks × 4 GiB, the two bounds
+ * composed to 144 GiB of permitted heap on 62 GiB of RAM. Neither layer was
+ * individually violated, which is exactly why the machine froze without any
+ * guard firing. Heavy tools are now bounded by the dimension that actually
+ * limits them — see {@link defaultMaxConcurrent}.
  *
  * Override via `CLEO_TOOL_CONCURRENCY_<CANONICAL>` (e.g.
  * `CLEO_TOOL_CONCURRENCY_TEST=2`). Set to `0` or a negative number to
- * disable the limit for that tool.
+ * disable the limit for that tool — which also disables the RAM bound, so it is
+ * the one setting that can still oversubscribe the machine.
  *
  * @task T1534
+ * @task T12091
  * @adr ADR-061
  */
 
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
-import { availableParallelism } from 'node:os';
+import { availableParallelism, totalmem } from 'node:os';
 import { join } from 'node:path';
 
 import lockfile from 'proper-lockfile';
@@ -92,6 +101,17 @@ export interface AcquireSlotOptions {
    */
   cpuCount?: number;
   /**
+   * Override `os.totalmem()` (in GiB) for tests.
+   *
+   * T12091 made the heavy-tool budget RAM-derived, which would otherwise make
+   * the slot count depend on whatever host the suite runs on — a 16 GiB CI
+   * runner and a 62 GiB workstation resolve different budgets for identical
+   * inputs. Injecting it keeps semaphore behaviour deterministic.
+   *
+   * @internal
+   */
+  totalRamGib?: number;
+  /**
    * Memory-pressure sample used to scale the effective slot count for the
    * pressure-sensitive `test`/`build` tools (T12001, Epic T11992). When
    * omitted, a best-effort live sample is taken (fail-open to the static slot
@@ -108,18 +128,76 @@ export interface AcquireSlotOptions {
 // ---------------------------------------------------------------------------
 
 /**
- * Compute the default max-concurrency for a canonical tool given the CPU
- * count. CPU-heavy runners (test, build) get a quarter of cores; lighter
- * tools (lint, typecheck, audit, security-scan) get half. Always at least 1.
+ * Worst-case resident footprint of ONE `tool:test` / `tool:build` invocation,
+ * in GiB.
+ *
+ * This is not a guess. `vitest.memory-safe.ts` permits
+ * `MEMORY_SAFE_MAX_WORKERS` forks (up to 6) each capped at `FORK_HEAP_MB`
+ * (4096), so a single `pnpm run test` may legitimately hold ~24 GiB before any
+ * guard fires. Keep this in step with that file if either bound changes.
+ *
+ * @task T12091
+ */
+export const HEAVY_TOOL_FOOTPRINT_GIB = 24;
+
+/**
+ * Compute the default max-concurrency for a canonical tool.
+ *
+ * ## Why this is RAM-derived, not core-derived (T12091)
+ *
+ * This returned `floor(cpus / 4)` for `test`/`build`, which on a 24-core box is
+ * **6 concurrent full test suites**. Each of those is itself allowed 6 vitest
+ * forks × a 4 GiB heap cap, so the composed permission was
+ *
+ *     6 runs × 6 forks × 4 GiB = 144 GiB
+ *
+ * on a 62 GiB machine. Both layers were individually "bounded" and their
+ * composition was 2.3× the hardware — which is precisely how this box froze
+ * repeatedly: no single guard was violated. The per-invocation cap (T12087) and
+ * this cross-invocation cap were written independently and never multiplied out.
+ *
+ * The dimensional error is the root of it: what limits a test run is MEMORY, and
+ * core count says nothing about memory. A 24-core/16 GiB VM got the same 6 slots
+ * as a 24-core/256 GiB server. So heavy tools now divide TOTAL RAM by
+ * {@link HEAVY_TOOL_FOOTPRINT_GIB} and are additionally capped by cores, never
+ * exceeding what the machine can actually hold.
+ *
+ * Reactive pressure scaling ({@link pressureScaleSlots}) is not a substitute:
+ * PSI `some avg10` is a ten-second average, and a fork fleet can exhaust RAM
+ * faster than that window can report it. Admission has to be right up front.
+ *
+ * Light tools (lint, typecheck, audit, security-scan) are single-process and
+ * short, and keep the core-derived half-of-cores budget.
+ *
+ * @param canonical - the canonical tool class.
+ * @param cpuCount  - logical cores available.
+ * @param totalRamGib - total machine RAM in GiB; defaults to a live reading.
+ * @returns the machine-wide slot count, always ≥ 1.
+ *
+ * @example
+ * ```ts
+ * // 24 cores, 62 GiB → floor(62/24) = 2 (was 6, permitting 144 GiB of heap)
+ * defaultMaxConcurrent('test', 24, 62); // → 2
+ * // 24 cores, 16 GiB → 1: one suite is already more than this box can hold
+ * defaultMaxConcurrent('test', 24, 16); // → 1
+ * ```
  *
  * @task T1534
+ * @task T12091
  */
-export function defaultMaxConcurrent(canonical: CanonicalTool, cpuCount: number): number {
+export function defaultMaxConcurrent(
+  canonical: CanonicalTool,
+  cpuCount: number,
+  totalRamGib: number = totalmem() / 1024 ** 3,
+): number {
   const cpus = Math.max(1, cpuCount);
   switch (canonical) {
     case 'test':
-    case 'build':
-      return Math.max(1, Math.floor(cpus / 4));
+    case 'build': {
+      const byRam = Math.floor(totalRamGib / HEAVY_TOOL_FOOTPRINT_GIB);
+      const byCpu = Math.floor(cpus / 4);
+      return Math.max(1, Math.min(byRam, byCpu));
+    }
     case 'lint':
     case 'typecheck':
     case 'audit':
@@ -139,7 +217,11 @@ export function defaultMaxConcurrent(canonical: CanonicalTool, cpuCount: number)
  *
  * @task T1534
  */
-export function resolveMaxConcurrent(canonical: CanonicalTool, cpuCount?: number): number {
+export function resolveMaxConcurrent(
+  canonical: CanonicalTool,
+  cpuCount?: number,
+  totalRamGib?: number,
+): number {
   const envKey = `CLEO_TOOL_CONCURRENCY_${canonical.toUpperCase().replace(/-/g, '_')}`;
   const raw = process.env[envKey];
   if (raw !== undefined && raw !== '') {
@@ -149,7 +231,11 @@ export function resolveMaxConcurrent(canonical: CanonicalTool, cpuCount?: number
       return parsed;
     }
   }
-  return defaultMaxConcurrent(canonical, cpuCount ?? availableParallelism());
+  return defaultMaxConcurrent(
+    canonical,
+    cpuCount ?? availableParallelism(),
+    totalRamGib ?? totalmem() / 1024 ** 3,
+  );
 }
 
 /**
@@ -277,7 +363,7 @@ export async function acquireGlobalSlot(
   canonical: CanonicalTool,
   opts: AcquireSlotOptions = {},
 ): Promise<ReleaseSlotFn> {
-  const max = resolveMaxConcurrent(canonical, opts.cpuCount);
+  const max = resolveMaxConcurrent(canonical, opts.cpuCount, opts.totalRamGib);
   if (!Number.isFinite(max) || max <= 0) {
     return NOOP_RELEASE;
   }
