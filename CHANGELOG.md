@@ -1,14 +1,6 @@
 # Changelog
 
-## [2026.8.3] (2026-08-07)
-
-### Added
-
-
-
-### Changed
-
-
+## [2026.8.3] (2026-08-09)
 
 ### Fixed
 
@@ -18,20 +10,8 @@
 - cleo worktree destroy reported worktreeRemoved/branchDeleted without acting — resolve path and branch from git, not by convention _(provenance: [T12086](https://github.com/kryptobaseddev/cleo/search?q=T12086&type=commits))_
 - the vitest OOM guard was both misplaced AND dead since Vitest 4 — bounds now live in one SSoT every config spreads, enforced by gate 8 _(provenance: [T12087](https://github.com/kryptobaseddev/cleo/search?q=T12087&type=commits))_
 - the dream cycle re-processed its own window every pass, lost anything older than 24h forever, and could never start learning on a new project _(provenance: [T12088](https://github.com/kryptobaseddev/cleo/search?q=T12088&type=commits))_
-
-### Deprecated
-
-
-
-### Removed
-
-
-
-### Security
-
-
-
-### BREAKING CHANGES
+- cleo release open could not cut ANY release — it dispatched only `version`, so the workflow planned with no scope and exited 2 at Prepare bump-PR _(provenance: [T12089](https://github.com/kryptobaseddev/cleo/search?q=T12089&type=commits))_
+- changelog emitted empty sections; --commit-plan silently committed nothing; and the workflow cannot re-derive a plan because CI has no tasks.db _(provenance: [T12092](https://github.com/kryptobaseddev/cleo/search?q=T12092&type=commits))_
 
 ## [2026.8.2] (2026-08-05)
 
