@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -19,6 +20,12 @@ function parseArgs(argv) {
       i += 1;
     }
   }
+  // T12093: accept the git-tag spelling (`v2026.8.3`) as well as the bare
+  // CalVer that package.json wants. Callers hand this straight through from a
+  // release tag or a workflow input, and making every one of them strip the
+  // prefix invites exactly the kind of shell quoting bug that broke the
+  // release pipeline. Normalising once, here, is the SSoT-shaped fix.
+  if (setVersion !== null) setVersion = setVersion.replace(/^v/, '');
   return { setVersion };
 }
 
@@ -35,7 +42,17 @@ async function getPackageJsonPaths() {
   const entries = await readdir(PACKAGES_DIR, { withFileTypes: true });
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
-    paths.push(path.join(PACKAGES_DIR, entry.name, 'package.json'));
+    const manifest = path.join(PACKAGES_DIR, entry.name, 'package.json');
+    // T12093: a directory under packages/ need not be a package. A removed
+    // package leaves its `node_modules/` behind, and the bump then threw ENOENT
+    // PART-WAY THROUGH — after rewriting the root and some members — leaving a
+    // half-bumped workspace that the release commit would have carried.
+    // Existence is checked up front so the write loop cannot fail mid-flight.
+    if (!existsSync(manifest)) {
+      console.warn(`SKIP: ${path.relative(ROOT, manifest)} does not exist (not a package)`);
+      continue;
+    }
+    paths.push(manifest);
   }
   return paths;
 }

@@ -1,0 +1,4 @@
+{
+  "$comment": "Placeholder overrides for the rendered release workflows (T12093). cleocode is a pnpm workspace, so the project-agnostic `npm version` default cannot bump 20 manifests — scripts/version-all.mjs walks every packages/*/package.json plus the root, and normalises the tag's leading `v` itself.",
+  "versionBumpCmd": "node scripts/version-all.mjs --set \"$VERSION\""
+}

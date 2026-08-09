@@ -207,6 +207,23 @@ const DEFAULT_PUBLISHERS = 'npm' as const;
 const DEFAULT_DOCS_BUILD_CMD = 'pnpm run docs:build' as const;
 
 /**
+ * Project-agnostic version bump: rewrite the manifest in place without tagging.
+ *
+ * `--allow-same-version` keeps a re-dispatch of an already-bumped version from
+ * failing the step; `--no-git-tag-version` leaves tagging to the release
+ * pipeline, which tags the merge commit, not the prepare branch.
+ *
+ * `npm version` accepts the tag spelling directly (it normalises a leading `v`),
+ * so `$VERSION` needs no shell munging. A workspace must walk every manifest
+ * instead, and overrides this with `versionBumpCmd` in
+ * `.cleo/release-config.json` — cleocode itself uses `scripts/version-all.mjs`.
+ *
+ * @task T12093
+ */
+const DEFAULT_VERSION_BUMP_CMD =
+  'npm version "$VERSION" --no-git-tag-version --allow-same-version' as const;
+
+/**
  * Read `.cleo/release-config.json` from `<projectRoot>/.cleo/`. Returns
  * `{}` on parse failure or missing file. Mirrors the helper in
  * {@link scaffoldWorkflows} so the rendered output is byte-equal across
@@ -343,6 +360,7 @@ function buildSubstitutionMap(
   const subs = new Map<string, string>();
   subs.set('NODE_VERSION', cfg.nodeVersion ?? DEFAULT_NODE_VERSION);
   subs.set('INSTALL_CMD', tools.install);
+  subs.set('VERSION_BUMP_CMD', cfg.versionBumpCmd ?? DEFAULT_VERSION_BUMP_CMD);
   subs.set('LINT_CMD', tools.lint);
   subs.set('TYPECHECK_CMD', tools.typecheck);
   subs.set('TEST_CMD', tools.test);

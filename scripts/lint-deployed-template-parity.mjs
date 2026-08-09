@@ -84,6 +84,10 @@ const DEFAULT_SUBSTITUTIONS = {
   BUILD_CMD: 'pnpm run build',
   BRANCH_PREFIX: 'release',
   PR_LABEL: 'release',
+  // T12093: cleocode is a workspace, so it overrides the project-agnostic
+  // `npm version` default via `.cleo/release-config.json#versionBumpCmd`. Keep
+  // this equal to that file's value — it is what the deployed workflow renders.
+  VERSION_BUMP_CMD: 'node scripts/version-all.mjs --set "$VERSION"',
 };
 
 /**

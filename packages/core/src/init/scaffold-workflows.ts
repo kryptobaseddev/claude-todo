@@ -98,6 +98,18 @@ export interface ScaffoldReleaseConfig {
    * Defaults to {@link DEFAULT_INSTALL_CMD}.
    */
   installCmd?: string;
+  /**
+   * Shell line that rewrites every package manifest to the release version, run
+   * with `VERSION` already exported as the tag (`v2026.8.3`). Version bumping is
+   * project-shaped — a single package wants `npm version`, a workspace wants a
+   * script that walks every manifest — so it cannot be a fixed default.
+   *
+   * Defaults to {@link DEFAULT_VERSION_BUMP_CMD}.
+   *
+   * @task T12093 — the template hardcoded `cleo version-bump`, a command that
+   *   never existed, so `Prepare bump-PR` exited 127 on every release.
+   */
+  versionBumpCmd?: string;
   nodeVersion?: string;
   releaseBranchPrefix?: string;
   prLabel?: string;
@@ -234,6 +246,23 @@ const DEFAULT_PUBLISHERS = 'npm' as const;
 const DEFAULT_DOCS_BUILD_CMD = 'pnpm run docs:build' as const;
 
 /**
+ * Project-agnostic version bump: rewrite the manifest in place without tagging.
+ *
+ * `--allow-same-version` keeps a re-dispatch of an already-bumped version from
+ * failing the step; `--no-git-tag-version` leaves tagging to the release
+ * pipeline, which tags the merge commit, not the prepare branch.
+ *
+ * `npm version` accepts the tag spelling directly (it normalises a leading `v`),
+ * so `$VERSION` needs no shell munging. A workspace must walk every manifest
+ * instead, and overrides this with `versionBumpCmd` in
+ * `.cleo/release-config.json` — cleocode itself uses `scripts/version-all.mjs`.
+ *
+ * @task T12093
+ */
+const DEFAULT_VERSION_BUMP_CMD =
+  'npm version "$VERSION" --no-git-tag-version --allow-same-version' as const;
+
+/**
  * Read `.cleo/release-config.json` from `<projectRoot>/.cleo/`. Returns
  * `{}` on parse failure or missing file — the scaffolder simply falls
  * through to language-default placeholder values in that case.
@@ -331,6 +360,7 @@ function buildSubstitutionMap(
   // Common placeholders (used by prepare + publish + fanout + rollback).
   subs.set('NODE_VERSION', cfg.nodeVersion ?? DEFAULT_NODE_VERSION);
   subs.set('INSTALL_CMD', tools.install);
+  subs.set('VERSION_BUMP_CMD', cfg.versionBumpCmd ?? DEFAULT_VERSION_BUMP_CMD);
   subs.set('LINT_CMD', tools.lint);
   subs.set('TYPECHECK_CMD', tools.typecheck);
   subs.set('TEST_CMD', tools.test);

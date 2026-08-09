@@ -35,6 +35,10 @@
 # Step 3: Allow project configuration files that are SAFE to track
 # (detected project facts and bootstrap scripts — not runtime state).
 !project-context.json
+# T12093: placeholder overrides consumed when the release workflows are
+# rendered. It is declarative project config (which command bumps versions),
+# not runtime state, and CI must be able to read it from a bare checkout.
+!release-config.json
 !setup-otel.sh
 !DATA-SAFETY-IMPLEMENTATION-SUMMARY.md
 

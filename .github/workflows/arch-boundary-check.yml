@@ -253,6 +253,13 @@ jobs:
       - name: Assert every cleo command in CLEO-INJECTION.md exists
         run: node scripts/lint-injection-commands.mjs
 
+      # Gate 15 (T12093) — same rule, applied to the workflows themselves.
+      # release-prepare.yml invoked `cleo version-bump` and `cleo release
+      # changelog`; neither has ever existed, and each cost a full green
+      # preflight (~20 min) to discover because the steps run last.
+      - name: Assert every cleo command invoked by a workflow exists
+        run: node scripts/lint-workflow-cleo-commands.mjs
+
   contract-literal-enums:
     # Gate 13 (T11483 · DHQ-035) · Epic T11480 SG-CORE-SELF-TOOLING
     #

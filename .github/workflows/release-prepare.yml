@@ -347,27 +347,47 @@ jobs:
           echo "plan_file=$PLAN_FILE" >> "$GITHUB_OUTPUT"
         timeout-minutes: 5
 
-      # R-205(c): bump version files via `cleo version-bump`.
+      # R-205(c): bump every package.json to the release version.
+      #
+      # T12093: this step used to run `cleo version-bump`, a command that has
+      # NEVER existed — the verb is absent from the CLI manifest, so the step
+      # died with `Unknown command version-bump` (exit 127) on every dispatch,
+      # always AFTER a full green preflight (~20 min). The real bumper is
+      # `scripts/version-all.mjs`, exposed as `pnpm run version:bump`, which now
+      # normalises the tag's leading `v` itself rather than pushing that onto
+      # every caller's shell quoting.
       - name: Bump version
-        run: cleo version-bump --version "${{ inputs.version }}"
+        run: |
+          VERSION="${{ inputs.version }}"
+          node scripts/version-all.mjs --set "$VERSION"
         timeout-minutes: 3
 
-      # R-205(d): regenerate CHANGELOG via the preserved `cleo release
-      # changelog` primitive, scoped to commits since the previous tag.
-      - name: Regenerate CHANGELOG
-        run: |
-          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          if [ -n "$PREV_TAG" ]; then
-            cleo release changelog --since "$PREV_TAG"
-          else
-            cleo release changelog
-          fi
+      # R-205(d): CHANGELOG.md.
+      #
+      # T12093: this step used to run `cleo release changelog`, which also does
+      # not exist (`cleo release` has no `changelog` sub-verb). CHANGELOG.md is
+      # written by `cleo release plan` itself (T9838), so there is nothing to
+      # regenerate here — the correct action is to VERIFY the section is present
+      # and fail loudly if it is not, rather than silently ship a release whose
+      # notes were never written.
+      - name: Verify CHANGELOG section
+        run: cleo release validate-changelog "${{ inputs.version }}"
         timeout-minutes: 3
 
       # R-205(e): commit with the canonical subject line.
+      #
+      # T12093: `git commit` exits 1 on an empty index, so an already-prepared
+      # version failed here with a bare "nothing to commit" and no explanation.
+      # An empty prepare cannot become a PR either (`gh pr create` rejects a head
+      # with no commits ahead of base), so say what state the repo is in and what
+      # to do next instead of pushing a branch that cannot open.
       - name: Commit prepare
         run: |
           git add -A
+          if git diff --cached --quiet; then
+            echo "::error::Nothing to commit — every package.json and CHANGELOG.md already match ${{ inputs.version }} on main. This release is already prepared; tag it directly (git tag -a ${{ inputs.version }} && git push origin ${{ inputs.version }}) instead of re-running prepare."
+            exit 1
+          fi
           git commit -m "release: prepare ${{ inputs.version }}"
         timeout-minutes: 2
 
@@ -379,6 +399,27 @@ jobs:
         timeout-minutes: 5
 
       # R-205(f): open the bump-PR via `gh pr create`.
+      #
+      # T12093: the body was `--body-file <plan>.json`, so every bump-PR opened
+      # with a raw schema envelope as its description. The plan already carries
+      # the rendered notes at `meta.releaseNotes` (the same text that lands in
+      # CHANGELOG.md) — use that, and fall back to the JSON only if absent.
+      - name: Render PR body
+        id: body
+        run: |
+          node -e '
+            const fs = require("node:fs");
+            const plan = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+            const notes = plan?.meta?.releaseNotes;
+            fs.writeFileSync(
+              "/tmp/bump-pr-body.md",
+              typeof notes === "string" && notes.trim().length > 0
+                ? notes
+                : "```json\n" + JSON.stringify(plan, null, 2) + "\n```\n",
+            );
+          ' "${{ steps.plan.outputs.plan_file }}"
+        timeout-minutes: 2
+
       - name: Open bump-PR
         run: |
           gh pr create \
@@ -386,7 +427,7 @@ jobs:
             --head "${{ steps.branch.outputs.name }}" \
             --title "release: prepare ${{ inputs.version }}" \
             --label "release" \
-            --body-file "${{ steps.plan.outputs.plan_file }}"
+            --body-file /tmp/bump-pr-body.md
         timeout-minutes: 5
 
       # R-209(c): emit recovery hint into the job summary artifact.
