@@ -398,8 +398,18 @@ async function readReleaseStatus(
 
 /**
  * R-062: commit the plan file to the active branch when `--commit-plan` is
- * supplied. The default flow leaves the plan uncommitted; the workflow can
- * re-derive the plan envelope from `releases` + tasks.db without it.
+ * supplied.
+ *
+ * T12092: the old doc claimed "the workflow can re-derive the plan envelope
+ * from `releases` + tasks.db without it". It cannot. `.cleo/tasks.db` is
+ * deliberately gitignored (ADR-013 §9 — committing it is the T5158 data-loss
+ * vector), so a CI runner has NO task database and `cleo release plan --tasks
+ * …` exits 4 (`E_NOT_FOUND`) there. Committing the plan is therefore the ONLY
+ * way a task- or epic-scoped release can be planned, not an optional extra.
+ *
+ * The plan lives under `.cleo/`, which is gitignored, so staging REQUIRES
+ * `-f`. Without it `git add` refuses the path and this function committed
+ * nothing while reporting success.
  *
  * @internal
  */
@@ -408,7 +418,10 @@ function commitPlanFile(planPath: string, version: string, projectRoot: string):
   const relPath = planPath.startsWith(projectRoot)
     ? planPath.slice(projectRoot.length).replace(/^\/+/, '')
     : planPath;
-  runGitWithLockRetry(['add', relPath], {
+  // `-f`: the plan lives under the gitignored `.cleo/`, so a plain `git add`
+  // refuses it ("use -f if you really want to add them") and the commit below
+  // would then have nothing staged.
+  runGitWithLockRetry(['add', '-f', relPath], {
     cwd: projectRoot,
     encoding: 'utf-8',
     stdio: 'pipe',
@@ -575,6 +588,15 @@ export async function releaseOpen(
   // Keep this `--field` set in lockstep with the YAML inputs declaration and
   // the `release-open-field-schema.test.ts` parity check.
   const dispatchFields = ['--field', `version=${opts.version}`];
+  // T12092: forward the plan hash ONLY when the plan was committed. The
+  // workflow's verify branch reads the plan FILE from its checkout, so the hash
+  // is meaningful exactly when the file is present there — and committing is
+  // the only way it can be, since `.cleo/` is gitignored. Sending the hash
+  // without the file would fail verification; omitting it with the file present
+  // would pointlessly regenerate a plan CI cannot compute (no tasks.db).
+  if (commitPlan) {
+    dispatchFields.push('--field', `plan-blob-sha256=${planBlobSha256}`);
+  }
   if (opts.epic !== undefined && opts.epic !== '') {
     dispatchFields.push('--field', `epic=${opts.epic}`);
   }

@@ -279,9 +279,23 @@ export function aggregateChangesetsForRelease(
 
   const header = title ? `## ${version} — ${date} — ${title}` : `## ${version} — ${date}`;
 
-  const body = RELEASE_NOTE_SECTION_ORDER.map((section) =>
-    renderGroup(section, groups.get(section) ?? []),
-  ).join('\n\n');
+  // T12092: render ONLY sections that have entries. Every section was emitted
+  // unconditionally, so a fix-only release shipped a changelog reading
+  //
+  //     ### Added
+  //     <blank>
+  //     ### Changed
+  //     <blank>
+  //     ### Fixed
+  //     - …
+  //
+  // Empty headings under a real release read as "we forgot to write this" and
+  // train the reader to skim past section headers entirely.
+  const body = RELEASE_NOTE_SECTION_ORDER.filter(
+    (section) => (groups.get(section) ?? []).length > 0,
+  )
+    .map((section) => renderGroup(section, groups.get(section) ?? []))
+    .join('\n\n');
 
   const markdown = `${header}\n\n${body}\n`;
 

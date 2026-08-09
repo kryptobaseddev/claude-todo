@@ -55,15 +55,16 @@ describe('aggregateChangesetsForRelease', () => {
     expect(result.entryCount).toBe(3);
     expect(result.kinds.size).toBe(3);
     expect(result.markdown).toContain('## v2026.6.0 — 2026-05-20');
-    expect(renderedSections(result.markdown)).toEqual([
-      'Added',
-      'Changed',
-      'Fixed',
-      'Deprecated',
-      'Removed',
-      'Security',
-      'BREAKING CHANGES',
-    ]);
+    // T12092: only sections WITH entries render, in canonical Keep-a-Changelog
+    // order. This previously asserted all seven headings always render, which
+    // shipped a real changelog reading "### Added" / "### Changed" with nothing
+    // under them for a fix-only release — an empty heading under a shipped
+    // version reads as a forgotten section and teaches readers to skim past
+    // headings. The determinism this test exists to protect is the ORDER, which
+    // is unchanged; only the always-present part is dropped.
+    expect(renderedSections(result.markdown)).toEqual(['Added', 'Changed', 'Fixed']);
+    expect(result.markdown).not.toContain('### Deprecated');
+    expect(result.markdown).not.toContain('### Security');
     expect(result.markdown).toContain('- New API endpoint. _(provenance: [T9001](');
     expect(result.markdown).toContain('- Stop the bleed. _(provenance: [T9002](');
     expect(result.markdown).toContain('- Update README. _(provenance: [T9003](');
