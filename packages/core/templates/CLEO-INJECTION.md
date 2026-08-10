@@ -149,34 +149,22 @@ Memory context: `cleo memory digest --brief` gives a live project memory summary
 <!-- /CLEO-INJECTION:section=memory -->
 
 <!-- CLEO-INJECTION:section=data-location -->
-## Where the data lives — do NOT read `.cleo/*.db` directly
+## Where the data lives — never read `.cleo/*.db` directly
 
-The project store is **`.cleo/cleo.db`**, and task rows live in PREFIXED tables
-(`tasks_tasks`, `tasks_sessions`, …). Ask the CLI, never the file.
+Store = **`.cleo/cleo.db`**; task rows are in PREFIXED tables (`tasks_tasks`, …).
+Three decoys make a HEALTHY project look corrupt:
 
-Two decoys will convince you the database is corrupt when it is not:
+| Decoy | Reality |
+|-------|---------|
+| `.cleo/tasks.db`, small + months old | The pre-migration store, left under the old live name |
+| `.cleo/backups/sqlite/tasks-<ts>.db`, ~100× bigger | Snapshots **of `cleo.db`**; `tasks-` is a legacy label |
+| bare `tasks` table, 0 rows | Empty relic beside the populated `tasks_tasks` |
 
-| You will see | What it actually is |
-|--------------|---------------------|
-| `.cleo/tasks.db`, small and months old | The **pre-migration** store, superseded by `cleo.db` and left on disk under its old name |
-| `.cleo/backups/sqlite/tasks-<ts>.db`, ~100× larger | Snapshots **of `cleo.db`** — the `tasks-` prefix is a legacy label, not the source |
-| A bare `tasks` table in `cleo.db` with 0 rows | An empty relic beside the populated `tasks_tasks` |
-
-A 400 KB `tasks.db` next to 58 MB `tasks-*.db` snapshots is the NORMAL, healthy
-layout of a migrated project. It is not truncation, not rotation, and not
-`llmtxt.db`.
-
-**If you are wondering which database is real, run one command:**
-
-```bash
-cleo doctor superseded-store
-```
-
-It names every superseded file and proves which store holds the data by counting
-rows in both. Then go back to `cleo briefing` / `cleo focus` — those read the
-right store already. An agent that reasons about `.db` file sizes instead of
-asking the CLI will build a corruption theory out of a healthy project.
+A 400 KB `tasks.db` beside 58 MB `tasks-*.db` is the NORMAL migrated layout — not
+truncation, not rotation, not `llmtxt.db`. `cleo doctor superseded-store` proves
+which DB is real by counting rows in both; `briefing`/`focus` read it already.
 <!-- /CLEO-INJECTION:section=data-location -->
+
 
 <!-- CLEO-INJECTION:section=nexus -->
 ## Nexus — when to use which scope
