@@ -37,6 +37,7 @@ import { doctorLegacyBackupsCommand } from './doctor-legacy-backups.js';
 import { runDoctorProjects } from './doctor-projects.js';
 import { doctorReleaseReadinessCommand } from './doctor-release-readiness.js';
 import { doctorRepairCommand } from './doctor-repair.js';
+import { doctorSupersededStoreCommand } from './doctor-superseded-store.js';
 import { readMigrationConflicts } from './migrate-agents-v2.js';
 
 // ============================================================================
@@ -235,6 +236,8 @@ export const doctorCommand = defineCommand({
     'db-substrate': doctorDbSubstrateCommand,
     // T10309 / Saga T10281 / Epic T10282 — Legacy-backup walker
     'legacy-backups': doctorLegacyBackupsCommand,
+    // T12095 — pre-dual-scope store files still on disk under their old LIVE names
+    'superseded-store': doctorSupersededStoreCommand,
     // T11777 / Saga T11242 / Epic T11249 — exodus stranded-residue check (+ --fix)
     'exodus-residue': doctorExodusResidueCommand,
     // T11837 / Saga T11242 / Epic T11833 — read-only exodus health report

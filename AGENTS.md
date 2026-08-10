@@ -241,7 +241,7 @@ Runbooks: `docs/release/merge-queue-runbook.md`, `docs/release/verb-matrix.md`, 
 
 ## Runtime Data Safety (ADR-013 §9)
 
-`.cleo/tasks.db`, `.cleo/brain.db`, `.cleo/config.json`, `.cleo/project-info.json` are **not tracked in git** — committing them risks data loss on branch switch (git overwrites the live file while SQLite WAL sidecars desync).
+`.cleo/cleo.db`, `.cleo/brain.db`, `.cleo/config.json`, `.cleo/project-info.json` are **not tracked in git** — committing them risks data loss on branch switch (git overwrites the live file while SQLite WAL sidecars desync).
 
 - **Manual snapshot:** `cleo backup add` — `VACUUM INTO` (SQLite) + atomic tmp-then-rename (JSON).
 - **Auto snapshot:** `cleo session end` → `vacuumIntoBackupAll` writes timestamped snapshots under `.cleo/backups/sqlite/` (10 per DB, oldest rotated out).
@@ -250,3 +250,24 @@ Runbooks: `docs/release/merge-queue-runbook.md`, `docs/release/verb-matrix.md`, 
 - **Fresh clones:** `cleo init` recreates config + project-info; DBs are created empty on first access.
 
 **NEVER** `git add` any of these four files. Root and nested `.gitignore` block this; manual overrides re-open the T5158 data-loss vector.
+
+### The store is `cleo.db`, and three things say otherwise (T12095)
+
+Post-E6 (ADR-068) the project store is **`.cleo/cleo.db`** with task rows in
+PREFIXED tables (`tasks_tasks`, `tasks_sessions`, …). Three leftovers make a
+healthy project look corrupt, and an agent that reasons about `.db` file sizes
+instead of asking the CLI will believe all three:
+
+| Artefact | Reality |
+|----------|---------|
+| `.cleo/tasks.db` — small, months old | The **pre-migration** store. The migration does not delete it, so it survives under the name every doc used to mean "live". |
+| `.cleo/backups/sqlite/tasks-<ts>.db` — ~100× larger | Snapshots **of `cleo.db`**. `openTasksDbForSnapshot` routes through the dual-scope chokepoint; the `tasks-` prefix is a legacy label kept for the rotation regex. `restore backup --file tasks.db` is therefore correct *and* misleading. |
+| A bare `tasks` table inside `cleo.db`, 0 rows | An empty relic beside the populated `tasks_tasks`. A direct SQL probe finds the decoy. |
+
+So a 408 KB `tasks.db` beside 58 MB `tasks-*.db` snapshots is the NORMAL layout
+of a migrated project — measured 2026-08-09 in a project with 1,123 intact tasks,
+where an agent spent a session theorising truncation, rotation, and then that the
+real store might be `llmtxt.db`.
+
+`cleo doctor superseded-store` answers it in one call: it names each superseded
+file and proves which store holds the data by counting rows in both. Read-only.
