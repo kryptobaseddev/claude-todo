@@ -174,7 +174,12 @@ export function scanSupersededStores(projectRoot: string): SupersededStoreScanRe
 
     const rowsInSuperseded = countRows(path, bareTable);
     const rowsInLive = countRows(liveStorePath, liveTable);
-    const safeToArchive = (rowsInLive ?? 0) > 0 && (rowsInSuperseded ?? 0) === 0;
+    // `rowsInSuperseded === 0` must be EXPLICIT, never `?? 0`. `null` means the
+    // file could not be read — corrupt, locked, truncated, or not SQLite — and
+    // "I could not read it" is not "it is empty". Coalescing the two would
+    // recommend archiving precisely the file whose contents are unknown, which
+    // is the one case where being wrong loses data.
+    const safeToArchive = (rowsInLive ?? 0) > 0 && rowsInSuperseded === 0;
 
     const reason = safeToArchive
       ? `superseded by ${LIVE_STORE_FILENAME}: ${rowsInSuperseded ?? 0} rows in ${file}#${bareTable} ` +
