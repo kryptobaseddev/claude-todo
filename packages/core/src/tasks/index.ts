@@ -170,6 +170,18 @@ export {
   type SignedGateAuditRecord,
   verifyAuditHistory,
 } from './gate-audit.js';
+// T12096 — hard memory ceiling injected into every heavy tool CLEO spawns.
+export type { HeavyToolEnv } from './heavy-tool-env.js';
+export {
+  GIB_PER_WORKER,
+  HEAVY_TOOL_HEAP_MB,
+  heavyToolEnv,
+  heavyToolWorkers,
+  MAX_HEAVY_WORKERS,
+  MIN_HEAVY_WORKERS,
+  mergeNodeOptions,
+  WORKSPACE_CONCURRENCY,
+} from './heavy-tool-env.js';
 // Pre-dispatch inference for cleo add (T1490)
 export {
   type InferAddParamsInput,

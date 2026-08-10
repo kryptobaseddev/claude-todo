@@ -46,6 +46,7 @@ import { join } from 'node:path';
 import { ExitCode } from '@cleocode/contracts';
 import { CleoError } from '../errors.js';
 import { withLock } from '../store/lock.js';
+import { heavyToolEnv } from './heavy-tool-env.js';
 import type { ResolvedToolCommand } from './tool-resolver.js';
 import { type AcquireSlotOptions, acquireGlobalSlot } from './tool-semaphore.js';
 
@@ -335,6 +336,7 @@ function spawnCmd(
   args: string[],
   cwd: string,
   spawnTimeoutMs?: number,
+  envOverlay?: Readonly<Record<string, string>>,
 ): Promise<CommandResult> {
   return new Promise((resolve) => {
     const stdoutBuf = new TailBuffer(STREAM_TAIL_CAP_BYTES);
@@ -342,7 +344,12 @@ function spawnCmd(
     const child = spawn(cmd, args, {
       cwd,
       stdio: ['ignore', 'pipe', 'pipe'],
-      env: process.env,
+      // T12096: the overlay carries a hard memory ceiling for heavy tools. It is
+      // applied HERE, at the one place CLEO starts a project's own toolchain,
+      // because a consuming project cannot be relied on to bound its own test
+      // runner — and CLEO's semaphore counts this whole tree as a single slot
+      // even when it fans out across a workspace.
+      env: envOverlay === undefined ? process.env : { ...process.env, ...envOverlay },
       // T12025: detached creates a new process group on POSIX so that
       // killProcessTree can signal every descendant. Without this a
       // tool like `pnpm test` that forks worker processes inheriting
@@ -614,7 +621,13 @@ export async function runToolCached(
 
         // Spawn the tool ourselves.
         const startedAt = Date.now();
-        const result = await spawnCmd(command.cmd, command.args, projectRoot, spawnTimeoutMs);
+        const result = await spawnCmd(
+          command.cmd,
+          command.args,
+          projectRoot,
+          spawnTimeoutMs,
+          heavyToolEnv(command.canonical),
+        );
         const durationMs = Date.now() - startedAt;
 
         // T12025: when the child exceeded its wall-clock deadline, do NOT
