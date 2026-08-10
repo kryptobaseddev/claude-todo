@@ -1,5 +1,12 @@
 # Changelog
 
+## [2026.8.4] (2026-08-10)
+
+### Fixed
+
+- a healthy migrated project read as CORRUPT — three leftovers from the cleo.db migration sent an agent in circles over a 1123-task database that was completely intact _(provenance: [T12095](https://github.com/kryptobaseddev/cleo/search?q=T12095&type=commits))_
+- one tool:test atom could fan out to 15 unbounded vitest pools in a consuming project — CLEO now sets a hard memory ceiling at the spawn point _(provenance: [T12096](https://github.com/kryptobaseddev/cleo/search?q=T12096&type=commits))_
+
 ## [2026.8.3] (2026-08-09)
 
 ### Fixed
