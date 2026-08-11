@@ -82,7 +82,12 @@ export default defineConfig({
       // they had never run, so they had never gated a PR. Excluding them lets
       // the other 199 files / 3428 tests start protecting the repo now.
       // The list may only shrink; burn-down is T12072.
-      ...CLEO_TEST_QUARANTINE,
+      //
+      // T12072: `CLEO_RUN_QUARANTINED=1` lifts the exclusion so a single file can
+      // be investigated. The burn-down is otherwise unworkable: the list is the
+      // only thing naming these files, and it is also what prevents running them.
+      // CI never sets this, so the quarantine still holds for every PR.
+      ...(process.env['CLEO_RUN_QUARANTINED'] === '1' ? [] : CLEO_TEST_QUARANTINE),
     ],
     // T11953 / DHQ-070: `withWorkspaceSubpathAliases` PREPENDS a generic
     // `@cleocode/<pkg>/<subpath>` → source resolver so cleo tests resolve any
