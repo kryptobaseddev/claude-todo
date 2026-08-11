@@ -13,13 +13,7 @@
  * @module
  */
 
-// T12076: deep-import rather than the `@cleocode/core/internal` barrel.
-// The barrel re-exports the entire core surface, so importing ONE routing helper
-// from it pulled the whole graph — zod, js-tiktoken, the store, the LLM stack —
-// into every `cleo` invocation. Measured: `internal.js` costs 2.27 s to import
-// while `routing/build-command-groups.js` costs 0.12 s, and this module is
-// reachable from the CLI entry, so every command paid it before doing anything.
-import { buildCommandGroups } from '@cleocode/core/routing/build-command-groups';
+import { buildCommandGroups } from '@cleocode/core/internal';
 import type { ArgsDef, CommandDef } from 'citty';
 import { showUsage as cittyShowUsage } from 'citty';
 
