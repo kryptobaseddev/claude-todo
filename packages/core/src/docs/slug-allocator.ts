@@ -118,6 +118,7 @@
  */
 
 import type { BuiltinDocKind } from '@cleocode/contracts';
+import { getProjectRoot } from '../paths.js';
 import { deriveSlugSuggestionsForAllocator } from '../store/attachment-store.js';
 import { getDb } from '../store/sqlite.js';
 import { normalizeSlug } from './slug-normalize.js';
@@ -221,14 +222,51 @@ async function acquireSlugLock(normalizedSlug: string): Promise<() => void> {
 const reservedSlugs = new Set<string>();
 
 /**
+ * Compose the reservation key for a slug within a project.
+ *
+ * T12090: the set used to be keyed by slug ALONE, which made it
+ * process-global. That is fine in production — one process serves one project —
+ * but it silently defeats test isolation: vitest reuses a worker across files,
+ * so a file that reserved `t123-foo` and never consumed it left that slug
+ * reserved for every later file in the same worker, no matter how carefully
+ * each set its own `CLEO_DIR`. The module even shipped a
+ * `_resetSlugAllocatorState_TESTING_ONLY` hook to paper over it, which only
+ * helps files that remember to call it.
+ *
+ * It surfaced as a macOS-ONLY failure because shard composition differs per
+ * platform: on `macos-latest` shard 1, `docs-memory-observation.test.ts` landed
+ * in a worker that had already run a file leaving a reservation behind, and it
+ * failed with `E_SLUG_RESERVED` against a slug it had never used. Nothing was
+ * wrong with the test or with macOS — the state was simply not partitioned.
+ *
+ * Keying by resolved project root makes `CLEO_DIR` isolation real, so the
+ * reset hook becomes a convenience rather than a correctness requirement.
+ *
+ * @param slug - already-normalised slug.
+ * @param cwd - caller cwd; resolved to a project root for the key.
+ * @task T12090
+ */
+function reservationKey(slug: string, cwd?: string): string {
+  let root: string;
+  try {
+    root = getProjectRoot(cwd);
+  } catch {
+    // An unresolvable root must not make two projects collide, and must not
+    // throw out of a bookkeeping helper. Fall back to the literal cwd.
+    root = cwd ?? '<unresolved>';
+  }
+  return `${root}\u0000${slug}`;
+}
+
+/**
  * Check whether the allocator has reserved `slug` in this process.
  *
  * Exported for use by `attachmentStore.put` (runtime assert).
  *
  * @internal
  */
-export function isSlugReserved(slug: string): boolean {
-  return reservedSlugs.has(normalizeSlug(slug));
+export function isSlugReserved(slug: string, cwd?: string): boolean {
+  return reservedSlugs.has(reservationKey(normalizeSlug(slug), cwd));
 }
 
 /**
@@ -237,8 +275,8 @@ export function isSlugReserved(slug: string): boolean {
  *
  * @internal
  */
-export function consumeReservedSlug(slug: string): void {
-  reservedSlugs.delete(normalizeSlug(slug));
+export function consumeReservedSlug(slug: string, cwd?: string): void {
+  reservedSlugs.delete(reservationKey(normalizeSlug(slug), cwd));
 }
 
 /**
@@ -311,7 +349,7 @@ export async function reserveSlug(
   try {
     // Same-process check first — another in-flight reservation already
     // claimed this slug.
-    if (reservedSlugs.has(normalizedSlug)) {
+    if (reservedSlugs.has(reservationKey(normalizedSlug, opts?.cwd))) {
       const db = await getDb(opts?.cwd);
       const suggestions = await deriveSlugSuggestionsForAllocator(db, normalizedSlug);
       return { ok: false, code: 'E_SLUG_RESERVED', suggestions };
@@ -333,7 +371,7 @@ export async function reserveSlug(
     }
 
     // Free — reserve it for the imminent `put`.
-    reservedSlugs.add(normalizedSlug);
+    reservedSlugs.add(reservationKey(normalizedSlug, opts?.cwd));
     return { ok: true, normalizedSlug };
   } finally {
     releaseLock();
@@ -348,8 +386,8 @@ export async function reserveSlug(
  *
  * @param slug - The slug as passed to `reserveSlug` (will be re-normalised).
  */
-export function releaseReservedSlug(slug: string): void {
-  reservedSlugs.delete(normalizeSlug(slug));
+export function releaseReservedSlug(slug: string, cwd?: string): void {
+  reservedSlugs.delete(reservationKey(normalizeSlug(slug), cwd));
 }
 
 // ─── ADR-057-compliant dispatch entry-point wrapper ───────────────────────────

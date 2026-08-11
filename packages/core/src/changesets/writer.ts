@@ -227,7 +227,7 @@ export async function writeChangesetEntry(
   //
   // The reservation is consumed by `attachmentStore.put` on success (writer
   // contract). On any subsequent failure path we explicitly release with
-  // `releaseReservedSlug(validated.id)` so retries do not see a stale claim.
+  // `releaseReservedSlug(validated.id, opts.projectRoot)` so retries do not see a stale claim.
   //
   // This ELIMINATES the rollback path that previously deleted
   // `.changeset/<slug>.md` after a late-bound `SlugCollisionError`. The
@@ -270,7 +270,7 @@ export async function writeChangesetEntry(
       /* Already gone or unwritable — ignore. */
     }
     // Release the slug reservation so retries do not see a stale claim.
-    releaseReservedSlug(validated.id);
+    releaseReservedSlug(validated.id, opts.projectRoot);
     return {
       ok: false,
       error: {
@@ -288,7 +288,7 @@ export async function writeChangesetEntry(
   if (ownerId === undefined) {
     // Schema guarantees `tasks.length >= 1` so this is unreachable; included
     // for type narrowing.
-    releaseReservedSlug(validated.id);
+    releaseReservedSlug(validated.id, opts.projectRoot);
     try {
       rmSync(filePath, { force: true });
     } catch {
@@ -345,7 +345,7 @@ export async function writeChangesetEntry(
     // Safe regardless of whether the chokepoint reserved it or
     // attachmentStore.put already consumed it (releaseReservedSlug is a
     // no-op on an unreserved slug).
-    releaseReservedSlug(validated.id);
+    releaseReservedSlug(validated.id, opts.projectRoot);
 
     // T10388 — defence-in-depth: if the SSoT write throws SlugCollisionError
     // it means another process took the slug between our reserveSlug() and

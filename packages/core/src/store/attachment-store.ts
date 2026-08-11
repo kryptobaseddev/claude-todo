@@ -651,12 +651,16 @@ export function createAttachmentStore(): AttachmentStore {
         // env var also lets tests exercise the assert path explicitly.
         if (slug !== undefined && process.env['CLEO_STRICT_SLUG_ALLOCATOR'] === '1') {
           const { isSlugReserved, consumeReservedSlug } = await import('../docs/slug-allocator.js');
-          if (!isSlugReserved(slug)) {
+          // T12090: pass `cwd` so the reservation lookup is scoped to THIS
+          // project. Without it the check consults a process-global set and a
+          // sibling project (or a sibling test file in the same vitest worker)
+          // can satisfy or steal a reservation that was never ours.
+          if (!isSlugReserved(slug, cwd)) {
             throw new SlugNotReservedByAllocatorError(slug);
           }
           // Consume the reservation now so retries do NOT re-trip the
           // assert and the in-process Set does not grow unbounded.
-          consumeReservedSlug(slug);
+          consumeReservedSlug(slug, cwd);
         }
 
         // Pre-check slug collision OUTSIDE the BEGIN IMMEDIATE window so the
