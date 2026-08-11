@@ -464,6 +464,7 @@ const checkProvenanceCommand = defineCommand({
  *   Gate 7 (T12041): lint-no-domain-db-singleton.mjs    — no NEW per-domain DB singleton cache
  *   Gate 8 (T12087): lint-vitest-memory-safe.mjs       — every vitest config bounds fork count + heap
  *   Gate 9 (T12093): lint-workflow-cleo-commands.mjs   — no workflow invokes a nonexistent cleo verb
+ *   Gate 10 (T12076): lint-cli-startup-barrel-imports.mjs — no NEW static core-barrel import in the CLI
  *
  * Each gate is run in --check mode (baseline tolerance). A gate whose script
  * does not yet exist on disk is reported as "skipped" (non-blocking) to allow
@@ -555,6 +556,18 @@ const checkArchCommand = defineCommand({
         task: 'T12087',
         script: 'scripts/lint-vitest-memory-safe.mjs',
         description: 'Every vitest config spreads the memory-safe fork bounds (workers + heap cap)',
+      },
+      {
+        // T12076: ratchet, not zero-tolerance. 106 static core-barrel imports
+        // force the full 1266-module @cleocode/core graph to load before any
+        // command runs (measured: 2.54 s for the barrel vs 0.12 s for a deep
+        // module). Converting them one at a time produced an
+        // EnvironmentTeardownError, so the count is allowed to fall but never
+        // rise, and the measurement travels with the gate.
+        id: 'gate-10',
+        task: 'T12076',
+        script: 'scripts/lint-cli-startup-barrel-imports.mjs',
+        description: 'No NEW static @cleocode/core barrel import in the CLI (startup cost)',
       },
       {
         // T12093: zero-tolerance. `release-prepare.yml` invoked two commands

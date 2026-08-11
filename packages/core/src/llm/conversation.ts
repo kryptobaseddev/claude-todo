@@ -10,12 +10,23 @@
 
 import { getEncoding } from 'js-tiktoken';
 
-const _enc = getEncoding('cl100k_base');
+/**
+ * Lazily-built cl100k_base encoder.
+ *
+ * T12076: this was `const _enc = getEncoding('cl100k_base')` at MODULE SCOPE.
+ * `getEncoding` parses the BPE vocabulary, measured at 156 ms, and this module is
+ * reachable from the `@cleocode/core` barrel — so every `cleo` invocation built a
+ * tokenizer table before doing anything, including commands that never count a
+ * token. Deferring to first use keeps the surrounding API synchronous (the static
+ * import stays; only the table build moves) while removing the cost from startup.
+ */
+let _enc: ReturnType<typeof getEncoding> | null = null;
 
 /**
  * Estimate token count for a string using tiktoken cl100k_base.
  */
 function estimateTokens(text: string): number {
+  _enc ??= getEncoding('cl100k_base');
   return _enc.encode(text).length;
 }
 
