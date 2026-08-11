@@ -6,6 +6,14 @@ on:
   pull_request:
     branches: [main]
   merge_group:
+  # T12094: a branch pushed and a PR opened with GITHUB_TOKEN do NOT trigger
+  # workflows — GitHub suppresses them to prevent recursive runs. The release
+  # bump-PR is created exactly that way, so it opened with ZERO checks and could
+  # never satisfy branch protection (which requires the `CI` context). This
+  # trigger lets `release-prepare` dispatch CI for the branch explicitly; the
+  # resulting check runs attach to the branch-tip SHA, which IS the PR head, so
+  # protection is satisfied without a human pushing a commit.
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -45,6 +53,13 @@ jobs:
       - uses: dorny/paths-filter@v3
         id: filter
         with:
+          # T12094: paths-filter infers its comparison point from the event —
+          # base branch for `pull_request`, previous commit for `push`. A
+          # `workflow_dispatch` run has neither, so the base is named
+          # explicitly. An empty string is what `core.getInput` returns for an
+          # unset input, so PR and push events keep their existing behaviour
+          # byte-for-byte.
+          base: ${{ github.event_name == 'workflow_dispatch' && github.event.repository.default_branch || '' }}
           filters: |
             code:
               - 'packages/**'

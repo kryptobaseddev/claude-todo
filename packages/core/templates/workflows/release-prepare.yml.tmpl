@@ -429,6 +429,29 @@ jobs:
             --body-file /tmp/bump-pr-body.md
         timeout-minutes: 5
 
+      # R-205(g) / T12094: trigger CI for the bump-PR.
+      #
+      # GitHub deliberately does NOT run workflows for events caused by
+      # GITHUB_TOKEN, so the `git push` and `gh pr create` above produce NO
+      # checks. Branch protection on `main` requires the `CI` context, so the
+      # bump-PR could never become mergeable — both previous releases needed a
+      # human to push a commit to the branch just to wake CI up.
+      #
+      # Dispatching CI against the branch produces check runs on the branch-tip
+      # SHA, which IS the PR head commit, so protection is satisfied. A
+      # workflow_dispatch run is itself GITHUB_TOKEN-initiated, but explicit
+      # dispatch is exempt from the recursion guard — that is the whole point of
+      # the trigger existing.
+      - name: Trigger CI for the bump-PR
+        run: |
+          BRANCH="${{ steps.branch.outputs.name }}"
+          if gh workflow run ci.yml --ref "$BRANCH"; then
+            echo "Dispatched CI for $BRANCH."
+          else
+            echo "::warning::Could not dispatch ci.yml for $BRANCH. The bump-PR will have no checks and cannot merge until CI is started (push any commit to the branch, or re-run: gh workflow run ci.yml --ref $BRANCH)."
+          fi
+        timeout-minutes: 3
+
       # R-209(c): emit recovery hint into the job summary artifact.
       - name: Emit recovery hint to job summary
         if: always()

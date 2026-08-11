@@ -34,6 +34,7 @@ import { doctorExodusCommand } from './doctor-exodus.js';
 import { doctorExodusResidueCommand } from './doctor-exodus-residue.js';
 import { doctorFkCheckCommand } from './doctor-fk-check.js';
 import { doctorLegacyBackupsCommand } from './doctor-legacy-backups.js';
+import { doctorMemoryGuardCommand } from './doctor-memory-guard.js';
 import { runDoctorProjects } from './doctor-projects.js';
 import { doctorReleaseReadinessCommand } from './doctor-release-readiness.js';
 import { doctorRepairCommand } from './doctor-repair.js';
@@ -238,6 +239,8 @@ export const doctorCommand = defineCommand({
     'legacy-backups': doctorLegacyBackupsCommand,
     // T12095 — pre-dual-scope store files still on disk under their old LIVE names
     'superseded-store': doctorSupersededStoreCommand,
+    // T12097 — machine-wide guard for test runs started OUTSIDE cleo verify
+    'memory-guard': doctorMemoryGuardCommand,
     // T11777 / Saga T11242 / Epic T11249 — exodus stranded-residue check (+ --fix)
     'exodus-residue': doctorExodusResidueCommand,
     // T11837 / Saga T11242 / Epic T11833 — read-only exodus health report

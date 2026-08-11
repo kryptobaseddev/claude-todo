@@ -123,6 +123,43 @@ gh api repos/:owner/:repo/branches/main/protection | jq '.required_pull_request_
 
 ---
 
+## The bump-PR opens with zero checks (T12094 — fixed)
+
+**Symptom.** `release-prepare` completes, the bump-PR exists, and it has *no*
+checks at all. Branch protection on `main` requires the `CI` context, so the PR
+can never become mergeable and `cleo release pr-status` reports nothing to poll.
+
+**Cause.** GitHub deliberately does not trigger workflows for events caused by
+`GITHUB_TOKEN` — a guard against recursive runs. `release-prepare` pushes the
+release branch and runs `gh pr create` with exactly that token, so neither the
+`push` nor the `pull_request` event starts anything. v2026.8.3 and v2026.8.4 both
+needed a human to push a throwaway commit to the branch purely to wake CI up.
+
+**Fix.** `ci.yml` gained a `workflow_dispatch` trigger, and `release-prepare` now
+dispatches it for the release branch immediately after opening the PR:
+
+```yaml
+- name: Trigger CI for the bump-PR
+  run: gh workflow run ci.yml --ref "$BRANCH"
+```
+
+An explicit dispatch is exempt from the recursion guard. The resulting check runs
+attach to the branch-tip SHA — which *is* the PR head commit — so branch
+protection is satisfied without human intervention.
+
+One subtlety worth keeping in mind if you edit `ci.yml`: `dorny/paths-filter`
+infers its comparison point from the event (base branch for `pull_request`,
+previous commit for `push`). A `workflow_dispatch` run has neither, so the filter
+is given an explicit `base` of the default branch for that event only. Without it
+every path filter reports `false`, every job skips, and the aggregate `CI` job
+passes **vacuously** — a green check that tested nothing.
+
+**If it still opens with no checks**, dispatch by hand and file a follow-up:
+
+```bash
+gh workflow run ci.yml --ref release/v2026.X.Y
+```
+
 ## Operator Commands
 
 ### Add a PR to the merge queue

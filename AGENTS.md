@@ -251,6 +251,36 @@ Runbooks: `docs/release/merge-queue-runbook.md`, `docs/release/verb-matrix.md`, 
 
 **NEVER** `git add` any of these four files. Root and nested `.gitignore` block this; manual overrides re-open the T5158 data-loss vector.
 
+### Memory guard — what CLEO bounds, and what it CANNOT (T12096 · T12097)
+
+`cleo verify --evidence "tool:test"` spawns the project's own test command, so
+CLEO injects a ceiling there (`resources/heavy-tool-env.ts`: heap cap, worker
+cap, `pnpm -r` fan-out cap). That covers evidence runs and **nothing else**.
+
+A test an agent starts itself — `pnpm test`, `npx vitest run`, `cargo test` —
+never enters a CLEO process, so no CLEO-side bound can apply. Measured
+2026-08-10: that path drove `app.slice` to 48.1 GiB against a `MemoryHigh` of
+exactly 48 GiB; the kernel reclaimed hard, thrashed 7.7 GiB of zram, and the
+desktop locked up. **There was no OOM kill** — a throttle-and-thrash freeze logs
+nothing, which is why repeated OOM hunts found nothing. Diagnose with
+`journalctl -b -1 -k | grep -i oom-kill` FIRST; an empty result means the
+mechanism is throttling, not OOM.
+
+Environment variables are NOT a fix for this: they bind only shells started
+after they are set. The five heaviest tabs that day all predated the profile
+edit. A cgroup limit on the enclosing slice is the only layer that binds
+processes already running — proven by applying `MemoryHigh` to a live scope 12
+minutes after its creation and observing it take effect immediately.
+
+```bash
+cleo doctor memory-guard          # audit (read-only)
+cleo doctor memory-guard --fix    # apply RAM-derived limits to app.slice
+```
+
+Recommendations derive from total RAM (`MemoryHigh` 72 %, `MemoryMax` 90 %), so a
+16 GiB laptop is not handed a 45 GiB ceiling. Off-Linux the audit reports
+`supported: false` rather than guessing.
+
 ### The store is `cleo.db`, and three things say otherwise (T12095)
 
 Post-E6 (ADR-068) the project store is **`.cleo/cleo.db`** with task rows in
