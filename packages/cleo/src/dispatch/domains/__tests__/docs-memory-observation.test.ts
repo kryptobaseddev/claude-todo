@@ -24,7 +24,7 @@
  * @epic T9964
  */
 
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { DocAttachmentObservationPayload } from '@cleocode/contracts';
@@ -81,7 +81,15 @@ const docsHandler = new DocsHandler();
 const memoryHandler = new MemoryHandler();
 
 beforeEach(async () => {
-  tempDir = await mkdtemp(join(tmpdir(), 'cleo-docs-mem-'));
+  // T12090: `realpath` is load-bearing on macOS. `os.tmpdir()` there is
+  // `/var/folders/...`, which is a SYMLINK to `/private/var/folders/...`. Code
+  // under test that resolves a real path (SQLite open, project-root walk) lands
+  // on the `/private/...` spelling, so the write and the read end up in two
+  // different `.cleo` directories: `memory.find` legitimately finds nothing, and
+  // the `rm` of the symlinked path leaves the real one behind as ENOTEMPTY.
+  // Both macOS-only symptoms are this one cause. Linux tmpdir is not symlinked,
+  // which is why it never reproduced there.
+  tempDir = await realpath(await mkdtemp(join(tmpdir(), 'cleo-docs-mem-')));
   process.env['CLEO_DIR'] = join(tempDir, '.cleo');
 
   fixtureFile = join(tempDir, 'spec.md');
