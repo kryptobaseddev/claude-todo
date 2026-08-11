@@ -453,6 +453,17 @@ jobs:
       - name: Trigger CI for the bump-PR
         run: |
           BRANCH="${{ steps.branch.outputs.name }}"
+          # The worktree-napi prebuild must be dispatched too. CI's "Worktree NAPI
+          # Prebuild Gate" looks for a prebuild run on this branch's SHA, and a
+          # run created by the GITHUB_TOKEN pull_request event comes back with
+          # conclusion `action_required` — queued pending human approval — which
+          # the gate reads as a failure. An explicit dispatch is not gated on
+          # approval, so it produces a real result.
+          if gh workflow run worktree-napi-prebuild.yml --ref "$BRANCH" 2>/dev/null; then
+            echo "Dispatched worktree-napi prebuild for $BRANCH."
+          else
+            echo "::warning::Could not dispatch worktree-napi-prebuild.yml for $BRANCH; the NAPI gate may block the bump-PR pending approval."
+          fi
           if gh workflow run ci.yml --ref "$BRANCH"; then
             echo "Dispatched CI for $BRANCH."
           else

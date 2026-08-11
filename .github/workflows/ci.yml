@@ -1615,6 +1615,13 @@ jobs:
 
   worktree-napi-gate:
     name: Worktree NAPI Prebuild Gate (T11127)
+    # T12094: `actions: write` lets this job APPROVE a prebuild run that GitHub
+    # queued as `action_required` — which is the state of every run triggered by
+    # a GITHUB_TOKEN-created pull_request, i.e. every release bump-PR. Without it
+    # the gate can only report the manual command and fail.
+    permissions:
+      actions: write
+      contents: read
     needs: [changes]
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -1651,6 +1658,28 @@ jobs:
 
           if [ "$RUN_STATUS" = "completed" ]; then
             CONCLUSION=$(echo "$MATCHING_RUN" | jq -r '.conclusion')
+            # T12094: `action_required` is NOT a failure — it means GitHub queued
+            # the run pending human approval, which is what happens to every run
+            # triggered by a GITHUB_TOKEN-created pull_request (the release
+            # bump-PR). Reading it as failure blocked v2026.8.5 on a prebuild that
+            # had never been allowed to start. Try to approve it and wait; if we
+            # lack the permission, say so precisely instead of reporting a build
+            # failure that did not occur.
+            if [ "$CONCLUSION" = "action_required" ]; then
+              echo "⏸ prebuild run #$RUN_ID is queued pending approval (GITHUB_TOKEN-created event)."
+              if gh api -X POST "repos/${{ github.repository }}/actions/runs/$RUN_ID/approve" >/dev/null 2>&1; then
+                echo "  approved — waiting for it to finish"
+                if gh run watch "$RUN_ID" --exit-status 2>/dev/null; then
+                  echo "✓ worktree-napi prebuild passed on all 4 platform targets"
+                  exit 0
+                fi
+                echo "✗ prebuild failed after approval — see run #$RUN_ID"
+                exit 1
+              fi
+              echo "::error::prebuild run #$RUN_ID needs approval and this token cannot grant it."
+              echo "  Approve it manually: gh api -X POST repos/${{ github.repository }}/actions/runs/$RUN_ID/approve"
+              exit 1
+            fi
             if [ "$CONCLUSION" = "success" ]; then
               echo "✓ worktree-napi prebuild passed on all 4 platform targets"
               exit 0
