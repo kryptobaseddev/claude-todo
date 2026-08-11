@@ -1,5 +1,12 @@
 # Changelog
 
+## [2026.8.5] (2026-08-11)
+
+### Fixed
+
+- the macOS-only E_SLUG_RESERVED flake was a process-global reservation set — keyed by slug alone, so CLEO_DIR isolation never isolated it _(provenance: [T12090](https://github.com/kryptobaseddev/cleo/search?q=T12090&type=commits))_
+- bump-PRs opened with zero checks and could never merge; and tests an agent runs itself bypassed every CLEO memory ceiling _(provenance: [T12094](https://github.com/kryptobaseddev/cleo/search?q=T12094&type=commits), [T12097](https://github.com/kryptobaseddev/cleo/search?q=T12097&type=commits))_
+
 ## [2026.8.4] (2026-08-10)
 
 ### Fixed
