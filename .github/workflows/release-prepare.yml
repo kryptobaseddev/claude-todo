@@ -67,6 +67,13 @@ permissions:
   contents: write
   pull-requests: write
   id-token: write
+  # T12094: `actions: write` is required to CREATE a workflow_dispatch event.
+  # Without it the "Trigger CI for the bump-PR" step gets
+  #   HTTP 403: Resource not accessible by integration
+  # and the bump-PR opens with no checks — the exact failure this step exists to
+  # prevent. Measured on the v2026.8.5 dispatch, which is why the step warns
+  # instead of failing: the release still completed and told us precisely why.
+  actions: write
 
 # R-207: concurrent prepare runs against the same version queue rather than
 # collide. cancel-in-progress=false preserves in-flight work.
