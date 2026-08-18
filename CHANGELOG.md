@@ -1,5 +1,11 @@
 # Changelog
 
+## [2026.8.6] (2026-08-18)
+
+### Fixed
+
+- doctor superseded-store reports a 0-byte legacy DB (brain.db) as provably empty instead of "an unknown number of rows" _(provenance: [T12099](https://github.com/kryptobaseddev/cleo/search?q=T12099&type=commits))_
+
 ## [2026.8.5] (2026-08-11)
 
 ### Fixed
