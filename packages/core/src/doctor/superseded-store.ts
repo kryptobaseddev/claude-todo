@@ -55,7 +55,9 @@ export interface SupersededStoreEntry {
   readonly modifiedAt: string;
   /**
    * Rows found in the superseded file's own task table, if it has one.
-   * `null` when the file has no such table or could not be read.
+   * `null` when the file has no such table or could not be read. A 0-byte
+   * file yields `0`, never `null` — an empty file holds zero rows by
+   * definition (T12099).
    */
   readonly rowsInSuperseded: number | null;
   /** Rows found in the LIVE store's prefixed table. */
@@ -172,7 +174,11 @@ export function scanSupersededStores(projectRoot: string): SupersededStoreScanRe
     // risk advising removal of something still being written.
     if (stat.mtimeMs >= liveMtimeMs) continue;
 
-    const rowsInSuperseded = countRows(path, bareTable);
+    // A 0-byte file holds zero rows BY DEFINITION — bypass countRows, which
+    // would return null (nothing to open) and manufacture the "unknown number
+    // of rows" corruption signal this check exists to kill (T12099). `null`
+    // remains reserved for a NONZERO file that could not be read.
+    const rowsInSuperseded = stat.size === 0 ? 0 : countRows(path, bareTable);
     const rowsInLive = countRows(liveStorePath, liveTable);
     // `rowsInSuperseded === 0` must be EXPLICIT, never `?? 0`. `null` means the
     // file could not be read — corrupt, locked, truncated, or not SQLite — and
@@ -181,17 +187,27 @@ export function scanSupersededStores(projectRoot: string): SupersededStoreScanRe
     // is the one case where being wrong loses data.
     const safeToArchive = (rowsInLive ?? 0) > 0 && rowsInSuperseded === 0;
 
-    const reason = safeToArchive
-      ? `superseded by ${LIVE_STORE_FILENAME}: ${rowsInSuperseded ?? 0} rows in ${file}#${bareTable} ` +
+    let reason: string;
+    if (stat.size === 0 && safeToArchive) {
+      reason =
+        `${file} is 0 bytes — an empty file holds zero rows by definition, so there is ` +
+        `nothing to reconcile. The live store ${LIVE_STORE_FILENAME}#${liveTable} holds ` +
+        `${rowsInLive} rows. Safe to archive.`;
+    } else if (safeToArchive) {
+      reason =
+        `superseded by ${LIVE_STORE_FILENAME}: ${rowsInSuperseded ?? 0} rows in ${file}#${bareTable} ` +
         `vs ${rowsInLive} in ${LIVE_STORE_FILENAME}#${liveTable}. Last written ` +
         `${stat.mtime.toISOString().slice(0, 10)}, while ${LIVE_STORE_FILENAME} was written ` +
         `${new Date(liveMtimeMs).toISOString().slice(0, 10)}. Its name is the one the docs and ` +
         `\`cleo restore backup --file tasks.db\` still say, and snapshots are named ` +
         `\`tasks-<ts>.db\` even though they snapshot ${LIVE_STORE_FILENAME} — so this file reads ` +
-        `as a truncated live DB when it is simply the pre-migration one.`
-      : `predates ${LIVE_STORE_FILENAME} but still holds ${rowsInSuperseded ?? 'an unknown number of'} ` +
+        `as a truncated live DB when it is simply the pre-migration one.`;
+    } else {
+      reason =
+        `predates ${LIVE_STORE_FILENAME} but still holds ${rowsInSuperseded ?? 'an unknown number of'} ` +
         `rows in ${bareTable} (live ${liveTable}: ${rowsInLive ?? 'unreadable'}). NOT recommended for ` +
         `removal — reconcile the contents first.`;
+    }
 
     entries.push({
       path,
