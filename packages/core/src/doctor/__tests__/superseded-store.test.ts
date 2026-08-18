@@ -104,6 +104,28 @@ describe('scanSupersededStores (T12095)', () => {
     expect(scanSupersededStores(root).entries).toEqual([]);
   });
 
+  it('reports a 0-byte legacy file as provably empty and safe to archive (T12099)', () => {
+    // The measured PepsVida shape: brain.db is 0 bytes. A 0-byte file holds
+    // zero rows BY DEFINITION — reporting "an unknown number of rows" and
+    // withholding the verdict manufactures the corruption signal this check
+    // exists to eliminate.
+    writeFileSync(join(cleoDir, 'brain.db'), '');
+    seed(join(cleoDir, LIVE_STORE_FILENAME), 'brain_observations', 1309);
+    backdate(join(cleoDir, 'brain.db'), 7);
+    backdate(join(cleoDir, LIVE_STORE_FILENAME), 0);
+
+    const { entries } = scanSupersededStores(root);
+    expect(entries).toHaveLength(1);
+    const [e] = entries;
+    expect(e?.name).toBe('brain.db');
+    expect(e?.sizeBytes).toBe(0);
+    expect(e?.rowsInSuperseded).toBe(0);
+    expect(e?.rowsInLive).toBe(1309);
+    expect(e?.safeToArchive).toBe(true);
+    expect(e?.reason).toContain('0 bytes');
+    expect(e?.reason).not.toContain('unknown number');
+  });
+
   it('survives a legacy file that is not valid SQLite', () => {
     // A truncated or garbage file must degrade to "unreadable", not throw and
     // take the whole doctor run down.
