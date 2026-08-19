@@ -410,7 +410,11 @@ export function evaluateRollup(
       ok: false,
       reason:
         `Required workflows did not run for this PR: ${missing.join(', ')}. ` +
-        `Cannot accept pr atom — required gates were skipped.`,
+        `Cannot accept pr atom — required gates were skipped. ` +
+        `If this project's required checks differ from the cleocode defaults, override the list ` +
+        `via the ${PR_REQUIRED_WORKFLOWS_ENV_VAR} env var (comma-separated) or the ` +
+        `\`release.prRequiredWorkflows\` key in \`.cleo/project-context.json\` ` +
+        `(an empty array means no required workflows).`,
     };
   }
 

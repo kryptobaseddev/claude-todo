@@ -395,6 +395,10 @@ describe('resolvePrEvidenceAtom — failure paths', () => {
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.reason).toMatch(/Required workflows did not run/);
+    // T12100: the error must point at the override tiers, or consumers conclude
+    // the cleocode gate list is hardcoded and invent workarounds.
+    expect(r.reason).toContain('CLEO_PR_REQUIRED_WORKFLOWS');
+    expect(r.reason).toContain('release.prRequiredWorkflows');
   });
 
   it('rejects invalid pr number (negative)', async () => {
