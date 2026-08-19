@@ -1,5 +1,11 @@
 # Changelog
 
+## [2026.8.7] (2026-08-19)
+
+### Fixed
+
+- pr-atom missing-workflows error now names the CLEO_PR_REQUIRED_WORKFLOWS env var and release.prRequiredWorkflows config key _(provenance: [T12100](https://github.com/kryptobaseddev/cleo/search?q=T12100&type=commits))_
+
 ## [2026.8.6] (2026-08-18)
 
 ### Fixed
