@@ -1,27 +1,27 @@
 {
   "$schema": "https://cleocode.io/schemas/release-plan/v1.json",
-  "version": "v2026.8.6",
-  "resolvedVersion": "v2026.8.6",
+  "version": "v2026.8.7",
+  "resolvedVersion": "v2026.8.7",
   "suffixApplied": false,
   "scheme": "calver",
   "channel": "latest",
   "epicId": "T11249",
   "releaseKind": "regular",
-  "createdAt": "2026-08-18T23:41:16.529Z",
+  "createdAt": "2026-08-19T17:03:55.171Z",
   "createdBy": "keatonhoskins",
-  "previousVersion": "v2026.8.5",
-  "previousTag": "v2026.8.5",
-  "previousShippedAt": "2026-08-11T05:16:30.251Z",
+  "previousVersion": "v2026.8.6",
+  "previousTag": "v2026.8.6",
+  "previousShippedAt": "2026-08-19T01:12:25.304Z",
   "tasks": [
     {
-      "id": "T12099",
+      "id": "T12100",
       "kind": "fix",
       "impact": "patch",
-      "userFacingSummary": "doctor superseded-store misdiagnoses a 0-byte superseded DB (brain.db) as holding 'an unknown number of rows'",
+      "userFacingSummary": "pr: atom missing-workflows error gives no hint of the override tiers — consumers conclude the list is hardcoded",
       "evidenceAtoms": [
-        "commit:506dbadd4a66ad4f3250141c41f23d211f6f8bda",
-        "files:packages/core/src/doctor/superseded-store.ts,packages/core/src/doctor/__tests__/superseded-store.test.ts,.changeset/t12099-superseded-store-empty-file.md",
-        "pr:1188"
+        "commit:2e0fe1fb85c14fdc91d06eba19a03cb5258a4767",
+        "files:packages/core/src/release/pr-evidence.ts,packages/core/src/release/__tests__/evidence-pr-atom.test.ts,.changeset/t12100-pr-atom-override-guidance.md",
+        "pr:1191"
       ],
       "epicAncestor": "T11249",
       "ivtrPhaseAtPlan": "contribution"
@@ -30,7 +30,7 @@
   "changelog": {
     "features": [],
     "fixes": [
-      "T12099"
+      "T12100"
     ],
     "chores": [],
     "breaking": []
@@ -40,7 +40,7 @@
       "name": "test",
       "atom": "tool:test",
       "status": "unresolved",
-      "lastVerifiedAt": "2026-08-18T23:41:16.529Z",
+      "lastVerifiedAt": "2026-08-19T17:03:55.171Z",
       "resolvedCommand": "pnpm run test",
       "resolvedSource": "project-context"
     },
@@ -48,7 +48,7 @@
       "name": "build",
       "atom": "tool:build",
       "status": "unresolved",
-      "lastVerifiedAt": "2026-08-18T23:41:16.529Z",
+      "lastVerifiedAt": "2026-08-19T17:03:55.171Z",
       "resolvedCommand": "pnpm run build",
       "resolvedSource": "project-context"
     },
@@ -56,7 +56,7 @@
       "name": "lint",
       "atom": "tool:lint",
       "status": "unresolved",
-      "lastVerifiedAt": "2026-08-18T23:41:16.529Z",
+      "lastVerifiedAt": "2026-08-19T17:03:55.171Z",
       "resolvedCommand": "npx biome check .",
       "resolvedSource": "language-default"
     },
@@ -64,7 +64,7 @@
       "name": "typecheck",
       "atom": "tool:typecheck",
       "status": "unresolved",
-      "lastVerifiedAt": "2026-08-18T23:41:16.529Z",
+      "lastVerifiedAt": "2026-08-19T17:03:55.171Z",
       "resolvedCommand": "npx tsc --noEmit",
       "resolvedSource": "language-default"
     },
@@ -72,7 +72,7 @@
       "name": "audit",
       "atom": "tool:audit",
       "status": "unresolved",
-      "lastVerifiedAt": "2026-08-18T23:41:16.529Z",
+      "lastVerifiedAt": "2026-08-19T17:03:55.171Z",
       "resolvedCommand": "npm audit",
       "resolvedSource": "language-default"
     },
@@ -80,7 +80,7 @@
       "name": "security-scan",
       "atom": "tool:security-scan",
       "status": "unresolved",
-      "lastVerifiedAt": "2026-08-18T23:41:16.529Z",
+      "lastVerifiedAt": "2026-08-19T17:03:55.171Z",
       "resolvedCommand": "npm audit",
       "resolvedSource": "language-default"
     }
@@ -108,13 +108,13 @@
   "meta": {
     "firstEverRelease": false,
     "archetype": "node",
-    "releaseNotes": "## v2026.8.6 — 2026-08-18\n\n### Fixed\n\n- doctor superseded-store reports a 0-byte legacy DB (brain.db) as provably empty instead of \"an unknown number of rows\" _(provenance: [T12099](https://github.com/kryptobaseddev/cleo/search?q=T12099&type=commits))_\n",
+    "releaseNotes": "## v2026.8.7 — 2026-08-19\n\n### Fixed\n\n- pr-atom missing-workflows error now names the CLEO_PR_REQUIRED_WORKFLOWS env var and release.prRequiredWorkflows config key _(provenance: [T12100](https://github.com/kryptobaseddev/cleo/search?q=T12100&type=commits))_\n",
     "changesetEntryCount": 1,
     "changesetIds": [
-      "t12099-superseded-store-empty-file"
+      "t12100-pr-atom-override-guidance"
     ],
     "taskIds": [
-      "T12099"
+      "T12100"
     ]
   }
 }
