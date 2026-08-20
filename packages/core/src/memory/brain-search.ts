@@ -62,22 +62,32 @@ export interface BrainSearchOptions {
 let _fts5Available: boolean | null = null;
 
 /**
- * Track WHICH brain database handle has had its FTS tables created and index
- * rebuilt this session — keyed by `DatabaseSync` identity, NOT a process-wide
- * boolean.
+ * Track WHICH brain database has had its FTS tables created and index rebuilt
+ * this session — keyed by the resolved `cleo.db` file PATH, NOT a process-wide
+ * boolean (and deliberately not by `DatabaseSync` handle identity: a cached
+ * handle reference is exactly the per-domain DB singleton the T12041 DB Open
+ * Guard exists to prevent).
  *
  * The dual-scope cache guarantees one `DatabaseSync` per `cleo.db` path, so a
- * different handle means a different (or freshly reopened) database whose FTS
- * index may not yet contain rows inserted before the content-sync triggers
- * existed. The old process-wide boolean skipped the rebuild for every database
- * after the first: in a multi-project process — and in vitest `--retry`
- * re-attempts, which mint a fresh temp DB per attempt while module state
- * survives — `memory find` then returned zero hits for committed rows
- * (T12101, macOS CI shard 1 flake on PRs #1188/#1191/#1202).
+ * different path means a different database whose FTS index may not yet
+ * contain rows inserted before the content-sync triggers existed. The old
+ * process-wide boolean skipped the rebuild for every database after the
+ * first: in a multi-project process — and in vitest `--retry` re-attempts,
+ * which mint a fresh temp DB per attempt while module state survives —
+ * `memory find` then returned zero hits for committed rows (T12101, macOS CI
+ * shard 1 flake on PRs #1188/#1191/#1202).
+ *
+ * Same-path file recreation (close + delete + recreate one `cleo.db` in a
+ * single process) is the one case path-keying cannot distinguish; tests that
+ * do this already call {@link resetFts5Cache} explicitly.
+ *
+ * Naming note: the identifier must NOT contain `Db`/`Database`/`Connection`/
+ * `Handle` — the T12041 gate regexes module-level `let … = null` declarations
+ * for exactly those tokens (scripts/lint-no-domain-db-singleton.mjs).
  *
  * @task T12101
  */
-let _fts5InitializedHandle: DatabaseSync | null = null;
+let _fts5RebuiltForPath: string | null = null;
 
 /**
  * Check if FTS5 is available in the current SQLite build.
@@ -322,7 +332,9 @@ export async function searchBrain(
   }
 
   // Ensure brain.db is initialized
-  const { getBrainDb, getBrainNativeDb } = await import('../store/memory-sqlite.js');
+  const { getBrainDb, getBrainDbPath, getBrainNativeDb } = await import(
+    '../store/memory-sqlite.js'
+  );
   await getBrainDb(projectRoot);
   const nativeDb = getBrainNativeDb(projectRoot);
 
@@ -338,12 +350,14 @@ export async function searchBrain(
   const ftsAvailable = ensureFts5Tables(nativeDb);
 
   if (ftsAvailable) {
-    // On first search against THIS database handle, rebuild FTS indexes to
-    // sync any data that was inserted before the FTS triggers existed.
-    // Handle-keyed (T12101): a fresh or different database always gets one
-    // rebuild, even when an earlier database in this process was already synced.
-    if (_fts5InitializedHandle !== nativeDb) {
-      _fts5InitializedHandle = nativeDb;
+    // On first search against THIS database, rebuild FTS indexes to sync any
+    // data that was inserted before the FTS triggers existed. Path-keyed
+    // (T12101): `getBrainDbPath` runs the same `resolveDualScopeDbPath`
+    // resolver the dual-scope cache keys on, so a fresh or different database
+    // always gets one rebuild — even when an earlier database in this process
+    // was already synced — while repeat searches against the same DB skip it.
+    if (_fts5RebuiltForPath !== getBrainDbPath(projectRoot)) {
+      _fts5RebuiltForPath = getBrainDbPath(projectRoot);
       rebuildFts5Index(nativeDb);
     }
     return searchWithFts5(nativeDb, query, tables, limit, peerId, includeGlobal);
@@ -772,15 +786,15 @@ export function matchConjunctiveFirst<T>(
 }
 
 /**
- * Reset the cached FTS5 availability flag and the initialized-handle marker.
+ * Reset the cached FTS5 availability flag and the initialized-path marker.
  * Used in tests to force re-detection and a rebuild on the next search.
  *
- * @task T12101 — also clears the per-handle rebuild marker (was a
+ * @task T12101 — also clears the per-path rebuild marker (was a
  * process-wide boolean before T12101).
  */
 export function resetFts5Cache(): void {
   _fts5Available = null;
-  _fts5InitializedHandle = null;
+  _fts5RebuiltForPath = null;
 }
 
 // ============================================================================
