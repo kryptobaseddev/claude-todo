@@ -1,0 +1,41 @@
+name: CI Phantom-Cancel Watchdog
+
+# @task T12103
+# Owner-CI cron — scans recent completed runs for the phantom-cancel
+# signature (job conclusion `cancelled` while every step reported success)
+# and re-runs the affected runs automatically. We cannot fix the hosted
+# runner's orphan-process reaper; this eliminates the manual-recovery cost.
+
+on:
+  schedule:
+    # Every 15 minutes, offset from :00/:30 to dodge top-of-hour contention.
+    - cron: '7-59/15 * * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (detect and print, do not rerun anything)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  actions: write # required for `gh run rerun`
+
+jobs:
+  watchdog:
+    name: Detect and rerun phantom cancels
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run phantom-cancel watchdog
+        run: |
+          ARGS="--json"
+          if [ "${DRY_RUN}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
+          node scripts/ci-phantom-cancel-watchdog.mjs $ARGS
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
