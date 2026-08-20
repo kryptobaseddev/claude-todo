@@ -53,6 +53,46 @@ async function waitFor(predicate: () => Promise<boolean>, ms = 4000): Promise<vo
 }
 
 /**
+ * Best-effort settle window for the fire-and-forget observation writer before
+ * teardown — mirrors `drainPendingBrainWrites` in
+ * docs-memory-observation.test.ts (T12101). `docs.add` emits its observation
+ * via an un-awaited promise chain whose tail can still be writing
+ * `.cleo/cleo.db` when the test body finishes; draining before
+ * `closeAllDatabases()` keeps those writes off the `rm` race window
+ * (ENOTEMPTY on macOS CI).
+ *
+ * @task T12101
+ */
+async function drainPendingBrainWrites(): Promise<void> {
+  await new Promise((r) => setImmediate(r));
+  await new Promise((r) => setImmediate(r));
+  await new Promise((r) => setTimeout(r, 200));
+}
+
+/**
+ * Recursive `rm` that retries the transient ENOTEMPTY/EBUSY/EPERM races
+ * produced by late fire-and-forget writers (T12101). Bounded to ~2.5s; any
+ * other error is rethrown immediately. Handles are always closed via
+ * `closeAllDatabases()` before this runs.
+ *
+ * @task T12101
+ */
+async function rmWithRetry(path: string): Promise<void> {
+  const maxAttempts = 25;
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await rm(path, { recursive: true, force: true });
+      return;
+    } catch (err) {
+      const code = (err as NodeJS.ErrnoException).code;
+      const transient = code === 'ENOTEMPTY' || code === 'EBUSY' || code === 'EPERM';
+      if (!transient || attempt >= maxAttempts) throw err;
+      await new Promise((r) => setTimeout(r, 100));
+    }
+  }
+}
+
+/**
  * Read the doc-attachment observation row for `slug` directly from
  * `brain_observations` via LIKE on `title` and `narrative` — bypasses RRF
  * fusion which requires both FTS and vector hits (and the latter is not
@@ -101,10 +141,14 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+  // T12101: settle fire-and-forget brain writers BEFORE closing handles, so
+  // they finish on the open DB instead of reopening `.cleo/cleo.db` during
+  // the recursive removal (ENOTEMPTY on macOS CI).
+  await drainPendingBrainWrites();
   const { closeAllDatabases } = await import('@cleocode/core/internal');
   await closeAllDatabases();
   delete process.env['CLEO_DIR'];
-  await rm(tempDir, { recursive: true, force: true });
+  await rmWithRetry(tempDir);
 });
 
 // ---------------------------------------------------------------------------
