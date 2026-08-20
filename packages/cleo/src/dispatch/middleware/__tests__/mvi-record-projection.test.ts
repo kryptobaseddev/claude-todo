@@ -3,7 +3,8 @@
  * (T9922 / Saga T9855 / E8.3).
  */
 
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { setFieldContext } from '../../../cli/field-context.js';
 import { resetProjectionOptOut, setProjectionOptOut } from '../../../cli/projection-context.js';
 import type { DispatchRequest, DispatchResponse } from '../../types.js';
 import { createMviRecordProjection } from '../mvi-record-projection.js';
@@ -152,5 +153,90 @@ describe('createMviRecordProjection middleware', () => {
     const response = await mw(req, async () => errResponse);
     expect(response.meta.projection).toBe('mvi');
     expect(response.success).toBe(false);
+  });
+});
+
+describe('--field pointer fallback to the full projection (T12108 / gh#1197)', () => {
+  const FULL_FIELD_CONTEXT = {
+    mvi: 'minimal',
+    mviSource: 'default',
+    expectsCustomMvi: false,
+  } as const;
+
+  beforeEach(() => {
+    resetProjectionOptOut();
+    setFieldContext({ ...FULL_FIELD_CONTEXT });
+  });
+
+  afterEach(() => {
+    setFieldContext({ ...FULL_FIELD_CONTEXT });
+  });
+
+  const TASK_WITH_GATES = {
+    ...FULL_TASK,
+    verification: { gates: { implemented: true, testsPassed: false } },
+  };
+
+  it('selects the full projection when the pointer only resolves there', async () => {
+    setFieldContext({ ...FULL_FIELD_CONTEXT, field: '/data/task/verification/gates' });
+    const mw = createMviRecordProjection();
+    const req = makeRequest('tasks', 'show', { taskId: 'T9922' });
+    const response = await mw(req, async () =>
+      makeSuccessResponse({ task: TASK_WITH_GATES, view: null, attachments: [] }),
+    );
+    const data = response.data as { task: Record<string, unknown> };
+    // The MVI-stripped field survived because the --field pointer needs it.
+    expect(data.task['verification']).toEqual(TASK_WITH_GATES.verification);
+    expect(data.task['description']).toBe(TASK_WITH_GATES.description);
+    expect(response.meta.projection).toBe('full');
+  });
+
+  it('keeps the MVI projection when the pointer already resolves in it', async () => {
+    setFieldContext({ ...FULL_FIELD_CONTEXT, field: '/data/task/title' });
+    const mw = createMviRecordProjection();
+    const req = makeRequest('tasks', 'show', { taskId: 'T9922' });
+    const response = await mw(req, async () =>
+      makeSuccessResponse({ task: TASK_WITH_GATES, view: null, attachments: [] }),
+    );
+    const data = response.data as { task: Record<string, unknown> };
+    expect(data.task['title']).toBe(TASK_WITH_GATES.title);
+    expect(data.task['verification']).toBeUndefined();
+    expect(response.meta.projection).toBe('mvi');
+  });
+
+  it('keeps the MVI projection when the pointer resolves nowhere (E_FIELD_NOT_FOUND path)', async () => {
+    setFieldContext({ ...FULL_FIELD_CONTEXT, field: '/data/task/nonexistent/deep' });
+    const mw = createMviRecordProjection();
+    const req = makeRequest('tasks', 'show', { taskId: 'T9922' });
+    const response = await mw(req, async () =>
+      makeSuccessResponse({ task: TASK_WITH_GATES, view: null, attachments: [] }),
+    );
+    const data = response.data as { task: Record<string, unknown> };
+    expect(data.task['verification']).toBeUndefined();
+    expect(response.meta.projection).toBe('mvi');
+  });
+
+  it('does not fall back for ops other than tasks.show', async () => {
+    setFieldContext({ ...FULL_FIELD_CONTEXT, field: '/data/tasks/0/verification' });
+    const mw = createMviRecordProjection();
+    const req = makeRequest('tasks', 'list');
+    const response = await mw(req, async () =>
+      makeSuccessResponse({ tasks: [TASK_WITH_GATES], total: 1, filtered: 1 }),
+    );
+    const data = response.data as { tasks: Record<string, unknown>[] };
+    expect(data.tasks[0]?.['verification']).toBeUndefined();
+    expect(response.meta.projection).toBe('mvi');
+  });
+
+  it('ignores non-/data pointers (/meta/... resolves against envelope chrome)', async () => {
+    setFieldContext({ ...FULL_FIELD_CONTEXT, field: '/meta/operation' });
+    const mw = createMviRecordProjection();
+    const req = makeRequest('tasks', 'show', { taskId: 'T9922' });
+    const response = await mw(req, async () =>
+      makeSuccessResponse({ task: TASK_WITH_GATES, view: null, attachments: [] }),
+    );
+    const data = response.data as { task: Record<string, unknown> };
+    expect(data.task['verification']).toBeUndefined();
+    expect(response.meta.projection).toBe('mvi');
   });
 });

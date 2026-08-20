@@ -12,7 +12,7 @@
  */
 
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -125,6 +125,100 @@ describe('validateAtom - files (T832)', () => {
   it('rejects empty paths list', async () => {
     const r = await validateAtom({ kind: 'files', paths: [] }, tmpDir);
     expect(r.ok).toBe(false);
+  });
+});
+
+describe('validateAtom - files with sibling commit sha (T12107 / gh#1195)', () => {
+  let tmpDir: string;
+  let commitSha: string;
+
+  beforeEach(() => {
+    tmpDir = mkdtempSync(join(tmpdir(), 'evidence-files-commit-'));
+    initGitRepo(tmpDir);
+    mkdirSync(join(tmpDir, 'docs'));
+    commitSha = gitCommit(tmpDir, 'docs/ENVIRONMENTS.md', 'environments\n', 'add docs');
+    // Simulate the gh#1195 state: the file exists in the commit tree but NOT
+    // in the local checkout (local main not fast-forwarded after a remote merge).
+    unlinkSync(join(tmpDir, 'docs', 'ENVIRONMENTS.md'));
+  });
+
+  afterEach(() => {
+    rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it('validates a file present in the commit tree but absent from the worktree', async () => {
+    const r = await validateAtom(
+      { kind: 'files', paths: ['docs/ENVIRONMENTS.md'] },
+      tmpDir,
+      undefined,
+      commitSha,
+    );
+    expect(r.ok).toBe(true);
+    if (r.ok && r.atom.kind === 'files') {
+      expect(r.atom.files).toHaveLength(1);
+      // sha256 is computed from the COMMIT-TREE content, not the worktree.
+      const { createHash } = await import('node:crypto');
+      const expected = createHash('sha256').update('environments\n').digest('hex');
+      expect(r.atom.files[0].sha256).toBe(expected);
+    }
+  });
+
+  it('fails honestly when the file is absent from the commit tree AND the worktree', async () => {
+    const r = await validateAtom(
+      { kind: 'files', paths: ['docs/NOPE.md'] },
+      tmpDir,
+      undefined,
+      commitSha,
+    );
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.reason).toMatch(/does not exist/);
+      // The message names WHERE it looked — commit tree first, then worktree.
+      expect(r.reason).toContain(`commit ${commitSha} tree`);
+      expect(r.reason).toContain('filesystem');
+    }
+  });
+
+  it('anchors the sha256 to the commit tree when worktree content differs', async () => {
+    // Re-create the file with DIFFERENT (uncommitted) content — the commit
+    // tree is the evidence anchor, so its bytes win.
+    writeFileSync(join(tmpDir, 'docs', 'ENVIRONMENTS.md'), 'dirty worktree\n');
+    const r = await validateAtom(
+      { kind: 'files', paths: ['docs/ENVIRONMENTS.md'] },
+      tmpDir,
+      undefined,
+      commitSha,
+    );
+    expect(r.ok).toBe(true);
+    if (r.ok && r.atom.kind === 'files') {
+      const { createHash } = await import('node:crypto');
+      const committed = createHash('sha256').update('environments\n').digest('hex');
+      expect(r.atom.files[0].sha256).toBe(committed);
+    }
+  });
+
+  it('revalidates OK at complete time when the file is still absent from the worktree', async () => {
+    const filesResult = await validateAtom(
+      { kind: 'files', paths: ['docs/ENVIRONMENTS.md'] },
+      tmpDir,
+      undefined,
+      commitSha,
+    );
+    expect(filesResult.ok).toBe(true);
+    if (!filesResult.ok) return;
+    const evidence = composeGateEvidence(
+      [{ kind: 'commit', sha: commitSha, shortSha: commitSha.slice(0, 7) }, filesResult.atom],
+      'test',
+    );
+    const r = await revalidateEvidence(evidence, tmpDir);
+    expect(r.stillValid).toBe(true);
+    expect(r.failedAtoms).toHaveLength(0);
+  });
+
+  it('still resolves from the worktree when no sibling commit sha is provided', async () => {
+    await writeFile(join(tmpDir, 'loose.txt'), 'on disk only\n');
+    const r = await validateAtom({ kind: 'files', paths: ['loose.txt'] }, tmpDir);
+    expect(r.ok).toBe(true);
   });
 });
 
