@@ -414,7 +414,15 @@ export async function completeTask(
     });
   }
 
-  await requireActiveSession('tasks.complete', cwd);
+  // gh#1194 / T12106 — name the exact recovery so an agent that recorded
+  // gates via `cleo verify` without an active session does not misread this
+  // as an evidence problem: gates are preserved; start a session, re-run
+  // complete. Verify stays session-free by design (T9505) for crash recovery.
+  await requireActiveSession(
+    'tasks.complete',
+    cwd,
+    'Verification gates already recorded via cleo verify are preserved — do NOT re-verify them. Recovery: start a session, then re-run this cleo complete command.',
+  );
 
   const enforcement = await loadCompletionEnforcement(cwd);
 
