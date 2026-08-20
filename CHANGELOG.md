@@ -1,5 +1,15 @@
 # Changelog
 
+## [2026.8.8] (2026-08-20)
+
+### Fixed
+
+- T9976 docs-memory-observation macOS CI flake fixed: FTS5 init is keyed by DB handle identity (not a process-wide boolean), and test teardown drains fire-and-forget brain writes before rmdir _(provenance: [T12101](https://github.com/kryptobaseddev/cleo/search?q=T12101&type=commits))_
+- cleo complete caches commit-atom re-validation, emits stderr progress, and is idempotent on done tasks; CLEO_TOOL_TIMEOUT_<TOOL> makes the tool: evidence deadline configurable _(provenance: [T12102](https://github.com/kryptobaseddev/cleo/search?q=T12102&type=commits), [T12105](https://github.com/kryptobaseddev/cleo/search?q=T12105&type=commits))_
+- pr: atom derives required checks from the target repo's branch protection; rejections print both sides and the list's source _(provenance: [T12104](https://github.com/kryptobaseddev/cleo/search?q=T12104&type=commits))_
+- cleo verify without an active session now warns via the envelope diagnostics channel, and complete's session error names the remedy and confirms gates are preserved _(provenance: [T12106](https://github.com/kryptobaseddev/cleo/search?q=T12106&type=commits))_
+- files: atom resolves against the sibling commit: sha first; cleo show --field transparently resolves full-projection fields like verification.gates _(provenance: [T12107](https://github.com/kryptobaseddev/cleo/search?q=T12107&type=commits), [T12108](https://github.com/kryptobaseddev/cleo/search?q=T12108&type=commits))_
+
 ## [2026.8.7] (2026-08-19)
 
 ### Fixed

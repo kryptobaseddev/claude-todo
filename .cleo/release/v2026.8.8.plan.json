@@ -1,0 +1,200 @@
+{
+  "$schema": "https://cleocode.io/schemas/release-plan/v1.json",
+  "version": "v2026.8.8",
+  "resolvedVersion": "v2026.8.8",
+  "suffixApplied": false,
+  "scheme": "calver",
+  "channel": "latest",
+  "epicId": "T11249",
+  "releaseKind": "regular",
+  "createdAt": "2026-08-20T06:08:28.200Z",
+  "createdBy": "keatonhoskins",
+  "previousVersion": "v2026.8.7",
+  "previousTag": "v2026.8.7",
+  "previousShippedAt": "2026-08-19T18:41:06.190Z",
+  "tasks": [
+    {
+      "id": "T12102",
+      "kind": "fix",
+      "impact": "patch",
+      "userFacingSummary": "cleo complete re-validates every hard atom synchronously — multi-minute completes blow 120s tool timeouts and read as a system freeze when batched",
+      "evidenceAtoms": [
+        "pr:1203"
+      ],
+      "epicAncestor": "T11249",
+      "ivtrPhaseAtPlan": "contribution"
+    },
+    {
+      "id": "T12104",
+      "kind": "fix",
+      "impact": "patch",
+      "userFacingSummary": "gh#1192+#1198: pr: atom should derive required checks from the target repo's branch protection, and evidence rejections must print both sides plus the source of the list",
+      "evidenceAtoms": [
+        "pr:1201"
+      ],
+      "epicAncestor": "T11249",
+      "ivtrPhaseAtPlan": "contribution"
+    },
+    {
+      "id": "T12105",
+      "kind": "fix",
+      "impact": "patch",
+      "userFacingSummary": "gh#1193: tool: evidence deadline is a fixed ~300s wall clock — make it configurable (CLEO_TOOL_TIMEOUT_<TOOL>) and load-aware",
+      "evidenceAtoms": [
+        "pr:1203"
+      ],
+      "epicAncestor": "T11249",
+      "ivtrPhaseAtPlan": "contribution"
+    },
+    {
+      "id": "T12106",
+      "kind": "fix",
+      "impact": "patch",
+      "userFacingSummary": "gh#1194: cleo verify accepts evidence with no active session but cleo complete requires one — gates pass, completion fails misleadingly",
+      "evidenceAtoms": [
+        "pr:1204"
+      ],
+      "epicAncestor": "T11249",
+      "ivtrPhaseAtPlan": "contribution"
+    },
+    {
+      "id": "T12107",
+      "kind": "fix",
+      "impact": "patch",
+      "userFacingSummary": "gh#1195: files: evidence atom resolves against the local checkout — must resolve against the commit: atom's sha first (git cat-file -e)",
+      "evidenceAtoms": [
+        "pr:1202"
+      ],
+      "epicAncestor": "T11249",
+      "ivtrPhaseAtPlan": "contribution"
+    },
+    {
+      "id": "T12108",
+      "kind": "fix",
+      "impact": "patch",
+      "userFacingSummary": "gh#1197: cleo show --field cannot address /data/task/verification/* — 404s while --full returns it; fix-string omits the boundary",
+      "evidenceAtoms": [
+        "pr:1202"
+      ],
+      "epicAncestor": "T11249",
+      "ivtrPhaseAtPlan": "contribution"
+    },
+    {
+      "id": "T12101",
+      "kind": "fix",
+      "impact": "patch",
+      "userFacingSummary": "T9976 docs-memory-observation test fails on macOS CI shard 1 on consecutive PRs (#1188, #1191) — ENOTEMPTY cleanup race + FTS visibility timing",
+      "evidenceAtoms": [
+        "pr:1205"
+      ],
+      "epicAncestor": "T11249",
+      "ivtrPhaseAtPlan": "contribution"
+    }
+  ],
+  "changelog": {
+    "features": [],
+    "fixes": [
+      "T12102",
+      "T12104",
+      "T12105",
+      "T12106",
+      "T12107",
+      "T12108",
+      "T12101"
+    ],
+    "chores": [],
+    "breaking": []
+  },
+  "gates": [
+    {
+      "name": "test",
+      "atom": "tool:test",
+      "status": "unresolved",
+      "lastVerifiedAt": "2026-08-20T06:08:28.200Z",
+      "resolvedCommand": "pnpm run test",
+      "resolvedSource": "project-context"
+    },
+    {
+      "name": "build",
+      "atom": "tool:build",
+      "status": "unresolved",
+      "lastVerifiedAt": "2026-08-20T06:08:28.200Z",
+      "resolvedCommand": "pnpm run build",
+      "resolvedSource": "project-context"
+    },
+    {
+      "name": "lint",
+      "atom": "tool:lint",
+      "status": "unresolved",
+      "lastVerifiedAt": "2026-08-20T06:08:28.200Z",
+      "resolvedCommand": "npx biome check .",
+      "resolvedSource": "language-default"
+    },
+    {
+      "name": "typecheck",
+      "atom": "tool:typecheck",
+      "status": "unresolved",
+      "lastVerifiedAt": "2026-08-20T06:08:28.200Z",
+      "resolvedCommand": "npx tsc --noEmit",
+      "resolvedSource": "language-default"
+    },
+    {
+      "name": "audit",
+      "atom": "tool:audit",
+      "status": "unresolved",
+      "lastVerifiedAt": "2026-08-20T06:08:28.200Z",
+      "resolvedCommand": "npm audit",
+      "resolvedSource": "language-default"
+    },
+    {
+      "name": "security-scan",
+      "atom": "tool:security-scan",
+      "status": "unresolved",
+      "lastVerifiedAt": "2026-08-20T06:08:28.200Z",
+      "resolvedCommand": "npm audit",
+      "resolvedSource": "language-default"
+    }
+  ],
+  "platformMatrix": [
+    {
+      "platform": "any",
+      "publisher": "npm",
+      "package": "@cleocode/cleo"
+    }
+  ],
+  "preflightSummary": {
+    "esbuildExternalsDrift": false,
+    "lockfileDrift": false,
+    "epicCompletenessClean": true,
+    "doubleListingClean": true,
+    "preflightWarnings": [
+      "Skipped 265 out-of-scope changeset entries whose task anchors are not part of this release plan"
+    ]
+  },
+  "workflowRunUrl": null,
+  "prUrl": null,
+  "mergeCommitSha": null,
+  "status": "planned",
+  "meta": {
+    "firstEverRelease": false,
+    "archetype": "node",
+    "releaseNotes": "## v2026.8.8 — 2026-08-20\n\n### Fixed\n\n- T9976 docs-memory-observation macOS CI flake fixed: FTS5 init is keyed by DB handle identity (not a process-wide boolean), and test teardown drains fire-and-forget brain writes before rmdir _(provenance: [T12101](https://github.com/kryptobaseddev/cleo/search?q=T12101&type=commits))_\n- cleo complete caches commit-atom re-validation, emits stderr progress, and is idempotent on done tasks; CLEO_TOOL_TIMEOUT_<TOOL> makes the tool: evidence deadline configurable _(provenance: [T12102](https://github.com/kryptobaseddev/cleo/search?q=T12102&type=commits), [T12105](https://github.com/kryptobaseddev/cleo/search?q=T12105&type=commits))_\n- pr: atom derives required checks from the target repo's branch protection; rejections print both sides and the list's source _(provenance: [T12104](https://github.com/kryptobaseddev/cleo/search?q=T12104&type=commits))_\n- cleo verify without an active session now warns via the envelope diagnostics channel, and complete's session error names the remedy and confirms gates are preserved _(provenance: [T12106](https://github.com/kryptobaseddev/cleo/search?q=T12106&type=commits))_\n- files: atom resolves against the sibling commit: sha first; cleo show --field transparently resolves full-projection fields like verification.gates _(provenance: [T12107](https://github.com/kryptobaseddev/cleo/search?q=T12107&type=commits), [T12108](https://github.com/kryptobaseddev/cleo/search?q=T12108&type=commits))_\n",
+    "changesetEntryCount": 5,
+    "changesetIds": [
+      "t12101-docs-memory-observation-macos-flake",
+      "t12102-t12105-complete-revalidation-tool-timeout",
+      "t12104-pr-atom-derive-provenance",
+      "t12106-verify-no-session-warning",
+      "t12107-t12108-files-commit-field-projection"
+    ],
+    "taskIds": [
+      "T12102",
+      "T12104",
+      "T12105",
+      "T12106",
+      "T12107",
+      "T12108",
+      "T12101"
+    ]
+  }
+}
