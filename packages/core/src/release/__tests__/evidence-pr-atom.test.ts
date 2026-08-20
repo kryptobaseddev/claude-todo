@@ -13,12 +13,15 @@
  *   - cache invalidates when mergedAt changes
  *   - gate-evidence-minimum accepts `pr` for implemented, testsPassed, AND qaPassed (T9838)
  *   - validateAtom dispatches `pr` through to the resolver
+ *   - branch-protection tier resolves required workflows from the TARGET repo (gh#1192 / T12104)
+ *   - missing-workflows rejection prints both sides plus the list source (gh#1198 / T12104)
  *
  * Uses an injectable `FetchGhPrPayload` mock to keep tests hermetic — no
  * real network calls happen.
  *
  * @task T9764
  * @task T9838
+ * @task T12104
  * @epic T9762
  */
 
@@ -29,7 +32,9 @@ import type { EvidenceAtom } from '@cleocode/contracts';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { checkGateEvidenceMinimum, parseEvidence, validateAtom } from '../../tasks/evidence.js';
 import {
+  branchProtectionCachePath,
   evaluateRollup,
+  type FetchGhBranchProtection,
   type FetchGhPrPayload,
   prCacheEntryPath,
   resolvePrEvidenceAtom,
@@ -391,10 +396,17 @@ describe('resolvePrEvidenceAtom — failure paths', () => {
     fetchSpy.mockResolvedValue({ ok: true, payload });
     const r = await resolvePrEvidenceAtom(357, projectRoot, {
       fetchGhPrPayload: mockFetch,
+      fetchGhBranchProtection: async () => ({ ok: false, reason: 'no branch protection' }),
+      bypassCache: true,
     });
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(r.reason).toMatch(/Required workflows did not run/);
+    // gh#1198: the rejection names both sides and the source instead of
+    // asserting the PR is at fault.
+    expect(r.reason).toMatch(/required gates were not found/);
+    expect(r.reason).toContain('source: built-in default list');
+    expect(r.reason).toContain('- CI  NOT FOUND on this PR');
+    expect(r.reason).toContain('- Some Other Job  SUCCESS');
     // T12100: the error must point at the override tiers, or consumers conclude
     // the cleocode gate list is hardcoded and invent workarounds.
     expect(r.reason).toContain('CLEO_PR_REQUIRED_WORKFLOWS');
@@ -627,11 +639,189 @@ describe('resolvePrEvidenceAtom — downstream repo with no CI (gh#1104)', () =>
     });
     const r = await resolvePrEvidenceAtom(20, projectRoot, {
       fetchGhPrPayload: mockFetch,
+      fetchGhBranchProtection: async () => ({ ok: false, reason: 'no branch protection' }),
       bypassCache: true,
     });
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(r.reason).toMatch(/Required workflows did not run/);
+    expect(r.reason).toMatch(/required gates were not found/);
+    expect(r.reason).toContain('source: built-in default list');
+    expect(r.reason).toContain('    (none)');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// gh#1192 / T12104 — branch-protection tier for required-workflow resolution
+// ---------------------------------------------------------------------------
+
+describe('resolvePrEvidenceAtom — branch-protection tier (gh#1192)', () => {
+  /** Build an injectable protection fetcher backed by a spy. */
+  function makeProtectionFetcher(result: {
+    ok: boolean;
+    contexts?: string[];
+    repo?: string;
+    branch?: string;
+    reason?: string;
+  }): { fetcher: FetchGhBranchProtection; spy: ReturnType<typeof vi.fn> } {
+    const spy = vi.fn().mockResolvedValue(
+      result.ok
+        ? {
+            ok: true,
+            contexts: result.contexts ?? [],
+            repo: result.repo ?? 'octo/repo',
+            branch: result.branch ?? 'main',
+          }
+        : { ok: false, reason: result.reason ?? 'lookup failed' },
+    );
+    return { fetcher: (() => spy()) as unknown as FetchGhBranchProtection, spy };
+  }
+
+  it('uses branch-protection contexts when env and project-context are absent', async () => {
+    // The repo's real required check is 'Repo CI' — a name the built-in
+    // default does not contain, so this only passes when the protection tier
+    // is actually consulted.
+    fetchSpy.mockResolvedValue({
+      ok: true,
+      payload: makePrPayload({
+        statusCheckRollup: [
+          {
+            __typename: 'CheckRun',
+            name: 'Repo CI',
+            workflowName: 'ci',
+            conclusion: 'SUCCESS',
+            status: 'COMPLETED',
+          },
+        ],
+      }),
+    });
+    const { fetcher } = makeProtectionFetcher({ ok: true, contexts: ['Repo CI'] });
+    const r = await resolvePrEvidenceAtom(96, projectRoot, {
+      fetchGhPrPayload: mockFetch,
+      fetchGhBranchProtection: fetcher,
+      bypassCache: true,
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it('env var beats branch protection', async () => {
+    fetchSpy.mockResolvedValue({ ok: true, payload: makePrPayload() });
+    const { fetcher, spy } = makeProtectionFetcher({ ok: true, contexts: ['Nonexistent Gate'] });
+    const r = await resolvePrEvidenceAtom(96, projectRoot, {
+      fetchGhPrPayload: mockFetch,
+      fetchGhBranchProtection: fetcher,
+      env: { CLEO_PR_REQUIRED_WORKFLOWS: 'CI' },
+      bypassCache: true,
+    });
+    expect(r.ok).toBe(true);
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('project-context beats branch protection', async () => {
+    fetchSpy.mockResolvedValue({ ok: true, payload: makePrPayload() });
+    const { fetcher, spy } = makeProtectionFetcher({ ok: true, contexts: ['Nonexistent Gate'] });
+    const r = await resolvePrEvidenceAtom(96, projectRoot, {
+      fetchGhPrPayload: mockFetch,
+      fetchGhBranchProtection: fetcher,
+      projectContext: { release: { prRequiredWorkflows: ['CI'] } },
+      bypassCache: true,
+    });
+    expect(r.ok).toBe(true);
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the built-in default when the protection lookup fails', async () => {
+    fetchSpy.mockResolvedValue({ ok: true, payload: makePrPayload() });
+    const { fetcher } = makeProtectionFetcher({ ok: false, reason: 'offline' });
+    const r = await resolvePrEvidenceAtom(96, projectRoot, {
+      fetchGhPrPayload: mockFetch,
+      fetchGhBranchProtection: fetcher,
+      bypassCache: true,
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it('names the branch-protection source in the missing-workflows rejection', async () => {
+    fetchSpy.mockResolvedValue({ ok: true, payload: makePrPayload() });
+    const { fetcher } = makeProtectionFetcher({ ok: true, contexts: ['Repo CI'] });
+    const r = await resolvePrEvidenceAtom(96, projectRoot, {
+      fetchGhPrPayload: mockFetch,
+      fetchGhBranchProtection: fetcher,
+      bypassCache: true,
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.reason).toContain('source: branch protection for octo/repo@main');
+    expect(r.reason).toContain('- Repo CI  NOT FOUND on this PR');
+  });
+
+  it('caches the protection lookup across verifies (1h TTL)', async () => {
+    fetchSpy.mockResolvedValue({ ok: true, payload: makePrPayload() });
+    const { fetcher, spy } = makeProtectionFetcher({
+      ok: true,
+      contexts: ['CI', 'Lockfile Check', 'Contracts Dep Lint'],
+    });
+    // Two different PR numbers so the PR-result cache never short-circuits;
+    // the SECOND call must reuse the cached protection contexts.
+    const first = await resolvePrEvidenceAtom(96, projectRoot, {
+      fetchGhPrPayload: mockFetch,
+      fetchGhBranchProtection: fetcher,
+    });
+    const second = await resolvePrEvidenceAtom(97, projectRoot, {
+      fetchGhPrPayload: mockFetch,
+      fetchGhBranchProtection: fetcher,
+    });
+    expect(first.ok).toBe(true);
+    expect(second.ok).toBe(true);
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(existsSync(branchProtectionCachePath(projectRoot))).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// gh#1198 / T12104 — missing-workflows rejection prints both sides + source
+// ---------------------------------------------------------------------------
+
+describe('resolvePrEvidenceAtom — missing-workflows rejection detail (gh#1198)', () => {
+  it('prints FOUND/NOT FOUND per required entry, the source, and the actually-run workflows', async () => {
+    fetchSpy.mockResolvedValue({
+      ok: true,
+      payload: makePrPayload({
+        statusCheckRollup: [
+          {
+            __typename: 'CheckRun',
+            name: 'Build & Verify',
+            workflowName: 'CI',
+            conclusion: 'SUCCESS',
+            status: 'COMPLETED',
+          },
+          {
+            __typename: 'CheckRun',
+            name: 'Lint',
+            workflowName: 'Lint Workflow',
+            conclusion: 'FAILURE',
+            status: 'COMPLETED',
+          },
+        ],
+      }),
+    });
+    const r = await resolvePrEvidenceAtom(102, projectRoot, {
+      fetchGhPrPayload: mockFetch,
+      fetchGhBranchProtection: async () => ({ ok: false, reason: 'no branch protection' }),
+      bypassCache: true,
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.reason).toContain('Cannot accept pr atom for PR #102');
+    expect(r.reason).toContain('source: built-in default list');
+    expect(r.reason).toContain('- CI  FOUND on this PR');
+    expect(r.reason).toContain('- Lockfile Check  NOT FOUND on this PR');
+    expect(r.reason).toContain('- Contracts Dep Lint  NOT FOUND on this PR');
+    expect(r.reason).toContain('workflows actually run on PR #102');
+    expect(r.reason).toContain('- Build & Verify  SUCCESS');
+    expect(r.reason).toContain('- Lint  FAILURE');
+    // Override guidance (T12100) survives the rewording.
+    expect(r.reason).toContain('CLEO_PR_REQUIRED_WORKFLOWS');
+    expect(r.reason).toContain('release.prRequiredWorkflows');
   });
 });
 

@@ -286,10 +286,16 @@ export type AtomValidation =
  *   check (T9178), content-intersect check (T9245), worktree-aware HEAD
  *   resolution (T-WT-3), and git-show file fallback for branch-only files
  *   (T11959).
+ * @param siblingCommitSha - Optional sha of a sibling `commit:` atom from the
+ *   same evidence string. When provided, `files:` paths are resolved against
+ *   that commit's tree FIRST (T12107 / gh#1195) before falling back to the
+ *   worktree and git refs — covers a merged commit whose files are not yet
+ *   present in the local checkout.
  * @returns Validation outcome with canonicalised form on success
  *
  * @task T832
  * @task T11959
+ * @task T12107
  * @adr ADR-051 §3
  */
 export async function validateAtom(
@@ -297,12 +303,14 @@ export async function validateAtom(
   projectRoot: string,
   /** T9178: When provided, validates commit is on task/<taskId> branch. */
   taskId?: string,
+  /** T12107: sha of a sibling `commit:` atom in the same evidence string. */
+  siblingCommitSha?: string,
 ): Promise<AtomValidation> {
   switch (parsed.kind) {
     case 'commit':
       return validateCommit(parsed.sha, projectRoot, taskId);
     case 'files':
-      return validateFiles(parsed.paths, projectRoot, taskId);
+      return validateFiles(parsed.paths, projectRoot, taskId, siblingCommitSha);
     case 'test-run':
       return validateTestRun(parsed.path, projectRoot);
     case 'tool':
@@ -1041,34 +1049,77 @@ async function gitShowFileContent(
 }
 
 /**
+ * Read file content from a specific commit tree.
+ *
+ * Used as the FIRST resolution step for `files:` evidence when the same
+ * evidence string carries a `commit:` atom (T12107 / gh#1195): the evidence
+ * claims the file exists at that commit, so the commit tree is the anchor —
+ * the file may not exist in the local checkout at all (e.g. the commit was
+ * merged remotely and local main has not been fast-forwarded).
+ *
+ * Uses `git cat-file blob <sha>:<path>` (not `git show`) so a path that
+ * resolves to a TREE (directory) fails with a non-zero exit instead of
+ * pretty-printing a tree listing that would hash as fake file content.
+ *
+ * @param relPath - Repo-relative file path.
+ * @param sha - Commit sha (short or full) whose tree is inspected.
+ * @param projectRoot - Working directory for git operations.
+ * @returns Buffer of the file content, or `null` when the path is not a blob
+ *   in that commit's tree (or git fails).
+ *
+ * @internal
+ * @task T12107
+ */
+async function gitShowFileContentAtCommit(
+  relPath: string,
+  sha: string,
+  projectRoot: string,
+): Promise<Buffer | null> {
+  // Normalise the path: strip leading "./" so git pathspec works correctly.
+  const norm = relPath.replace(/^\.\//, '');
+  const r = await runCommand('git', ['cat-file', 'blob', `${sha}:${norm}`], projectRoot);
+  if (r.exitCode !== 0) return null;
+  return Buffer.from(r.stdout, 'binary');
+}
+
+/**
  * Validate a `files:` evidence atom.
  *
  * Resolution order for each path:
- *   1. Filesystem check — `existsSync(abs)` at `projectRoot`.
- *   2. Git-show fallback (T11959) — when `taskId` is provided and the file is
+ *   1. Commit-tree check (T12107 / gh#1195) — when `commitSha` is provided
+ *      (a sibling `commit:` atom in the same evidence string), read the file
+ *      from that commit's tree via `git cat-file blob <sha>:<path>`. The
+ *      commit is the evidence anchor; the file may be absent from the local
+ *      checkout (merged remotely, local main not fast-forwarded).
+ *   2. Filesystem check — `existsSync(abs)` at `projectRoot`.
+ *   3. Git-show fallback (T11959) — when `taskId` is provided and the file is
  *      absent at `projectRoot`, try reading it from `task/<taskId>` (or main /
  *      HEAD) via `git show <ref>:<path>`. This allows worktree agents to record
  *      `files:` evidence for files that exist only on their branch and have not
  *      yet been merged to main, without triggering `E_WT_DB_ISOLATION_VIOLATION`.
  *
- * When the file is read from git (fallback path) the sha256 is computed from
- * the git-object content rather than the on-disk content.  The re-validation at
- * `cleo complete` time uses the same fallback path so the checksums remain
- * consistent across verify → complete.
+ * When the file is read from git (commit tree or fallback refs) the sha256 is
+ * computed from the git-object content rather than the on-disk content. The
+ * re-validation at `cleo complete` time uses the same resolution order so the
+ * checksums remain consistent across verify → complete.
  *
  * @param paths - Repo-relative or absolute file paths.
  * @param projectRoot - Absolute path to project root.
  * @param taskId - Optional CLEO task ID; enables the git-show fallback (T11959).
+ * @param commitSha - Optional sibling `commit:` atom sha; enables the
+ *   commit-tree-first check (T12107).
  * @returns Validated atom on success, error on failure.
  *
  * @internal
  * @task T832
  * @task T11959
+ * @task T12107
  */
 async function validateFiles(
   paths: string[],
   projectRoot: string,
   taskId?: string,
+  commitSha?: string,
 ): Promise<AtomValidation> {
   if (paths.length === 0) {
     return {
@@ -1080,9 +1131,16 @@ async function validateFiles(
   const files: Array<{ path: string; sha256: string }> = [];
   for (const p of paths) {
     const abs = isAbsolute(p) ? p : resolvePath(projectRoot, p);
-    let content: Buffer;
+    let content: Buffer | null = null;
 
-    if (existsSync(abs)) {
+    // T12107 (gh#1195): the sibling commit is the evidence anchor — check its
+    // tree FIRST. A file merged remotely but not yet present locally validates
+    // here without waiting for a fast-forward.
+    if (commitSha) {
+      content = await gitShowFileContentAtCommit(p, commitSha, projectRoot);
+    }
+
+    if (content === null && existsSync(abs)) {
       // Happy path — file exists on disk.
       const st = await stat(abs);
       if (!st.isFile()) {
@@ -1093,24 +1151,24 @@ async function validateFiles(
         };
       }
       content = await readFile(abs);
-    } else if (taskId) {
+    }
+
+    if (content === null && taskId) {
       // T11959: Git-show fallback for branch-only files (worktree context).
       // The file exists on the task branch but not yet at the canonical root.
-      const fromGit = await gitShowFileContent(p, taskId, projectRoot);
-      if (!fromGit) {
-        return {
-          ok: false,
-          reason:
-            `File does not exist: ${p}` +
-            ` (checked filesystem at ${projectRoot} and git refs task/${taskId}, main, HEAD)`,
-          codeName: 'E_EVIDENCE_INVALID',
-        };
-      }
-      content = fromGit;
-    } else {
+      content = await gitShowFileContent(p, taskId, projectRoot);
+    }
+
+    if (content === null) {
+      // Honest failure: enumerate every location that was checked so the
+      // caller can tell a worktree-miss from a commit-tree-miss.
+      const looked: string[] = [];
+      if (commitSha) looked.push(`commit ${commitSha} tree`);
+      looked.push(`filesystem at ${projectRoot}`);
+      if (taskId) looked.push(`git refs task/${taskId}, main, HEAD`);
       return {
         ok: false,
-        reason: `File does not exist: ${p}`,
+        reason: `File does not exist: ${p} (checked ${looked.join(', ')})`,
         codeName: 'E_EVIDENCE_INVALID',
       };
     }
@@ -1908,6 +1966,7 @@ export function isHardAtom(atom: EvidenceAtom): boolean {
  * @task T9245
  * @task T11959
  * @task T12102
+ * @task T12107
  * @adr ADR-051 §5 / §8 (Decision 8)
  */
 export async function revalidateEvidence(
@@ -1971,13 +2030,26 @@ export async function revalidateEvidence(
         // Deliberately NOT cached (T12102): the read-and-compare-sha256 below
         // IS the staleness guarantee; a cheaper key would weaken it.
         const startedAt = Date.now();
+        // T12107 (gh#1195): mirror validateFiles' resolution order so the
+        // sha256 captured at verify time compares against the same bytes —
+        // when a sibling `commit:` atom anchors the evidence, its tree is
+        // checked FIRST (the file may still be absent from the local checkout
+        // at complete time when local main was never fast-forwarded).
+        const siblingCommit = evidence.atoms.find(
+          (a): a is Extract<EvidenceAtom, { kind: 'commit' }> => a.kind === 'commit',
+        );
+        const siblingCommitSha = siblingCommit?.sha;
         for (const f of atom.files) {
           const abs = isAbsolute(f.path) ? f.path : resolvePath(projectRoot, f.path);
           let content: Buffer | null = null;
 
-          if (existsSync(abs)) {
+          if (siblingCommitSha) {
+            content = await gitShowFileContentAtCommit(f.path, siblingCommitSha, projectRoot);
+          }
+          if (!content && existsSync(abs)) {
             content = await readFile(abs);
-          } else if (taskId) {
+          }
+          if (!content && taskId) {
             // T11959: git-show fallback — file may have been on task branch at
             // verify time and is now on main after merge, or it may still only
             // exist on the branch. Use the same resolution path as validateFiles.

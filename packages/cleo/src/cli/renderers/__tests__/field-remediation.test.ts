@@ -100,6 +100,28 @@ describe('cliOutput --field remediation (T11762 ST-4 · DHQ-057)', () => {
     expect(fix).toContain('/data/task/title');
   });
 
+  it('states the MVI/full boundary honestly when a pointer genuinely does not exist (T12108 / gh#1197)', () => {
+    // The pointer addresses NOTHING in any projection — the fix must say that
+    // the listed pointers are the default (MVI) projection and name the fields
+    // that live only in --full, instead of implying the list is exhaustive.
+    const { envelope, exitCode } = captureFieldError(
+      { task: { id: 'T1', title: 'Hello' }, view: {}, attachments: [] },
+      '/data/task/verification/gates',
+      { command: 'show', operation: 'tasks.show' },
+    );
+
+    expect(exitCode).toBe(4);
+    const error = envelope['error'] as Record<string, unknown>;
+    expect(error['codeName']).toBe('E_FIELD_NOT_FOUND');
+    const fix = error['fix'] as string;
+    expect(fix).toContain('default (MVI) projection');
+    expect(fix).toContain('verification');
+    expect(fix).toContain('acceptance');
+    expect(fix).toContain('description');
+    expect(fix).toContain('evidence');
+    expect(fix).toContain('--full');
+  });
+
   it('emits alternatives as {action,command}[] re-runnable against the failing op', () => {
     const { envelope } = captureFieldError(
       { task: { id: 'T1', title: 'Hello' }, view: {}, attachments: [] },

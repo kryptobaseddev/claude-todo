@@ -66,7 +66,10 @@ const tasksShowOutputContract: OperationOutputContract = {
   operation: 'tasks.show',
   shapeNote:
     'The task record is nested under `task` — use /data/task/<field>, not /data/<field>. ' +
-    '`view` may be null. `acRows` and `relations` are conditional.',
+    '`view` may be null. `acRows` and `relations` are conditional. ' +
+    'The listed pointers are the default (MVI) projection — `verification`, `acceptance`, ' +
+    '`description`, and `evidence` live only in the full record (`cleo show <id> --full`); ' +
+    '`--field` resolves them transparently when they exist (T12108).',
   dataSchema: {
     type: 'object',
     required: ['task', 'view', 'attachments'],

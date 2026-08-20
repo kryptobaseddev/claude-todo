@@ -23,6 +23,7 @@ import { loadConfig } from '../config.js';
 import { type EngineResult, engineError, engineSuccess } from '../engine-result.js';
 import { checkAndIncrementOverrideCap } from '../security/override-cap.js';
 import { enforceSharedEvidence } from '../security/shared-evidence-tracker.js';
+import { warnIfNoActiveSession } from '../sessions/session-enforcement.js';
 import { getTaskAccessor } from '../store/data-accessor.js';
 import {
   checkCallsiteCoverageAtom,
@@ -30,6 +31,7 @@ import {
   checkGateEvidenceMinimumDetailed,
   composeGateEvidence,
   isHardAtom,
+  type ParsedAtom,
   parseEvidence,
   validateAtom,
 } from '../tasks/evidence.js';
@@ -334,6 +336,7 @@ function protocolCatch(err: unknown): EngineResult {
  *
  * @task T5327
  * @task T832
+ * @task T12106
  * @adr ADR-051
  */
 export async function validateGateVerify(
@@ -520,8 +523,13 @@ export async function validateGateVerify(
             const message = err instanceof Error ? err.message : String(err);
             return engineError('E_EVIDENCE_INVALID', message);
           }
+          // T12107 (gh#1195): a sibling `commit:` atom anchors `files:` paths —
+          // thread its sha so files are resolved against that commit's tree first.
+          const siblingCommitSha = parsed.atoms.find(
+            (a): a is Extract<ParsedAtom, { kind: 'commit' }> => a.kind === 'commit',
+          )?.sha;
           for (const atom of parsed.atoms) {
-            const check = await validateAtom(atom, projectRoot, taskId);
+            const check = await validateAtom(atom, projectRoot, taskId, siblingCommitSha);
             if (!check.ok) {
               return engineError(check.codeName, check.reason);
             }
@@ -560,9 +568,14 @@ export async function validateGateVerify(
           return engineError('E_EVIDENCE_INVALID', message);
         }
 
+        // T12107 (gh#1195): a sibling `commit:` atom anchors `files:` paths —
+        // thread its sha so files are resolved against that commit's tree first.
+        const siblingCommitSha = parsed.atoms.find(
+          (a): a is Extract<ParsedAtom, { kind: 'commit' }> => a.kind === 'commit',
+        )?.sha;
         for (const atom of parsed.atoms) {
           // T9178: pass taskId for branch-scope commit validation
-          const check = await validateAtom(atom, projectRoot, taskId);
+          const check = await validateAtom(atom, projectRoot, taskId, siblingCommitSha);
           if (!check.ok) {
             return engineError(check.codeName, check.reason);
           }
@@ -772,6 +785,17 @@ export async function validateGateVerify(
       missing.length === 0
     ) {
       result.hint = `All gates green. Run: cleo complete ${taskId}`;
+    }
+
+    // gh#1194 / T12106 — verify is session-free by design (T9505), but
+    // complete is not. When a gate write lands WITHOUT an active session
+    // under strict enforcement, emit a loud non-fatal warning (envelope
+    // meta.warnings channel — stdout JSON contract stays pure) so the agent
+    // learns about the verify/complete session asymmetry NOW instead of at
+    // complete time, where E_CLEO_SESSION_REQUIRED otherwise reads like an
+    // evidence problem after every gate already returned true.
+    if (action !== 'view') {
+      await warnIfNoActiveSession('check.gate.set', projectRoot);
     }
 
     return engineSuccess(result);
