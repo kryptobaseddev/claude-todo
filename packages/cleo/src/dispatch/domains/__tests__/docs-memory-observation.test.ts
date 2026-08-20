@@ -46,6 +46,55 @@ async function waitFor(predicate: () => Promise<boolean>, ms = 4000): Promise<vo
 }
 
 /**
+ * Best-effort settle window for fire-and-forget brain writers before teardown.
+ *
+ * `docs.add` emits its observation via an UN-awaited promise chain
+ * (`emitDocAttachmentObservation` → `memoryObserve`), and a successful
+ * `memory.find` schedules `setImmediate` follow-ups (citation increments,
+ * retrieval logging, session-id resolution). Those tails can still be in
+ * flight when the test body finishes; if they open or write `.cleo/cleo.db`
+ * after `closeAllDatabases()` — or worse, mid-`rm` — they recreate files
+ * inside `.cleo` and the recursive removal fails with ENOTEMPTY (the macOS
+ * CI shard-1 flake on PRs #1188/#1191/#1202; Linux timing never lined up).
+ * Two `setImmediate` ticks plus a short sleep let those tails land while the
+ * handles are still open. {@link rmWithRetry} is the bounded backstop for
+ * anything slower.
+ *
+ * @task T12101
+ */
+async function drainPendingBrainWrites(): Promise<void> {
+  await new Promise((r) => setImmediate(r));
+  await new Promise((r) => setImmediate(r));
+  await new Promise((r) => setTimeout(r, 200));
+}
+
+/**
+ * Recursive `rm` that retries the transient ENOTEMPTY/EBUSY/EPERM races
+ * produced by late fire-and-forget writers (see {@link drainPendingBrainWrites}).
+ * Bounded to ~2.5s; any other error is rethrown immediately.
+ *
+ * Handles are always closed via `closeAllDatabases()` BEFORE this runs — the
+ * retry only covers stragglers that re-create a file during the removal walk,
+ * never an openly held handle.
+ *
+ * @task T12101
+ */
+async function rmWithRetry(path: string): Promise<void> {
+  const maxAttempts = 25;
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await rm(path, { recursive: true, force: true });
+      return;
+    } catch (err) {
+      const code = (err as NodeJS.ErrnoException).code;
+      const transient = code === 'ENOTEMPTY' || code === 'EBUSY' || code === 'EPERM';
+      if (!transient || attempt >= maxAttempts) throw err;
+      await new Promise((r) => setTimeout(r, 100));
+    }
+  }
+}
+
+/**
  * Search brain_observations directly via SQLite for doc-attachment entries.
  *
  * Uses LIKE on `title` and `narrative` to reliably find the entry in fresh
@@ -97,10 +146,14 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+  // T12101: settle fire-and-forget brain writers BEFORE closing handles, so
+  // they finish on the open DB instead of reopening `.cleo/cleo.db` during
+  // the recursive removal (ENOTEMPTY on macOS CI).
+  await drainPendingBrainWrites();
   const { closeAllDatabases } = await import('@cleocode/core/internal');
   await closeAllDatabases();
   delete process.env['CLEO_DIR'];
-  await rm(tempDir, { recursive: true, force: true });
+  await rmWithRetry(tempDir);
 });
 
 // ---------------------------------------------------------------------------

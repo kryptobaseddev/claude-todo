@@ -31,6 +31,7 @@ import {
   checkGateEvidenceMinimumDetailed,
   composeGateEvidence,
   isHardAtom,
+  type ParsedAtom,
   parseEvidence,
   validateAtom,
 } from '../tasks/evidence.js';
@@ -522,8 +523,13 @@ export async function validateGateVerify(
             const message = err instanceof Error ? err.message : String(err);
             return engineError('E_EVIDENCE_INVALID', message);
           }
+          // T12107 (gh#1195): a sibling `commit:` atom anchors `files:` paths —
+          // thread its sha so files are resolved against that commit's tree first.
+          const siblingCommitSha = parsed.atoms.find(
+            (a): a is Extract<ParsedAtom, { kind: 'commit' }> => a.kind === 'commit',
+          )?.sha;
           for (const atom of parsed.atoms) {
-            const check = await validateAtom(atom, projectRoot, taskId);
+            const check = await validateAtom(atom, projectRoot, taskId, siblingCommitSha);
             if (!check.ok) {
               return engineError(check.codeName, check.reason);
             }
@@ -562,9 +568,14 @@ export async function validateGateVerify(
           return engineError('E_EVIDENCE_INVALID', message);
         }
 
+        // T12107 (gh#1195): a sibling `commit:` atom anchors `files:` paths —
+        // thread its sha so files are resolved against that commit's tree first.
+        const siblingCommitSha = parsed.atoms.find(
+          (a): a is Extract<ParsedAtom, { kind: 'commit' }> => a.kind === 'commit',
+        )?.sha;
         for (const atom of parsed.atoms) {
           // T9178: pass taskId for branch-scope commit validation
-          const check = await validateAtom(atom, projectRoot, taskId);
+          const check = await validateAtom(atom, projectRoot, taskId, siblingCommitSha);
           if (!check.ok) {
             return engineError(check.codeName, check.reason);
           }

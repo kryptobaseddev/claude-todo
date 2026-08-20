@@ -16,10 +16,22 @@
  *      `'SKIPPED'`) — there are zero `FAILURE` checks among the
  *      required workflows configured by branch protection.
  *
+ * Required-workflow list precedence (gh#1192 / T12104):
+ *   1. `CLEO_PR_REQUIRED_WORKFLOWS` env var (operator override).
+ *   2. `.cleo/project-context.json` `release.prRequiredWorkflows` (an explicit
+ *      empty array means NO required workflows — gh#1104).
+ *   3. The TARGET repo's branch-protection required status checks, queried
+ *      via `gh api repos/{owner}/{repo}/branches/{branch}/protection/
+ *      required_status_checks` and cached for 1h.
+ *   4. {@link PR_REQUIRED_WORKFLOWS} built-in default (cleocode's own gates).
+ *
  * Results are cached under `<projectRoot>/.cleo/cache/evidence/pr-<num>.json`,
  * keyed on `(prNumber, mergedAt)` so re-verifies skip the network round trip.
+ * The branch-protection tier is cached separately at
+ * `<projectRoot>/.cleo/cache/evidence/pr-required-checks.json` (1h TTL).
  *
  * @task T9764
+ * @task T12104
  * @epic T9762
  * @saga T9758
  */
@@ -32,6 +44,7 @@ import {
   type GhPrViewPayload,
   ghPrViewSchema,
   PR_REQUIRED_WORKFLOWS,
+  PR_REQUIRED_WORKFLOWS_CONTEXT_KEY,
   PR_REQUIRED_WORKFLOWS_ENV_VAR,
 } from '@cleocode/contracts';
 
@@ -261,7 +274,7 @@ function extractProjectContextRequiredWorkflows(
 /**
  * Resolve the list of required-workflow names for the current project.
  *
- * Precedence (most specific wins):
+ * SYNC tiers only (most specific wins):
  * 1. `CLEO_PR_REQUIRED_WORKFLOWS` env var (comma-separated) — CI/operator
  *    override.
  * 2. `.cleo/project-context.json` `release.prRequiredWorkflows`
@@ -269,23 +282,308 @@ function extractProjectContextRequiredWorkflows(
  *    An explicit empty array means NO required workflows (gh#1104).
  * 3. {@link PR_REQUIRED_WORKFLOWS} default (the cleocode contract-repo gates).
  *
+ * The branch-protection tier (gh#1192) requires a `gh api` round trip and
+ * therefore lives in the async {@link resolveRequiredWorkflowsDetailed}; this
+ * pure function is kept for callers that cannot await.
+ *
  * @task T9764
  * @task T12014 (gh#1104)
+ * @task T12104 (gh#1192)
  */
 export function resolveRequiredWorkflows(
   env: NodeJS.ProcessEnv = process.env,
   projectContext?: Record<string, unknown> | null,
 ): string[] {
+  return resolveSyncTier(env, projectContext)?.workflows ?? [...PR_REQUIRED_WORKFLOWS];
+}
+
+/**
+ * Which tier produced the required-workflow list. Surfaced in rejection
+ * messages (gh#1198) so the reader can tell immediately whether the list is
+ * their own configuration or a CLEO-side assumption.
+ *
+ * @task T12104 (gh#1192, gh#1198)
+ */
+export type RequiredWorkflowsSource =
+  | { readonly tier: 'env' }
+  | { readonly tier: 'project-context' }
+  | { readonly tier: 'branch-protection'; readonly repo: string; readonly branch: string }
+  | { readonly tier: 'default' };
+
+/**
+ * The resolved required-workflow list plus the tier that produced it.
+ *
+ * @task T12104 (gh#1192, gh#1198)
+ */
+export interface RequiredWorkflowsResolution {
+  readonly workflows: string[];
+  readonly source: RequiredWorkflowsSource;
+}
+
+/**
+ * Human-readable description of a {@link RequiredWorkflowsSource}, embedded
+ * verbatim in rejection messages as `(source: …)`.
+ *
+ * @task T12104 (gh#1198)
+ */
+export function describeRequiredWorkflowsSource(source: RequiredWorkflowsSource): string {
+  switch (source.tier) {
+    case 'env':
+      return `${PR_REQUIRED_WORKFLOWS_ENV_VAR} env var`;
+    case 'project-context':
+      return `${PR_REQUIRED_WORKFLOWS_CONTEXT_KEY} in .cleo/project-context.json`;
+    case 'branch-protection':
+      return `branch protection for ${source.repo}@${source.branch}`;
+    case 'default':
+      return 'built-in default list (cleocode gates)';
+  }
+}
+
+/**
+ * Resolve the two SYNC tiers (env var, then project context). Returns `null`
+ * when neither tier declares a list, signalling the caller to continue to the
+ * async branch-protection tier and then the built-in default.
+ *
+ * @task T12104 (gh#1192)
+ */
+function resolveSyncTier(
+  env: NodeJS.ProcessEnv = process.env,
+  projectContext?: Record<string, unknown> | null,
+): RequiredWorkflowsResolution | null {
   const raw = env[PR_REQUIRED_WORKFLOWS_ENV_VAR];
   if (typeof raw === 'string' && raw.trim().length > 0) {
-    return raw
-      .split(',')
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0);
+    return {
+      workflows: raw
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0),
+      source: { tier: 'env' },
+    };
   }
   const fromContext = extractProjectContextRequiredWorkflows(projectContext);
-  if (fromContext !== null) return fromContext;
-  return [...PR_REQUIRED_WORKFLOWS];
+  if (fromContext !== null) {
+    return { workflows: fromContext, source: { tier: 'project-context' } };
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Branch-protection tier (gh#1192)
+// ---------------------------------------------------------------------------
+
+/**
+ * Function signature for querying the TARGET repo's branch-protection
+ * required status checks via the `gh` CLI. Injectable for tests, mirroring
+ * {@link FetchGhPrPayload}.
+ *
+ * Returning `ok: false` NEVER fails the atom — the caller falls back to the
+ * {@link PR_REQUIRED_WORKFLOWS} built-in default. An ok result carries the
+ * repo (`owner/name`) and branch the contexts were read from so the source
+ * can be named in rejection messages.
+ *
+ * @task T12104 (gh#1192)
+ */
+export type FetchGhBranchProtection = (
+  cwd: string,
+) => Promise<
+  { ok: true; contexts: string[]; repo: string; branch: string } | { ok: false; reason: string }
+>;
+
+/**
+ * Default {@link FetchGhBranchProtection}: reads the repo identity and
+ * default branch via `gh repo view --json nameWithOwner,defaultBranchRef`
+ * (falling back to `main` when the default branch cannot be determined),
+ * then queries `gh api repos/{owner}/{repo}/branches/{branch}/protection/
+ * required_status_checks`. Both the classic `.contexts[]` entries and the
+ * newer `.checks[].context` entries are collected and de-duplicated.
+ *
+ * A lookup that yields ZERO contexts (protection exists but requires no
+ * checks) is treated as a lookup failure and falls back to the built-in
+ * default — the explicit "no required workflows" lever remains the empty
+ * `release.prRequiredWorkflows` array from gh#1104.
+ *
+ * @task T12104 (gh#1192)
+ */
+export const defaultFetchGhBranchProtection: FetchGhBranchProtection = async (cwd: string) => {
+  if (!isGhCliAvailable()) {
+    return { ok: false, reason: 'gh CLI is not available on PATH' };
+  }
+  try {
+    const repoStdout = execFileSync(
+      'gh',
+      ['repo', 'view', '--json', 'nameWithOwner,defaultBranchRef'],
+      { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'pipe'], cwd },
+    );
+    const repoInfo = JSON.parse(repoStdout) as {
+      nameWithOwner?: unknown;
+      defaultBranchRef?: { name?: unknown } | null;
+    };
+    if (typeof repoInfo.nameWithOwner !== 'string' || repoInfo.nameWithOwner === '') {
+      return { ok: false, reason: 'gh repo view did not return nameWithOwner' };
+    }
+    const repo = repoInfo.nameWithOwner;
+    const branch =
+      typeof repoInfo.defaultBranchRef?.name === 'string' && repoInfo.defaultBranchRef.name !== ''
+        ? repoInfo.defaultBranchRef.name
+        : 'main';
+    const stdout = execFileSync(
+      'gh',
+      ['api', `repos/${repo}/branches/${branch}/protection/required_status_checks`],
+      { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'pipe'], cwd },
+    );
+    const parsed = JSON.parse(stdout) as { contexts?: unknown; checks?: unknown };
+    const contexts = new Set<string>();
+    if (Array.isArray(parsed.contexts)) {
+      for (const c of parsed.contexts) {
+        if (typeof c === 'string' && c.trim().length > 0) contexts.add(c.trim());
+      }
+    }
+    if (Array.isArray(parsed.checks)) {
+      for (const c of parsed.checks) {
+        if (typeof c !== 'object' || c === null) continue;
+        const ctx = (c as Record<string, unknown>).context;
+        if (typeof ctx === 'string' && ctx.trim().length > 0) contexts.add(ctx.trim());
+      }
+    }
+    if (contexts.size === 0) {
+      return {
+        ok: false,
+        reason: `branch protection for ${repo}@${branch} declares no required status checks`,
+      };
+    }
+    return { ok: true, contexts: [...contexts], repo, branch };
+  } catch (err) {
+    const stderr =
+      err instanceof Error && 'stderr' in err
+        ? String((err as NodeJS.ErrnoException & { stderr?: unknown }).stderr ?? err.message)
+        : err instanceof Error
+          ? err.message
+          : String(err);
+    return { ok: false, reason: `branch-protection lookup failed: ${stderr.slice(0, 200)}` };
+  }
+};
+
+/**
+ * Filesystem location for the cached branch-protection required-checks list.
+ *
+ * Path: `<projectRoot>/.cleo/cache/evidence/pr-required-checks.json`.
+ *
+ * @task T12104 (gh#1192)
+ */
+export function branchProtectionCachePath(projectRoot: string): string {
+  return join(projectRoot, '.cleo', 'cache', 'evidence', 'pr-required-checks.json');
+}
+
+/**
+ * TTL for the branch-protection cache: 1 hour. Branch protection changes
+ * rarely and verify runs cluster in time, so a short TTL keeps repeated
+ * verifies off the API without going stale for long. The entry also records
+ * the repo+branch it was read from, purely for diagnostics.
+ *
+ * @task T12104 (gh#1192)
+ */
+export const BRANCH_PROTECTION_CACHE_TTL_MS = 60 * 60 * 1000;
+
+interface BranchProtectionCacheEntry {
+  readonly schemaVersion: 1;
+  readonly repo: string;
+  readonly branch: string;
+  readonly contexts: string[];
+  readonly capturedAt: string;
+}
+
+function readBranchProtectionCache(projectRoot: string): BranchProtectionCacheEntry | null {
+  const path = branchProtectionCachePath(projectRoot);
+  if (!existsSync(path)) return null;
+  try {
+    const parsed = JSON.parse(readFileSync(path, 'utf-8')) as Partial<BranchProtectionCacheEntry>;
+    if (parsed.schemaVersion !== 1) return null;
+    if (typeof parsed.repo !== 'string' || parsed.repo === '') return null;
+    if (typeof parsed.branch !== 'string' || parsed.branch === '') return null;
+    if (!Array.isArray(parsed.contexts) || parsed.contexts.length === 0) return null;
+    if (!parsed.contexts.every((c) => typeof c === 'string' && c.length > 0)) return null;
+    if (typeof parsed.capturedAt !== 'string' || parsed.capturedAt === '') return null;
+    const capturedMs = Date.parse(parsed.capturedAt);
+    if (Number.isNaN(capturedMs)) return null;
+    if (Date.now() - capturedMs > BRANCH_PROTECTION_CACHE_TTL_MS) return null;
+    return parsed as BranchProtectionCacheEntry;
+  } catch {
+    return null;
+  }
+}
+
+function writeBranchProtectionCache(projectRoot: string, entry: BranchProtectionCacheEntry): void {
+  const dir = join(projectRoot, '.cleo', 'cache', 'evidence');
+  if (!existsSync(dir)) {
+    mkdirSync(dir, { recursive: true });
+  }
+  const finalPath = branchProtectionCachePath(projectRoot);
+  const tmpPath = `${finalPath}.${process.pid}.tmp`;
+  writeFileSync(tmpPath, JSON.stringify(entry, null, 2), 'utf-8');
+  renameSync(tmpPath, finalPath);
+}
+
+/**
+ * Full async required-workflow resolution (gh#1192). Precedence:
+ *   1. env var → 2. project context → 3. branch protection (cached, 1h TTL)
+ *   → 4. built-in default.
+ *
+ * The branch-protection tier is a READ-ONLY hint: any lookup failure (offline,
+ * no `gh`, no branch protection, not a GitHub repo) silently falls through to
+ * the built-in default — the atom never fails because the protection lookup
+ * failed.
+ *
+ * @task T12104 (gh#1192)
+ */
+export async function resolveRequiredWorkflowsDetailed(
+  projectRoot: string,
+  opts: {
+    /** Env (defaults to `process.env`). */
+    readonly env?: NodeJS.ProcessEnv;
+    /** Parsed `.cleo/project-context.json` (or `null`). */
+    readonly projectContext?: Record<string, unknown> | null;
+    /** Mock branch-protection fetcher for tests. */
+    readonly fetchGhBranchProtection?: FetchGhBranchProtection;
+    /** When `true`, skip the branch-protection cache read (writes still happen). */
+    readonly bypassProtectionCache?: boolean;
+  } = {},
+): Promise<RequiredWorkflowsResolution> {
+  const syncTier = resolveSyncTier(opts.env ?? process.env, opts.projectContext);
+  if (syncTier) return syncTier;
+
+  if (!opts.bypassProtectionCache) {
+    const cached = readBranchProtectionCache(projectRoot);
+    if (cached) {
+      return {
+        workflows: [...cached.contexts],
+        source: { tier: 'branch-protection', repo: cached.repo, branch: cached.branch },
+      };
+    }
+  }
+
+  const fetcher = opts.fetchGhBranchProtection ?? defaultFetchGhBranchProtection;
+  const fetched = await fetcher(projectRoot);
+  if (fetched.ok) {
+    // Best-effort cache write — never fail the resolution because the cache
+    // directory was read-only or full.
+    try {
+      writeBranchProtectionCache(projectRoot, {
+        schemaVersion: 1,
+        repo: fetched.repo,
+        branch: fetched.branch,
+        contexts: fetched.contexts,
+        capturedAt: new Date().toISOString(),
+      });
+    } catch {
+      /* ignore */
+    }
+    return {
+      workflows: fetched.contexts,
+      source: { tier: 'branch-protection', repo: fetched.repo, branch: fetched.branch },
+    };
+  }
+
+  return { workflows: [...PR_REQUIRED_WORKFLOWS], source: { tier: 'default' } };
 }
 
 // ---------------------------------------------------------------------------
@@ -322,10 +620,21 @@ export function resolveRequiredWorkflows(
  *
  * @internal
  * @task T9764
+ * @task T12104 (gh#1198)
  */
 export function evaluateRollup(
   rollup: GhPrViewPayload['statusCheckRollup'],
   requiredWorkflows: readonly string[],
+  opts: {
+    /**
+     * Human-readable source of the required list (see
+     * {@link describeRequiredWorkflowsSource}), named in the missing-workflows
+     * rejection so the reader knows which tier produced it (gh#1198).
+     */
+    readonly requiredSource?: string;
+    /** PR number, embedded in the missing-workflows rejection header. */
+    readonly prNumber?: number;
+  } = {},
 ): { ok: true; successCount: number; totalChecks: number } | { ok: false; reason: string } {
   const totalChecks = rollup.length;
   let successCount = 0;
@@ -406,15 +715,34 @@ export function evaluateRollup(
   }
 
   if (missing.length > 0) {
+    // gh#1198: print BOTH sides of the comparison plus the source of the
+    // required list. The old wording ("Required workflows did not run for
+    // this PR") asserted a fact about the PR and sent agents investigating a
+    // green PR when the actual problem was a required list that does not
+    // match the repo.
+    const requiredLines = requiredWorkflows.map((req) => {
+      const found = status.get(req)?.seen ?? false;
+      return `    - ${req}  ${found ? 'FOUND' : 'NOT FOUND'} on this PR`;
+    });
+    const runLines = rollup.slice(0, 10).map((check) => {
+      const label = check.name ?? check.workflowName ?? '(unnamed)';
+      const outcome = check.conclusion ?? check.status ?? 'UNKNOWN';
+      return `    - ${label}  ${outcome}`;
+    });
+    const prRef = opts.prNumber !== undefined ? `PR #${opts.prNumber}` : 'this PR';
     return {
       ok: false,
       reason:
-        `Required workflows did not run for this PR: ${missing.join(', ')}. ` +
-        `Cannot accept pr atom — required gates were skipped. ` +
-        `If this project's required checks differ from the cleocode defaults, override the list ` +
-        `via the ${PR_REQUIRED_WORKFLOWS_ENV_VAR} env var (comma-separated) or the ` +
-        `\`release.prRequiredWorkflows\` key in \`.cleo/project-context.json\` ` +
-        `(an empty array means no required workflows).`,
+        `Cannot accept pr atom for ${prRef} — required gates were not found on this PR.\n\n` +
+        `  required workflows (source: ${opts.requiredSource ?? 'unknown'})\n` +
+        `${requiredLines.join('\n')}\n` +
+        `  workflows actually run on ${prRef}\n` +
+        `${runLines.length > 0 ? runLines.join('\n') : '    (none)'}` +
+        `${rollup.length > 10 ? `\n    …and ${rollup.length - 10} more` : ''}\n\n` +
+        `  If none of the required names exist in this repo, the required list does not\n` +
+        `  match this project. Override via the ${PR_REQUIRED_WORKFLOWS_ENV_VAR} env var\n` +
+        `  (comma-separated) or the \`${PR_REQUIRED_WORKFLOWS_CONTEXT_KEY}\` key in\n` +
+        `  \`.cleo/project-context.json\` (an empty array means no required workflows).`,
     };
   }
 
@@ -455,13 +783,20 @@ export interface ResolvePrEvidenceAtomOptions {
   readonly fetchGhPrPayload?: FetchGhPrPayload;
   /** Env (defaults to `process.env`). */
   readonly env?: NodeJS.ProcessEnv;
-  /** When `true`, bypass cache reads. Cache writes always happen. */
+  /** When `true`, bypass cache reads (PR-result cache and branch-protection cache). Cache writes always happen. */
   readonly bypassCache?: boolean;
   /**
    * Parsed `.cleo/project-context.json` (or `null`). Tier between env and the
    * built-in default for required-workflow resolution (gh#1104). @task T12014
    */
   readonly projectContext?: Record<string, unknown> | null;
+  /**
+   * Mock branch-protection fetcher for tests; defaults to
+   * {@link defaultFetchGhBranchProtection}. Only consulted when neither the
+   * env var nor the project context declares a required-workflow list
+   * (gh#1192). @task T12104
+   */
+  readonly fetchGhBranchProtection?: FetchGhBranchProtection;
 }
 
 /**
@@ -472,8 +807,10 @@ export interface ResolvePrEvidenceAtomOptions {
  *   2. Fetch `gh pr view <num> --json …`.
  *   3. Schema-validate the payload.
  *   4. Reject non-merged PRs (`state !== 'MERGED'` or null `mergedAt`).
- *   5. Evaluate the status-check rollup against required workflows.
- *   6. Persist the result to cache and return.
+ *   5. Resolve the required-workflow list (env → project context → branch
+ *      protection → built-in default; gh#1192).
+ *   6. Evaluate the status-check rollup against required workflows.
+ *   7. Persist the result to cache and return.
  *
  * @param prNumber - PR number (positive integer).
  * @param projectRoot - Absolute path to the project root (for cache + cwd).
@@ -481,6 +818,7 @@ export interface ResolvePrEvidenceAtomOptions {
  * @returns Validation result envelope.
  *
  * @task T9764
+ * @task T12104
  */
 export async function resolvePrEvidenceAtom(
   prNumber: number,
@@ -550,10 +888,16 @@ export async function resolvePrEvidenceAtom(
     };
   }
 
-  const rollupResult = evaluateRollup(
-    payload.statusCheckRollup,
-    resolveRequiredWorkflows(opts.env, opts.projectContext),
-  );
+  const required = await resolveRequiredWorkflowsDetailed(projectRoot, {
+    env: opts.env,
+    projectContext: opts.projectContext,
+    fetchGhBranchProtection: opts.fetchGhBranchProtection,
+    bypassProtectionCache: opts.bypassCache,
+  });
+  const rollupResult = evaluateRollup(payload.statusCheckRollup, required.workflows, {
+    requiredSource: describeRequiredWorkflowsSource(required.source),
+    prNumber,
+  });
   if (!rollupResult.ok) {
     return {
       ok: false,
