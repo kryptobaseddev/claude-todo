@@ -1,5 +1,15 @@
 # Changelog
 
+## [2026.8.9] (2026-08-20)
+
+### Added
+
+- CI phantom-cancel watchdog — detects workflow runs cancelled after all steps succeeded and auto-reruns them (scripts/ci-phantom-cancel-watchdog.mjs + scheduled workflow) _(provenance: [T12103](https://github.com/kryptobaseddev/cleo/search?q=T12103&type=commits))_
+
+### Changed
+
+- docs-canonical-surface integration test — raise the spawned-CLI timeout from 30s to 120s and retry once on a timeout kill, so a loaded CI runner no longer fails the whole shard _(provenance: [T12109](https://github.com/kryptobaseddev/cleo/search?q=T12109&type=commits))_
+
 ## [2026.8.8] (2026-08-20)
 
 ### Fixed
