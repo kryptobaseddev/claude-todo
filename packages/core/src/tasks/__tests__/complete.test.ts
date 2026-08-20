@@ -10,7 +10,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createTestDb, seedTasks, type TestDbEnv } from '../../store/__tests__/test-db-helper.js';
 import type { DataAccessor, TransactionAccessor } from '../../store/data-accessor.js';
 import { resetDbState } from '../../store/sqlite.js';
-import { completeTask, withTaskWriteTransaction } from '../complete.js';
+import { completeTask, completeTaskStrict, withTaskWriteTransaction } from '../complete.js';
 
 describe('completeTask', () => {
   let env: TestDbEnv;
@@ -65,7 +65,7 @@ describe('completeTask', () => {
     );
   });
 
-  it('throws if task already done', async () => {
+  it('is an idempotent no-op success when the task is already done (T12102 / gh#1196)', async () => {
     await seedTasks(accessor, [
       {
         id: 'T001',
@@ -77,9 +77,36 @@ describe('completeTask', () => {
       },
     ]);
 
-    await expect(completeTask({ taskId: 'T001' }, env.tempDir, accessor)).rejects.toThrow(
-      'already completed',
-    );
+    const result = await completeTask({ taskId: 'T001' }, env.tempDir, accessor);
+    expect(result.alreadyCompleted).toBe(true);
+    expect(result.task.status).toBe('done');
+    // No side effects on a no-op: no auto-completed parents, no unblocked list.
+    expect(result.autoCompleted).toBeUndefined();
+    expect(result.unblockedTasks).toBeUndefined();
+  });
+
+  it('completeTaskStrict returns success with alreadyDone for a done task in strict mode (T12102 / gh#1196)', async () => {
+    // Strict lifecycle mode would normally run the staleness/IVTR/verification
+    // pre-checks — the done short-circuit must fire BEFORE any of them so a
+    // post-timeout retry succeeds instead of failing on stale-state guards.
+    await writeConfig({ lifecycle: { mode: 'strict' } });
+    await seedTasks(accessor, [
+      {
+        id: 'T001',
+        title: 'Done task',
+        status: 'done',
+        priority: 'medium',
+        createdAt: new Date().toISOString(),
+        completedAt: new Date().toISOString(),
+      },
+    ]);
+
+    const result = await completeTaskStrict(env.tempDir, 'T001');
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data?.alreadyDone).toBe(true);
+      expect(result.data?.note).toContain('already done');
+    }
   });
 
   it('throws if dependencies are incomplete', async () => {

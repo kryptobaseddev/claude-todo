@@ -27,7 +27,9 @@ import {
   captureHead,
   clearToolCache,
   computeCacheKey,
+  DEFAULT_SPAWN_TIMEOUT_MS,
   readCacheEntry,
+  resolveSpawnTimeoutMs,
   runToolCached,
 } from '../tool-cache.js';
 import type { ResolvedToolCommand } from '../tool-resolver.js';
@@ -693,5 +695,65 @@ describe('runToolCached — lock contention fail-fast (T12025)', () => {
     const r = await runToolCached(cmd, dir, { skipGlobalSemaphore: true });
     expect(r.cacheHit).toBe(true);
     expect(r.lockBusy).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// CLEO_TOOL_TIMEOUT_<TOOL> — wall-clock deadline resolution (T12105 / gh#1193)
+// ---------------------------------------------------------------------------
+
+describe('resolveSpawnTimeoutMs (T12105)', () => {
+  it('returns the 300s default when the env var is unset', () => {
+    expect(resolveSpawnTimeoutMs('typecheck', {})).toBe(DEFAULT_SPAWN_TIMEOUT_MS);
+    expect(DEFAULT_SPAWN_TIMEOUT_MS).toBe(300_000);
+  });
+
+  it('returns the default when the env var is empty', () => {
+    expect(resolveSpawnTimeoutMs('typecheck', { CLEO_TOOL_TIMEOUT_TYPECHECK: '' })).toBe(
+      DEFAULT_SPAWN_TIMEOUT_MS,
+    );
+    expect(resolveSpawnTimeoutMs('typecheck', { CLEO_TOOL_TIMEOUT_TYPECHECK: '   ' })).toBe(
+      DEFAULT_SPAWN_TIMEOUT_MS,
+    );
+  });
+
+  it('honours a valid positive-integer override', () => {
+    expect(resolveSpawnTimeoutMs('typecheck', { CLEO_TOOL_TIMEOUT_TYPECHECK: '600000' })).toBe(
+      600_000,
+    );
+  });
+
+  it('follows the concurrency-var naming convention (uppercase, dashes → underscores)', () => {
+    expect(
+      resolveSpawnTimeoutMs('security-scan', { CLEO_TOOL_TIMEOUT_SECURITY_SCAN: '900000' }),
+    ).toBe(900_000);
+    // The dashed spelling is NOT consulted — same convention as CLEO_TOOL_CONCURRENCY_*.
+    expect(
+      resolveSpawnTimeoutMs('security-scan', { 'CLEO_TOOL_TIMEOUT_SECURITY-SCAN': '900000' }),
+    ).toBe(DEFAULT_SPAWN_TIMEOUT_MS);
+  });
+
+  it('rejects non-numeric values with a clear error (no silent fallback)', () => {
+    expect(() =>
+      resolveSpawnTimeoutMs('typecheck', { CLEO_TOOL_TIMEOUT_TYPECHECK: 'ten-minutes' }),
+    ).toThrow(/CLEO_TOOL_TIMEOUT_TYPECHECK must be a positive integer/);
+  });
+
+  it('rejects zero and negative values with a clear error', () => {
+    expect(() => resolveSpawnTimeoutMs('test', { CLEO_TOOL_TIMEOUT_TEST: '0' })).toThrow(
+      /CLEO_TOOL_TIMEOUT_TEST must be greater than zero/,
+    );
+    expect(() => resolveSpawnTimeoutMs('test', { CLEO_TOOL_TIMEOUT_TEST: '-5000' })).toThrow(
+      /CLEO_TOOL_TIMEOUT_TEST/,
+    );
+  });
+
+  it('rejects fractional and unit-suffixed values', () => {
+    expect(() => resolveSpawnTimeoutMs('lint', { CLEO_TOOL_TIMEOUT_LINT: '1.5' })).toThrow(
+      /CLEO_TOOL_TIMEOUT_LINT/,
+    );
+    expect(() => resolveSpawnTimeoutMs('lint', { CLEO_TOOL_TIMEOUT_LINT: '600000ms' })).toThrow(
+      /CLEO_TOOL_TIMEOUT_LINT/,
+    );
   });
 });

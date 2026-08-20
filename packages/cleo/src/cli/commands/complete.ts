@@ -118,6 +118,14 @@ export const completeCommand = defineCommand({
     // Engine may return {task: {...}} or the task record directly
     const task = data?.task ?? data;
     const output: Record<string, unknown> = { task };
+    // T12102 (gh#1196) — idempotent complete: surface the no-op marker +
+    // note so the agent sees "already done, nothing to do" with exit 0.
+    if (data?.alreadyDone === true) {
+      output['alreadyDone'] = true;
+    }
+    if (typeof data?.note === 'string') {
+      output['note'] = data.note;
+    }
     const autoCompleted = data?.autoCompleted;
     if (Array.isArray(autoCompleted) && autoCompleted.length > 0) {
       output['autoCompleted'] = autoCompleted;

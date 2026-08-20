@@ -355,7 +355,7 @@ All overrides append a line to `.cleo/audit/force-bypass.jsonl`. Use sparingly.
 
 ### Tool resolution + result cache (ADR-061)
 
-`tool:<name>` evidence resolves via `.cleo/project-context.json` with per-`primaryType` fallbacks. Results cached under `.cleo/cache/evidence/<key>.json`, keyed on `(canonical, cmd, args, HEAD, dirty-tree fingerprint)`. Parallel verifies coalesce; cross-worktree bounded by per-tool semaphore at `~/.local/share/cleo/locks/tool-<canonical>/`. Tune with `CLEO_TOOL_CONCURRENCY_<TOOL>=<n>`.
+`tool:<name>` evidence resolves via `.cleo/project-context.json` with per-`primaryType` fallbacks. Results cached under `.cleo/cache/evidence/<key>.json`, keyed on `(canonical, cmd, args, HEAD, dirty-tree fingerprint)`. Parallel verifies coalesce; cross-worktree bounded by per-tool semaphore at `~/.local/share/cleo/locks/tool-<canonical>/`. Tune with `CLEO_TOOL_CONCURRENCY_<TOOL>=<n>`. The wall-clock deadline per tool run defaults to 300000 ms; override with `CLEO_TOOL_TIMEOUT_<TOOL>=<ms>` (positive integer; invalid values are rejected with a clear error, never silently ignored).
 
 ### `pr:<number>` retroactive atom (T9764)
 
