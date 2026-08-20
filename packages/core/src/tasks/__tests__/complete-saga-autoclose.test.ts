@@ -279,12 +279,12 @@ describe('completeTask — saga auto-close (T10116)', () => {
     expect(sagaAfterFirst?.status).toBe('done');
     const completedAtAfterFirst = sagaAfterFirst?.completedAt;
 
-    // Second attempt on the same task MUST raise 'already completed' —
-    // proving the saga auto-close path is not re-entered for a no-op
-    // call. The saga's completedAt stamp MUST be unchanged.
-    await expect(completeTask({ taskId: 'TM-I2' }, env.tempDir, accessor)).rejects.toThrow(
-      'already completed',
-    );
+    // Second attempt on the same task is an idempotent no-op success
+    // (T12102 / gh#1196) — the saga auto-close path is not re-entered and
+    // the saga's completedAt stamp MUST be unchanged.
+    const second = await completeTask({ taskId: 'TM-I2' }, env.tempDir, accessor);
+    expect(second.alreadyCompleted).toBe(true);
+    expect(second.autoCompleted).toBeUndefined();
     const sagaAfterSecond = await accessor.loadSingleTask('TS-IDEM');
     expect(sagaAfterSecond?.status).toBe('done');
     expect(sagaAfterSecond?.completedAt).toBe(completedAtAfterFirst);

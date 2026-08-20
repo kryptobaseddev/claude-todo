@@ -1608,6 +1608,7 @@ export {
   type ParsedAtom,
   type ParsedEvidence,
   parseEvidence,
+  type RevalidateOptions,
   type RevalidationResult,
   revalidateEvidence,
   TOOL_COMMANDS,

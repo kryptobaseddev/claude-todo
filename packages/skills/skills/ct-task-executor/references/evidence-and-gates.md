@@ -155,6 +155,11 @@ semaphore at `~/.local/share/cleo/locks/tool-<canonical>/`.
 Tune with `CLEO_TOOL_CONCURRENCY_<TOOL>=<n>` (`0` disables). For most
 worker agents this is set-and-forget; the orchestrator handles tuning.
 
+The wall-clock deadline per tool run defaults to 300000 ms (5 min). On
+loaded CI runners a suite can legitimately exceed that; raise it per tool
+with `CLEO_TOOL_TIMEOUT_<TOOL>=<ms>` (positive integer — invalid values
+are rejected with a clear error, not silently ignored).
+
 ## The Emergency Override
 
 In rare incident-response scenarios, the override exists:

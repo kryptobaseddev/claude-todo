@@ -133,6 +133,15 @@ export interface CompleteTaskResult {
   autoCompleted?: string[];
   unblockedTasks?: Array<Pick<TaskRef, 'id' | 'title'>>;
   /**
+   * `true` when the task was already `done` and the call was an idempotent
+   * no-op (T12102 / gh#1196). No gates re-ran, no writes occurred, and the
+   * caller should surface success with an `already done` note so the
+   * recovery path after a timed-out complete is simply "run it again".
+   *
+   * @task T12102
+   */
+  alreadyCompleted?: boolean;
+  /**
    * llmtxt ContributionReceipt correlation (T947). Absent when the
    * AgentSession adapter degraded to a no-op (peer deps missing) or
    * when running in VITEST with no audit layer.
@@ -414,6 +423,22 @@ export async function completeTask(
     });
   }
 
+  // ---- T12102 (gh#1196): idempotent complete ----
+  // Re-running `cleo complete` on an already-done task is a no-op SUCCESS,
+  // not E_CLEO_TASK_COMPLETED. The reported failure mode was a complete that
+  // committed `status='done'` server-side and then kept running until the
+  // agent's tool timeout killed the client — the agent saw a failure for an
+  // operation that actually succeeded. Making the retry exit 0 with a clear
+  // note turns the recovery path into simply "run it again".
+  //
+  // This check runs BEFORE requireActiveSession: the no-op mutates nothing,
+  // so the mutation guard does not apply, and recovery must work even from a
+  // fresh shell. The `cleo verify` E_ALREADY_DONE guard (ADR-051 §11.1
+  // evidence immutability) is a different path and is NOT loosened.
+  if (task.status === 'done') {
+    return { task, alreadyCompleted: true };
+  }
+
   // gh#1194 / T12106 — name the exact recovery so an agent that recorded
   // gates via `cleo verify` without an active session does not misread this
   // as an evidence problem: gates are preserved; start a session, re-run
@@ -425,14 +450,6 @@ export async function completeTask(
   );
 
   const enforcement = await loadCompletionEnforcement(cwd);
-
-  // Already done
-  if (task.status === 'done') {
-    throw new CleoError(ExitCode.TASK_COMPLETED, `Task ${options.taskId} is already completed`, {
-      fix: `To reopen, run cleo update ${options.taskId} --status active`,
-      details: { field: 'status', expected: 'not done', actual: 'done' },
-    });
-  }
 
   // ---- Dependency gate (T11954 / DHQ-071) ----
   // A task whose OWN work is done can still be blocked here by `depends` edges
@@ -1249,6 +1266,21 @@ interface CompleteEngineSuccess {
   autoCompleted?: string[];
   unblockedTasks?: Array<{ id: string; title: string }>;
   /**
+   * `true` when the task was already `done` and the complete call was an
+   * idempotent no-op (T12102 / gh#1196). Accompanies {@link note}; exit
+   * code is 0 so a post-timeout retry is the canonical recovery path.
+   *
+   * @task T12102
+   */
+  alreadyDone?: boolean;
+  /**
+   * Human-readable note surfaced on the payload — currently used for the
+   * idempotent `already done` case (T12102).
+   *
+   * @task T12102
+   */
+  note?: string;
+  /**
    * T9548 — Auto-invoke worktree-complete diagnostic envelope.
    *
    * Populated when `cleo complete <taskId>` runs and the auto-invoke hook
@@ -1350,6 +1382,19 @@ export async function taskComplete(
       accessor,
     );
 
+    // T12102 (gh#1196): idempotent no-op — the task was already done before
+    // this call. Skip every post-completion side effect (provenance stamp,
+    // worktree auto-complete) and return success with a clear note so an
+    // agent recovering from a timed-out complete can confirm state by
+    // simply re-running the command.
+    if (result.alreadyCompleted) {
+      return engineSuccess({
+        task: result.task as TaskRecord,
+        alreadyDone: true,
+        note: `Task ${taskId} is already done — complete was a no-op (idempotent).`,
+      });
+    }
+
     // T1222 / CLEO-VALID-27: stamp modified_by + session_id on every successful completion.
     // Best-effort — failure here must not roll back the completion that already landed.
     try {
@@ -1435,6 +1480,13 @@ export async function completeTaskStrict(
     if (lifecycleMode === 'strict') {
       const accessor = await getTaskAccessor(projectRoot);
       const task = await accessor.loadSingleTask(taskId);
+      // T12102 (gh#1196): an already-done task short-circuits to the
+      // idempotent success path BEFORE any strict pre-check. Without this a
+      // post-timeout retry could spuriously fail on E_EVIDENCE_STALE /
+      // E_IVTR_INCOMPLETE for a task that is legitimately finished.
+      if (task?.status === 'done') {
+        return taskComplete(projectRoot, taskId, opts);
+      }
       if (task?.verification?.evidence) {
         const evidenceEntries = Object.entries(task.verification.evidence);
         const staleGates: Array<{ gate: string; failures: string[] }> = [];
@@ -1442,7 +1494,24 @@ export async function completeTaskStrict(
           if (!ev) continue;
           // T9245: pass gate so revalidate can enforce the
           // critical-gate override-rejection rule.
-          const check = await revalidateEvidence(ev, projectRoot, gate as VerificationGate);
+          // T12102: progress lines go to stderr (console.warn) so a slow
+          // re-validation is observable while stdout stays pure JSON.
+          const gateStartedAt = Date.now();
+          console.warn(
+            `[complete] re-validating evidence for gate '${gate}' (${ev.atoms.length} atom(s))…`,
+          );
+          const check = await revalidateEvidence(
+            ev,
+            projectRoot,
+            gate as VerificationGate,
+            undefined,
+            {
+              onProgress: (message) => console.warn(`[complete]   ${message}`),
+            },
+          );
+          console.warn(
+            `[complete] gate '${gate}' re-validated: ${check.stillValid ? 'ok' : 'STALE'} (${Date.now() - gateStartedAt}ms)`,
+          );
           if (!check.stillValid) {
             staleGates.push({
               gate,

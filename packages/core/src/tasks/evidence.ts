@@ -42,6 +42,11 @@ import {
 
 import { CleoError } from '../errors.js';
 import { getEffectiveHead } from '../worktree/effective-head.js';
+import {
+  computeCommitRevalidationKey,
+  readCommitRevalidationEntry,
+  writeCommitRevalidationEntry,
+} from './revalidation-cache.js';
 import { runToolCached } from './tool-cache.js';
 import {
   CANONICAL_TOOLS,
@@ -1880,6 +1885,24 @@ export interface RevalidationResult {
 }
 
 /**
+ * Options for {@link revalidateEvidence}.
+ *
+ * @task T12102
+ */
+export interface RevalidateOptions {
+  /**
+   * Progress sink invoked once per hard atom as it is re-validated, with a
+   * short human-readable line (e.g. `commit:abc1234 ok (cached) 3ms`). The
+   * `cleo complete` path forwards this to stderr so a long re-validation is
+   * observable; stdout stays pure JSON per the output contract. Other
+   * callers omit it and see no behavioural change.
+   *
+   * @task T12102 (gh#1196)
+   */
+  onProgress?: (message: string) => void;
+}
+
+/**
  * Critical gates for which `override`-only evidence is NEVER accepted. Closes
  * the override-loophole proven 2026-05-12 — 13 mis-completed tasks in the
  * 2026-05-11 campaign passed `implemented`/`testsPassed` with override-only
@@ -1936,11 +1959,13 @@ export function isHardAtom(atom: EvidenceAtom): boolean {
  *   that were on the task branch at verify time but are now on main after
  *   merge (T11959). When provided, sha256 comparison uses the same git-show
  *   resolution path as validate time so the checksums remain consistent.
+ * @param options - Optional {@link RevalidateOptions} progress sink (T12102).
  * @returns Revalidation outcome
  *
  * @task T832
  * @task T9245
  * @task T11959
+ * @task T12102
  * @task T12107
  * @adr ADR-051 §5 / §8 (Decision 8)
  */
@@ -1949,6 +1974,7 @@ export async function revalidateEvidence(
   projectRoot: string,
   gate?: VerificationGate,
   taskId?: string,
+  options?: RevalidateOptions,
 ): Promise<RevalidationResult> {
   // T9245: critical-gate override rejection.
   // When the gate is `implemented` or `testsPassed`, evidence that has no
@@ -1988,11 +2014,22 @@ export async function revalidateEvidence(
       case 'override':
         break;
       case 'commit': {
-        const check = await validateCommit(atom.sha, projectRoot);
-        if (!check.ok) failed.push({ atom, reason: check.reason });
+        // T12102 (gh#1196): routed through the revalidation cache — keyed on
+        // (commitSha, headSha), both immutable git facts, so a hit is exactly
+        // as sound as re-running the git spawns. See revalidation-cache.ts.
+        const startedAt = Date.now();
+        const cached = await revalidateCommitAtom(atom.sha, projectRoot);
+        if (!cached.check.ok) failed.push({ atom, reason: cached.check.reason });
+        options?.onProgress?.(
+          `commit:${atom.sha.slice(0, 7)} ${cached.check.ok ? 'ok' : 'FAILED'}` +
+            `${cached.fromCache ? ' (cached)' : ''} ${Date.now() - startedAt}ms`,
+        );
         break;
       }
       case 'files': {
+        // Deliberately NOT cached (T12102): the read-and-compare-sha256 below
+        // IS the staleness guarantee; a cheaper key would weaken it.
+        const startedAt = Date.now();
         // T12107 (gh#1195): mirror validateFiles' resolution order so the
         // sha256 captured at verify time compares against the same bytes —
         // when a sibling `commit:` atom anchors the evidence, its tree is
@@ -2032,12 +2069,20 @@ export async function revalidateEvidence(
             break;
           }
         }
+        options?.onProgress?.(
+          `files:${atom.files.length} path(s) ` +
+            `${failed.some((x) => x.atom === atom) ? 'FAILED' : 'ok'} ${Date.now() - startedAt}ms`,
+        );
         break;
       }
       case 'test-run': {
+        // Deliberately NOT cached (T12102): same reasoning as files: — the
+        // content hash comparison IS the staleness guarantee.
+        const startedAt = Date.now();
         const abs = isAbsolute(atom.path) ? atom.path : resolvePath(projectRoot, atom.path);
         if (!existsSync(abs)) {
           failed.push({ atom, reason: `test-run file removed since verify: ${atom.path}` });
+          options?.onProgress?.(`test-run:${atom.path} FAILED ${Date.now() - startedAt}ms`);
           break;
         }
         const content = await readFile(abs);
@@ -2045,6 +2090,9 @@ export async function revalidateEvidence(
         if (sha256 !== atom.sha256) {
           failed.push({ atom, reason: `test-run output modified since verify: ${atom.path}` });
         }
+        options?.onProgress?.(
+          `test-run:${atom.path} ${sha256 === atom.sha256 ? 'ok' : 'FAILED'} ${Date.now() - startedAt}ms`,
+        );
         break;
       }
       case 'tool': {
@@ -2088,6 +2136,65 @@ export async function revalidateEvidence(
   }
 
   return { stillValid: failed.length === 0, failedAtoms: failed };
+}
+
+/**
+ * Re-validate a `commit:` atom at complete time, consulting the T12102
+ * revalidation cache first.
+ *
+ * The cache key is `(commitSha, headSha)` — every check
+ * {@link validateCommit} performs on this path (no `taskId`, so
+ * `getEffectiveHead` resolves to `HEAD`) is an immutable fact of the git
+ * DAG once both SHAs are fixed, so a cache hit is exactly as sound as
+ * re-running the git spawns. Only successful validations are cached: a
+ * "commit not found" failure is NOT immutable (a later `git fetch` can
+ * make the object appear), so failures always re-run.
+ *
+ * When `HEAD` cannot be resolved (not a git checkout, bare failure), the
+ * cache is bypassed entirely and behaviour matches the pre-T12102 path.
+ *
+ * @param sha - Commit SHA recorded at verify time.
+ * @param projectRoot - Absolute path used as cwd for git operations.
+ * @returns The {@link AtomValidation} plus whether it came from cache.
+ *
+ * @internal
+ * @task T12102 (gh#1196)
+ */
+async function revalidateCommitAtom(
+  sha: string,
+  projectRoot: string,
+): Promise<{ check: AtomValidation; fromCache: boolean }> {
+  const headResult = await runCommand('git', ['rev-parse', 'HEAD'], projectRoot);
+  const head = headResult.exitCode === 0 ? headResult.stdout.trim() : null;
+  if (!head) {
+    return { check: await validateCommit(sha, projectRoot), fromCache: false };
+  }
+  const key = computeCommitRevalidationKey(sha, head);
+  const hit = readCommitRevalidationEntry(projectRoot, key);
+  if (hit) {
+    return {
+      check: { ok: true, atom: { kind: 'commit', sha: hit.sha, shortSha: hit.shortSha } },
+      fromCache: true,
+    };
+  }
+  const check = await validateCommit(sha, projectRoot);
+  if (check.ok && check.atom.kind === 'commit') {
+    try {
+      writeCommitRevalidationEntry(projectRoot, {
+        schemaVersion: 1,
+        kind: 'commit-revalidation',
+        key,
+        sha: check.atom.sha,
+        shortSha: check.atom.shortSha,
+        head,
+        capturedAt: new Date().toISOString(),
+      });
+    } catch {
+      // Cache writes are advisory — a read-only .cleo dir must not fail a
+      // legitimate completion.
+    }
+  }
+  return { check, fromCache: false };
 }
 
 // ---------------------------------------------------------------------------

@@ -75,6 +75,8 @@ function makeAccessorMock(opts: {
     id: string;
     parentId: string | null | undefined;
     verification?: Record<string, unknown> | null;
+    /** Defaults to 'active' — pass 'done' for the T12102 idempotency tests. */
+    status?: string;
   };
   parent?: {
     id: string;
@@ -91,7 +93,7 @@ function makeAccessorMock(opts: {
           id: opts.child.id,
           title: 'Child task',
           description: '',
-          status: 'active',
+          status: opts.child.status ?? 'active',
           priority: 'medium',
           type: 'task',
           parentId: opts.child.parentId ?? null,
@@ -322,5 +324,34 @@ describe('taskCompleteStrict — parent-epic lifecycle gate (T788)', () => {
     expect(result.success).toBe(false);
     expect(result.error?.code).toBe('E_LIFECYCLE_GATE_FAILED');
     expect(result.error?.fix).toContain('lifecycle complete');
+  });
+
+  // -------------------------------------------------------------------------
+  // T12102 (gh#1196): idempotent complete — an already-done task must return
+  // success BEFORE any strict pre-check (staleness, IVTR, lifecycle gate),
+  // so the post-timeout recovery path is simply "run it again".
+  // -------------------------------------------------------------------------
+
+  it('strict mode: already-done task short-circuits to idempotent success (T12102)', async () => {
+    vi.mocked(loadConfig).mockResolvedValue({
+      lifecycle: { mode: 'strict' },
+    } as ReturnType<typeof loadConfig> extends Promise<infer T> ? T : never);
+
+    vi.mocked(getTaskAccessor).mockResolvedValue(
+      makeAccessorMock({
+        // Done task whose parent epic is STILL in a planning stage — without
+        // the short-circuit this fixture would fail E_LIFECYCLE_GATE_FAILED.
+        child: { id: CHILD_ID, parentId: EPIC_ID, status: 'done' },
+        parent: { id: EPIC_ID, type: 'epic', pipelineStage: 'research' },
+      }) as ReturnType<typeof getAccessor> extends Promise<infer T> ? T : never,
+    );
+
+    const result = await completeTaskStrict(PROJECT_ROOT, CHILD_ID);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data?.alreadyDone).toBe(true);
+      expect(result.data?.note).toContain('already done');
+    }
   });
 });

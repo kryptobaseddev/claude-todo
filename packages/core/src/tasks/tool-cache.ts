@@ -171,13 +171,84 @@ export interface RunToolOptions {
    * Wall-clock deadline for the child process (ms). When exceeded the
    * process is SIGTERM'd, then SIGKILL'd after a 5 s grace period.
    * The lock and semaphore slot are always released so a subsequent
-   * retry can proceed. Default covers a full monorepo test suite;
-   * tests inject shorter values for determinism.
+   * retry can proceed. When omitted, the deadline resolves via
+   * {@link resolveSpawnTimeoutMs} (`CLEO_TOOL_TIMEOUT_<CANONICAL>` env
+   * override over {@link DEFAULT_SPAWN_TIMEOUT_MS}); tests inject shorter
+   * values for determinism.
    *
    * @defaultValue `300_000` (5 min)
    * @task T12025
+   * @task T12105
    */
   spawnTimeoutMs?: number;
+}
+
+// ---------------------------------------------------------------------------
+// Wall-clock deadline resolution (T12105 / gh#1193)
+// ---------------------------------------------------------------------------
+
+/**
+ * Default wall-clock deadline for one evidence-tool child process, in ms.
+ *
+ * 5 minutes covers a full monorepo test suite on an idle machine. Loaded
+ * CI runners sharing the box can push a suite past this — raise it per
+ * tool with `CLEO_TOOL_TIMEOUT_<CANONICAL>` rather than weakening the
+ * deadline globally in code.
+ *
+ * @task T12025
+ * @task T12105
+ */
+export const DEFAULT_SPAWN_TIMEOUT_MS = 300_000;
+
+/**
+ * Resolve the wall-clock child-process deadline for a canonical tool.
+ *
+ * Precedence:
+ *   1. `CLEO_TOOL_TIMEOUT_<CANONICAL>` env var (canonical name uppercased,
+ *      dashes → underscores — the same convention as
+ *      `CLEO_TOOL_CONCURRENCY_<CANONICAL>` in tool-semaphore.ts). Value is
+ *      milliseconds, digits only, strictly positive.
+ *   2. {@link DEFAULT_SPAWN_TIMEOUT_MS}.
+ *
+ * A set-but-invalid value (non-numeric, zero, negative) is a configuration
+ * ERROR, not a fallback: silently ignoring it would let an operator believe
+ * they raised the deadline while the old one still fires (gh#1193).
+ *
+ * @param canonical - Canonical tool name from the resolver.
+ * @param env - Environment to read (injectable for tests).
+ * @returns Deadline in milliseconds.
+ * @throws CleoError(VALIDATION_ERROR) when the env var is set but invalid.
+ *
+ * @task T12105 (gh#1193)
+ */
+export function resolveSpawnTimeoutMs(
+  canonical: string,
+  env: NodeJS.ProcessEnv = process.env,
+): number {
+  const envKey = `CLEO_TOOL_TIMEOUT_${canonical.toUpperCase().replace(/-/g, '_')}`;
+  const raw = env[envKey];
+  if (raw === undefined || raw.trim() === '') return DEFAULT_SPAWN_TIMEOUT_MS;
+  const trimmed = raw.trim();
+  if (!/^\d+$/.test(trimmed)) {
+    throw new CleoError(
+      ExitCode.VALIDATION_ERROR,
+      `${envKey} must be a positive integer (milliseconds), got "${raw}".`,
+      {
+        fix: `Set ${envKey} to a millisecond value such as 600000 (10 min), or unset it to use the ${DEFAULT_SPAWN_TIMEOUT_MS}ms default.`,
+      },
+    );
+  }
+  const parsed = Number.parseInt(trimmed, 10);
+  if (parsed <= 0) {
+    throw new CleoError(
+      ExitCode.VALIDATION_ERROR,
+      `${envKey} must be greater than zero, got ${parsed}.`,
+      {
+        fix: `Set ${envKey} to a positive millisecond value such as 600000 (10 min), or unset it to use the ${DEFAULT_SPAWN_TIMEOUT_MS}ms default.`,
+      },
+    );
+  }
+  return parsed;
 }
 
 // ---------------------------------------------------------------------------
@@ -551,7 +622,9 @@ export async function runToolCached(
 ): Promise<ToolRunResult> {
   const tailBytes = opts.tailBytes ?? 512;
   const lockStaleMs = opts.lockStaleMs ?? 600_000;
-  const spawnTimeoutMs = opts.spawnTimeoutMs ?? 300_000;
+  // T12105 / gh#1193: an explicit opts value (tests) wins; otherwise the
+  // CLEO_TOOL_TIMEOUT_<CANONICAL> env override, else the 5 min default.
+  const spawnTimeoutMs = opts.spawnTimeoutMs ?? resolveSpawnTimeoutMs(command.canonical);
 
   const head = await captureHead(projectRoot);
   const dirtyFingerprint = await captureDirtyFingerprint(projectRoot);

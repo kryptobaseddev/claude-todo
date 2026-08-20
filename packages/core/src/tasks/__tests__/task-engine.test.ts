@@ -265,6 +265,43 @@ describe('taskComplete', () => {
     }
   });
 
+  it('returns success with alreadyDone note for an already-done task (T12102 / gh#1196)', async () => {
+    // The real completeTask runs against this accessor (importActual spread);
+    // its early done-check must short-circuit BEFORE any session/enforcement
+    // work, and taskComplete must skip the provenance stamp + worktree hook.
+    const updateTaskFields = vi.fn().mockResolvedValue(undefined);
+    const doneAccessor = {
+      loadSingleTask: vi.fn(async (id: string) =>
+        id === 'T300'
+          ? {
+              id: 'T300',
+              title: 'Done task',
+              description: '',
+              status: 'done',
+              priority: 'medium',
+              type: 'task',
+              parentId: null,
+              pipelineStage: 'contribution',
+              completedAt: '2026-01-02T00:00:00.000Z',
+              updatedAt: '2026-01-02T00:00:00.000Z',
+            }
+          : null,
+      ),
+      updateTaskFields,
+    };
+    mockGetTaskAccessor.mockResolvedValue(
+      doneAccessor as ReturnType<typeof getAccessor> extends Promise<infer T> ? T : never,
+    );
+
+    const result = await taskComplete(projectRoot, 'T300');
+
+    expect(result.success).toBe(true);
+    expect(result.data?.alreadyDone).toBe(true);
+    expect(result.data?.note).toContain('already done');
+    // No side effects on a no-op: provenance stamp must NOT fire.
+    expect(updateTaskFields).not.toHaveBeenCalled();
+  });
+
   it('populates session_id from active session on successful completion (T1222 · CLEO-VALID-27)', async () => {
     const mockUpdateTaskFields = vi.fn().mockResolvedValue(undefined);
     mockGetAccessor.mockResolvedValue(
