@@ -12,6 +12,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ExitCode } from '@cleocode/contracts';
 import { CleoError } from '../errors.js';
+import { pushWarning } from '../output.js';
 import { getCleoDir } from '../paths.js';
 import { sessionStatus } from './index.js';
 
@@ -96,10 +97,19 @@ export interface EnforcementResult {
  * In strict mode, throws if no session is active.
  * In warn mode, returns a warning but allows the operation.
  * In none mode, always allows.
+ *
+ * @param operation - Dot-delimited operation identifier (e.g. `"tasks.complete"`).
+ * @param cwd - Project root override for config + session resolution.
+ * @param remedyNote - Optional operation-specific remediation sentence appended
+ *   to the thrown error's `fix` text (gh#1194 / T12106). Used by
+ *   `tasks.complete` to make clear that gates already recorded via
+ *   `cleo verify` are preserved and do NOT need re-verification — the recovery
+ *   is "start a session, re-run complete", not "fix the evidence".
  */
 export async function requireActiveSession(
   operation: string,
   cwd?: string,
+  remedyNote?: string,
 ): Promise<EnforcementResult> {
   const mode = getEnforcementMode(cwd);
 
@@ -119,7 +129,9 @@ export async function requireActiveSession(
       ExitCode.SESSION_REQUIRED,
       `Operation '${operation}' requires an active session`,
       {
-        fix: 'Start a session with \'cleo session start --scope epic:T### --auto-start --name "Work"\'',
+        fix:
+          `Start a session with 'cleo session start --scope epic:T### --auto-start --name "Work"'` +
+          (remedyNote ? ` ${remedyNote}` : ''),
         alternatives: [
           {
             action: 'Start session',
@@ -138,6 +150,47 @@ export async function requireActiveSession(
     session: null,
     warning: `No active session for operation '${operation}'. Consider starting one.`,
   };
+}
+
+/**
+ * Emit a loud NON-fatal warning when a session-free write operation (e.g.
+ * `cleo verify`) records state without an active session while strict session
+ * enforcement is in effect (gh#1194 / T12106).
+ *
+ * Session-free writes are intentional: T9505 keeps `cleo verify` usable
+ * without a session so crash-recovery re-attestation works before a new
+ * session is started — the write is NEVER blocked here. But `cleo complete`
+ * DOES require an active session, so an agent that ended its session
+ * mid-turn would otherwise discover the asymmetry only at complete time
+ * (E_CLEO_SESSION_REQUIRED) after every gate already read green. Pushing the
+ * warning into the envelope `meta.warnings[]` diagnostics channel keeps the
+ * stdout JSON contract pure while surfacing the mismatch at verify time.
+ *
+ * Only fires under `strict` enforcement — in `warn`/`none` modes complete
+ * will not reject the missing session, so the warning would be misleading.
+ *
+ * @param operation - Dot-delimited operation identifier (e.g. `"check.gate.set"`).
+ * @param cwd - Project root override for config + session resolution.
+ * @returns `true` when the warning was emitted (strict mode + no active session).
+ *
+ * @task T12106
+ * @gh 1194
+ */
+export async function warnIfNoActiveSession(operation: string, cwd?: string): Promise<boolean> {
+  if (getEnforcementMode(cwd) !== 'strict') return false;
+
+  const session = await getActiveSessionInfo(cwd);
+  if (session) return false;
+
+  pushWarning({
+    code: 'W_NO_ACTIVE_SESSION',
+    message:
+      `No active session: '${operation}' was recorded anyway (session-free by design, T9505), ` +
+      `but 'cleo complete' requires an active session and will fail with E_CLEO_SESSION_REQUIRED. ` +
+      `Start one with 'cleo session start --scope epic:T### --auto-start --name "Work"' before completing — ` +
+      `gates recorded now are preserved and do NOT need re-verification.`,
+  });
+  return true;
 }
 
 /**
