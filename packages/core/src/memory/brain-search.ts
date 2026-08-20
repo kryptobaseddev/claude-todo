@@ -61,8 +61,23 @@ export interface BrainSearchOptions {
 /** Track whether FTS5 is available in the current SQLite build. */
 let _fts5Available: boolean | null = null;
 
-/** Track whether FTS tables have been created and indexed this session. */
-let _fts5Initialized = false;
+/**
+ * Track WHICH brain database handle has had its FTS tables created and index
+ * rebuilt this session — keyed by `DatabaseSync` identity, NOT a process-wide
+ * boolean.
+ *
+ * The dual-scope cache guarantees one `DatabaseSync` per `cleo.db` path, so a
+ * different handle means a different (or freshly reopened) database whose FTS
+ * index may not yet contain rows inserted before the content-sync triggers
+ * existed. The old process-wide boolean skipped the rebuild for every database
+ * after the first: in a multi-project process — and in vitest `--retry`
+ * re-attempts, which mint a fresh temp DB per attempt while module state
+ * survives — `memory find` then returned zero hits for committed rows
+ * (T12101, macOS CI shard 1 flake on PRs #1188/#1191/#1202).
+ *
+ * @task T12101
+ */
+let _fts5InitializedHandle: DatabaseSync | null = null;
 
 /**
  * Check if FTS5 is available in the current SQLite build.
@@ -323,10 +338,12 @@ export async function searchBrain(
   const ftsAvailable = ensureFts5Tables(nativeDb);
 
   if (ftsAvailable) {
-    // On first initialization, rebuild FTS indexes to sync any data
-    // that was inserted before the FTS triggers existed.
-    if (!_fts5Initialized) {
-      _fts5Initialized = true;
+    // On first search against THIS database handle, rebuild FTS indexes to
+    // sync any data that was inserted before the FTS triggers existed.
+    // Handle-keyed (T12101): a fresh or different database always gets one
+    // rebuild, even when an earlier database in this process was already synced.
+    if (_fts5InitializedHandle !== nativeDb) {
+      _fts5InitializedHandle = nativeDb;
       rebuildFts5Index(nativeDb);
     }
     return searchWithFts5(nativeDb, query, tables, limit, peerId, includeGlobal);
@@ -755,12 +772,15 @@ export function matchConjunctiveFirst<T>(
 }
 
 /**
- * Reset the cached FTS5 availability flag.
- * Used in tests to force re-detection.
+ * Reset the cached FTS5 availability flag and the initialized-handle marker.
+ * Used in tests to force re-detection and a rebuild on the next search.
+ *
+ * @task T12101 — also clears the per-handle rebuild marker (was a
+ * process-wide boolean before T12101).
  */
 export function resetFts5Cache(): void {
   _fts5Available = null;
-  _fts5Initialized = false;
+  _fts5InitializedHandle = null;
 }
 
 // ============================================================================
