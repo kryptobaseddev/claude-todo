@@ -41,18 +41,25 @@ function runCli(args: readonly string[], projectRoot: string): CliResult {
     CLEO_OUTPUT_FORMAT: 'json',
     CLEO_TEST_ALLOW_PROJECT_DB: 'true',
   };
-  const result = spawnSync('node', [CLI_DIST, ...args], {
-    stdio: ['pipe', 'pipe', 'pipe'],
-    encoding: 'utf-8',
-    timeout: 30_000,
-    cwd: projectRoot,
-    env,
-  });
-  return {
-    stdout: result.stdout ?? '',
-    stderr: result.stderr ?? '',
-    status: result.status,
+  // T12109: 30s was too tight under shard load — a spawned CLI hit the cap with
+  // status null on ubuntu CI (run 32334556443). 120s headroom plus one retry on a
+  // timeout kill keeps a slow runner from failing the whole shard.
+  const runOnce = (): CliResult => {
+    const result = spawnSync('node', [CLI_DIST, ...args], {
+      stdio: ['pipe', 'pipe', 'pipe'],
+      encoding: 'utf-8',
+      timeout: 120_000,
+      cwd: projectRoot,
+      env,
+    });
+    return {
+      stdout: result.stdout ?? '',
+      stderr: result.stderr ?? '',
+      status: result.status,
+    };
   };
+  const first = runOnce();
+  return first.status === null ? runOnce() : first;
 }
 
 interface LafsEnvelope<TData = unknown> {
