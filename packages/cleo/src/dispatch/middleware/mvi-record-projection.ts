@@ -13,6 +13,11 @@
  * middleware so consumers can distinguish a projected payload from a full
  * record without re-implementing the policy.
  *
+ * T12108 (gh#1197): for `tasks.show`, a `--field /data/...` JSON pointer that
+ * does not resolve in the MVI projection but does resolve in the full record
+ * transparently selects the full projection (see
+ * {@link fieldPointerNeedsFullData}).
+ *
  * This is distinct from `./projection.ts` (the tier-based domain-access gate)
  * and from `./field-filter.ts` (the LAFS `--fields` parameter). All three can
  * coexist on the same request.
@@ -21,14 +26,18 @@
  *
  * @epic T9855
  * @task T9922
+ * @task T12108
  */
 
 import {
   applyProjectionPlan,
+  extractByJsonPointer,
+  isJsonPointer,
   PROJECTION_PLANS,
   type ProjectionMode,
   resolveProjectionMode,
 } from '@cleocode/core';
+import { getFieldContext } from '../../cli/field-context.js';
 import { getProjectionOptOut } from '../../cli/projection-context.js';
 import type { DispatchRequest, DispatchResponse, Middleware } from '../types.js';
 
@@ -44,6 +53,34 @@ function resolveModeFor(req: DispatchRequest): ProjectionMode {
   const override = req.params?.['_projection'];
   if (override === 'full' || override === 'mvi') return override;
   return resolveProjectionMode(getProjectionOptOut() || undefined);
+}
+
+/**
+ * Decide whether the current `--field` JSON pointer needs the FULL record
+ * rather than the projected one (T12108 / gh#1197).
+ *
+ * `--field /data/...` pointers are resolved by `cliOutput` against the whole
+ * envelope AFTER this middleware ran, so a pointer into a field the MVI
+ * projection strips (`verification`, `acceptance`, `description`, `evidence`)
+ * used to fail with `E_FIELD_NOT_FOUND` even though the value exists. When
+ * the pointer misses in the projected data but resolves in the unprojected
+ * data, the caller asked for one scalar either way — select the fuller
+ * projection transparently.
+ *
+ * Only `/data/...` pointers are considered; `/meta/...` and `/page/...`
+ * pointers never address record fields.
+ *
+ * @internal
+ * @task T12108
+ */
+function fieldPointerNeedsFullData(fullData: unknown, projectedData: unknown): boolean {
+  const field = getFieldContext().field;
+  if (!field || !isJsonPointer(field) || !field.startsWith('/data/')) return false;
+  const pointer = field.slice('/data'.length);
+  return (
+    extractByJsonPointer(projectedData, pointer) === undefined &&
+    extractByJsonPointer(fullData, pointer) !== undefined
+  );
 }
 
 /**
@@ -73,13 +110,27 @@ export function createMviRecordProjection(): Middleware {
 
     if (!hasPlan) return response;
 
+    let appliedMode = mode;
     if (response.success && response.data !== undefined) {
-      response.data = applyProjectionPlan(response.data, opKey, mode);
+      const projected = applyProjectionPlan(response.data, opKey, mode);
+      // T12108 (gh#1197), scoped to tasks.show: a `--field /data/...` pointer
+      // that misses in the MVI projection but resolves in the full record
+      // transparently selects the fuller projection instead of failing with
+      // E_FIELD_NOT_FOUND (e.g. /data/task/verification/gates).
+      if (
+        mode === 'mvi' &&
+        opKey === 'tasks.show' &&
+        fieldPointerNeedsFullData(response.data, projected)
+      ) {
+        appliedMode = 'full';
+      } else {
+        response.data = projected;
+      }
     }
     // Stamp the choice on every response that ran through a planned op,
     // including errors — agents inspecting an error envelope can still see
     // which mode the request resolved to.
-    response.meta.projection = mode;
+    response.meta.projection = appliedMode;
     return response;
   };
 }
